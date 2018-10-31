@@ -7,7 +7,6 @@ import View = android.lib.base.View;
 import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
-import $util_android = android.lib.util;
 import $color = androme.lib.color;
 import $resource_android = android.lib.base.Resource;
 
@@ -54,16 +53,15 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         node.nodeType = $enum.NODE_STANDARD.BUTTON;
         node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
         if (!node.pageflow || target) {
-            const settings = <SettingsAndroid> this.application.settings;
-            const horizontalBias = node.horizontalBias(settings);
-            const verticalBias = node.verticalBias(settings);
+            const horizontalBias = node.horizontalBias();
+            const verticalBias = node.verticalBias();
             const documentParent = node.documentParent;
             const gravity: string[] = [];
             if (horizontalBias < 0.5) {
-                gravity.push($util_android.parseRTL('left', settings));
+                gravity.push(node.localizeString('left'));
             }
             else if (horizontalBias > 0.5) {
-                gravity.push($util_android.parseRTL('right', settings));
+                gravity.push(node.localizeString('right'));
             }
             else {
                 gravity.push('center_horizontal');

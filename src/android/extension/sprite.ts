@@ -16,8 +16,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
         let output = '';
         let container: Null<T>;
         if (image && image.uri && image.position) {
-            container = new View(this.application.cacheProcessing.nextId, node.element) as T;
-            container.api = node.api;
+            container = new View(this.application.cacheProcessing.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
             container.siblingIndex = node.siblingIndex;
             container.nodeName = node.nodeName;
             container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');

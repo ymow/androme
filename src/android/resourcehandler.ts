@@ -9,9 +9,10 @@ import LAYERLIST_TMPL from './template/resource/layer-list';
 import View from './view';
 import NodeList = androme.lib.base.NodeList;
 
-import { generateId, parseRTL, replaceUnit, getXmlNs } from './lib/util';
+import { generateId, replaceUnit, getXmlNs } from './lib/util';
 
 import $enum = androme.lib.enumeration;
+import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
@@ -145,10 +146,10 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
 export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
     public static formatOptions(options: {}, settings: SettingsAndroid) {
         for (const namespace in options) {
-            const obj: StringMap = options[namespace];
+            const obj: ObjectMap<any> = options[namespace];
             if (typeof obj === 'object') {
                 for (const attr in obj) {
-                    if (obj[attr] != null) {
+                    if (obj.hasOwnProperty(attr)) {
                         let value = obj[attr].toString();
                         switch (namespace) {
                             case 'android': {
@@ -163,7 +164,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         }
                                         break;
                                     case 'src':
-                                        if (/^\w+:\/\//.test(value)) {
+                                        if ($const.DOM_REGEX.URI.test(value)) {
                                             value = this.addImage({ mdpi: value });
                                             if (value !== '') {
                                                 obj[attr] = `@drawable/${value}`;
@@ -836,11 +837,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             const width = parseInt(border.width);
                             const baseWidth = Math.floor(width / 3);
                             const remainder = width % 3;
-                            const offset = remainder === 2 ? 1 : 0;
+                            const offset =  remainder === 2 ? 1 : 0;
                             const leftWidth = baseWidth + offset;
                             const rightWidth = baseWidth + offset;
-                            const indentWidth = `${$util.formatPX(width - baseWidth)}`;
-                            const hideWidth = `-${indentWidth}`;
+                            let indentWidth = `${$util.formatPX(width - baseWidth)}`;
+                            let hideWidth = `-${indentWidth}`;
                             data['6'].push({
                                 top: top ? '' : hideWidth,
                                 right: right ? '' : hideWidth,
@@ -849,6 +850,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 'stroke': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
                                 'corners': borderRadius
                             });
+                            if (width === 3) {
+                                indentWidth = `${$util.formatPX(width)}`;
+                                hideWidth = `-${indentWidth}`;
+                            }
                             data['6'].push({
                                 top: top ? indentWidth : hideWidth,
                                 right: right ? indentWidth : hideWidth,
@@ -1008,11 +1013,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const textShadow = node.css('textShadow');
                 if (textShadow !== 'none') {
-                    [
-                        /^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/,
-                        /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/
-                    ]
-                    .some((value, index) => {
+                    [/^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/, /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/].some((value, index) => {
                         const match = textShadow.match(value);
                         if (match) {
                             const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
@@ -1053,8 +1054,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] && this.settings.targetAPI >= FONT_ANDROID[fontFamily]) ||
-                        (this.settings.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] && this.settings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
+                    if ((FONT_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[fontFamily]) ||
+                        (this.settings.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
                     {
                         system = true;
                         stored.fontFamily = fontFamily;
@@ -1124,8 +1125,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 if (stored.marginLeft === stored.marginRight &&
                     !node.blockWidth &&
-                    node.alignParent('left', this.settings) &&
-                    node.alignParent('right', this.settings) &&
+                    node.alignParent('left') &&
+                    node.alignParent('right') &&
                     !(node.position === 'relative' && node.alignNegative))
                 {
                     node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
@@ -1147,7 +1148,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             const stored: NameValue = $dom.getElementCache(node.element, 'valueString');
             if (stored) {
                 if (node.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
-                    if (node.alignParent('left', this.settings) && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    if (node.alignParent('left') && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                         const value = node.textContent;
                         let leadingSpace = 0;
                         for (let i = 0; i < value.length; i++) {
@@ -1375,10 +1376,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         this.addFile(options.output.path, options.output.file, xml);
     }
 
-    protected buildBackgroundGradient(node: View, gradients: Gradient[]) {
+    private buildBackgroundGradient(node: T, gradients: Gradient[]) {
         const result: BackgroundGradient[] = [];
         for (const shape of gradients) {
-            const hasStop = shape.colorStop.filter(item => $util.convertInt(item.offset) > 0).length > 0;
+            const hasStop = node.svgElement || shape.colorStop.filter(item => $util.convertInt(item.offset) > 0).length > 0;
             const gradient: BackgroundGradient = {
                 type: shape.type,
                 startColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[0].color) : '',
@@ -1389,29 +1390,29 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             switch (shape.type) {
                 case 'radial':
                     const radial = <RadialGradient> shape;
-                    let boxPosition: Null<BoxPosition> = null;
-                    if (radial.shapePosition && radial.shapePosition.length > 1) {
-                        boxPosition = $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
+                    if (node.svgElement) {
+                        gradient.gradientRadius = radial.r.toString();
+                        gradient.centerX = radial.cx.toString();
+                        gradient.centerY = radial.cy.toString();
                     }
-                    if (hasStop) {
-                        if (node.svgElement) {
-                            gradient.gradientRadius = radial.r.toString();
-                            gradient.centerX = radial.cx.toString();
-                            gradient.centerY = radial.cy.toString();
+                    else {
+                        let boxPosition: Null<BoxPosition> = null;
+                        if (radial.shapePosition && radial.shapePosition.length > 1) {
+                            boxPosition = $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
                         }
-                        else {
+                        if (hasStop) {
                             gradient.gradientRadius = node.bounds.width.toString();
                             if (boxPosition) {
                                 gradient.centerX = boxPosition.horizontal === 'right' ? (node.bounds.width - boxPosition.right).toString() : boxPosition.left.toString();
                                 gradient.centerY = boxPosition.vertical === 'bottom' ? (node.bounds.height - boxPosition.bottom).toString() : boxPosition.top.toString();
                             }
                         }
-                    }
-                    else {
-                        gradient.gradientRadius = $util.formatPX(node.bounds.width);
-                        if (boxPosition) {
-                            gradient.centerX = `${boxPosition.horizontal === 'right' ? 100 - $util.convertPercent(boxPosition.right) : boxPosition.left}%`;
-                            gradient.centerY = `${boxPosition.vertical === 'bottom' ? 100 - $util.convertPercent(boxPosition.bottom) : boxPosition.top}%`;
+                        else {
+                            gradient.gradientRadius = $util.formatPX(node.bounds.width);
+                            if (boxPosition) {
+                                gradient.centerX = `${boxPosition.horizontal === 'right' ? 100 - $util.convertPercent(boxPosition.right) : boxPosition.left}%`;
+                                gradient.centerY = `${boxPosition.vertical === 'bottom' ? 100 - $util.convertPercent(boxPosition.bottom) : boxPosition.top}%`;
+                            }
                         }
                     }
                     break;
@@ -1440,7 +1441,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         if (offset !== 0 && !node.svgElement) {
                             gradient.colorStop.push({
                                 color,
-                                offset: '0'
+                                offset: '0',
+                                opacity: item.opacity
                             });
                         }
                     }
@@ -1456,7 +1458,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     gradient.colorStop.push({
                         color,
-                        offset: (offset / 100).toFixed(2)
+                        offset: (offset / 100).toFixed(2),
+                        opacity: item.opacity
                     });
                 }
             }
@@ -1722,32 +1725,22 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     private processDimensions(data: ViewData<NodeList<T>>) {
         const groups: ObjectMapNested<T[]> = {};
         const dimens: Map<string, string> = $resource.STORED.dimens;
-        function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
-            const group: ObjectMap<T[]> = groups[nodeName];
-            let name = dimen;
-            if (arguments.length === 5) {
-                if (value && /(px|dp|sp)$/.test(value)) {
-                    name += `,${attr},${value}`;
+        function getResourceKey(key: string, value: string) {
+            return dimens.has(key) && dimens.get(key) !== value ? generateId('dimens', key, 1) : key;
+        }
+        function addToGroup(group: ObjectMap<T[]>, node: T, dimen: string, attr?: string, value?: string) {
+            if (typeof value !== 'undefined') {
+                if (/(px|dp|sp)$/.test(value)) {
+                    dimen += `,${attr},${value}`;
                 }
                 else {
                     return;
                 }
             }
-            if (group[name] == null) {
-                group[name] = [];
+            if (group[dimen] == null) {
+                group[dimen] = [];
             }
-            group[name].push(node);
-        }
-        function boxValue(node: T, region: string, settings: Settings) {
-            const name = $util.convertEnum(parseInt(region), $enum.BOX_STANDARD, BOX_ANDROID);
-            if (name !== '') {
-                const attr = parseRTL(name, settings);
-                return [attr, node.android(attr) || '0px'];
-            }
-            return ['', '0px'];
-        }
-        function getResourceKey(key: string, value: string) {
-            return dimens.has(key) && dimens.get(key) !== value ? generateId('dimens', key, 1) : key;
+            group[dimen].push(node);
         }
         data.cache.visible.forEach(node => {
             const nodeName = node.nodeName.toLowerCase();
@@ -1755,30 +1748,27 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 groups[nodeName] = {};
             }
             for (const key of Object.keys($enum.BOX_STANDARD)) {
-                const result = boxValue(node, key, this.application.settings);
-                if (result[0] !== '' && result[1] !== '0px') {
-                    const name = `${$enum.BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
-                    addToGroup(nodeName, node, name);
+                const attr = node.localizeString($util.convertEnum(parseInt(key), $enum.BOX_STANDARD, BOX_ANDROID));
+                const value = node.android(attr);
+                if (value !== '') {
+                    addToGroup(groups[nodeName], node, `${node.localizeString($enum.BOX_STANDARD[key].toLowerCase())},${attr},${value}`);
                 }
             }
             [
-                'android:layout_width:width',
-                'android:layout_height:height',
-                'android:minWidth:min_width',
-                'android:minHeight:min_height',
-                'app:layout_constraintWidth_min:constraint_width_min',
-                'app:layout_constraintHeight_min:constraint_height_min'
+                'android:layout_width:width', 'android:layout_height:height',
+                'android:minWidth:min_width', 'android:minHeight:min_height',
+                'app:layout_constraintWidth_min:constraint_width_min', 'app:layout_constraintHeight_min:constraint_height_min'
             ]
             .forEach(value => {
                 const [obj, attr, dimen] = value.split(':');
-                addToGroup(nodeName, node, dimen, attr, node[obj](attr));
+                addToGroup(groups[nodeName], node, dimen, attr, node[obj](attr));
             });
         });
         for (const nodeName in groups) {
             const group: ObjectMap<T[]> = groups[nodeName];
             for (const name in group) {
                 const [dimen, attr, value] = name.split(',');
-                const key = getResourceKey(`${nodeName}_${parseRTL(dimen, this.settings)}`, value);
+                const key = getResourceKey(`${nodeName}_${dimen}`, value);
                 group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
                 dimens.set(key, value);
             }
@@ -1789,7 +1779,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
                 let match: Null<RegExpExecArray>;
                 while ((match = pattern.exec(content)) != null) {
-                    const key = getResourceKey(`${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
+                    const key = getResourceKey(`${match[2]}_${match[3]}`, match[4]);
                     dimens.set(key, match[4]);
                     content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
                 }

@@ -59,7 +59,8 @@ export enum NODE_PROCEDURE {
     OPTIMIZATION = 16,
     CUSTOMIZATION = 32,
     ACCESSIBILITY = 64,
-    ALL = 126
+    LOCALIZATION = 128,
+    ALL = 254
 }
 
 export enum NODE_STANDARD {

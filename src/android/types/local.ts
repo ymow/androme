@@ -1,6 +1,7 @@
 export interface SettingsAndroid extends Settings {
     targetAPI: number;
     density: number;
+    supportRTL: boolean;
     dimensResourceValue: boolean;
     numberResourceValue: boolean;
     fontAliasResourceValue: boolean;
@@ -15,10 +16,14 @@ export interface SettingsAndroid extends Settings {
     convertPixels: string;
 }
 
-export type ViewAttribute = {
-    android: StringMap;
-    app: StringMap;
-};
+export interface EnvironmentSettings {
+    targetAPI: number;
+    supportRTL: boolean;
+}
+
+export interface LocalSettings extends EnvironmentSettings {
+    constraintPercentAccuracy?: number;
+}
 
 export type Constraint = {
     horizontal: boolean;
@@ -35,6 +40,11 @@ export type Constraint = {
     marginHorizontal: string;
     marginVertical: string;
     guideline: ObjectMapNested<ObjectMapNested<number>>
+};
+
+export type ViewAttribute = {
+    android: StringMap;
+    app: StringMap;
 };
 
 export type BackgroundImage = {

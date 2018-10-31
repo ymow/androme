@@ -484,13 +484,18 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         };
                                     }
                                     const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
+                                    const opacity = node.css('opacity');
                                     for (let i = 0; i < stopMatch.length; i += 3) {
-                                        const color = parseRGBA(stopMatch[i + 1]);
-                                        if (color && color.visible) {
-                                            gradient.colorStop.push({
-                                                color,
-                                                offset: stopMatch[i + 2]
-                                            });
+                                        const rgba = stopMatch[i + 1];
+                                        if (isString(rgba)) {
+                                            const color = parseRGBA(stopMatch[i + 1], rgba.startsWith('rgba') ? undefined : opacity);
+                                            if (color && color.visible) {
+                                                gradient.colorStop.push({
+                                                    color,
+                                                    offset: stopMatch[i + 2],
+                                                    opacity: color.alpha
+                                                });
+                                            }
                                         }
                                     }
                                     if (gradient.colorStop.length > 1) {
@@ -857,11 +862,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 function getColorStop(gradient: SVGGradientElement) {
                                     const result: ColorStop[] = [];
                                     Array.from(gradient.getElementsByTagName('stop')).forEach(stop => {
-                                        const color = parseRGBA(cssAttribute(stop, 'stop-color'));
+                                        const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
                                         if (color) {
                                             result.push({
                                                 color,
-                                                offset: cssAttribute(stop, 'offset')
+                                                offset: cssAttribute(stop, 'offset'),
+                                                opacity: color.alpha
                                             });
                                         }
                                     });

@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './local';
+import { EnvironmentSettings, SettingsAndroid } from './local';
 
 import * as $enum from '../lib/enumeration';
 import * as $const from '../lib/constant';
@@ -32,7 +32,7 @@ declare global {
                 export function delimitUnit(nodeName: string, attr: string, size: string, settings: SettingsAndroid): string;
                 export function replaceUnit(value: string, settings: Settings, font?: boolean): string;
                 export function calculateBias(start: number, end: number, accuracy: number): number;
-                export function parseRTL(value: string, settings: Settings): string;
+                export function parseRTL(value: string, settings: EnvironmentSettings): string;
                 export function getXmlNs(value: string): string;
             }
         }

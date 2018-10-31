@@ -182,7 +182,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public reset() {
-        this.cacheSession.each(node => deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
+        this.cacheSession.each(node => node.element instanceof Element && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
         for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
@@ -257,7 +257,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     this.appName = element.id;
                 }
-                let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${this.viewController.settingsInternal.layout.fileExtension}$`), '');
+                let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${this.viewController.localSettings.layout.fileExtension}$`), '');
                 if (filename === '') {
                     if (element.id === '') {
                         element.id = `document_${this.size}`;
@@ -372,9 +372,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         else {
             return false;
         }
-        const settingsInternal = this.viewController.settingsInternal;
-        const inlineAlways = settingsInternal.inline.always;
-        const inlineSupport = this.settings.renderInlineText ? [] : settingsInternal.inline.tagName;
+        const localSettings = this.viewController.localSettings;
+        const inlineAlways = localSettings.inline.always;
+        const inlineSupport = this.settings.renderInlineText ? [] : localSettings.inline.tagName;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (
@@ -386,7 +386,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
                 prioritizeExtensions(this.extensions, element).some(item => item.init(element));
-                if (!this.elements.has(element) && !settingsInternal.unsupported.tagName.includes(element.tagName)) {
+                if (!this.elements.has(element) && !localSettings.unsupported.tagName.includes(element.tagName)) {
                     if (inlineAlways.includes(element.tagName) || (
                             inlineElement(element) &&
                             element.parentElement &&
@@ -562,10 +562,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public createDocument() {
-        const settingsInternal = this.viewController.settingsInternal;
+        const localSettings = this.viewController.localSettings;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        let baseTemplate = settingsInternal.baseTemplate;
+        let baseTemplate = localSettings.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
             if (!mapY.has(depth)) {
@@ -719,7 +719,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     let parentY = nodeY.parent as T;
                     let currentY = '';
-                    if (settingsInternal.includes) {
+                    if (localSettings.includes) {
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                             const filename = trimNull(nodeY.dataset.include);
                             if (filename !== '' && includes.indexOf(filename) === -1) {
@@ -1148,7 +1148,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         renderNode(nodeY, parentY, output, currentY);
                     }
-                    if (settingsInternal.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
+                    if (localSettings.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
                         includes.pop();
                     }
                 }
@@ -1184,7 +1184,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            if (settingsInternal.includes) {
+            if (localSettings.includes) {
                 for (const [filename, templates] of external.entries()) {
                     const content = Array.from(templates.values());
                     if (content.length > 0) {
@@ -1842,7 +1842,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public createLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
-        pathname = pathname || this.viewController.settingsInternal.layout.pathName;
+        pathname = pathname || this.viewController.localSettings.layout.pathName;
         const layout: FileAsset = {
             pathname,
             filename,
@@ -1859,7 +1859,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public createIncludeFile(filename: string, content: string) {
         this._includes.push({
-            pathname: this.viewController.settingsInternal.layout.pathName,
+            pathname: this.viewController.localSettings.layout.pathName,
             filename,
             content
         });

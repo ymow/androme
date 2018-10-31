@@ -5,8 +5,8 @@ declare global {
             public cache: NodeList<T>;
             public application: Application<T>;
             public settings: Settings;
-            public readonly settingsInternal: SettingsInternal;
-            public readonly delegateNodeInit: SelfWrapped<T>;
+            public readonly localSettings: ControllerSettings;
+            public readonly delegateNodeInit: SelfWrapped<T, void>;
             public createGroup(parent: T, node: T, children: T[]): T;
             public renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
             public renderNode(node: T, parent: T, nodeName: number | string): string;

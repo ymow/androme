@@ -6,7 +6,7 @@ type FunctionMap<T> = ObjectMap<(...args: any[]) => T>;
 
 type IteratorPredicate<T, U> = (value: T, index?: number) => U;
 
-type SelfWrapped<T> = (self: T) => void;
+type SelfWrapped<T, U> = (self: T, ...args: any[]) => U;
 
 type FunctionVoid = (...args: any[]) => void;
 

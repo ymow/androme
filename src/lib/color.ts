@@ -294,6 +294,9 @@ export function convertRGBA(value: string): Null<RGBA> {
 
 export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
     if (value && value !== 'initial' && value !== 'transparent') {
+        if (opacity === '') {
+            opacity = '1';
+        }
         if (value.charAt(0) === '#') {
             const rgba = convertRGBA(value);
             if (rgba) {

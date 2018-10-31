@@ -6,7 +6,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public cache: NodeList<T>;
     public application: Application<T>;
     public abstract settings: Settings;
-    public abstract readonly settingsInternal: SettingsInternal;
+    public abstract readonly localSettings: ControllerSettings;
 
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
@@ -22,7 +22,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract setBoxSpacing(data: ViewData<NodeList<T>>): void;
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>): void;
-    public abstract get delegateNodeInit(): SelfWrapped<T>;
+    public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 
     public reset() {
         this._before = {};

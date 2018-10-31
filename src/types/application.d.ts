@@ -7,7 +7,6 @@ type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 interface Settings {
     builtInExtensions: string[];
-    supportRTL: boolean;
     renderInlineText: boolean;
     preloadImages: boolean;
     autoSizeBackgroundImage: boolean;
@@ -29,7 +28,7 @@ interface Settings {
     outputMaxProcessingTime: number;
 }
 
-interface SettingsInternal {
+interface ControllerSettings {
     includes: boolean;
     baseTemplate: string;
     inline: {
@@ -95,5 +94,5 @@ interface InitialData<T> {
 }
 
 interface NodeConstructor<T> {
-    new (id: number, element?: Element, afterInit?: SelfWrapped<T>): T;
+    new (id: number, element?: Element, afterInit?: SelfWrapped<T, void>): T;
 }

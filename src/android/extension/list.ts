@@ -6,7 +6,7 @@ import { NODE_ANDROID } from '../lib/constant';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 
-import { delimitUnit, parseRTL } from '../lib/util';
+import { delimitUnit } from '../lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -81,7 +81,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     paddingLeft -= left;
                 }
                 paddingLeft = Math.max(paddingLeft, 20);
-                const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, parseRTL('min_width', settings), $util.formatPX(paddingLeft), settings) : '';
+                const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, 'min_width', $util.formatPX(paddingLeft), settings) : '';
                 const paddingRight = (() => {
                     if (paddingLeft <= 24) {
                         return 6;
@@ -101,7 +101,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 };
                 if (positionInside) {
                     if (layoutMarginLeft !== '') {
-                        layoutMarginLeft = delimitUnit(node.nodeName, parseRTL('margin_left', settings), layoutMarginLeft, settings);
+                        layoutMarginLeft = delimitUnit(node.nodeName, node.localizeString('margin_left'), layoutMarginLeft, settings);
                     }
                     controller.prependBefore(
                         node.id,
@@ -112,7 +112,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                                 android: {
                                     minWidth,
                                     layout_columnWeight: columnWeight,
-                                    [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft
+                                    [node.localizeString('layout_marginLeft')]: layoutMarginLeft
                                 }
                             },
                             'wrap_content',
@@ -120,16 +120,16 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         )
                     );
                     Object.assign(options.android, {
-                        minWidth: delimitUnit(node.nodeName, parseRTL('min_width', settings), $util.formatPX(24), settings)
+                        minWidth: delimitUnit(node.nodeName, 'min_width', $util.formatPX(24), settings)
                     });
                 }
                 else {
                     Object.assign(options.android, {
                         minWidth,
-                        gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
-                        [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft,
-                        [parseRTL('paddingLeft', settings)]: gravity === '' && image === '' ? $util.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
-                        [parseRTL('paddingRight', settings)]: gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '',
+                        gravity: paddingLeft > 20 ? node.localizeString(gravity) : '',
+                        [node.localizeString('layout_marginLeft')]: layoutMarginLeft,
+                        [node.localizeString('paddingLeft')]: gravity === '' && image === '' ? $util.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
+                        [node.localizeString('paddingRight')]: gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '',
                         paddingTop: node.paddingTop > 0 ? $util.formatPX(node.paddingTop) : ''
                     });
                     if (columnCount === 3) {
@@ -151,8 +151,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     else {
                         Object.assign(options.android, { text: mainData.ordinal });
                     }
-                    const companion = new View(this.application.cacheProcessing.nextId, document.createElement('SPAN')) as T;
-                    companion.api = node.api;
+                    const companion = new View(this.application.cacheProcessing.nextId, document.createElement('SPAN'), this.application.viewController.delegateNodeInit) as T;
                     companion.alignmentType = $enum.NODE_ALIGNMENT.SPACE;
                     companion.nodeName = `${node.tagName}_ORDINAL`;
                     companion.setNodeType(NODE_ANDROID.SPACE);

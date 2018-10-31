@@ -10,7 +10,6 @@ import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
-import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
 import $resource_android = android.lib.base.Resource;
 
@@ -50,7 +49,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         }
         else {
             const optionsNavigationView = Object.assign({}, this.options.navigationView);
-            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
+            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
             const navView = node.children[node.children.length - 1] as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
@@ -94,7 +93,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         if (menu !== '' || headerLayout !== '') {
             $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            $util.overwriteDefault(options, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
+            $util.overwriteDefault(options, 'android', 'layout_gravity', node.localizeString('left'));
             const output = application.viewController.renderNodeStatic(
                 $const_android.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,

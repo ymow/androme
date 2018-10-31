@@ -1,4 +1,4 @@
-import { Constraint, SettingsAndroid } from './types/local';
+import { Constraint, SettingsAndroid, LocalSettings } from './types/local';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
@@ -50,7 +50,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public constraint: Constraint;
-        public api = 0;
         public children: View[] = [];
         public readonly renderChildren: View[] = [];
 
@@ -63,11 +62,15 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private _android: StringMap = {};
         private _app: StringMap = {};
+        private _localSettings: LocalSettings & ObjectMap<any> = {
+            targetAPI: 0,
+            supportRTL: false
+        };
 
         constructor(
             id = 0,
             element?: Element,
-            afterInit?: SelfWrapped<View>)
+            afterInit?: SelfWrapped<View, void>)
         {
             super(id, element);
             this.constraint = { current: {} } as any;
@@ -77,8 +80,23 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public attr(obj: string, attr: string, value = '', overwrite = true) {
-            if (!this.supported(obj, attr)) {
+            const result = {};
+            if (!this.supported(obj, attr, result)) {
                 return '';
+            }
+            if (Object.keys(result).length > 0) {
+                if ($util.isString(result['obj'])) {
+                    obj = result['obj'];
+                }
+                if ($util.isString(result['attr'])) {
+                    attr = result['attr'];
+                }
+                if ($util.isString(result['value'])) {
+                    value = result['value'];
+                }
+                if (typeof result['overwrite'] === 'boolean') {
+                    overwrite = result['overwrite'];
+                }
             }
             return super.attr(obj, attr, value, overwrite);
         }
@@ -125,35 +143,37 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public alignParent(position: string, settings: Settings) {
+        public alignParent(position: string) {
             if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
-                const direction = $util.capitalize(parseRTL(position, settings));
+                position = $util.capitalize(position);
                 if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {
-                    return this.app(`layout_constraint${direction}_to${direction}Of`) === 'parent';
+                    const attr = `layout_constraint${position}_to${position}Of`;
+                    return this.app(this.localizeString(attr)) === 'parent' || this.app(attr) === 'parent';
                 }
                 else {
-                    return this.android(`layout_alignParent${direction}`) === 'true';
+                    const attr = `layout_alignParent${position}`;
+                    return this.android(this.localizeString(attr)) === 'true' || this.android(attr) === 'true';
                 }
             }
             return false;
         }
 
-        public horizontalBias({ constraintPercentAccuracy = 4 }) {
+        public horizontalBias() {
             const parent = this.documentParent;
             if (parent !== this) {
                 const left = Math.max(0, this.linear.left - parent.box.left);
                 const right = Math.max(0, parent.box.right - this.linear.right);
-                return calculateBias(left, right, constraintPercentAccuracy);
+                return calculateBias(left, right, this.localSettings.constraintPercentAccuracy);
             }
             return 0.5;
         }
 
-        public verticalBias({ constraintPercentAccuracy = 4 }) {
+        public verticalBias() {
             const parent = this.documentParent;
             if (parent !== this) {
                 const top = Math.max(0, this.linear.top - parent.box.top);
                 const bottom = Math.max(0, parent.box.bottom - this.linear.bottom);
-                return calculateBias(top, bottom, constraintPercentAccuracy);
+                return calculateBias(top, bottom, this.localSettings.constraintPercentAccuracy);
             }
             return 0.5;
         }
@@ -185,12 +205,18 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return [0, 0];
         }
 
-        public supported(obj: string, attr: string) {
-            if (this.api > 0) {
-                for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
+        public supported(obj: string, attr: string, result = {}) {
+            if (this.localSettings.targetAPI > 0) {
+                for (let i = this.localSettings.targetAPI; i <= BUILD_ANDROID.LATEST; i++) {
                     const version = API_ANDROID[i];
-                    if (version && version[obj] && version[obj].includes(attr)) {
-                        return false;
+                    if (version && version[obj] && version[obj][attr] != null) {
+                        const callback = version[obj][attr];
+                        if (typeof callback === 'boolean') {
+                            return callback;
+                        }
+                        else if (typeof callback === 'function') {
+                            return callback(this, result) as boolean;
+                        }
                     }
                 }
             }
@@ -225,11 +251,19 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             });
         }
 
+        public localizeString(value: string) {
+            if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
+                return parseRTL(value, this.localSettings);
+            }
+            return value;
+        }
+
         public clone(id?: number, children = false): View {
             const node = new View(id || this.id, this.element);
-            node.api = this.api;
+            Object.assign(node.localSettings, this.localSettings);
             node.nodeId = this.nodeId;
             node.nodeType = this.nodeType;
+            node.baseElement = this.baseElement;
             node.controlName = this.controlName;
             node.alignmentType = this.alignmentType;
             node.depth = this.depth;
@@ -529,7 +563,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public setAlignment(settings: SettingsAndroid) {
+        public setAlignment() {
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
                 const direction = [...$util.trimNull(original).split('|'), ...alignment].filter(value => value);
                 switch (direction.length) {
@@ -625,8 +659,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             const renderParent = this.renderParent;
             const textAlignParent = this.cssParent('textAlign');
-            const left = parseRTL('left', settings);
-            const right = parseRTL('right', settings);
+            const left = this.localizeString('left');
+            const right = this.localizeString('right');
             let textAlign = this.styleMap.textAlign || '';
             let verticalAlign = '';
             let floating = '';
@@ -686,14 +720,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     floating = floating || this.float;
                     if (floating !== 'none') {
                         if (renderParent.inlineWidth || (this.singleChild && !renderParent.documentRoot)) {
-                            renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), parseRTL(floating, settings)));
+                            renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), this.localizeString(floating)));
                         }
                         else {
                             if (this.blockWidth) {
                                 textAlign = setTextAlign(floating);
                             }
                             else {
-                                this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), parseRTL(floating, settings)));
+                                this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), this.localizeString(floating)));
                             }
                         }
                     }
@@ -712,7 +746,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     textAlign = setTextAlign(floating);
                 }
             }
-            if (textAlignParent !== '' && parseRTL(textAlignParent, settings) !== left) {
+            if (textAlignParent !== '' && this.localizeString(textAlignParent) !== left) {
                 if (renderParent.is($enum.NODE_STANDARD.FRAME) &&
                     this.singleChild &&
                     !this.floating &&
@@ -734,24 +768,28 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
 
-        public setBoxSpacing(settings: SettingsAndroid) {
+        public setBoxSpacing() {
             if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                         const dimension = region + direction;
                         const value: number = (this._boxReset[dimension] === 0 ? this[dimension] : 0) + this._boxAdjustment[dimension];
                         if (value !== 0) {
-                            const attr = parseRTL(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`], settings);
-                            this.android(attr, $util.formatPX(value));
+                            this.android(
+                                this.localizeString(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`]),
+                                $util.formatPX(value)
+                            );
                         }
                     });
                 });
-                if (this.api >= BUILD_ANDROID.OREO) {
+                if (this.supported('android', 'layout_marginHorizontal')) {
+                    const localizeLeft = this.localizeString('Left');
+                    const localizeRight = this.localizeString('Right');
                     ['layout_margin', 'padding'].forEach((value, index) => {
                         const top = $util.convertInt(this.android(`${value}Top`));
-                        const right = $util.convertInt(this.android(parseRTL(`${value}Right`, settings)));
+                        const right = $util.convertInt(this.android(value + localizeRight));
                         const bottom = $util.convertInt(this.android(`${value}Bottom`));
-                        const left = $util.convertInt(this.android(parseRTL(`${value}Left`, settings)));
+                        const left = $util.convertInt(this.android(value + localizeLeft));
                         if (top !== 0 && top === bottom && bottom === left && left === right) {
                             this.delete('android', `${value}*`);
                             this.android(value, $util.formatPX(top));
@@ -763,7 +801,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                     this.android(`${value}Vertical`, $util.formatPX(top));
                                 }
                                 if (left !== 0 && left === right) {
-                                    this.delete('android', parseRTL(`${value}Left`, settings), parseRTL(`${value}Right`, settings));
+                                    this.delete('android', value + localizeLeft, value + localizeRight);
                                     this.android(`${value}Horizontal`, $util.formatPX(left));
                                 }
                             }
@@ -775,14 +813,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public applyOptimizations(settings: SettingsAndroid) {
             this.setBlockSpacing();
-            this.bindWhiteSpace(settings);
+            this.bindWhiteSpace();
             this.autoSizeBoxModel(settings);
             this.alignLinearLayout(settings);
             this.alignRelativePosition();
         }
 
         public applyCustomizations(settings: SettingsAndroid) {
-            for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
+            for (const build of [API_ANDROID[0], API_ANDROID[this.localSettings.targetAPI]]) {
                 if (build && build.customizations) {
                     for (const nodeName of [this.tagName, this.controlName]) {
                         const customizations = build.customizations[nodeName];
@@ -974,7 +1012,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        private bindWhiteSpace(settings: SettingsAndroid) {
+        private bindWhiteSpace() {
             if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (
                     this.linearHorizontal ||
                     this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
@@ -988,7 +1026,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: View, index: number) => {
                     if (!(node.floating ||
-                        (relative && node.alignParent('left', settings)) ||
+                        (relative && node.alignParent('left')) ||
                         (index === 0 && (textAlign !== 'left' || node.plainText)) ||
                         ['SUP', 'SUB'].includes(node.tagName)))
                     {
@@ -1104,7 +1142,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
                 if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
-                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
+                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.localSettings.targetAPI, 'SUB', 'android', 'layout_marginTop'));
                     if (offsetHeight > 0) {
                         this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
                     }
@@ -1293,6 +1331,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
         get blockHeight() {
             return this._android.layout_height === 'match_parent';
+        }
+
+        set localSettings(value) {
+            Object.assign(this._localSettings, value);
+        }
+        get localSettings() {
+            return this._localSettings;
         }
     };
 };

@@ -83,10 +83,10 @@ declare global {
             export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
             export function findNestedExtension(element: Element, name: string): Null<HTMLElement>;
-            export function setElementCache(element: Null<Element>, attr: string, data: any): void;
-            export function getElementCache(element: Null<Element>, attr: string): any;
-            export function deleteElementCache(element: Null<Element>, ...attrs: string[]): void;
-            export function getNodeFromElement(element: Null<Element>): Null<{}>;
+            export function setElementCache(element: Element, attr: string, data: any): void;
+            export function getElementCache(element: Element, attr: string): any;
+            export function deleteElementCache(element: Element, ...attrs: string[]): void;
+            export function getNodeFromElement<T>(element: Null<Element>): Null<T>;
         }
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;

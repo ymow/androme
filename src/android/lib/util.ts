@@ -63,7 +63,7 @@ export function replaceUnit(value: string, { density = 160, convertPixels = 'dp'
     }
 }
 
-export function calculateBias(start: number, end: number, accuracy: number) {
+export function calculateBias(start: number, end: number, accuracy = 4) {
     if (start === 0) {
         return 0;
     }

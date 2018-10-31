@@ -49,16 +49,6 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
     }
 
     public processNode(): ExtensionResult {
-        function createPlaceholder(nextId: number, container: View, nodes: View[]) {
-            const placeholder = new View(nextId);
-            placeholder.init();
-            placeholder.api = container.api;
-            nodes.forEach(item => item.parent = placeholder);
-            placeholder.inherit(container, 'dimensions');
-            placeholder.auto = false;
-            placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
-            return placeholder;
-        }
         const controller = this.application.viewController;
         const node = this.node;
         const parent = this.parent as T;
@@ -209,7 +199,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             else {
                 $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren) as T;
+            appBarNode = this.createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
             this.application.cacheProcessing.append(appBarNode, appBarChildren.length > 0);
@@ -231,7 +221,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 }
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                collapsingToolbarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode = this.createPlaceholder(this.application.cacheProcessing.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
@@ -310,5 +300,15 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         $util.overwriteDefault(options, 'output', 'path', 'res/values');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addTheme(EXTENSION_APPBAR_TMPL, data, options);
+    }
+
+    private createPlaceholder(nextId: number, container: View, nodes: View[]) {
+        const placeholder = new View(nextId, undefined, this.application.viewController.delegateNodeInit);
+        placeholder.init();
+        nodes.forEach(item => item.parent = placeholder);
+        placeholder.inherit(container, 'dimensions');
+        placeholder.auto = false;
+        placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
+        return placeholder;
     }
 }

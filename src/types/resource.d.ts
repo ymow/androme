@@ -155,6 +155,7 @@ interface Color {
 interface ColorStop {
     color: string | ColorHexAlpha;
     offset: string;
+    opacity: number;
 }
 
 interface ColorHexAlpha {

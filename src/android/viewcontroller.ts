@@ -77,7 +77,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public settings: SettingsAndroid;
-    public readonly settingsInternal: SettingsInternal = {
+    public readonly localSettings: ControllerSettings = {
         includes: true,
         baseTemplate: BASE_TMPL,
         layout: {
@@ -436,7 +436,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         {
                             for (let i = 1; i < nodes.length; i++) {
                                 const item = nodes.get(i);
-                                if (!item.multiLine && !item.floating && !item.alignParent('left', this.settings)) {
+                                if (!item.multiLine && !item.floating && !item.alignParent('left')) {
                                     checkSingleLine(item, false, widthParent);
                                 }
                             }
@@ -697,9 +697,11 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 const current = pageflow.get(i);
                                 if (!current.anchored) {
                                     const result = $util.searchObject(current.get('app'), '*constraint*');
+                                    const localizeLeft = current.localizeString('Left');
+                                    const localizeRight = current.localizeString('Right');
                                     for (const [key, value] of result) {
                                         if (value !== 'parent' && pageflow.list.filter(item => item.anchored).find(item => item.stringId === value)) {
-                                            if ($util.indexOf(key, parseRTL('Left', this.settings), parseRTL('Right', this.settings)) !== -1) {
+                                            if ($util.indexOf(key, localizeLeft, localizeRight) !== -1) {
                                                 current.constraint.horizontal = true;
                                             }
                                             if ($util.indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') !== -1) {
@@ -837,7 +839,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     const column = columns[i];
                                     const first = column[0];
                                     if (i > 0) {
-                                        first.android(`layout_${parseRTL('marginLeft', this.settings)}`, $util.formatPX(first.marginLeft + marginLeft));
+                                        first.android(first.localizeString('layout_marginLeft'), $util.formatPX(first.marginLeft + marginLeft));
                                     }
                                     row.push(first);
                                     column.forEach(item => {
@@ -1356,7 +1358,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             unbound.forEach(current => this.addGuideline(current, '', false, false));
                             const [adjacent, unanchored] = nodes.partition(item => item.anchored);
                             unanchored.each(current => {
-                                if ($util.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) && $util.withinRange(current.verticalBias(this.settings), 0.5, 0.01)) {
+                                if ($util.withinRange(current.horizontalBias(), 0.5, 0.01) && $util.withinRange(current.verticalBias(), 0.5, 0.01)) {
                                     setAlignParent(current);
                                 }
                                 else if (
@@ -1663,7 +1665,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public createGroup(parent: T, node: T, children: T[]) {
-        const group = new ViewGroup(this.cache.nextId, node, parent, children) as T;
+        const group = new ViewGroup(this.cache.nextId, node, parent, children, this.delegateNodeInit) as T;
         if (children.length > 0) {
             children.forEach(item => item.inherit(group, 'data'));
         }
@@ -1715,8 +1717,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             }
             let previous: Null<T> = null;
             const scrollView = overflow.map((controlName, index) => {
-                const container = new View(this.cache.nextId, index === 0 ? node.element : undefined) as T;
-                container.api = node.api;
+                const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
                 container.nodeName = node.nodeName;
                 container.setNodeType(controlName);
                 if (index === 0) {
@@ -1840,8 +1841,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         const left = node.toInt('left');
                         const top = node.toInt('top');
                         if (left < 0 || top < 0) {
-                            const container = new View(this.cache.nextId, node.element) as T;
-                            container.api = this.settings.targetAPI;
+                            const container = new View(this.cache.nextId, node.element, this.delegateNodeInit) as T;
                             container.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
                             container.excludeResource |= $enum.NODE_RESOURCE.ALL;
                             container.android('layout_width', width > 0 ? $util.formatPX(width) : 'wrap_content');
@@ -2014,8 +2014,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     public renderNodeStatic(nodeType: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
         if (!node) {
-            node = new View() as T;
-            node.api = this.settings.targetAPI;
+            node = new View(0, undefined, this.delegateNodeInit) as T;
         }
         node.apply(options);
         const renderDepth = Math.max(0, depth);
@@ -2080,8 +2079,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     public renderMerge(name: string, value: string[]) {
         let xml = value.join('');
         if (this._merge[name]) {
-            const node = new View() as T;
-            node.api = this.settings.targetAPI;
+            const node = new View(0, undefined, this.delegateNodeInit) as T;
             node.documentRoot = true;
             xml = this.renderNodeStatic(
                 'merge',
@@ -2122,7 +2120,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public setBoxSpacing(data: ViewData<NodeList<T>>) {
-        data.cache.visible.forEach(node => node.rendered && node.setBoxSpacing(this.settings));
+        data.cache.visible.forEach(node => node.rendered && node.setBoxSpacing());
     }
 
     protected addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
@@ -2133,10 +2131,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     node.float === 'right' ||
                     (node.left == null && node.right != null) ||
                     (node.textElement && node.css('textAlign') === 'right') ||
-                    node.alignParent('right', this.settings)
+                    node.alignParent('right')
                 );
             }
-            if (percent == null && opposite === true) {
+            if (percent == null && opposite) {
                 percent = true;
             }
         }
@@ -2337,9 +2335,13 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         return this.cache.find('stringId', id);
     }
 
-    public get delegateNodeInit(): SelfWrapped<T> {
+    public get delegateNodeInit(): SelfWrapped<T, void> {
         return (self: T) => {
-            self.api = this.settings.targetAPI;
+            self.localSettings = {
+                targetAPI: this.settings.targetAPI,
+                supportRTL: this.settings.supportRTL,
+                constraintPercentAccuracy: this.settings.constraintPercentAccuracy
+            };
         };
     }
 }

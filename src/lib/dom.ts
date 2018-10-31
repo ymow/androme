@@ -377,17 +377,17 @@ export function findNestedExtension(element: Element, name: string): HTMLElement
     return undefined;
 }
 
-export function setElementCache(element: Null<Element>, attr: string, data: any) {
+export function setElementCache(element: Element, attr: string, data: any) {
     if (element) {
         element[`__${attr}`] = data;
     }
 }
 
-export function getElementCache(element: Null<Element>, attr: string) {
+export function getElementCache(element: Element, attr: string) {
     return element ? element[`__${attr}`] : null;
 }
 
-export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
+export function deleteElementCache(element: Element, ...attrs: string[]) {
     if (element) {
         for (const attr of attrs) {
             delete element[`__${attr}`];
@@ -395,6 +395,6 @@ export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement(element: Null<Element>): Null<androme.lib.base.Node> {
-    return getElementCache(element, 'node');
+export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
+    return element ? getElementCache(element, 'node') : null;
 }

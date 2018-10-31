@@ -82,6 +82,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public abstract applyCustomizations(settings: Settings): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
+    public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
     public abstract set controlName(value: string);
     public abstract get controlName();
@@ -869,6 +870,9 @@ export default abstract class Node implements androme.lib.base.Node {
         return this._element || { dataset: {}, style: {} };
     }
 
+    set baseElement(value) {
+        this._baseElement = value;
+    }
     get baseElement() {
         return this._baseElement || this.element;
     }

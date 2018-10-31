@@ -37,7 +37,6 @@ declare global {
             public readonly inlineHeight: boolean;
             public readonly blockWidth: boolean;
             public readonly blockHeight: boolean;
-            public readonly baseElement: Element;
             public readonly tagName: string;
             public readonly htmlElement: boolean;
             public readonly domElement: boolean;
@@ -112,6 +111,7 @@ declare global {
             public renderParent: Node;
             public nodeName: string;
             public element: Element;
+            public baseElement: Element;
             public renderAs: Node;
             public renderDepth: number;
             public pageflow: boolean;
@@ -125,6 +125,7 @@ declare global {
             public applyCustomizations(settings: Settings): void;
             public modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
             public valueBox(region: number): string[];
+            public localizeString(value: string): string;
             public clone(id?: number, children?: boolean): Node;
             public init(): void;
             public is(...views: number[]): boolean;

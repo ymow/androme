@@ -290,7 +290,7 @@ Using "target" into a ConstraintLayout or RelativeLayout view will not include a
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 ```xml
 <div data-exclude-section="INCLUDE | DOM_TRAVERSE | EXTENSION | RENDER | ALL"
-     data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL"
+     data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | LOCALIZATION | ALL"
      data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL">
 </div>
 <div>
@@ -1447,7 +1447,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
-    <dimen name="checkbox_margin_start">8dp</dimen>
+    <dimen name="checkbox_margin_start">7dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">3dp</dimen>
     <dimen name="form_padding_horizontal">11dp</dimen>
