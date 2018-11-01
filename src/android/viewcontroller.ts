@@ -95,7 +95,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private _merge = {};
 
-    public finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>) {
+    public finalize(data: ViewData<NodeList<T>>, callbackArray: FunctionVoid[]) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
             if (Array.isArray(callbackArray)) {

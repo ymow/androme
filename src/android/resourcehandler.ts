@@ -431,7 +431,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 ids: []
             });
         }
-        return <ArrayObject<FunctionVoid>> callbackArray;
+        return callbackArray;
     }
 
     public setBoxStyle() {
@@ -452,7 +452,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 const backgroundImage: string[] = [];
-                const backgroundVector: ArrayObject<StringMap> = [];
+                const backgroundVector: StringMap[] = [];
                 const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 const backgroundDimensions: Null<ImageAsset>[] = [];
                 const backgroundGradient: BackgroundGradient[] = [];
@@ -1241,31 +1241,50 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             if (node.svgElement) {
                 const stored: SVG = $dom.getElementCache(node.element, 'imageSource');
                 if (stored) {
-                    const namespace = new Set<string>();
-                    const groups: ArrayObject<StringMap> = [];
-                    stored.children.forEach(group => {
-                        const data: TemplateData = {
-                            name: group.name,
-                            '2': [],
-                            '3': []
-                        };
-                        if (group.element.tagName !== 'svg' || group.element === node.element) {
-                            if (group.scaleX !== 1) {
-                                data.scaleX = group.scaleX.toString();
+                    let vectorName = '';
+                    if (stored.children.length > 0) {
+                        const namespace = new Set<string>();
+                        const groups: StringMap[] = [];
+                        stored.children.forEach(group => {
+                            const data: TemplateData = {
+                                name: group.name,
+                                '2': [],
+                                '3': []
+                            };
+                            if (group.element && (group.element.tagName !== 'svg' || group.element === node.element)) {
+                                if (group.scaleX !== 1) {
+                                    data.scaleX = group.scaleX.toString();
+                                }
+                                if (group.scaleY !== 1) {
+                                    data.scaleY = group.scaleY.toString();
+                                }
+                                if (group.rotate !== 0) {
+                                    data.rotation = group.rotate.toString();
+                                }
+                                if (group.skewX !== 0) {
+                                    data.pivotX = group.skewX.toString();
+                                }
+                                if (group.skewY !== 0) {
+                                    data.pivotY = group.skewY.toString();
+                                }
+                                if (group.element.tagName === 'use') {
+                                    if (group.x) {
+                                        data.translateX = group.x.toString();
+                                    }
+                                    if (group.y) {
+                                        data.translateY = group.y.toString();
+                                    }
+                                }
+                                else {
+                                    if (group.translateX !== 0) {
+                                        data.translateX = group.translateX.toString();
+                                    }
+                                    if (group.translateY !== 0) {
+                                        data.translateY = group.translateY.toString();
+                                    }
+                                }
                             }
-                            if (group.scaleY !== 1) {
-                                data.scaleY = group.scaleY.toString();
-                            }
-                            if (group.rotate !== 0) {
-                                data.rotation = group.rotate.toString();
-                            }
-                            if (group.skewX !== 0) {
-                                data.pivotX = group.skewX.toString();
-                            }
-                            if (group.skewY !== 0) {
-                                data.pivotY = group.skewY.toString();
-                            }
-                            if (group.element.tagName === 'use') {
+                            else {
                                 if (group.x) {
                                     data.translateX = group.x.toString();
                                 }
@@ -1273,76 +1292,98 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     data.translateY = group.y.toString();
                                 }
                             }
-                            else {
-                                if (group.translateX !== 0) {
-                                    data.translateX = group.translateX.toString();
-                                }
-                                if (group.translateY !== 0) {
-                                    data.translateY = group.translateY.toString();
-                                }
-                            }
-                        }
-                        else {
-                            if (group.x) {
-                                data.translateX = group.x.toString();
-                            }
-                            if (group.y) {
-                                data.translateY = group.y.toString();
-                            }
-                        }
-                        group.children.forEach(item => {
-                            if (item.clipPath !== '') {
-                                const clipPath = stored.defs.clipPaths.get(item.clipPath);
-                                if (clipPath) {
-                                    clipPath.forEach(path => data['2'].push({ name: path.name, d: path.d }));
-                                }
-                            }
-                            ['fill', 'stroke'].forEach(value => {
-                                if (item[value].charAt(0) === '@') {
-                                    const gradient = stored.defs.gradients.get(item[value]);
-                                    if (gradient) {
-                                        item[value] = [{ gradients: this.buildBackgroundGradient(node, [gradient]) }];
-                                        namespace.add('aapt');
-                                        return;
-                                    }
-                                    else {
-                                        item[value] = item.color;
+                            group.children.forEach(item => {
+                                if (item.clipPath !== '') {
+                                    const clipPath = stored.defs.clipPath.get(item.clipPath);
+                                    if (clipPath) {
+                                        clipPath.forEach(path => data['2'].push({ name: path.name, d: path.d }));
                                     }
                                 }
-                                if (this.settings.vectorColorResourceValue) {
-                                    const color = ResourceHandler.addColor(item[value]);
-                                    if (color !== '') {
-                                        item[value] = `@color/${color}`;
+                                ['fill', 'stroke'].forEach(value => {
+                                    if (item[value].charAt(0) === '@') {
+                                        const gradient = stored.defs.gradient.get(item[value]);
+                                        if (gradient) {
+                                            item[value] = [{ gradients: this.buildBackgroundGradient(node, [gradient]) }];
+                                            namespace.add('aapt');
+                                            return;
+                                        }
+                                        else {
+                                            item[value] = item.color;
+                                        }
+                                    }
+                                    if (this.settings.vectorColorResourceValue) {
+                                        const color = ResourceHandler.addColor(item[value]);
+                                        if (color !== '') {
+                                            item[value] = `@color/${color}`;
+                                        }
+                                    }
+                                });
+                                if (item.fillRule) {
+                                    switch (item.fillRule) {
+                                        case 'evenodd':
+                                            item.fillRule = 'evenOdd';
+                                            break;
+                                        default:
+                                            item.fillRule = 'nonZero';
+                                            break;
                                     }
                                 }
+                                data['3'].push(item);
                             });
-                            if (item.fillRule) {
-                                switch (item.fillRule) {
-                                    case 'evenodd':
-                                        item.fillRule = 'evenOdd';
-                                        break;
-                                    default:
-                                        item.fillRule = 'nonZero';
-                                        break;
-                                }
-                            }
-                            data['3'].push(item);
+                            groups.push(data);
                         });
-                        groups.push(data);
-                    });
-                    const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
-                        namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
-                        width: $util.formatPX(stored.width),
-                        height: $util.formatPX(stored.height),
-                        viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
-                        viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
-                        alpha: stored.opacity < 1 ? stored.opacity : false,
-                        '1': groups
-                    });
-                    result = getStoredDrawable(xml);
-                    if (result === '') {
-                        result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                        $resource.STORED.drawables.set(result, xml);
+                        const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
+                            namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
+                            width: $util.formatPX(stored.width),
+                            height: $util.formatPX(stored.height),
+                            viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
+                            viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
+                            alpha: stored.opacity < 1 ? stored.opacity : false,
+                            '1': groups
+                        });
+                        vectorName = getStoredDrawable(xml);
+                        if (vectorName === '') {
+                            vectorName = `${node.nodeName.toLowerCase()}_${node.nodeId + (stored.defs.image.length > 0 ? '_vector' : '')}`;
+                            $resource.STORED.drawables.set(vectorName, xml);
+                        }
+                    }
+                    if (stored.defs.image.length > 0) {
+                        const images: TemplateData = [];
+                        stored.defs.image.forEach(item => {
+                            if (item.uri) {
+                                const scaleX = stored.width / stored.viewBoxWidth;
+                                const scaleY = stored.height / stored.viewBoxHeight;
+                                item.width *= scaleX;
+                                item.height *= scaleY;
+                                if (item.position) {
+                                    item.position.x *= scaleX;
+                                    item.position.y *= scaleY;
+                                }
+                                images.push({
+                                    width: item.width > 0 ? $util.formatPX(item.width) : '',
+                                    height: item.height > 0 ? $util.formatPX(item.height) : '',
+                                    left: item.position && item.position.x ? $util.formatPX(item.position.x) : '',
+                                    top: item.position && item.position.y ? $util.formatPX(item.position.y) : '',
+                                    src: ResourceHandler.addImage({ mdpi: item.uri })
+                                });
+                            }
+                        });
+                        const xml = $xml.createTemplate($xml.parseTemplate(LAYERLIST_TMPL), {
+                            '1': false,
+                            '2': false,
+                            '3': [{ vector: vectorName }],
+                            '4': images,
+                            '5': false,
+                            '6': false
+                        });
+                        result = getStoredDrawable(xml);
+                        if (result === '') {
+                            result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                            $resource.STORED.drawables.set(result, xml);
+                        }
+                    }
+                    else {
+                        result = vectorName;
                     }
                 }
             }
@@ -1391,9 +1432,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 case 'radial':
                     const radial = <RadialGradient> shape;
                     if (node.svgElement) {
-                        gradient.gradientRadius = radial.r.toString();
-                        gradient.centerX = radial.cx.toString();
-                        gradient.centerY = radial.cy.toString();
+                        gradient.gradientRadius = radial.r;
+                        gradient.centerX = radial.cx;
+                        gradient.centerY = radial.cy;
                     }
                     else {
                         let boxPosition: Null<BoxPosition> = null;
@@ -1419,10 +1460,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 case 'linear':
                     const linear = <LinearGradient> shape;
                     if (hasStop) {
-                        gradient.startX = linear.x1.toString();
-                        gradient.startY = linear.y1.toString();
-                        gradient.endX = linear.x2.toString();
-                        gradient.endY = linear.y2.toString();
+                        gradient.startX = linear.x1;
+                        gradient.startY = linear.y1;
+                        gradient.endX = linear.x2;
+                        gradient.endY = linear.y2;
                     }
                     else {
                         if (linear.angle) {
@@ -1438,7 +1479,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     let offset = $util.convertInt(item.offset);
                     const color = this.settings.vectorColorResourceValue ? `@color/${ResourceHandler.addColor(item.color)}` : ResourceHandler.getHexARGB(item.color);
                     if (i === 0) {
-                        if (offset !== 0 && !node.svgElement) {
+                        if (!node.svgElement && offset !== 0) {
                             gradient.colorStop.push({
                                 color,
                                 offset: '0',
@@ -1446,14 +1487,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             });
                         }
                     }
-                    else if (i === shape.colorStop.length - 1) {
-                        if (offset === 0) {
-                            offset = 100;
-                        }
-                    }
-                    else {
-                        if (offset === 0) {
+                    else if (offset === 0) {
+                        if (i < shape.colorStop.length - 1) {
                             offset = Math.round(($util.convertInt(shape.colorStop[i - 1].offset) + $util.convertInt(shape.colorStop[i + 1].offset)) / 2);
+                        }
+                        else {
+                            offset = 100;
                         }
                     }
                     gradient.colorStop.push({

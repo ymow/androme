@@ -230,7 +230,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             const data: TemplateData = { '1': [] };
             const styles = Array.from(this.stored.styles.values()).sort((a: ResourceStyleData, b: ResourceStyleData) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1) as ResourceStyleData[];
             for (const style of styles) {
-                const items: ArrayObject<StringMap> = [];
+                const items: StringMap[] = [];
                 style.attrs.split(';').sort().forEach((attr: string) => {
                     const [name, value] = attr.split('=');
                     items.push({

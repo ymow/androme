@@ -7,7 +7,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
 
-import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
@@ -246,7 +246,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const rootElement = this.elements.values().next().value;
         const parseResume = () => {
             this.loading = false;
-            if (this.settings.preloadImages && rootElement) {
+            if (this.settings.preloadImages) {
                 Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
             }
             this.resourceHandler.imageDimensions = this.cacheImage;
@@ -278,7 +278,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 __THEN.call(this);
             }
         };
-        if (this.settings.preloadImages && rootElement) {
+        if (this.settings.preloadImages) {
+            Array.from(rootElement.querySelectorAll('image')).forEach((item: SVGImageElement) => {
+                const uri = resolvePath(item.href.baseVal);
+                this.cacheImage.set(uri, {
+                    width: item.width.baseVal.value,
+                    height: item.height.baseVal.value,
+                    uri
+                });
+            });
             for (const image of this.cacheImage.values()) {
                 if (image.width === 0 && image.height === 0 && image.uri) {
                     const imageElement = <HTMLImageElement> document.createElement('IMG');

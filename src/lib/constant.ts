@@ -115,5 +115,5 @@ export const EXT_NAME = {
 
 export const DOM_REGEX = {
     CSS_URL: /url\("?(.*?)"?\)/,
-    URI: /^\w+:\/\//
+    URI: /^[A-Za-z]+:\/\//
 };

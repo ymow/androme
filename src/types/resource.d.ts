@@ -27,26 +27,30 @@ interface SVG {
     viewBoxHeight: number;
     opacity: number;
     defs: {
-        clipPaths: Map<string, SVGPath[]>,
-        gradients: Map<string, Gradient>
+        image: SVGImage[],
+        clipPath: Map<string, SVGPath[]>,
+        gradient: Map<string, Gradient>
     };
     children: SVGGroup[];
 }
 
-interface SVGGroup {
-    element: SVGElement | SVGGElement;
-    name: string;
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
+interface SVGTransformAttributes {
     translateX: number;
     translateY: number;
     scaleX: number;
     scaleY: number;
-    rotate: number;
     skewX: number;
     skewY: number;
+    rotate: number;
+}
+
+interface SVGGroup extends SVGTransformAttributes {
+    element?: SVGElement | SVGGElement;
+    name?: string;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
     children: SVGPath[];
 }
 
@@ -68,6 +72,8 @@ interface SVGPath {
     d: string;
 }
 
+type SVGImage = ImageAsset & SVGTransformAttributes;
+
 interface Gradient {
     type: string;
     colorStop: ColorStop[];
@@ -75,19 +81,20 @@ interface Gradient {
 
 interface LinearGradient extends Gradient {
     angle?: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
+    x1: string;
+    y1: string;
+    x2: string;
+    y2: string;
 }
 
 interface RadialGradient extends Gradient {
     shapePosition?: string[];
-    cx: number;
-    cy: number;
-    r: number;
-    fx: number;
-    fy: number;
+    cx: string;
+    cy: string;
+    r: string;
+    fx?: string;
+    fy?: string;
+    fr?: string;
 }
 
 interface BoxRect {
