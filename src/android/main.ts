@@ -2,7 +2,7 @@ import { SettingsAndroid } from './types/local';
 
 import { XMLNS_ANDROID } from './lib/constant';
 import SETTINGS from './settings';
-import API_ANDROID from './customizations';
+import { API_ANDROID } from './customizations';
 
 import View from './view';
 import ViewController from './viewcontroller';

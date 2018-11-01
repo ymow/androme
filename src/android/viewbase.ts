@@ -2,7 +2,7 @@ import { Constraint, SettingsAndroid, LocalSettings } from './types/local';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
-import API_ANDROID from './customizations';
+import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
 
 import NodeList = androme.lib.base.NodeList;
 
@@ -206,16 +206,23 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public supported(obj: string, attr: string, result = {}) {
-            if (this.localSettings.targetAPI > 0) {
+            if (this.localSettings.targetAPI > 0 && this.localSettings.targetAPI < BUILD_ANDROID.LATEST) {
+                const deprecated: ObjectMap<FunctionResult> = DEPRECATED_ANDROID[obj];
+                if (deprecated && typeof deprecated[attr] === 'function') {
+                    const valid = deprecated[attr](result, this.localSettings.targetAPI, this);
+                    if (!valid || Object.keys(result).length > 0) {
+                        return valid;
+                    }
+                }
                 for (let i = this.localSettings.targetAPI; i <= BUILD_ANDROID.LATEST; i++) {
                     const version = API_ANDROID[i];
                     if (version && version[obj] && version[obj][attr] != null) {
-                        const callback = version[obj][attr];
+                        const callback: boolean | FunctionResult = version[obj][attr];
                         if (typeof callback === 'boolean') {
                             return callback;
                         }
                         else if (typeof callback === 'function') {
-                            return callback(this, result) as boolean;
+                            return callback(result, this.localSettings.targetAPI, this);
                         }
                     }
                 }

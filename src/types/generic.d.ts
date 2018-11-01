@@ -2,13 +2,13 @@ type Null<T> = T | null | undefined;
 
 type Constructor<T> = new(...args: any[]) => T;
 
-type FunctionMap<T> = ObjectMap<(...args: any[]) => T>;
-
 type IteratorPredicate<T, U> = (value: T, index?: number) => U;
 
 type SelfWrapped<T, U> = (self: T, ...args: any[]) => U;
 
-type FunctionVoid = (...args: any[]) => void;
+type FunctionType<T> = (...args: any[]) => T;
+type FunctionVoid = FunctionType<void>;
+type FunctionMap<T> = ObjectMap<FunctionType<T>>;
 
 interface StringMap {
     [key: string]: string;
