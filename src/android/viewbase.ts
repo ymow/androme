@@ -1079,7 +1079,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
                                     return getPreviousBottom(previous.renderParent.renderChildren.slice());
                                 }
-                                else if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                                else if (!previous.domElement && previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
                                     return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                 }
                                 return previous.linear.bottom;

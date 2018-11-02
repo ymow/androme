@@ -29,7 +29,7 @@ declare global {
             export function capitalize(value: string, upper?: boolean): string;
             export function convertInt(value: any): number;
             export function convertFloat(value: any): number;
-            export function convertPercent(value: number, precision?: number): number;
+            export function convertPercent(value: number, precision?: number): string;
             export function convertPX(value: any, fontSize?: Null<string>): string;
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
@@ -66,7 +66,7 @@ declare global {
             export function getBoxRect(): BoxRect;
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;
-            export function convertClientUnit(value: string, dimension: number, fontSize: string, percent?: boolean): number;
+            export function convertClientUnit(value: string, dimension: number, fontSize?: string, percent?: boolean): number;
             export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;

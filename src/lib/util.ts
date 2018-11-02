@@ -93,7 +93,7 @@ export function convertFloat(value: any) {
 }
 
 export function convertPercent(value: number, precision = 0) {
-    return value < 1 ? precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)) : value;
+    return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
 }
 
 export function convertPX(value: any, fontSize?: Null<string>) {
@@ -110,7 +110,7 @@ export function convertPX(value: any, fontSize?: Null<string>) {
                         result *= 4 / 3;
                         break;
                     case 'em':
-                        result *= convertInt(convertPX(fontSize)) || 16;
+                        result *= parseInt(convertPX(fontSize)) || 16;
                         break;
                 }
             }

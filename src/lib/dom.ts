@@ -43,12 +43,12 @@ export function getBoxModel(): BoxModel {
     };
 }
 
-export function convertClientUnit(value: string, dimension: number, fontSize: string, percent = false) {
+export function convertClientUnit(value: string, dimension: number, fontSize?: string, percent = false) {
     if (percent) {
         return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
     }
     else {
-        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : convertInt(convertPX(value, fontSize));
+        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, fontSize));
     }
 }
 

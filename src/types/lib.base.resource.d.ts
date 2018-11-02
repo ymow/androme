@@ -2,7 +2,8 @@ declare global {
     namespace androme.lib.base {
         export class Resource<T extends Node> implements AppCurrent<T> {
             public static STORED: ResourceMap;
-            public static parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize: string, percent?: boolean): BoxPosition;
+            public static getSvgTransform(element: SVGGraphicsElement): SvgTransformAttributes;
+            public static parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string, percent?: boolean): BoxPosition;
             public static insertStoredAsset(asset: string, name: string, value: any): string;
             public static isBorderVisible(border?: BorderAttribute): boolean;
             public static hasDrawableBackground(object?: BoxStyle): boolean;

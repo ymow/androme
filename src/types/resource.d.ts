@@ -18,7 +18,7 @@ interface ImageAsset extends Asset {
     position?: Point;
 }
 
-interface SVG {
+interface Svg {
     element: SVGSVGElement;
     name: string;
     width: number;
@@ -27,34 +27,37 @@ interface SVG {
     viewBoxHeight: number;
     opacity: number;
     defs: {
-        image: SVGImage[],
-        clipPath: Map<string, SVGPath[]>,
+        image: SvgImage[],
+        clipPath: Map<string, SvgPath[]>,
         gradient: Map<string, Gradient>
     };
-    children: SVGGroup[];
+    children: SvgGroup[];
 }
 
-interface SVGTransformAttributes {
+interface SvgTransformAttributes {
     translateX: number;
     translateY: number;
     scaleX: number;
     scaleY: number;
     skewX: number;
     skewY: number;
-    rotate: number;
+    rotateAngle: number;
+    rotateX: number;
+    rotateY: number;
+    origin?: BoxPosition;
 }
 
-interface SVGGroup extends SVGTransformAttributes {
+interface SvgGroup extends SvgTransformAttributes {
     element?: SVGElement | SVGGElement;
     name?: string;
     x?: number;
     y?: number;
     width?: number;
     height?: number;
-    children: SVGPath[];
+    children: SvgPath[];
 }
 
-interface SVGPath {
+interface SvgPath {
     element: SVGGraphicsElement;
     name: string;
     color: string;
@@ -72,7 +75,10 @@ interface SVGPath {
     d: string;
 }
 
-type SVGImage = ImageAsset & SVGTransformAttributes;
+interface SvgImage extends ImageAsset, SvgTransformAttributes {
+    element: SVGImageElement;
+    origin?: BoxPosition;
+}
 
 interface Gradient {
     type: string;
@@ -81,20 +87,28 @@ interface Gradient {
 
 interface LinearGradient extends Gradient {
     angle?: number;
-    x1: string;
-    y1: string;
-    x2: string;
-    y2: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    x1AsString?: string;
+    y1AsString?: string;
+    x2AsString?: string;
+    y2AsString?: string;
 }
 
 interface RadialGradient extends Gradient {
     shapePosition?: string[];
-    cx: string;
-    cy: string;
-    r: string;
-    fx?: string;
-    fy?: string;
-    fr?: string;
+    cx: number;
+    cy: number;
+    r: number;
+    cxAsString?: string;
+    cyAsString?: string;
+    rAsString?: string;
+    fx?: number;
+    fy?: number;
+    fxAsString?: string;
+    fyAsString?: string;
 }
 
 interface BoxRect {
@@ -112,6 +126,8 @@ interface BoxDimensions extends BoxRect {
 interface BoxPosition extends BoxRect {
     horizontal: string;
     vertical: string;
+    originalX: string;
+    originalY: string;
 }
 
 interface BoxModel {
