@@ -1,7 +1,7 @@
 import { USER_AGENT } from './enumeration';
 import { DOM_REGEX } from './constant';
 
-import { convertCamelCase, convertInt, convertPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
+import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 export function isUserAgent(value: number) {
     let client = USER_AGENT.CHROME;
@@ -201,6 +201,104 @@ export function cssFromParent(element: Element, attr: string) {
 
 export function cssAttribute(element: Element, attr: string): string {
     return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
+}
+
+export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string, percent = false) {
+    const result: BoxPosition = {
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        horizontal: 'left',
+        vertical: 'top',
+        originalX: '',
+        originalY: ''
+    };
+    const orientation = value.split(' ');
+    if (orientation.length === 4) {
+        orientation.forEach((position, index) => {
+            switch (index) {
+                case 0:
+                    result.horizontal = position;
+                    break;
+                case 2:
+                    result.vertical = position;
+                    break;
+                case 1:
+                case 3:
+                    const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                    if (index === 1) {
+                        if (result.horizontal === 'right') {
+                            if (isPercent(position)) {
+                                result.originalX = `${100 - parseInt(position)}%`;
+                            }
+                            else {
+                                result.originalX = formatPX(dimension.width - parseInt(convertPX(position, fontSize)));
+                            }
+                            result.right = clientXY;
+                            result.left = percent ? 1 - clientXY : dimension.width - clientXY;
+                        }
+                        else {
+                            result.left = clientXY;
+                            result.originalX = position;
+                        }
+                    }
+                    else {
+                        if (result.horizontal === 'bottom') {
+                            if (isPercent(position)) {
+                                result.originalY = `${100 - parseInt(position)}%`;
+                            }
+                            else {
+                                result.originalY = formatPX(dimension.height - parseInt(convertPX(position, fontSize)));
+                            }
+                            result.bottom = clientXY;
+                            result.top = percent ? 1 - clientXY : dimension.height - clientXY;
+                        }
+                        else {
+                            result.top = clientXY;
+                            result.originalY = position;
+                        }
+                    }
+                    break;
+            }
+        });
+    }
+    else if (orientation.length === 2) {
+        orientation.forEach((position, index) => {
+            const offsetParent = index === 0 ? dimension.width : dimension.height;
+            const direction = index === 0 ? 'left' : 'top';
+            const original = index === 0 ? 'originalX' : 'originalY';
+            if (isPercent(position)) {
+                result[direction] = convertClientUnit(position, offsetParent, fontSize, percent);
+                result[original] = position;
+            }
+            else {
+                if (/^[a-z]+$/.test(position)) {
+                    result[index === 0 ? 'horizontal' : 'vertical'] = position;
+                    switch (position) {
+                        case 'left':
+                        case 'top':
+                            result[original] = '0%';
+                            break;
+                        case 'right':
+                        case 'bottom':
+                            result[direction] = percent ? 1 : offsetParent;
+                            result[original] = '100%';
+                            break;
+                        case 'center':
+                            result[direction] = percent ? 0.5 : Math.round(offsetParent / 2);
+                            result[original] = '50%';
+                            break;
+                    }
+                }
+                else {
+                    result[direction] = convertClientUnit(position, offsetParent, fontSize, percent);
+                    result[original] = position;
+                }
+            }
+        });
+    }
+    return result;
 }
 
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {

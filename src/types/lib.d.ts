@@ -75,6 +75,7 @@ declare global {
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
+            export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string, percent?: boolean): BoxPosition;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function cssAttribute(element: Element, attr: string): string;
             export function isPlainText(element: Null<Element>, whiteSpace?: boolean): boolean;

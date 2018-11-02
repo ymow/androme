@@ -1,6 +1,10 @@
 import Node from './base/node';
 import NodeList from './base/nodelist';
 import NodeGroup from './base/nodegroup';
+import Svg from './base/svg';
+import SvgGroup from './base/svggroup';
+import SvgImage from './base/svgimage';
+import SvgPath from './base/svgpath';
 import Application from './base/application';
 import Controller from './base/controller';
 import Resource from './base/resource';
@@ -194,6 +198,10 @@ const lib = {
         Node,
         NodeList,
         NodeGroup,
+        Svg,
+        SvgGroup,
+        SvgImage,
+        SvgPath,
         Application,
         Controller,
         Resource,

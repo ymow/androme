@@ -18,20 +18,10 @@ interface ImageAsset extends Asset {
     position?: Point;
 }
 
-interface Svg {
-    element: SVGSVGElement;
-    name: string;
-    width: number;
-    height: number;
-    viewBoxWidth: number;
-    viewBoxHeight: number;
-    opacity: number;
-    defs: {
-        image: SvgImage[],
-        clipPath: Map<string, SvgPath[]>,
-        gradient: Map<string, Gradient>
-    };
-    children: SvgGroup[];
+interface SvgDefs<T, U> {
+    image: T[];
+    clipPath: Map<string, U[]>;
+    gradient: Map<string, Gradient>;
 }
 
 interface SvgTransformAttributes {
@@ -44,39 +34,6 @@ interface SvgTransformAttributes {
     rotateAngle: number;
     rotateX: number;
     rotateY: number;
-    origin?: BoxPosition;
-}
-
-interface SvgGroup extends SvgTransformAttributes {
-    element?: SVGElement | SVGGElement;
-    name?: string;
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    children: SvgPath[];
-}
-
-interface SvgPath {
-    element: SVGGraphicsElement;
-    name: string;
-    color: string;
-    fillRule: string;
-    fill: string | TemplateItemData;
-    fillOpacity: number;
-    stroke: string | TemplateItemData;
-    strokeWidth: string;
-    strokeOpacity: number;
-    strokeLinecap: string;
-    strokeLinejoin: string;
-    strokeMiterlimit: string;
-    clipPath: string;
-    clipRule: string;
-    d: string;
-}
-
-interface SvgImage extends ImageAsset, SvgTransformAttributes {
-    element: SVGImageElement;
     origin?: BoxPosition;
 }
 

@@ -7,6 +7,7 @@ import VECTOR_TMPL from './template/resource/vector';
 import LAYERLIST_TMPL from './template/resource/layer-list';
 
 import View from './view';
+import Svg = androme.lib.base.Svg;
 import NodeList = androme.lib.base.NodeList;
 
 import { generateId, replaceUnit, getXmlNs } from './lib/util';
@@ -523,7 +524,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '') {
-                            const boxPosition = $resource.parseBackgroundPosition(backgroundPosition[i], node.bounds, node.css('fontSize'));
+                            const boxPosition = $dom.parseBackgroundPosition(backgroundPosition[i], node.bounds, node.css('fontSize'));
                             const image = backgroundDimensions[i];
                             let gravity = (() => {
                                 if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
@@ -733,8 +734,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             viewportHeight: height.toString(),
                             alpha: '',
                             '1': [{
-                                '2': false,
-                                '3': [{
+                                '2': [{
+                                    clipPaths: false,
                                     d: `'M0,0 L${width},0 L${width},${height} L0,${height} Z`,
                                     fill: [{ 'gradients': backgroundGradient }]
                                 }]
@@ -1225,28 +1226,29 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 '2': []
                             };
                             if (group.element !== node.element) {
-                                const x = (group.x || 0) + group.translateX;
-                                const y = (group.y || 0) + group.translateY;
+                                const transform = group.transform;
+                                const x = (group.x || 0) + transform.translateX;
+                                const y = (group.y || 0) + transform.translateY;
                                 if (x !== 0) {
                                     data.translateX = x.toString();
                                 }
                                 if (y !== 0) {
                                     data.translateY = y.toString();
                                 }
-                                if (group.scaleX !== 1) {
-                                    data.scaleX = group.scaleX.toString();
+                                if (transform.scaleX !== 1) {
+                                    data.scaleX = transform.scaleX.toString();
                                 }
-                                if (group.scaleY !== 1) {
-                                    data.scaleY = group.scaleY.toString();
+                                if (transform.scaleY !== 1) {
+                                    data.scaleY = transform.scaleY.toString();
                                 }
-                                if (group.rotateAngle !== 0) {
-                                    data.rotation = group.rotateAngle.toString();
-                                    if (group.rotateX !== 0 || group.rotateY !== 0) {
-                                        data.pivotX = group.rotateX.toString();
-                                        data.pivotY = group.rotateX.toString();
+                                if (transform.rotateAngle !== 0) {
+                                    data.rotation = transform.rotateAngle.toString();
+                                    if (transform.rotateX !== 0 || transform.rotateY !== 0) {
+                                        data.pivotX = transform.rotateX.toString();
+                                        data.pivotY = transform.rotateX.toString();
                                     }
                                 }
-                                setPivotXY(data, group.origin);
+                                setPivotXY(data, transform.origin);
                             }
                             for (const item of group.children) {
                                 const clipPaths: TemplateData[] = [];
@@ -1287,7 +1289,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                             break;
                                     }
                                 }
-                                data['2'].push(Object.assign(item, { clipPaths }));
+                                data['2'].push(Object.assign({}, item, { clipPaths }));
                             }
                             groups.push(data);
                         }
@@ -1311,15 +1313,20 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const rotate: TemplateData = [];
                         for (const item of stored.defs.image) {
                             if (item.uri) {
+                                const transform = item.transform;
                                 const scaleX = stored.width / stored.viewBoxWidth;
                                 const scaleY = stored.height / stored.viewBoxHeight;
-                                item.width *= scaleX * item.scaleX;
-                                item.height *= scaleY * item.scaleY;
+                                if (item.width) {
+                                    item.width *= scaleX * transform.scaleX;
+                                }
+                                if (item.height) {
+                                    item.height *= scaleY * transform.scaleY;
+                                }
                                 let x = 0;
                                 let y = 0;
-                                if (item.position) {
-                                    x = item.position.x * scaleX;
-                                    y = item.position.y * scaleY;
+                                if (item.imageAsset.position) {
+                                    x = item.imageAsset.position.x * scaleX;
+                                    y = item.imageAsset.position.y * scaleY;
                                     let parent = item.element.parentElement;
                                     while (parent instanceof SVGSVGElement && parent !== node.element) {
                                         const attributes = $resource.getSvgTransform(parent);
@@ -1329,16 +1336,16 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     }
                                 }
                                 const data: TemplateData = {
-                                    width: item.width > 0 ? $util.formatPX(item.width) : '',
-                                    height: item.height > 0 ? $util.formatPX(item.height) : '',
+                                    width: item.width ? $util.formatPX(item.width) : '',
+                                    height: item.height ? $util.formatPX(item.height) : '',
                                     left: x !== 0 ? $util.formatPX(x) : '',
                                     top: y !== 0 ? $util.formatPX(y) : '',
                                     src: ResourceHandler.addImage({ mdpi: item.uri })
                                 };
-                                if (item.rotateAngle !== 0) {
-                                    data.fromDegrees = item.rotateAngle.toString();
+                                if (transform.rotateAngle !== 0) {
+                                    data.fromDegrees = transform.rotateAngle.toString();
                                     data.visible = 'true';
-                                    setPivotXY(data, item.origin);
+                                    setPivotXY(data, transform.origin);
                                     rotate.push(data);
                                 }
                                 else {
@@ -1418,7 +1425,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     else {
                         let boxPosition: Null<BoxPosition> = null;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
-                            boxPosition = $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
+                            boxPosition = $dom.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
                         }
                         if (hasStop) {
                             gradient.gradientRadius = node.bounds.width.toString();

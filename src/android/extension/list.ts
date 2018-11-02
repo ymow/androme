@@ -11,7 +11,7 @@ import { delimitUnit } from '../lib/util';
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
-import $resource = androme.lib.base.Resource;
+import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.List<T> {
     public processChild(): ExtensionResult {
@@ -67,7 +67,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 let left = 0;
                 let top = 0;
                 if (mainData.imageSrc !== '') {
-                    const boxPosition = $resource.parseBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
+                    const boxPosition = $dom.parseBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
                     left = boxPosition.left;
                     top = boxPosition.top;
                     image = ResourceHandler.addImageURL(mainData.imageSrc);
