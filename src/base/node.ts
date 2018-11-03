@@ -198,7 +198,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 this._data[obj][attr] = value;
             }
         }
-        return this._data[obj] != null ? this._data[obj][attr] : null;
+        return this._data[obj] != null ? this._data[obj][attr] : undefined;
     }
 
     public ascend(generated = false, levels = -1) {
@@ -219,7 +219,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public cascade() {
         function cascade(node: T) {
             const current = [...node.list];
-            for (const item of node.list) {
+            for (const item of node) {
                 current.push(...cascade(item));
             }
             return current;
@@ -312,7 +312,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public alignedVertically(previous: Null<T>, cleared = new Map<T, string>(), firstNode = false) {
+    public alignedVertically(previous: T | undefined, cleared = new Map<T, string>(), firstNode = false) {
         if (previous && this.documentParent.baseElement === previous.documentParent.baseElement) {
             const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
             return (
@@ -613,8 +613,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             let parent = getNodeFromElement<T>(this._element.parentElement);
             if (!this.pageflow) {
                 let found = false;
-                let previous: Null<T> = null;
-                let relativeParent: Null<T> = null;
+                let previous: T | undefined;
+                let relativeParent: T | undefined;
                 let outside = false;
                 while (parent && parent.id !== 0) {
                     if (!relativeParent && this.position === 'absolute') {
@@ -666,7 +666,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             return parent;
         }
-        return null;
+        return undefined;
     }
 
     public replaceNode(node: Node, withNode: Node, append = true) {
@@ -721,13 +721,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
-        let element: Null<Element> = null;
+        let element: Element | undefined;
         if (this._element) {
             element = <Element> this._element.previousSibling;
         }
         else if (this.initial.children.length > 0) {
             const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
-            element = list.length > 0 ? <Element> list[0].element.previousSibling : null;
+            element = list.length > 0 ? <Element> list[0].element.previousSibling : undefined;
         }
         while (element) {
             const node = getNodeFromElement<T>(element);
@@ -742,17 +742,17 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             element = <Element> element.previousSibling;
         }
-        return null;
+        return undefined;
     }
 
     public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
-        let element: Null<Element> = null;
+        let element: Element | undefined;
         if (this._element) {
             element = <Element> this._element.nextSibling;
         }
         else if (this.initial.children.length > 0) {
             const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
-            element = list.length > 0 ? <Element> list[0].element.nextSibling : null;
+            element = list.length > 0 ? <Element> list[0].element.nextSibling : undefined;
         }
         while (element) {
             const node = getNodeFromElement<T>(element);
@@ -765,7 +765,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             element = <Element> element.nextSibling;
         }
-        return null;
+        return undefined;
     }
 
     public actualLeft(dimension = 'linear') {
@@ -1249,7 +1249,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             element = <Element> element.previousSibling;
         }
-        return null;
+        return undefined;
     }
     get nextElementSibling() {
         let element = <Element> this.baseElement.nextSibling;
@@ -1259,7 +1259,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             element = <Element> element.nextSibling;
         }
-        return null;
+        return undefined;
     }
 
     get center(): Point {

@@ -34,7 +34,7 @@ export function generateId(section: string, name: string, start: number) {
     return name;
 }
 
-export function stripId(value: Null<string>) {
+export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 

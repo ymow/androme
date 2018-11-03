@@ -41,13 +41,13 @@ declare global {
             export function isArray<T>(value: any): value is Array<T>;
             export function isUnit(value: string): boolean;
             export function isPercent(value: string): boolean;
-            export function includes(source: Null<string>, value: string, delimiter?: string): boolean;
-            export function optional(obj: Null<{}>, value: string, type?: string): any;
+            export function includes(source: string | undefined, value: string, delimiter?: string): boolean;
+            export function optional(obj: {} | undefined, value: string, type?: string): any;
             export function resolvePath(value: string): string;
-            export function trimNull(value: Null<string>): string;
-            export function trimString(value: string, char: string): string;
-            export function trimStart(value: string, char: string): string;
-            export function trimEnd(value: string, char: string): string;
+            export function trimNull(value: string | undefined): string;
+            export function trimString(value: string | undefined, char: string): string;
+            export function trimStart(value: string | undefined, char: string): string;
+            export function trimEnd(value: string | undefined, char: string): string;
             export function repeat(many: number, value?: string): string;
             export function indexOf(value: string, ...terms: string[]): number;
             export function lastIndexOf(value: string, char?: string): string;
@@ -67,7 +67,7 @@ declare global {
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;
             export function convertClientUnit(value: string, dimension: number, fontSize?: string, percent?: boolean): number;
-            export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean];
+            export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
             export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
@@ -80,17 +80,17 @@ declare global {
             export function getLastElementChild(elements: Element[]): Element | undefined;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function cssAttribute(element: Element, attr: string): string;
-            export function isPlainText(element: Null<Element>, whiteSpace?: boolean): boolean;
-            export function hasLineBreak(element: Null<Element>): boolean;
-            export function isLineBreak(element: Null<Element>, excluded?: boolean): boolean;
-            export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
-            export function isStyleElement(element: Null<Element>): element is HTMLElement;
+            export function isPlainText(element: Element | undefined, whiteSpace?: boolean): boolean;
+            export function hasLineBreak(element: Element | undefined): boolean;
+            export function isLineBreak(element: Element | undefined, excluded?: boolean): boolean;
+            export function getElementsBetweenSiblings(firstElement: Element | undefined, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
+            export function isStyleElement(element: Element | undefined): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
             export function findNestedExtension(element: Element, name: string): HTMLElement | undefined;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: Null<Element>): Null<T>;
+            export function getNodeFromElement<T>(element: Null<Element>): T | undefined;
         }
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;
@@ -104,11 +104,11 @@ declare global {
             export function getTemplateBranch(data: {}, ...levels: string[]): {};
         }
         namespace color {
-            export function getColorByName(value: string): Color | null;
-            export function getColorNearest(value: string): Color | null;
+            export function getColorByName(value: string): Color | undefined;
+            export function getColorNearest(value: string): Color | undefined;
             export function convertHex(value: string, opacity?: number): string;
-            export function convertRGBA(value: string): RGBA | null;
-            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
+            export function convertRGBA(value: string): RGBA | undefined;
+            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | undefined;
             export function reduceRGBA(value: string, percent: number): string;
         }
     }

@@ -54,7 +54,7 @@ export function convertClientUnit(value: string, dimension: number, fontSize?: s
     }
 }
 
-export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean] {
+export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
@@ -364,7 +364,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
     }
 }
 
-export function isPlainText(element: Null<Element>, whiteSpace = false) {
+export function isPlainText(element: Element | undefined, whiteSpace = false) {
     if (element && element.nodeName === '#text' && element.textContent) {
         if (whiteSpace) {
             const value = element.textContent;
@@ -390,7 +390,7 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
     return false;
 }
 
-export function hasLineBreak(element: Null<Element>) {
+export function hasLineBreak(element: Element | undefined) {
     if (element) {
         const node = getNodeFromElement<T>(element);
         const fromParent = element.nodeName === '#text';
@@ -406,7 +406,7 @@ export function hasLineBreak(element: Null<Element>) {
     return false;
 }
 
-export function isLineBreak(element: Null<Element>, excluded = true) {
+export function isLineBreak(element: Element | undefined, excluded = true) {
     const node = getNodeFromElement<T>(element);
     if (node) {
         return (
@@ -420,7 +420,7 @@ export function isLineBreak(element: Null<Element>, excluded = true) {
     return false;
 }
 
-export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {
+export function getElementsBetweenSiblings(firstElement: Element | undefined, secondElement: Element, cacheNode = false, whiteSpace = false) {
     if (!firstElement || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
         if (parentElement) {
@@ -450,7 +450,7 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
     return [];
 }
 
-export function isStyleElement(element: Null<Element>): element is HTMLElement {
+export function isStyleElement(element: Element | undefined): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
@@ -514,7 +514,7 @@ export function setElementCache(element: Element, attr: string, data: any) {
 }
 
 export function getElementCache(element: Element, attr: string) {
-    return element ? element[`__${attr}`] : null;
+    return element ? element[`__${attr}`] : undefined;
 }
 
 export function deleteElementCache(element: Element, ...attrs: string[]) {
@@ -525,6 +525,6 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T>(element: Null<Element>): Null<T> {
-    return element ? getElementCache(element, 'node') : null;
+export function getNodeFromElement<T>(element: Null<Element>): T | undefined {
+    return element ? getElementCache(element, 'node') : undefined;
 }

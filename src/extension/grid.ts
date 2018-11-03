@@ -316,7 +316,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         !item.excluded &&
                         !item.rendered &&
                         item.linear.left >= node.linear.right &&
-                        item.linear.right <= columnEnd ? item : null
+                        item.linear.right <= columnEnd ? item : undefined
                     );
                 })
                 .filter(item => item) as T[];

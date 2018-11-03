@@ -20,7 +20,7 @@ function buildSvgPath(element: SVGGraphicsElement, d: string) {
     if (isString(d) && d !== 'none' && cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'))) {
         return new SvgPath(element, d);
     }
-    return null;
+    return undefined;
 }
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -143,13 +143,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 break;
             }
         }
-        return null;
+        return undefined;
     }
 
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
-    public imageDimensions: Map<string, ImageAsset>;
+    public imageAssets = new Map<string, ImageAsset>();
 
     protected constructor(public file: File<T>) {
         this.file.stored = Resource.STORED;
@@ -646,7 +646,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             if (node.tagName === 'SELECT' && node.visible && this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')) {
                 const element = <HTMLSelectElement> node.element;
                 const stringArray: string[] = [];
-                let numberArray: Null<string[]> = [];
+                let numberArray: string[] | undefined = [];
                 let i = -1;
                 while (++i < element.children.length) {
                     const item = <HTMLOptionElement> element.children[i];
@@ -658,7 +658,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         else {
                             if (numberArray && numberArray.length > 0) {
                                 i = -1;
-                                numberArray = null;
+                                numberArray = undefined;
                                 continue;
                             }
                             if (value !== '') {
@@ -668,8 +668,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                 }
                 setElementCache(element, 'optionArray', {
-                    stringArray: stringArray.length > 0 ? stringArray : null,
-                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                    stringArray: stringArray.length > 0 ? stringArray : undefined,
+                    numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
                 });
             }
         }
@@ -760,7 +760,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     const svgImage = new SvgImage(image, uri);
                                     svgImage.width = image.width.baseVal.value;
                                     svgImage.height = image.height.baseVal.value;
-                                    const dimensions = this.imageDimensions.get(uri);
+                                    const dimensions = this.imageAssets.get(uri);
                                     if (dimensions) {
                                         Object.assign(svgImage.imageAsset, dimensions);
                                         if (svgImage.width === 0) {
@@ -799,7 +799,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             result.append(group);
                         });
                         element.querySelectorAll('use').forEach((item: SVGUseElement) => {
-                            let pathParent: any = null;
+                            let pathParent: SvgPath | undefined;
                             result.some(parent => {
                                 return parent.some(path => {
                                     if (item.href.baseVal === `#${path.name}`) {
@@ -844,7 +844,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         sorted.add(group);
                                         break;
                                     }
-                                    for (const path of group.list) {
+                                    for (const path of group) {
                                         if (path.element && (path.element === item || children.has(path.element))) {
                                             sorted.delete(group);
                                             sorted.add(group);

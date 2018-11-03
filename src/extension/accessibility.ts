@@ -16,21 +16,23 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                         case 'radio':
                         case 'checkbox':
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = getNodeFromElement<T>(sibling);
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : null;
-                                if (label && label.visible && label.pageflow) {
-                                    if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
-                                        node.companion = label;
-                                    }
-                                    else if (label.textElement && labelParent) {
-                                        node.companion = label;
-                                        labelParent.renderAs = node;
-                                    }
-                                    if (node.companion) {
-                                        if (this.options && !this.options.showLabel) {
-                                            label.hide();
+                                if (sibling) {
+                                    const label = getNodeFromElement<T>(sibling);
+                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : undefined;
+                                    if (label && label.visible && label.pageflow) {
+                                        if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                            node.companion = label;
                                         }
-                                        return true;
+                                        else if (label.textElement && labelParent) {
+                                            node.companion = label;
+                                            labelParent.renderAs = node;
+                                        }
+                                        if (node.companion) {
+                                            if (this.options && !this.options.showLabel) {
+                                                label.hide();
+                                            }
+                                            return true;
+                                        }
                                     }
                                 }
                                 return false;

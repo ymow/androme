@@ -34,7 +34,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
                     item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
                 }
             });
-            this.application.elements.add(element);
+            this.application.viewElements.add(element);
             return true;
         }
         return false;

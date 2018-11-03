@@ -4,7 +4,7 @@ declare global {
             settings: Settings;
             cache: NodeList<T>;
             application: Application<T>;
-            imageDimensions: Map<string, ImageAsset>;
+            imageAssets: Map<string, ImageAsset>;
             file: File<T>;
             setImageSource(): void;
             finalize(viewData: ViewData<NodeList<T>>): FunctionVoid[];

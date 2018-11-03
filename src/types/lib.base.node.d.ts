@@ -101,8 +101,8 @@ declare global {
             readonly dir: string;
             readonly nodes: Node[];
             readonly length: number;
-            readonly previousElementSibling: Null<Element>;
-            readonly nextElementSibling: Null<Element>;
+            readonly previousElementSibling: Element | undefined;
+            readonly nextElementSibling: Element | undefined;
             readonly center: Point;
             parent: Node;
             controlName: string;
@@ -138,7 +138,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previous: Null<Node>, cleared?: Map<Node, string>, firstT?: boolean): boolean;
+            alignedVertically(previous: Node | undefined, cleared?: Map<Node, string>, firstT?: boolean): boolean;
             intersect(rect: BoxDimensions, dimension?: string): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
@@ -158,13 +158,13 @@ declare global {
             setBounds(calibrate?: boolean): void;
             setDimensions(region?: string[]): void;
             setMultiLine(): void;
-            getParentElementAsNode(negative?: boolean): Null<Node>;
+            getParentElementAsNode(negative?: boolean): Node | undefined;
             replaceNode(node: Node, withT: Node, append?: boolean): void;
             appendRendered(node: Node): void;
             resetBox(region: number, node?: Node, negative?: boolean): void;
             removeElement(): void;
-            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
-            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
+            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | undefined;
+            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | undefined;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
         }

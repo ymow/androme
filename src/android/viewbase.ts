@@ -571,7 +571,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public setAlignment() {
-            function mergeGravity(original?: Null<string>, ...alignment: string[]) {
+            function mergeGravity(original?: string, ...alignment: string[]) {
                 const direction = [...$util.trimNull(original).split('|'), ...alignment].filter(value => value);
                 switch (direction.length) {
                     case 0:
@@ -1051,7 +1051,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
                 children.forEach((node: View) => {
                     const previous = (() => {
-                        let current: Null<View> = node;
+                        let current: View | undefined = node;
                         do {
                             current = current.previousSibling(true, false, false) as View;
                         }
@@ -1061,7 +1061,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     const elements = $dom.getElementsBetweenSiblings(
                         previous
                             ? (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement)
-                            : null,
+                            : undefined,
                         node.baseElement
                     )
                     .filter(element => {

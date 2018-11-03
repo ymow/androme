@@ -15,13 +15,13 @@ declare global {
             setOpacity(value: string | number): void;
         }
         export interface SvgElement {
-            element: SVGGraphicsElement;
+            element: SVGGraphicsElement | undefined;
             name: string;
             x: number;
             y: number;
             width: number;
             height: number;
-            transform: SvgTransformAttributes;
+            transform: SvgTransformAttributes | undefined;
         }
         export interface SvgGroup<T> extends Container<T>, SvgElement {}
         export interface SvgImage extends SvgElement {

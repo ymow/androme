@@ -41,7 +41,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                     element.parentElement !== target &&
                     !$util.includes(target.dataset.ext, WIDGET_NAME.COORDINATOR))
                 {
-                    this.application.elements.add(element);
+                    this.application.viewElements.add(element);
                 }
             }
         }
@@ -57,7 +57,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const optionsToolbar = Object.assign({}, options.self);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-        const hasMenu = $dom.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
+        const hasMenu = $dom.findNestedExtension(node.element, WIDGET_NAME.MENU) != undefined;
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
@@ -183,8 +183,8 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             }
         }
         let outer = '';
-        let appBarNode: Null<T> = null;
-        let collapsingToolbarNode: Null<T> = null;
+        let appBarNode: T | undefined;
+        let collapsingToolbarNode: T | undefined;
         if (hasAppBar) {
             $util.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
             $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $util_android.delimitUnit('appbar', 'height', $util.formatPX(node.viewHeight), <SettingsAndroid> this.application.settings) : 'wrap_content');

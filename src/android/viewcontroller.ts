@@ -150,7 +150,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         function anchoredSibling(node: T, nodes: T[], orientation: string) {
             if (!node.constraint[orientation]) {
                 const connected: string[] = [];
-                let parent: Null<T> = node;
+                let parent: T | undefined = node;
                 while (parent && !connected.includes(parent.stringId)) {
                     connected.push(parent.stringId);
                     const stringId = mapSibling(parent, orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom');
@@ -161,7 +161,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                     }
                     else {
-                        parent = null;
+                        parent = undefined;
                     }
                 }
                 return false;
@@ -195,7 +195,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             if (textBaseline.length > 0) {
                                 const alignWith = textBaseline[0];
                                 const images: T[] = [];
-                                let baseExcluded: Null<T> = null;
+                                let baseExcluded: T | undefined;
                                 for (const current of siblings) {
                                     if (current !== alignWith) {
                                         if (current.baseline && (
@@ -232,7 +232,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             images[i].android(mapLayout['bottom'], images[0].stringId);
                                         }
                                     }
-                                    baseExcluded = null;
+                                    baseExcluded = undefined;
                                 }
                                 if (baseExcluded) {
                                     if (!baseExcluded.imageElement) {
@@ -242,7 +242,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         baseExcluded.delete('android', mapLayout['bottom']);
                                     }
                                     else {
-                                        baseExcluded = null;
+                                        baseExcluded = undefined;
                                     }
                                     if (baseExcluded) {
                                         alignWith.android(mapLayout['bottom'], baseExcluded.stringId);
@@ -274,8 +274,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     boxWidth = Math.ceil(boxWidth);
                     let rowWidth = 0;
                     let rowPaddingLeft = 0;
-                    let rowPreviousLeft: Null<T> = null;
-                    let rowPreviousBottom: Null<T> = null;
+                    let rowPreviousLeft: T | undefined;
+                    let rowPreviousBottom: T | undefined;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
                         rowPaddingLeft = Math.abs(textIndent);
                         node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
@@ -361,7 +361,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 }
                                 else {
                                     current.anchor(sideParent, 'true');
-                                    rowPreviousLeft = null;
+                                    rowPreviousLeft = undefined;
                                 }
                                 if (this.settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
                                     checkSingleLine(previous.item() as T, true);
@@ -472,7 +472,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         for (let i = 0; i < nodes.length; i++) {
                             const current = nodes[i];
                             const previous = nodes[i - 1];
-                            let alignWith: Null<T> = optimal;
+                            let alignWith: T | undefined = optimal;
                             if (i === 0) {
                                 current.app(mapLayout['left'], 'parent');
                             }
@@ -490,7 +490,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 verticalAlign = 'text-bottom';
                             }
                             if (!alignWith || verticalAlign.startsWith('text') || alignWith === current) {
-                                alignWith = null;
+                                alignWith = undefined;
                                 baseline.some(item => {
                                     if (item !== current) {
                                         alignWith = item;
@@ -1033,7 +1033,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                     else {
                                                         const previousRow = connectedRows[connectedRows.length - 1];
                                                         const bottom = Math.max.apply(null, previousRow.map(item => item.linear.bottom));
-                                                        let anchorAbove: Null<T>;
+                                                        let anchorAbove: T | undefined;
                                                         if (chainable.length === previousRow.length) {
                                                             anchorAbove = previousRow[i];
                                                         }
@@ -1289,7 +1289,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         if (mapParent(current, index === 0 ? 'bottom' : 'top')) {
                                             const chain: T[] = [current];
                                             let valid = false;
-                                            let adjacent: Null<T> = current;
+                                            let adjacent: T | undefined = current;
                                             while (adjacent) {
                                                 const topBottom = mapSibling(adjacent, value);
                                                 if (topBottom) {
@@ -1303,7 +1303,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                     }
                                                 }
                                                 else {
-                                                    adjacent = null;
+                                                    adjacent = undefined;
                                                 }
                                             }
                                             if (!valid) {
@@ -1422,8 +1422,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     this.addGuideline(current);
                                 }
                             }
-                            let bottomParent: Null<boolean> = null;
-                            let rightParent: Null<boolean> = null;
+                            let bottomParent: boolean | undefined;
+                            let rightParent: boolean | undefined;
                             const maxBottom: number = Math.max.apply(null, nodes.map(item => item.linear.bottom));
                             const connected: ObjectMapNested<string> = {};
                             function deleteChain(item: T, value: string) {
@@ -1451,7 +1451,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']].forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
                                         if (value[0] || value[1]) {
                                             let valid = value[0] && value[1];
-                                            let next: Null<T> = current;
+                                            let next: T | undefined = current;
                                             if (!valid) {
                                                 do {
                                                     const stringId = mapSibling(next, value[0] ? value[2] : value[3]);
@@ -1463,7 +1463,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                         }
                                                     }
                                                     else {
-                                                        next = null;
+                                                        next = undefined;
                                                     }
                                                 }
                                                 while (next);
@@ -1711,7 +1711,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     overflow.push(NODE_ANDROID.SCROLL_VERTICAL);
                 }
             }
-            let previous: Null<T> = null;
+            let previous: T | undefined;
             const scrollView = overflow.map((controlName, index) => {
                 const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
                 container.nodeName = node.nodeName;
@@ -1911,7 +1911,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 {
                                     return item;
                                 }
-                                return null;
+                                return undefined;
                             })
                             .filter(item => item) as T[];
                             if (radiogroup.length > 1) {

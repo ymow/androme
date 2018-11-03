@@ -46,12 +46,12 @@ export default abstract class NodeGroup<T extends Node> extends Node {
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
         const node = this.item(0);
-        return node ? node.previousSibling(pageflow, lineBreak, excluded) : null;
+        return node ? node.previousSibling(pageflow, lineBreak, excluded) : undefined;
     }
 
     public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
         const node = this.item(0);
-        return node ? node.nextSibling(pageflow, lineBreak, excluded) : null;
+        return node ? node.nextSibling(pageflow, lineBreak, excluded) : undefined;
     }
 
     get inline() {
@@ -102,7 +102,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
     }
 
     get baseElement() {
-        function cascade(nodes: T[]): Null<Element> {
+        function cascade(nodes: T[]): Element | undefined {
             for (const node of nodes) {
                 if (node.domElement) {
                     return node.element;
@@ -114,7 +114,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
                     }
                 }
             }
-            return null;
+            return undefined;
         }
         return cascade(this.nodes as T[]) || super.baseElement;
     }

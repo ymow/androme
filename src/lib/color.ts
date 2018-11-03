@@ -221,7 +221,7 @@ export function getColorByName(value: string) {
             return <Color> X11_CSS3[color];
         }
     }
-    return null;
+    return undefined;
 }
 
 export function getColorNearest(value: string) {
@@ -246,7 +246,7 @@ export function getColorNearest(value: string) {
                 return result[Math.min(index + 1, result.length - 1)];
             }
         }
-        return null;
+        return undefined;
     }
 }
 
@@ -260,7 +260,7 @@ export function convertHex(value: string, opacity = 1) {
     return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
 }
 
-export function convertRGBA(value: string): Null<RGBA> {
+export function convertRGBA(value: string): RGBA | undefined {
     value = value.replace(/#/g, '').trim();
     if (/[A-Za-z\d]{3,}/.test(value)) {
         let a = 1;
@@ -289,10 +289,10 @@ export function convertRGBA(value: string): Null<RGBA> {
             };
         }
     }
-    return null;
+    return undefined;
 }
 
-export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
+export function parseRGBA(value: string, opacity = '1'): ColorHexAlpha | undefined {
     if (value && value !== 'initial' && value !== 'transparent') {
         if (opacity === '') {
             opacity = '1';
@@ -330,7 +330,7 @@ export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
             };
         }
     }
-    return null;
+    return undefined;
 }
 
 export function reduceRGBA(value: string, percent: number) {

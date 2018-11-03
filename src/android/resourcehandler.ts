@@ -296,7 +296,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return '';
     }
 
-    public static getHexARGB(hexAlpha: Null<string | ColorHexAlpha>) {
+    public static getHexARGB(hexAlpha: string | ColorHexAlpha | undefined) {
         if (typeof hexAlpha === 'string') {
             hexAlpha = $color.parseRGBA(hexAlpha);
         }
@@ -431,7 +431,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         backgroundImage.push(...stored.backgroundImage);
                         for (let i = 0; i < backgroundImage.length; i++) {
                             if (backgroundImage[i] && backgroundImage[i] !== 'none') {
-                                backgroundDimensions.push(this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i])));
+                                backgroundDimensions.push(this.imageAssets.get($dom.cssResolveUrl(backgroundImage[i])));
                                 backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
                                 const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
                                 const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
@@ -1199,7 +1199,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setImageSource() {
-        function setPivotXY(data: TemplateData, origin: Null<BoxPosition>) {
+        function setPivotXY(data: TemplateData, origin: BoxPosition | undefined) {
             if (origin) {
                 if (origin.left !== 0) {
                     data.pivotX = $util.isPercent(origin.originalX) ? origin.originalX : origin.left.toString();
@@ -1226,28 +1226,30 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             };
                             if (group.element !== node.element) {
                                 const transform = group.transform;
-                                const x = (group.x || 0) + transform.translateX;
-                                const y = (group.y || 0) + transform.translateY;
+                                const x = (group.x || 0) + (transform ? transform.translateX : 0);
+                                const y = (group.y || 0) + (transform ? transform.translateY : 0);
                                 if (x !== 0) {
                                     data.translateX = x.toString();
                                 }
                                 if (y !== 0) {
                                     data.translateY = y.toString();
                                 }
-                                if (transform.scaleX !== 1) {
-                                    data.scaleX = transform.scaleX.toString();
-                                }
-                                if (transform.scaleY !== 1) {
-                                    data.scaleY = transform.scaleY.toString();
-                                }
-                                if (transform.rotateAngle !== 0) {
-                                    data.rotation = transform.rotateAngle.toString();
-                                    if (transform.rotateX !== 0 || transform.rotateY !== 0) {
-                                        data.pivotX = transform.rotateX.toString();
-                                        data.pivotY = transform.rotateX.toString();
+                                if (transform) {
+                                    if (transform.scaleX !== 1) {
+                                        data.scaleX = transform.scaleX.toString();
                                     }
+                                    if (transform.scaleY !== 1) {
+                                        data.scaleY = transform.scaleY.toString();
+                                    }
+                                    if (transform.rotateAngle !== 0) {
+                                        data.rotation = transform.rotateAngle.toString();
+                                        if (transform.rotateX !== 0 || transform.rotateY !== 0) {
+                                            data.pivotX = transform.rotateX.toString();
+                                            data.pivotY = transform.rotateX.toString();
+                                        }
+                                    }
+                                    setPivotXY(data, transform.origin);
                                 }
-                                setPivotXY(data, transform.origin);
                             }
                             for (const item of group) {
                                 const clipPaths: TemplateData[] = [];
@@ -1315,11 +1317,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 const transform = item.transform;
                                 const scaleX = stored.width / stored.viewBoxWidth;
                                 const scaleY = stored.height / stored.viewBoxHeight;
-                                if (item.width) {
-                                    item.width *= scaleX * transform.scaleX;
-                                }
-                                if (item.height) {
-                                    item.height *= scaleY * transform.scaleY;
+                                if (transform) {
+                                    if (item.width) {
+                                        item.width *= scaleX * transform.scaleX;
+                                    }
+                                    if (item.height) {
+                                        item.height *= scaleY * transform.scaleY;
+                                    }
                                 }
                                 let x = 0;
                                 let y = 0;
@@ -1341,7 +1345,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     top: y !== 0 ? $util.formatPX(y) : '',
                                     src: ResourceHandler.addImage({ mdpi: item.uri })
                                 };
-                                if (transform.rotateAngle !== 0) {
+                                if (transform && transform.rotateAngle !== 0) {
                                     data.fromDegrees = transform.rotateAngle.toString();
                                     data.visible = 'true';
                                     setPivotXY(data, transform.origin);
@@ -1422,7 +1426,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         gradient.centerY = radial.cy.toString();
                     }
                     else {
-                        let boxPosition: Null<BoxPosition> = null;
+                        let boxPosition: BoxPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
                             boxPosition = $dom.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
                         }

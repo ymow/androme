@@ -189,11 +189,11 @@ export function isPercent(value: string) {
     return /^\d+(\.\d+)?%$/.test(value);
 }
 
-export function includes(source: Null<string>, value: string, delimiter = ',') {
+export function includes(source: string | undefined, value: string, delimiter = ',') {
     return source ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false;
 }
 
-export function optional(obj: Null<{}>, value: string, type?: string) {
+export function optional(obj: {} | undefined, value: string, type?: string) {
     let valid = false;
     let result: any = null;
     if (typeof obj === 'object') {
@@ -201,7 +201,7 @@ export function optional(obj: Null<{}>, value: string, type?: string) {
         const attrs = value.split('.');
         let i = 0;
         do {
-            result = result[attrs[i]] != null ? result[attrs[i]] : null;
+            result = result[attrs[i]] != null ? result[attrs[i]] : undefined;
         }
         while (
             result != null &&
@@ -214,7 +214,7 @@ export function optional(obj: Null<{}>, value: string, type?: string) {
     }
     switch (type) {
         case 'object':
-            return valid ? result : null;
+            return valid ? result : undefined;
         case 'number':
             return valid && !isNaN(parseInt(result)) ? parseInt(result) : 0;
         case 'boolean':
@@ -255,20 +255,20 @@ export function resolvePath(value: string) {
     return value;
 }
 
-export function trimNull(value: Null<string>) {
+export function trimNull(value: string | undefined) {
     return value ? value.trim() : '';
 }
 
-export function trimString(value: string, char: string) {
+export function trimString(value: string | undefined, char: string) {
     return value ? trimStart(trimEnd(value, char), char) : '';
 }
 
-export function trimStart(value: string, char: string) {
-    return value.replace(new RegExp(`^${char}+`, 'g'), '');
+export function trimStart(value: string | undefined, char: string) {
+    return value ? value.replace(new RegExp(`^${char}+`, 'g'), '') : '';
 }
 
-export function trimEnd(value: string, char: string) {
-    return value.replace(new RegExp(`${char}+$`, 'g'), '');
+export function trimEnd(value: string | undefined, char: string) {
+    return value ? value.replace(new RegExp(`${char}+$`, 'g'), '') : '';
 }
 
 export function repeat(many: number, value = '\t') {

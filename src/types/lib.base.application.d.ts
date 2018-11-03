@@ -8,15 +8,16 @@ declare global {
             builtInExtensions: ObjectMap<Extension<T>>;
             renderQueue: ObjectMap<string[]>;
             loading: boolean;
+            appName: string;
+            nodeProcessing: T | undefined;
+            layoutProcessing: FileAsset;
             closed: boolean;
             readonly framework: number;
             readonly cacheImage: Map<string, ImageAsset>;
             readonly cacheSession: NodeList<T>;
             readonly cacheProcessing: NodeList<T>;
-            readonly elements: Set<Element>;
+            readonly viewElements: Set<Element>;
             readonly extensions: Extension<T>[];
-            appName: string;
-            layoutProcessing: FileAsset;
             readonly layouts: FileAsset[];
             readonly viewData: ViewData<NodeList<T>>;
             readonly size: number;
@@ -38,13 +39,13 @@ declare global {
             writeConstraintLayout(node: T, parent: T): string;
             writeNode(node: T, parent: T, nodeName: number | string): string;
             writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>): string;
+            writeFrameLayoutVertical(group: T | undefined, parent: T, nodes: T[], cleared: Map<T, string>): string;
             createLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
             createIncludeFile(filename: string, content: string): void;
             addRenderQueue(id: string, views: string[]): void;
             preserveRenderPosition(node: T): void;
             getExtension(name: string): Extension<T> | undefined;
-            insertNode(element: Element, parent?: T): Null<T>;
+            insertNode(element: Element, parent?: T): T | undefined;
             toString(): string;
         }
         export class Application<T extends Node> implements Application<T> {

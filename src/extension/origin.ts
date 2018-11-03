@@ -1,10 +1,9 @@
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 import Node from '../base/node';
-import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 
-import { convertInt, formatPX } from '../lib/util';
+import { convertInt, formatPX, partition } from '../lib/util';
 
 export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
@@ -58,7 +57,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     marginLeft.push(leftType);
                 }
                 if (marginRight.length > 0) {
-                    const [sectionLeft, sectionRight] = new NodeList(node.list).partition((item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = partition(node.list, (item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
                         if (node.style.marginLeft && node.autoMarginLeft) {
                             node.css('marginLeft', node.style.marginLeft);
@@ -66,7 +65,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                         const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.map(item => item.bounds.width));
                         const widthRight: number = Math.max.apply(null, sectionRight.map(item => Math.abs(item.toInt('right'))));
-                        sectionLeft.each(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
+                        sectionLeft.forEach(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
                     }
                 }

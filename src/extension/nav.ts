@@ -24,7 +24,7 @@ export default abstract class Nav<T extends Node> extends Extension<T> {
                 valid = Array.from(element.children).every(item => item.tagName === tagName);
                 let current = element.parentElement;
                 while (current) {
-                    if (current.tagName === 'NAV' && this.application.elements.has(current)) {
+                    if (current.tagName === 'NAV' && this.application.viewElements.has(current)) {
                         valid = false;
                         break;
                     }
@@ -38,7 +38,7 @@ export default abstract class Nav<T extends Node> extends Extension<T> {
                         item.style.display = 'block';
                     }
                 });
-                this.application.elements.add(<HTMLElement> element);
+                this.application.viewElements.add(<HTMLElement> element);
             }
         }
         return false;
