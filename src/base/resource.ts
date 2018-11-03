@@ -16,13 +16,6 @@ import { cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache
 import { replaceEntities } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 
-function buildSvgPath(element: SVGGraphicsElement, d: string) {
-    if (isString(d) && d !== 'none' && cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'))) {
-        return new SvgPath(element, d);
-    }
-    return undefined;
-}
-
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
         strings: new Map(),
@@ -84,66 +77,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 (Array.isArray(object.backgroundImage) && object.backgroundImage.length > 0)
             )
         );
-    }
-
-    public static createSvgPath(element: SVGGraphicsElement) {
-        switch (element.tagName) {
-            case 'path': {
-                const subitem = <SVGPathElement> element;
-                return buildSvgPath(subitem, cssAttribute(subitem, 'd'));
-            }
-            case 'line': {
-                const subitem = <SVGLineElement> element;
-                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
-                    const path = buildSvgPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`);
-                    if (path && path.stroke) {
-                        path.fill = '';
-                        return path;
-                    }
-                }
-                break;
-            }
-            case 'rect': {
-                const subitem = <SVGRectElement> element;
-                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
-                    const x = subitem.x.baseVal.value;
-                    const y = subitem.y.baseVal.value;
-                    return buildSvgPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} Z`);
-                }
-                break;
-            }
-            case 'polyline':
-            case 'polygon': {
-                const subitem = <SVGPolygonElement> element;
-                if (subitem.points.numberOfItems > 0) {
-                    const d: string[] = [];
-                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
-                        const point = subitem.points.getItem(j);
-                        d.push(`${point.x},${point.y}`);
-                    }
-                    return buildSvgPath(subitem, `M${d.join(' ') + (element.tagName === 'polygon' ? ' Z' : '')}`);
-                }
-                break;
-            }
-            case 'circle': {
-                const subitem = <SVGCircleElement> element;
-                const r = subitem.r.baseVal.value;
-                if (r > 0) {
-                    return buildSvgPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`);
-                }
-                break;
-            }
-            case 'ellipse': {
-                const subitem = <SVGEllipseElement> element;
-                const rx = subitem.rx.baseVal.value;
-                const ry = subitem.ry.baseVal.value;
-                if (rx > 0 && ry > 0) {
-                    return buildSvgPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0`);
-                }
-                break;
-            }
-        }
-        return undefined;
     }
 
     public abstract settings: Settings;
@@ -680,7 +613,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             if (clipPath.id) {
                 const result: SvgPath[] = [];
                 for (const item of Array.from(clipPath.children)) {
-                    const path = Resource.createSvgPath(<SVGGraphicsElement> item);
+                    const path = Svg.createSvgPath(<SVGGraphicsElement> item);
                     if (path) {
                         result.push(path);
                     }
@@ -781,7 +714,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         });
                         const baseTags = new Set(['svg', 'g']);
                         [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item: SVGGraphicsElement, index) => {
-                            const group = new SvgGroup<SvgPath>(item);
+                            const group = new SvgGroup(item);
                             group.name = item.id;
                             if (index > 0 && item.tagName === 'svg') {
                                 const svg = <SVGSVGElement> item;
@@ -791,7 +724,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 group.height = svg.height.baseVal.value;
                             }
                             for (let i = 0; i < item.children.length; i++) {
-                                const path = Resource.createSvgPath(<SVGGraphicsElement> item.children[i]);
+                                const path = Svg.createSvgPath(<SVGGraphicsElement> item.children[i]);
                                 if (path) {
                                     group.append(path);
                                 }
@@ -799,42 +732,44 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             result.append(group);
                         });
                         element.querySelectorAll('use').forEach((item: SVGUseElement) => {
-                            let pathParent: SvgPath | undefined;
-                            result.some(parent => {
-                                return parent.some(path => {
-                                    if (item.href.baseVal === `#${path.name}`) {
-                                        pathParent = path;
-                                        return true;
-                                    }
-                                    return false;
+                            if (Svg.isVisible(item)) {
+                                let pathParent: SvgPath | undefined;
+                                result.some(parent => {
+                                    return parent.some(path => {
+                                        if (item.href.baseVal === `#${path.name}`) {
+                                            pathParent = path;
+                                            return true;
+                                        }
+                                        return false;
+                                    });
                                 });
-                            });
-                            if (pathParent) {
-                                const usePath = buildSvgPath(item, pathParent.d);
-                                if (usePath) {
-                                    if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
-                                        result.some(groupItem => {
-                                            if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
-                                                groupItem.append(usePath);
-                                                return true;
-                                            }
-                                            return false;
-                                        });
-                                    }
-                                    else {
-                                        const useGroup = new SvgGroup<SvgPath>(item);
-                                        useGroup.name = item.id;
-                                        useGroup.x = item.x.baseVal.value;
-                                        useGroup.y = item.y.baseVal.value;
-                                        useGroup.width = item.width.baseVal.value;
-                                        useGroup.height = item.height.baseVal.value;
-                                        useGroup.append(usePath);
-                                        result.append(useGroup);
+                                if (pathParent) {
+                                    const usePath = Svg.createSvgPath(item);
+                                    if (usePath) {
+                                        if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
+                                            result.some(groupItem => {
+                                                if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
+                                                    groupItem.append(usePath);
+                                                    return true;
+                                                }
+                                                return false;
+                                            });
+                                        }
+                                        else {
+                                            const useGroup = new SvgGroup(item);
+                                            useGroup.name = item.id;
+                                            useGroup.x = item.x.baseVal.value;
+                                            useGroup.y = item.y.baseVal.value;
+                                            useGroup.width = item.width.baseVal.value;
+                                            useGroup.height = item.height.baseVal.value;
+                                            useGroup.append(usePath);
+                                            result.append(useGroup);
+                                        }
                                     }
                                 }
                             }
                         });
-                        const sorted = new Set<SvgGroup<SvgPath>>();
+                        const sorted = new Set<SvgGroup>();
                         for (const item of Array.from(element.children)) {
                             const children = new Set(Array.from(item.querySelectorAll('*')));
                             for (const group of result) {
