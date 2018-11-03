@@ -401,13 +401,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setFontStyle() {
-        this.cache.each(node => {
+        for (const node of this.cache) {
             if (this.checkPermissions(node, NODE_RESOURCE.FONT_STYLE, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
-                if (node.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === '')) {
-                    return;
-                }
-                else {
+                if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity) || '';
                     let backgroundColor: string | ColorHexAlpha = node.css('backgroundColor');
@@ -485,7 +482,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     setElementCache(node.element, 'fontStyle', result);
                 }
             }
-        });
+        }
     }
 
     public setBoxSpacing() {
@@ -645,39 +642,37 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setOptionArray() {
-        this.cache.list.filter(node =>
-            node.visible &&
-            node.tagName === 'SELECT' &&
-            this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')
-        ).forEach(node => {
-            const element = <HTMLSelectElement> node.element;
-            const stringArray: string[] = [];
-            let numberArray: Null<string[]> = [];
-            let i = -1;
-            while (++i < element.children.length) {
-                const item = <HTMLOptionElement> element.children[i];
-                const value = item.text.trim();
-                if (value !== '') {
-                    if (numberArray && stringArray.length === 0 && isNumber(value)) {
-                        numberArray.push(value);
-                    }
-                    else {
-                        if (numberArray && numberArray.length > 0) {
-                            i = -1;
-                            numberArray = null;
-                            continue;
+        for (const node of this.cache) {
+            if (node.tagName === 'SELECT' && node.visible && this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')) {
+                const element = <HTMLSelectElement> node.element;
+                const stringArray: string[] = [];
+                let numberArray: Null<string[]> = [];
+                let i = -1;
+                while (++i < element.children.length) {
+                    const item = <HTMLOptionElement> element.children[i];
+                    const value = item.text.trim();
+                    if (value !== '') {
+                        if (numberArray && stringArray.length === 0 && isNumber(value)) {
+                            numberArray.push(value);
                         }
-                        if (value !== '') {
-                            stringArray.push(value);
+                        else {
+                            if (numberArray && numberArray.length > 0) {
+                                i = -1;
+                                numberArray = null;
+                                continue;
+                            }
+                            if (value !== '') {
+                                stringArray.push(value);
+                            }
                         }
                     }
                 }
+                setElementCache(element, 'optionArray', {
+                    stringArray: stringArray.length > 0 ? stringArray : null,
+                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                });
             }
-            setElementCache(element, 'optionArray', {
-                stringArray: stringArray.length > 0 ? stringArray : null,
-                numberArray: numberArray && numberArray.length > 0 ? numberArray : null
-            });
-        });
+        }
     }
 
     public setImageSource() {
@@ -697,7 +692,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         }
         function getColorStop(gradient: SVGGradientElement) {
             const result: ColorStop[] = [];
-            Array.from(gradient.getElementsByTagName('stop')).forEach(stop => {
+            for (const stop of Array.from(gradient.getElementsByTagName('stop'))) {
                 const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
                 if (color) {
                     result.push({
@@ -706,10 +701,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         opacity: color.alpha
                     });
                 }
-            });
+            }
             return result;
         }
-        this.cache.visible.forEach(node => {
+        for (const node of this.cache.visible) {
             if (this.checkPermissions(node, NODE_RESOURCE.IMAGE_SOURCE, 'imageSource')) {
                 if (node.svgElement) {
                     const element = <SVGSVGElement> node.element;
@@ -786,7 +781,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         });
                         const baseTags = new Set(['svg', 'g']);
                         [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item: SVGGraphicsElement, index) => {
-                            const group = new SvgGroup(item);
+                            const group = new SvgGroup<SvgPath>(item);
                             group.name = item.id;
                             if (index > 0 && item.tagName === 'svg') {
                                 const svg = <SVGSVGElement> item;
@@ -804,22 +799,21 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             result.append(group);
                         });
                         element.querySelectorAll('use').forEach((item: SVGUseElement) => {
-                            let groupParent: Null<SvgGroup> = null;
-                            let pathParent: Null<SvgPath> = null;
-                            for (let i = 0; i < result.children.length; i++) {
-                                groupParent = result.children[i];
-                                for (let j = 0; j < groupParent.children.length; j++) {
-                                    if (item.href.baseVal === `#${groupParent.children[j].name}`) {
-                                        pathParent = groupParent.children[j];
-                                        break;
+                            let pathParent: any = null;
+                            result.some(parent => {
+                                return parent.some(path => {
+                                    if (item.href.baseVal === `#${path.name}`) {
+                                        pathParent = path;
+                                        return true;
                                     }
-                                }
-                            }
-                            if (groupParent && pathParent) {
+                                    return false;
+                                });
+                            });
+                            if (pathParent) {
                                 const usePath = buildSvgPath(item, pathParent.d);
                                 if (usePath) {
                                     if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
-                                        result.children.some(groupItem => {
+                                        result.some(groupItem => {
                                             if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
                                                 groupItem.append(usePath);
                                                 return true;
@@ -828,7 +822,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         });
                                     }
                                     else {
-                                        const useGroup = new SvgGroup(item);
+                                        const useGroup = new SvgGroup<SvgPath>(item);
                                         useGroup.name = item.id;
                                         useGroup.x = item.x.baseVal.value;
                                         useGroup.y = item.y.baseVal.value;
@@ -840,34 +834,34 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 }
                             }
                         });
-                        const sorted = new Set<SvgGroup>();
-                        Array.from(element.children).forEach(item => {
+                        const sorted = new Set<SvgGroup<SvgPath>>();
+                        for (const item of Array.from(element.children)) {
                             const children = new Set(Array.from(item.querySelectorAll('*')));
-                            for (const group of result.children) {
-                                if (group instanceof SvgGroup && group.children.length > 0) {
+                            for (const group of result) {
+                                if (group instanceof SvgGroup && group.length > 0) {
                                     if (group.element && (group.element === item || children.has(group.element))) {
                                         sorted.delete(group);
                                         sorted.add(group);
-                                        return;
+                                        break;
                                     }
-                                    for (const path of group.children) {
+                                    for (const path of group.list) {
                                         if (path.element && (path.element === item || children.has(path.element))) {
                                             sorted.delete(group);
                                             sorted.add(group);
-                                            return;
+                                            break;
                                         }
                                     }
                                 }
                             }
-                        });
-                        result.replace([...result.children.filter(item => item.children.length > 0 && !sorted.has(item)), ...sorted]);
+                        }
+                        result.replace([...result.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
                         if (result.length > 0 || result.defs.image.length > 0) {
                             setElementCache(element, 'imageSource', result);
                         }
                     }
                 }
             }
-        });
+        }
     }
 
     private checkPermissions(node: Node, resourceFlag: number, storedName: string) {

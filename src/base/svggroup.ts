@@ -1,23 +1,20 @@
-import SvgElement from './svgelement';
-import SvgPath from './svgpath';
+import Container from './container';
+import Svg from './svg';
 
-export default class SvgGroup extends SvgElement {
-    public readonly children: SvgPath[] = [];
+export default class SvgGroup<T> extends Container<T> implements androme.lib.base.SvgElement {
+    public element: SVGGraphicsElement;
+    public name: string;
+    public x: number;
+    public y: number;
+    public width: number;
+    public height: number;
+    public transform;
 
-    constructor(element: SVGGraphicsElement) {
-        super(element);
-    }
-
-    public append(value: SvgPath) {
-        this.children.push(value);
-    }
-
-    public replace(value: SvgPath[]) {
-        this.children.length = 0;
-        this.children.push(...value);
-    }
-
-    get length() {
-        return this.children.length;
+    constructor(element?: SVGGraphicsElement) {
+        super();
+        if (element) {
+            this.element = element;
+            this.transform = Svg.createTransform(element);
+        }
     }
 }

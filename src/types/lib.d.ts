@@ -76,14 +76,17 @@ declare global {
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
             export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string, percent?: boolean): BoxPosition;
+            export function getFirstElementChild(elements: Element[]): Element | undefined;
+            export function getLastElementChild(elements: Element[]): Element | undefined;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function cssAttribute(element: Element, attr: string): string;
             export function isPlainText(element: Null<Element>, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Null<Element>): boolean;
             export function isLineBreak(element: Null<Element>, excluded?: boolean): boolean;
             export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
+            export function isStyleElement(element: Null<Element>): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
-            export function findNestedExtension(element: Element, name: string): Null<HTMLElement>;
+            export function findNestedExtension(element: Element, name: string): HTMLElement | undefined;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
@@ -105,7 +108,7 @@ declare global {
             export function getColorNearest(value: string): Color | null;
             export function convertHex(value: string, opacity?: number): string;
             export function convertRGBA(value: string): RGBA | null;
-            export function parseRGBA(value: string, opacity?: string): Null<ColorHexAlpha>;
+            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
             export function reduceRGBA(value: string, percent: number): string;
         }
     }

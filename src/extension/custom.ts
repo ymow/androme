@@ -21,7 +21,7 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
         const data = this.getData();
         let output = '';
         if (data.tag) {
-            if (node.children.length > 0) {
+            if (node.length > 0) {
                 output = this.application.viewController.renderGroup(node, parent, data.tag);
             }
             else {
@@ -30,12 +30,12 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
             node.nodeType = node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE;
         }
         if (data.tagChild) {
-            node.each(item => {
+            for (const item of node) {
                 if (item.styleElement) {
                     item.dataset.ext = this.name;
                     item.dataset.andromeCustomTag = data.tagChild;
                 }
-            });
+            }
         }
         return { output, complete: false };
     }

@@ -1,34 +1,36 @@
 declare global {
     namespace androme.lib.base {
-        export class Extension<T extends Node> {
-            public application: Application<T>;
-            public tagNames: string[];
-            public options: ExternalData;
-            public documentRoot: boolean;
-            public readonly framework: number;
-            public readonly name: string;
-            public readonly dependencies: ExtensionDependency[];
-            public readonly subscribers: Set<T>;
-            public readonly subscribersChild: Set<T>;
-            public readonly node: T;
-            public readonly parent: T | undefined;
-            public readonly element: Element | undefined;
+        export interface Extension<T extends Node> {
+            application: Application<T>;
+            tagNames: string[];
+            options: ExternalData;
+            documentRoot: boolean;
+            readonly framework: number;
+            readonly name: string;
+            readonly dependencies: ExtensionDependency[];
+            readonly subscribers: Set<T>;
+            readonly subscribersChild: Set<T>;
+            readonly node: T;
+            readonly parent: T | undefined;
+            readonly element: Element | undefined;
+            setTarget(node?: T, parent?: T, element?: Element): void;
+            getData(): StringMap;
+            is(node: T): boolean;
+            require(value: string, init?: boolean): void;
+            included(element?: Element): boolean;
+            beforeInit(init?: boolean): void;
+            init(element: HTMLElement): boolean;
+            afterInit(init?: boolean): void;
+            condition(): boolean;
+            processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
+            processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
+            afterRender(): void;
+            beforeInsert(): void;
+            afterInsert(): void;
+            finalize(): void;
+        }
+        export class Extension<T extends Node> implements Extension<T> {
             constructor(name: string, framework: number, tagNames?: string[], options?: {});
-            public setTarget(node?: T, parent?: T, element?: Element): void;
-            public getData(): StringMap;
-            public is(node: T): boolean;
-            public require(value: string, init?: boolean): void;
-            public included(element?: Element): boolean;
-            public beforeInit(init?: boolean): void;
-            public init(element: HTMLElement): boolean;
-            public afterInit(init?: boolean): void;
-            public condition(): boolean;
-            public processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
-            public processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
-            public afterRender(): void;
-            public beforeInsert(): void;
-            public afterInsert(): void;
-            public finalize(): void;
         }
         namespace extensions {
             export class Accessibility<T extends Node> extends Extension<T> {}

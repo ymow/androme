@@ -1,11 +1,12 @@
 import { NODE_ALIGNMENT, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Node from './node';
+import Container from './container';
 
-import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
+import { convertInt, hasBit, partition } from '../lib/util';
 import { getNodeFromElement, isUserAgent } from '../lib/dom';
 
-function getDocumentParent(nodes: Node[]) {
+function getDocumentParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {
         if (!node.companion && node.domElement) {
             return node.documentParent;
@@ -14,7 +15,7 @@ function getDocumentParent(nodes: Node[]) {
     return nodes[0].documentParent;
 }
 
-export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
+export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
         let top: T[] = [];
         let right: T[] = [];
@@ -65,27 +66,27 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     public static cleared<T extends Node>(list: T[]) {
-        const nodes = new Map<T, string>();
+        const result = new Map<T, string>();
         const floated = new Set<string>();
-        list.forEach(node => {
+        for (const node of list) {
             if (node.siblingflow) {
                 const clear = node.css('clear');
                 if (floated.size > 0) {
                     if (clear === 'both') {
-                        nodes.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
+                        result.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
                         floated.clear();
                     }
                     else if (floated.has(clear)) {
                         floated.delete(clear);
-                        nodes.set(node, clear);
+                        result.set(node, clear);
                     }
                 }
                 if (node.floating) {
                     floated.add(node.float);
                 }
             }
-        });
-        return nodes;
+        }
+        return result;
     }
 
     public static textBaseline<T extends Node>(list: T[]) {
@@ -95,10 +96,10 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 let nodeTypeA = a.nodeType;
                 let nodeTypeB = b.nodeType;
                 if (a.layoutHorizontal) {
-                    nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                    nodeTypeA = Math.min.apply(null, a.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                 }
                 if (b.layoutHorizontal) {
-                    nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                    nodeTypeB = Math.min.apply(null, b.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                 }
                 return nodeTypeA === nodeTypeB ? (a.id < b.id ? -1 : 1) : (nodeTypeA < nodeTypeB ? -1 : 1);
             });
@@ -299,36 +300,26 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
-        return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element) as T).filter(node => node));
+        return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement<T>(element) as T).filter(node => node));
     }
 
     public delegateAppend?: (node: T) => void;
 
     private _currentId = 0;
-    private readonly _list: T[] = [];
 
-    constructor(
-        nodes?: T[],
-        public parent?: T)
-    {
-        if (Array.isArray(nodes)) {
-            this._list = nodes;
+    constructor(children?: T[]) {
+        super();
+        if (Array.isArray(children)) {
+            this.replace(children);
         }
     }
 
-    public [Symbol.iterator]() {
-        const list = this._list;
-        let i = 0;
-        return {
-            next(): IteratorResult<T> {
-                if (i < list.length) {
-                    return { done: false, value: list[i++] };
-                }
-                else {
-                    return { done: true, value: undefined } as any;
-                }
-            }
-        };
+    public append(node: T, delegate = true) {
+        super.append(node);
+        if (delegate && this.delegateAppend) {
+            this.delegateAppend.call(this, node);
+        }
+        return this;
     }
 
     public reset() {
@@ -337,84 +328,17 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return this;
     }
 
-    public append(node: T, delegate = true) {
-        this._list.push(node);
-        if (delegate && this.delegateAppend) {
-            this.delegateAppend.call(this, node);
-        }
-        return this;
-    }
-
-    public each(predicate: IteratorPredicate<T, void>) {
-        this._list.forEach(predicate);
-        return this;
-    }
-
-    public clear() {
-        this._list.length = 0;
-        return this;
-    }
-
-    public sort(predicate: (a: T, b: T) => number) {
-        this._list.sort(predicate);
-        return this;
-    }
-
-    public sortAsc(...attrs: string[]) {
-        sortAsc(this._list, ...attrs);
-        return this;
-    }
-
-    public sortDesc(...attrs: string[]) {
-        sortDesc(this._list, ...attrs);
-        return this;
-    }
-
-    public get(index?: number): T {
-        if (index == null) {
-            return this._list[this._list.length - 1];
-        }
-        return this._list[index];
-    }
-
-    public remove(start: number, deleteCount = 1) {
-        return this._list.splice(start, deleteCount);
-    }
-
-    public clone(): NodeList<T> {
-        return new NodeList(this._list.slice());
-    }
-
     public partition(predicate: (value: T) => boolean) {
-        const [valid, invalid]: T[][] = partition(this._list, predicate);
+        const [valid, invalid]: T[][] = partition(this.list, predicate);
         return [new NodeList(valid), new NodeList(invalid)];
     }
 
-    public find(attr: string | IteratorPredicate<T, boolean>, value?: any) {
-        if (typeof attr === 'string') {
-            return this._list.find(node => node[attr] === value);
-        }
-        return this._list.find(attr);
-    }
-
-    public sliceSort(predicate: (a: T, b: T) => number) {
-        return new NodeList(this._list.slice().sort(predicate));
-    }
-
-    get length() {
-        return this._list.length;
-    }
-
-    get list() {
-        return this._list;
-    }
-
     get visible() {
-        return this._list.filter(node => node.visible);
+        return this.list.filter(node => node.visible);
     }
 
     get elements() {
-        return this._list.filter(node => node.visible && node.styleElement);
+        return this.list.filter(node => node.visible && node.styleElement);
     }
 
     get nextId() {
@@ -422,9 +346,9 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     get linearX() {
-        return NodeList.linearX(this._list);
+        return NodeList.linearX(this.list);
     }
     get linearY() {
-        return NodeList.linearY(this._list);
+        return NodeList.linearY(this.list);
     }
 }

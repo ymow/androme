@@ -9,9 +9,13 @@ import Extension from '../base/extension';
 
 import { convertAlpha, convertRoman } from '../lib/util';
 
+function hasSingleImage<T extends Node>(node: T) {
+    return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
+}
+
 export default abstract class List<T extends Node> extends Extension<T> {
     public condition() {
-        const children = this.node.children;
+        const children = this.node.list;
         return (
             super.condition() &&
             children.length > 0 && (
@@ -20,8 +24,8 @@ export default abstract class List<T extends Node> extends Extension<T> {
                 (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
                 children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))
             ) && (
-                children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
-                children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))
+                children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
+                children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
             )
         );
     }
@@ -30,20 +34,20 @@ export default abstract class List<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         let output = '';
-        if (NodeList.linearY(node.children)) {
-            output = this.application.writeGridLayout(node, parent, node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
+        if (NodeList.linearY(node.list)) {
+            output = this.application.writeGridLayout(node, parent, node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
         }
         else {
             output = this.application.writeLinearLayout(node, parent, true);
         }
         let i = 0;
-        node.each((item: T) => {
+        for (const item of node) {
             const mainData: ListData = {
                 ordinal: '',
                 imageSrc: '',
                 imagePosition: ''
             };
-            if (item.display === 'list-item' || item.has('listStyleType') || this.hasSingleImage(item)) {
+            if (item.display === 'list-item' || item.has('listStyleType') || hasSingleImage(item)) {
                 let src = item.css('listStyleImage');
                 if (src && src !== 'none') {
                     mainData.imageSrc = src;
@@ -98,7 +102,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
                 i++;
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
-        });
+        }
         return { output, complete: true };
     }
 
@@ -107,9 +111,5 @@ export default abstract class List<T extends Node> extends Extension<T> {
             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
             node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
         }
-    }
-
-    private hasSingleImage(node: T) {
-        return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
     }
 }

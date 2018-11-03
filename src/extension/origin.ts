@@ -1,6 +1,7 @@
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 import Node from '../base/node';
+import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 
 import { convertInt, formatPX } from '../lib/util';
@@ -13,8 +14,8 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
             node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
             node.setBounds(true);
         }
-        Array.from(this.application.cacheProcessing.elements).forEach(node => {
-            const outside = node.children.some(current => {
+        for (const node of Array.from(this.application.cacheProcessing.elements)) {
+            const outside = node.some(current => {
                 if (current.pageflow) {
                     return (
                         current.float !== 'right' &&
@@ -32,7 +33,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
             if (outside) {
                 const marginLeft: number[] = [];
                 const marginRight: T[] = [];
-                node.each((current: T) => {
+                for (const current of node) {
                     let leftType = 0;
                     if (current.pageflow) {
                         const left = current.marginLeft;
@@ -50,21 +51,21 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         }
                         else if (right < 0) {
                             if (Math.abs(right) >= current.bounds.width) {
-                                marginRight.push(current);
+                                marginRight.push(current as T);
                             }
                         }
                     }
                     marginLeft.push(leftType);
-                });
+                }
                 if (marginRight.length > 0) {
-                    const [sectionLeft, sectionRight] = new androme.lib.base.NodeList(node.children).partition((item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = new NodeList(node.list).partition((item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
                         if (node.style.marginLeft && node.autoMarginLeft) {
                             node.css('marginLeft', node.style.marginLeft);
                         }
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                        const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
-                        const widthRight: number = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
+                        const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.map(item => item.bounds.width));
+                        const widthRight: number = Math.max.apply(null, sectionRight.map(item => Math.abs(item.toInt('right'))));
                         sectionLeft.each(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
                     }
@@ -90,6 +91,6 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     modifyMarginLeft(node, node.marginLeft, true);
                 }
             }
-        });
+        }
     }
 }

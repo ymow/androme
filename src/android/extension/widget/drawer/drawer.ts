@@ -50,7 +50,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         else {
             const optionsNavigationView = Object.assign({}, this.options.navigationView);
             $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
-            const navView = node.children[node.children.length - 1] as T;
+            const navView = node.item() as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
@@ -108,7 +108,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     public afterInsert() {
         const element = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
         if (element) {
-            const header = $dom.getNodeFromElement(element) as T;
+            const header = $dom.getNodeFromElement<T>(element);
             if (header && !header.hasHeight) {
                 header.android('layout_height', 'wrap_content');
             }

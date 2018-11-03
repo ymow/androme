@@ -29,10 +29,10 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 columnCount = $util.convertInt(parent.android('columnCount'));
                 paddingLeft += parentLeft;
             }
-            else if (parent.children[0] === node) {
+            else if (parent.item(0) === node) {
                 paddingLeft += parentLeft;
             }
-            const ordinal = <T> node.children.find(item =>
+            const ordinal = <T> node.find(item =>
                 item.float === 'left' &&
                 $util.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
                 Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))
@@ -40,10 +40,10 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
             if (ordinal && mainData.ordinal === '') {
                 let output = '';
                 ordinal.parent = parent;
-                if (ordinal.inlineText || ordinal.children.length === 0) {
+                if (ordinal.inlineText || ordinal.length === 0) {
                     output = controller.renderNode(ordinal, parent, $enum.NODE_STANDARD.TEXT);
                 }
-                else if (ordinal.children.every(item => item.pageflow)) {
+                else if (ordinal.every(item => item.pageflow)) {
                     output = controller.renderGroup(ordinal, parent, $enum.NODE_STANDARD.RELATIVE);
                 }
                 else {

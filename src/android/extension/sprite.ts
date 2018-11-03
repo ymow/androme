@@ -22,7 +22,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
             container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
             container.setNodeType(NODE_ANDROID.FRAME);
             container.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
-            parent.replaceChild(node, container);
+            parent.replaceNode(node, container);
             container.render(parent);
             this.application.cacheProcessing.append(container, false);
             node.parent = container;

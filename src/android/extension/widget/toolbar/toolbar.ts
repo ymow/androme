@@ -63,7 +63,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const collapsingToolbarChildren: T[] = [];
         let output: string;
         let depth = target ? 0 : node.depth;
-        let children = node.children.filter(item => item.auto).length;
+        let children = node.filter(item => item.auto).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 if ($util.hasValue(element.dataset.navigationIcon)) {
@@ -89,7 +89,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 children--;
             }
             else {
-                const targetNode = $dom.getNodeFromElement(element) as T;
+                const targetNode = $dom.getNodeFromElement<T>(element);
                 if (targetNode) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':

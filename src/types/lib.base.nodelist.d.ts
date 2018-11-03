@@ -1,6 +1,17 @@
 declare global {
     namespace androme.lib.base {
-        export class NodeList<T extends Node> implements Iterable<T> {
+        export interface NodeList<T extends Node> extends Container<T>, Iterable<T> {
+            delegateAppend?: (node: T) => void;
+            readonly visible: T[];
+            readonly elements: T[];
+            readonly nextId: number;
+            readonly linearX: boolean;
+            readonly linearY: boolean;
+            append(node: T, delegate?: boolean): this;
+            reset(): void;
+            partition(predicate: (value: T) => boolean): NodeList<T>[];
+        }
+        export class NodeList<T extends Node> implements NodeList<T> {
             public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;
             public static floated<T>(list: T[]): Set<string>;
             public static cleared<T>(list: T[]): Map<T, string>;
@@ -9,30 +20,7 @@ declare global {
             public static linearY<T>(list: T[]): boolean;
             public static sortByAlignment<T>(list: T[], alignmentType?: number, parent?: T): boolean;
             public static siblingIndex(): number;
-            public parent?: T;
-            public delegateAppend?: (node: T) => void;
-            public readonly length: number;
-            public readonly list: T[];
-            public readonly visible: T[];
-            public readonly elements: T[];
-            public readonly nextId: number;
-            public readonly linearX: boolean;
-            public readonly linearY: boolean;
-            constructor(nodes?: T[], parent?: T);
-            public [Symbol.iterator](): Iterator<T>;
-            public reset(): this;
-            public append(node: T, delegate?: boolean): this;
-            public each(predicate: IteratorPredicate<T, void>): this;
-            public sort(predicate: (a: T, b: T) => number): this;
-            public clear(): this;
-            public sortAsc(...attrs: string[]): this;
-            public sortDesc(...attrs: string[]): this;
-            public get(index?: number): T;
-            public remove(start: number, deleteCount?: number): T[];
-            public clone(): NodeList<T>;
-            public sliceSort(predicate: (a: T, b: T) => number): NodeList<T>;
-            public partition(predicate: (value: T) => boolean): NodeList<T>[];
-            public find(attr: string | IteratorPredicate<T, boolean>, value?: any): T | undefined;
+            constructor(children?: T[]);
         }
     }
 }

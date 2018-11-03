@@ -8,7 +8,7 @@ import { getNodeFromElement } from '../lib/dom';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {
-        Array.from(this.application.cacheProcessing.elements).forEach(node => {
+        for (const node of Array.from(this.application.cacheProcessing.elements)) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 if (element instanceof HTMLInputElement) {
@@ -16,8 +16,8 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                         case 'radio':
                         case 'checkbox':
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = getNodeFromElement(sibling) as T;
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) as T : null;
+                                const label = getNodeFromElement<T>(sibling);
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : null;
                                 if (label && label.visible && label.pageflow) {
                                     if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         node.companion = label;
@@ -39,6 +39,6 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                     }
                 }
             }
-        });
+        }
     }
 }

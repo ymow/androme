@@ -46,7 +46,7 @@ const VALIDATE_GROUP = {
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
 function hasInputType(node: View, value: string) {
-    return node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value);
+    return node.some(item => (<HTMLInputElement> item.element).type === value);
 }
 
 export default class Menu<T extends View> extends androme.lib.base.extensions.Nav<T> {
@@ -87,8 +87,8 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
         let title = '';
         let next = false;
         let layout = false;
-        if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
-            if (node.children.some(item => item.tagName === 'NAV')) {
+        if (node.some(item => (!item.inlineElement || !item.blockStatic) && item.length > 0)) {
+            if (node.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
                     title = element.title;
                 }
@@ -119,10 +119,10 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
             else {
                 nodeName = VIEW_NAVIGATION.GROUP;
                 let checkable = '';
-                if (node.children.every((item: T) => hasInputType(item, 'radio'))) {
+                if (node.every((item: T) => hasInputType(item, 'radio'))) {
                     checkable = 'single';
                 }
-                else if (node.children.every((item: T) => hasInputType(item, 'checkbox'))) {
+                else if (node.every((item: T) => hasInputType(item, 'checkbox'))) {
                     checkable = 'all';
                 }
                 options.android.checkableBehavior = checkable;
@@ -147,7 +147,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                         options.android.icon = `@drawable/${src}`;
                     }
                     else {
-                        const image = node.children.find(item => item.imageElement);
+                        const image = node.find(item => item.imageElement);
                         if (image) {
                             src = $resource_android.addImageSrcSet(<HTMLImageElement> image.element, $const_android.DRAWABLE_PREFIX.MENU);
                             if (src !== '') {

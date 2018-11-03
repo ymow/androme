@@ -8,15 +8,15 @@ import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.Accessibility<T> {
     public afterRender() {
-        Array.from(this.application.cacheProcessing.elements).forEach(node => {
+        for (const node of Array.from(this.application.cacheProcessing.elements)) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 switch (node.controlName) {
                     case NODE_ANDROID.EDIT:
                         if (!node.companion) {
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = $dom.getNodeFromElement(sibling) as T;
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getNodeFromElement(sibling.parentElement) as T : null;
+                                const label = $dom.getNodeFromElement<T>(sibling);
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getNodeFromElement<T>(sibling.parentElement) : null;
                                 if (label && label.visible && label.pageflow) {
                                     if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         label.android('labelFor', node.stringId);
@@ -40,6 +40,6 @@ export default class <T extends View> extends androme.lib.base.extensions.Access
                         break;
                 }
             }
-        });
+        }
     }
 }

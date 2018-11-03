@@ -19,21 +19,21 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const table: T[] = [];
-        const thead = node.children.filter(item => item.tagName === 'THEAD');
-        const tbody = node.children.filter(item => item.tagName === 'TBODY');
-        const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
+        const thead = node.filter(item => item.tagName === 'THEAD');
+        const tbody = node.filter(item => item.tagName === 'TBODY');
+        const tfoot = node.filter(item => item.tagName === 'TFOOT');
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
         if (thead.length > 0) {
             thead[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(thead[0], 'styleMap'));
-            table.push(...thead[0].children as T[]);
+            table.push(...thead[0].list as T[]);
             thead.forEach(item => item.hide());
         }
         if (tbody.length > 0) {
             tbody.forEach(item => {
-                table.push(...item.children as T[]);
+                table.push(...item.list as T[]);
                 item.hide();
             });
         }
@@ -41,7 +41,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             tfoot[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(tfoot[0], 'styleMap'));
-            table.push(...tfoot[0].children as T[]);
+            table.push(...tfoot[0].list as T[]);
             tfoot.forEach(item => item.hide());
         }
         const tableFixed = node.css('tableLayout') === 'fixed';
@@ -71,9 +71,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         let multiLine = false;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
-            for (let j = 0; j < tr.children.length; j++) {
-                const td = tr.children[j];
-                const element = <HTMLTableCellElement> tr.children[j].element;
+            for (let j = 0; j < tr.length; j++) {
+                const td = tr.item(j) as T;
+                const element = <HTMLTableCellElement> td.element;
                 for (let k = 0; k < element.rowSpan - 1; k++)  {
                     const l = (i + 1) + k;
                     if (columnIndex[l] != null) {
@@ -134,7 +134,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 td.css({
                     marginTop: i === 0 ? '0px' : spacingHeight,
-                    marginRight: j < tr.children.length - 1 ? spacingWidth : '0px',
+                    marginRight: j < tr.length - 1 ? spacingWidth : '0px',
                     marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                     marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
                 });
@@ -181,7 +181,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
             if (mapWidth.every(value => value === mapWidth[0])) {
                 if (multiLine) {
-                    return node.children.some(td => td.has('height')) ? 2 : 3;
+                    return node.some(td => td.has('height')) ? 2 : 3;
                 }
                 if (mapWidth[0] === 'auto') {
                     return node.has('width') ? 3 : 0;
@@ -198,8 +198,8 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
-        const caption = node.children.find(item => item.tagName === 'CAPTION');
-        node.children.length = 0;
+        const caption = node.find(item => item.tagName === 'CAPTION');
+        node.clear();
         if (caption) {
             if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
@@ -212,7 +212,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         let borderInside = 0;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
-            const children = tr.children.slice();
+            const children = tr.duplicate();
             for (let j = 0; j < children.length; j++) {
                 const td = children[j] as T;
                 const element = <HTMLTableCellElement> td.element;

@@ -35,9 +35,10 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
             'wrap_content',
             node
         );
-        for (let i = 5; i < node.children.length; i++) {
-            node.children[i].hide();
-            node.children[i].cascade().forEach(item => item.hide());
+        for (let i = 5; i < node.length; i++) {
+            const item = node.item(i) as T;
+            item.hide();
+            item.cascade().forEach(child => child.hide());
         }
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         node.render(parent);

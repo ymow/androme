@@ -3,6 +3,8 @@ import { DOM_REGEX } from './constant';
 
 import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
+type T = androme.lib.base.Node;
+
 export function isUserAgent(value: number) {
     let client = USER_AGENT.CHROME;
     if (navigator.userAgent.indexOf('Edge') !== -1) {
@@ -98,7 +100,7 @@ export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {
 export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
     if (element) {
         if (cache) {
-            const node = getNodeFromElement(element);
+            const node = getNodeFromElement<T>(element);
             const style = getElementCache(element, 'style');
             if (style) {
                 return style;
@@ -123,7 +125,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
 
 export function getBoxSpacing(element: Element, complete = false, merge = false) {
     const result = {};
-    const node = getNodeFromElement(element);
+    const node = getNodeFromElement<T>(element);
     const style = getStyle(element);
     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
         let total = 0;
@@ -186,7 +188,7 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
 
 export function cssFromParent(element: Element, attr: string) {
     if (isStyleElement(element) && element.parentElement) {
-        const node = getNodeFromElement(element);
+        const node = getNodeFromElement<T>(element);
         const style = getStyle(element);
         return (
             style &&
@@ -301,6 +303,36 @@ export function parseBackgroundPosition(value: string, dimension: BoxDimensions,
     return result;
 }
 
+export function getFirstElementChild(elements: Element[]) {
+    if (elements.length > 0) {
+        const parentElement = elements[0].parentElement;
+        if (parentElement) {
+            for (let i = 0; i < parentElement.childNodes.length; i++) {
+                const element = <Element> parentElement.childNodes[i];
+                if (elements.includes(element)) {
+                    return element;
+                }
+            }
+        }
+    }
+    return undefined;
+}
+
+export function getLastElementChild(elements: Element[]) {
+    if (elements.length > 0) {
+        const parentElement = elements[0].parentElement;
+        if (parentElement) {
+            for (let i = parentElement.childNodes.length - 1; i >= 0; i--) {
+                const element = <Element> parentElement.childNodes[i];
+                if (elements.includes(element)) {
+                    return element;
+                }
+            }
+        }
+    }
+    return undefined;
+}
+
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
     let depth = -1;
     function findFreeForm(elements: any[]): boolean {
@@ -360,7 +392,7 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
 
 export function hasLineBreak(element: Null<Element>) {
     if (element) {
-        const node = getNodeFromElement(element);
+        const node = getNodeFromElement<T>(element);
         const fromParent = element.nodeName === '#text';
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
@@ -375,7 +407,7 @@ export function hasLineBreak(element: Null<Element>) {
 }
 
 export function isLineBreak(element: Null<Element>, excluded = true) {
-    const node = getNodeFromElement(element);
+    const node = getNodeFromElement<T>(element);
     if (node) {
         return (
             node.tagName === 'BR' ||
@@ -409,7 +441,7 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
                     result = result.filter(element => element.nodeName !== '#comment');
                 }
                 if (cacheNode) {
-                    result = result.filter(element => getNodeFromElement(element));
+                    result = result.filter(element => getNodeFromElement<T>(element));
                 }
                 return result;
             }
@@ -418,7 +450,7 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
     return [];
 }
 
-export function isStyleElement(element: Element): element is HTMLElement {
+export function isStyleElement(element: Null<Element>): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
@@ -468,7 +500,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
     return false;
 }
 
-export function findNestedExtension(element: Element, name: string): HTMLElement | undefined {
+export function findNestedExtension(element: Element, name: string) {
     if (isStyleElement(element)) {
         return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }
@@ -493,6 +525,6 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
+export function getNodeFromElement<T>(element: Null<Element>): Null<T> {
     return element ? getElementCache(element, 'node') : null;
 }

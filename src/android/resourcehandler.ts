@@ -113,7 +113,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
 export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
     public static formatOptions(options: {}, settings: SettingsAndroid) {
         for (const namespace in options) {
-            const obj: ObjectMap<any> = options[namespace];
+            const obj: ExternalData = options[namespace];
             if (typeof obj === 'object') {
                 for (const attr in obj) {
                     if (obj.hasOwnProperty(attr)) {
@@ -322,7 +322,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         if (this.settings.dimensResourceValue) {
             callbackArray.push(this.processDimensions(viewData));
         }
-        viewData.cache.each(node => {
+        for (const node of viewData.cache) {
             const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
                 const map = new Map<string, number>();
@@ -390,7 +390,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
             }
-        });
+        }
         for (const name in styles) {
             $resource.STORED.styles.set(name, {
                 name,
@@ -403,7 +403,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public setBoxStyle() {
         super.setBoxStyle();
-        for (const node of this.cache.elements) {
+        this.cache.elements.forEach(node => {
             const stored: BoxStyle = $dom.getElementCache(node.element, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
                 function checkPartialBackgroundPosition(current: string, adjacent: string, defaultPosition: string) {
@@ -513,7 +513,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         stored.borderBottom,
                         stored.borderLeft
                     ];
-                    borders.forEach((item: BorderAttribute) => {
+                    borders.forEach(item => {
                         if ($resource.isBorderVisible(item)) {
                             item.color = ResourceHandler.addColor(item.color);
                         }
@@ -961,7 +961,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     node.formatted($util.formatString(FONT_STYLE.backgroundColor, stored.backgroundColor), node.renderExtension.size === 0);
                 }
             }
-        }
+        });
     }
 
     public setFontStyle() {
@@ -1216,11 +1216,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const stored: Svg = $dom.getElementCache(node.element, 'imageSource');
                 if (stored) {
                     let vectorName = '';
-                    if (stored.children.length > 0) {
+                    if (stored.length > 0) {
                         const namespace = new Set<string>();
                         const groups: StringMap[] = [];
-                        for (let i = 0; i < stored.children.length; i++) {
-                            const group = stored.children[i];
+                        for (const group of stored) {
                             const data: TemplateData = {
                                 name: group.name,
                                 '2': []
@@ -1250,7 +1249,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 }
                                 setPivotXY(data, transform.origin);
                             }
-                            for (const item of group.children) {
+                            for (const item of group) {
                                 const clipPaths: TemplateData[] = [];
                                 if (item.clipPath !== '') {
                                     const clipPath = stored.defs.clipPath.get(item.clipPath);
@@ -1494,7 +1493,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     private processFontStyle(viewData: ViewData<NodeList<T>>) {
-        function deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
+        type NumberMap = ObjectMap<number[]>;
+        function deleteStyleAttribute(sorted: NumberMap[], attrs: string, ids: number[]) {
             attrs.split(';').forEach(value => {
                 for (let i = 0; i < sorted.length; i++) {
                     if (sorted[i]) {
@@ -1564,13 +1564,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     sorted.length = 0;
                 }
                 else {
-                    const styleKey: ObjectMap<number[]> = {};
-                    const layoutKey: ObjectMap<number[]> = {};
+                    const styleKey: NumberMap = {};
+                    const layoutKey: NumberMap = {};
                     for (let i = 0; i < sorted.length; i++) {
                         if (!sorted[i]) {
                             continue;
                         }
-                        const filtered: ObjectMap<number[]> = {};
+                        const filtered: NumberMap = {};
                         const combined: ObjectMap<Set<string>> = {};
                         const deleteKeys = new Set<string>();
                         for (const attr1 in sorted[i]) {
@@ -1590,7 +1590,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 revalidate = true;
                             }
                             if (!revalidate) {
-                                const found: ObjectMap<number[]> = {};
+                                const found: NumberMap = {};
                                 let merged = false;
                                 for (let j = 0; j < sorted.length; j++) {
                                     if (i !== j && sorted[j]) {
@@ -1663,7 +1663,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             delete sorted[i];
                         }
                     }
-                    sorted = sorted.filter((item: ObjectMap<number[]>) => {
+                    sorted = sorted.filter(item => {
                         if (item) {
                             for (const attr in item) {
                                 if (item[attr] && item[attr].length > 0) {
@@ -1706,7 +1706,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     mapNode[id].styles.push(group.name);
                 }
             }
-            const tagData = <ObjectMap<number[]>> layout[tagName];
+            const tagData = <NumberMap> layout[tagName];
             if (tagData) {
                 for (const attr in tagData) {
                     for (const id of tagData[attr]) {
@@ -1767,7 +1767,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
             group[dimen].push(node);
         }
-        data.cache.visible.forEach(node => {
+        for (const node of data.cache.visible) {
             const nodeName = node.nodeName.toLowerCase();
             if (groups[nodeName] == null) {
                 groups[nodeName] = {};
@@ -1788,7 +1788,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const [obj, attr, dimen] = value.split(':');
                 addToGroup(groups[nodeName], node, dimen, attr, node[obj](attr));
             });
-        });
+        }
         for (const nodeName in groups) {
             const group: ObjectMap<T[]> = groups[nodeName];
             for (const name in group) {

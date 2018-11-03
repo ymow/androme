@@ -10,7 +10,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
     public condition() {
         const node = this.node;
         let valid = false;
-        if (node.hasWidth && node.hasHeight && node.children.length === 0 && !node.inlineText) {
+        if (node.hasWidth && node.hasHeight && node.length === 0 && !node.inlineText) {
             let url = node.css('backgroundImage');
             if (!url || url === 'none') {
                 url = '';

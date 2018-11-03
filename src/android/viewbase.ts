@@ -50,8 +50,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public constraint: Constraint;
-        public children: View[] = [];
         public readonly renderChildren: View[] = [];
+        public renderExtension = new Set<androme.lib.base.Extension<View>>();
 
         protected _namespaces = new Set(['android', 'app']);
         protected _controlName: string;
@@ -280,7 +280,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             node.renderExtension = this.renderExtension;
             node.documentRoot = this.documentRoot;
             if (children) {
-                node.children = this.children.slice();
+                node.replace(this.duplicate());
             }
             node.inherit(this, 'initial', 'base', 'style', 'styleMap');
             return node;
@@ -846,29 +846,28 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         private setBlockSpacing() {
             if (this.pageflow) {
                 const renderParent = this.renderParent;
-                if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                    [
-                        ['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
-                        ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]
-                    ]
-                    .forEach((item: [string, string, number, number], index: number) => {
-                        const node = $dom.getNodeFromElement(renderParent[item[0]]) as View;
-                        if (node && !node.lineBreak && (
-                                node === this ||
-                                node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]
-                           ))
-                        {
-                            const marginOffset = renderParent[`margin${item[1]}`];
-                            if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
-                                node.modifyBox(item[2], null);
+                if (this.documentParent === renderParent && !renderParent.documentBody && renderParent.blockStatic) {
+                    const elements = this.map(item => item.baseElement);
+                    [[$dom.getFirstElementChild(elements), 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
+                     [$dom.getLastElementChild(elements), 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]]
+                        .forEach((item: [HTMLElement, string, number, number], index: number) => {
+                            const node = $dom.getNodeFromElement<View>(item[0]);
+                            if (node && !node.lineBreak && (
+                                    node === this ||
+                                    node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]
+                            ))
+                            {
+                                const marginOffset = renderParent[`margin${item[1]}`];
+                                if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
+                                    node.modifyBox(item[2], null);
+                                }
                             }
-                        }
-                    });
+                        });
                 }
                 if (this.htmlElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {
                         const element = this.element.children[i];
-                        const node = $dom.getNodeFromElement(element) as View;
+                        const node = $dom.getNodeFromElement<View>(element);
                         if (node && node.pageflow && node.blockStatic && !node.lineBreak) {
                             const previous = node.previousSibling();
                             if (previous && previous.pageflow && !previous.lineBreak) {
@@ -884,7 +883,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 }
                             }
                             [element.previousElementSibling, element.nextElementSibling].forEach((item, index) => {
-                                const adjacent = $dom.getNodeFromElement(item) as View;
+                                const adjacent = $dom.getNodeFromElement<View>(item);
                                 if (adjacent && adjacent.excluded) {
                                     const offset = Math.min(adjacent.marginTop, adjacent.marginBottom);
                                     if (offset < 0) {
@@ -1061,12 +1060,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     })();
                     const elements = $dom.getElementsBetweenSiblings(
                         previous
-                            ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement)
+                            ? (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement)
                             : null,
                         node.baseElement
                     )
                     .filter(element => {
-                        const item = $dom.getNodeFromElement(element) as View;
+                        const item = $dom.getNodeFromElement<View>(element);
                         return item && (item.lineBreak || (item.excluded && item.blockStatic));
                     });
                     if (elements.length > 0) {

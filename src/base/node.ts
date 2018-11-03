@@ -1,6 +1,7 @@
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
 import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
 
+import Container from './container';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
@@ -8,10 +9,10 @@ import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRa
 
 type T = Node;
 
-export default abstract class Node implements androme.lib.base.Node {
-    public abstract children: T[];
+export default abstract class Node extends Container<T> implements androme.lib.base.Node {
     public abstract constraint: {};
     public abstract readonly renderChildren: T[];
+    public abstract renderExtension: Set<Extension<T>>;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public nodeId: string;
@@ -28,7 +29,6 @@ export default abstract class Node implements androme.lib.base.Node {
     public excludeSection = 0;
     public excludeProcedure = 0;
     public excludeResource = 0;
-    public renderExtension = new Set<Extension<T>>();
     public documentRoot = false;
     public auto = true;
     public visible = true;
@@ -62,6 +62,7 @@ export default abstract class Node implements androme.lib.base.Node {
         public readonly id: number,
         element?: Element)
     {
+        super();
         this.initial = {
             depth: -1,
             children: [],
@@ -139,7 +140,7 @@ export default abstract class Node implements androme.lib.base.Node {
         return this[name][attr] || '';
     }
 
-    public get(obj: string): StringMap {
+    public namespace(obj: string): StringMap {
         const name = `_${obj || '_'}`;
         return this[name] || {};
     }
@@ -173,7 +174,7 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public each(predicate: IteratorPredicate<T, void>, rendered = false) {
-        (rendered ? this.renderChildren : this.children).forEach(predicate);
+        (rendered ? this.renderChildren : this.list).forEach(predicate);
         return this;
     }
 
@@ -217,8 +218,8 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public cascade() {
         function cascade(node: T) {
-            const current = [...node.children];
-            for (const item of node.children) {
+            const current = [...node.list];
+            for (const item of node.list) {
                 current.push(...cascade(item));
             }
             return current;
@@ -400,7 +401,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
         if (this.baseElement) {
-            let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement) as T;
+            let current = startChild ? this : getNodeFromElement<T>(this.baseElement.parentElement);
             while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
@@ -409,7 +410,7 @@ export default abstract class Node implements androme.lib.base.Node {
                     }
                     break;
                 }
-                current = getNodeFromElement(current.baseElement.parentElement) as T;
+                current = getNodeFromElement<T>(current.baseElement.parentElement);
             }
         }
         return result;
@@ -607,9 +608,9 @@ export default abstract class Node implements androme.lib.base.Node {
         }
     }
 
-    public getParentElementAsNode(negative = false, containerDefault?: T) {
+    public getParentElementAsNode(negative = false) {
         if (this._element) {
-            let parent: Null<T> = getNodeFromElement(this._element.parentElement) as T;
+            let parent = getNodeFromElement<T>(this._element.parentElement);
             if (!this.pageflow) {
                 let found = false;
                 let previous: Null<T> = null;
@@ -657,10 +658,10 @@ export default abstract class Node implements androme.lib.base.Node {
                         }
                     }
                     previous = parent;
-                    parent = getNodeFromElement(parent.element.parentElement) as T;
+                    parent = getNodeFromElement<T>(parent.element.parentElement);
                 }
-                if (!found) {
-                    parent = outside && containerDefault ? containerDefault : relativeParent;
+                if (!found && !outside) {
+                    parent = relativeParent;
                 }
             }
             return parent;
@@ -668,19 +669,10 @@ export default abstract class Node implements androme.lib.base.Node {
         return null;
     }
 
-    public removeChild(node: T) {
-        for (let i = 0; i < this.children.length; i++) {
-            if (node === this.children[i]) {
-                this.children.splice(i, 1);
-                break;
-            }
-        }
-    }
-
-    public replaceChild(node: Node, withNode: Node, append = true) {
-        for (let i = 0; i < this.children.length; i++) {
-            if (node === this.children[i]) {
-                this.children[i] = withNode;
+    public replaceNode(node: Node, withNode: Node, append = true) {
+        for (let i = 0; i < this.length; i++) {
+            if (node === this.item(i)) {
+                this.item(i, withNode);
                 withNode.parent = this;
                 return true;
             }
@@ -738,7 +730,7 @@ export default abstract class Node implements androme.lib.base.Node {
             element = list.length > 0 ? <Element> list[0].element.previousSibling : null;
         }
         while (element) {
-            const node = getNodeFromElement(element) as T;
+            const node = getNodeFromElement<T>(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
@@ -763,7 +755,7 @@ export default abstract class Node implements androme.lib.base.Node {
             element = list.length > 0 ? <Element> list[0].element.nextSibling : null;
         }
         while (element) {
-            const node = getNodeFromElement(element) as T;
+            const node = getNodeFromElement<T>(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) &&
@@ -829,13 +821,13 @@ export default abstract class Node implements androme.lib.base.Node {
     set parent(value) {
         if (value !== this._parent) {
             if (this._parent) {
-                this._parent.removeChild(this);
+                this._parent.remove(this);
             }
             this._parent = value;
         }
         if (value) {
-            if (!value.children.includes(this)) {
-                value.children.push(this);
+            if (!value.contains(this)) {
+                value.append(this);
                 if (!value.styleElement && this.siblingIndex !== -1) {
                     value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                 }
@@ -967,7 +959,7 @@ export default abstract class Node implements androme.lib.base.Node {
         if (this.rendered) {
             if (this._lineHeight == null) {
                 this._lineHeight = 0;
-                if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
+                if (this.length === 0 && !this.renderParent.linearHorizontal) {
                     const lineHeight = this.toInt('lineHeight');
                     if (this.inlineElement) {
                         this._lineHeight = lineHeight || this.documentParent.toInt('lineHeight');
@@ -1093,7 +1085,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         hasFreeFormText(this._element) &&
                         (this.initial.children.length === 0 || this.initial.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
-                            const node = getNodeFromElement(element) as T;
+                            const node = getNodeFromElement<T>(element);
                             return !!node && !node.lineBreak && (!node.excluded || !node.visible);
                         }))
                     );
@@ -1246,11 +1238,7 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     get nodes() {
-        return this.rendered ? this.renderChildren : this.children;
-    }
-
-    get length() {
-        return this.nodes.length;
+        return this.rendered ? this.renderChildren : this.list;
     }
 
     get previousElementSibling() {
@@ -1270,38 +1258,6 @@ export default abstract class Node implements androme.lib.base.Node {
                 return element;
             }
             element = <Element> element.nextSibling;
-        }
-        return null;
-    }
-
-    get firstElementChild() {
-        const element = this.baseElement;
-        if (isStyleElement(element)) {
-            for (let i = 0; i < element.childNodes.length; i++) {
-                const childElement = <Element> element.childNodes[i];
-                if (childElement instanceof Element) {
-                    return childElement;
-                }
-                else if (isPlainText(childElement)) {
-                    return childElement;
-                }
-            }
-        }
-        return null;
-    }
-
-    get lastElementChild() {
-        const element = this.baseElement;
-        if (isStyleElement(element)) {
-            for (let i = element.childNodes.length - 1; i >= 0; i--) {
-                const childElement = <Element> element.childNodes[i];
-                if (childElement instanceof Element) {
-                    return childElement;
-                }
-                else if (isPlainText(childElement)) {
-                    return childElement;
-                }
-            }
         }
         return null;
     }

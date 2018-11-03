@@ -16,12 +16,12 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         const node = this.node;
         return (
             this.included() ||
-            (node.children.length > 1 && (
-                (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
-                (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+            (node.length > 1 && (
+                (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
+                (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
                     node.css('listStyle') === 'none' ||
-                    node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
+                    node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
+                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
                 ))
             ))
         );
@@ -42,10 +42,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             const dimensions: number[][] = [];
             node.each((item, index: number) => {
                 dimensions[index] = [];
-                for (let l = 0; l < item.children.length; l++) {
-                    dimensions[index].push(item.children[l].bounds.width);
-                }
-                columns.push(item.children.slice() as T[]);
+                item.each(subitem => dimensions[index].push(subitem.bounds.width));
+                columns.push(item.duplicate() as T[]);
             });
             const base = columns[
                 dimensions.findIndex(item => {
@@ -216,13 +214,10 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 mainData.columnEnd[mainData.columnEnd.length - 1] = node.box.right;
             }
         }
-        if (columns.length > 1 && columns[0].length === node.children.length) {
+        if (columns.length > 1 && columns[0].length === node.length) {
             mainData.columnCount = columnBalance ? columns[0].length : columns.length;
             output = this.application.writeGridLayout(node, parent, mainData.columnCount);
-            node.children.slice().forEach(item => {
-                node.removeChild(item);
-                item.hide();
-            });
+            node.duplicate().forEach(item => node.remove(item) && item.hide());
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -285,7 +280,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
             }
-            sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
+            sortAsc(node.list, 'documentParent.siblingIndex', 'siblingIndex');
             if (node.display === 'table') {
                 if (node.css('borderCollapse') === 'collapse') {
                     node.modifyBox(BOX_STANDARD.PADDING_TOP, null);
@@ -314,7 +309,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings = Array.from(node.documentParent.element.children).map(element => {
-                    const item = getNodeFromElement(element) as T;
+                    const item = getNodeFromElement<T>(element);
                     return (
                         item &&
                         item.visible &&

@@ -5,5 +5,7 @@
       { "modules": false }
     ]
   ],
-  "plugins": []
+  "plugins": [
+    ["@babel/plugin-transform-for-of", { "loose": true }]
+  ]
 }
