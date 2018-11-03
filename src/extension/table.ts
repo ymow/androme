@@ -44,7 +44,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             table.push(...tfoot[0].list as T[]);
             tfoot.forEach(item => item.hide());
         }
-        const tableFixed = node.css('tableLayout') === 'fixed';
+        const layoutFixed = node.css('tableLayout') === 'fixed';
         const borderCollapse = node.css('borderCollapse') === 'collapse';
         const [horizontal, vertical] = borderCollapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value));
         if (horizontal > 0) {
@@ -67,10 +67,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const spacingHeight = formatPX(vertical > 1 ? Math.round(vertical / 2) : vertical);
         const mapWidth: string[] = [];
         const mapBounds: number[] = [];
+        const rowWidth: number[] = [];
         let columnIndex = new Array(table.length).fill(0);
         let multiLine = false;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
+            rowWidth[i] = horizontal;
             for (let j = 0; j < tr.length; j++) {
                 const td = tr.item(j) as T;
                 const element = <HTMLTableCellElement> td.element;
@@ -106,7 +108,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
-                if (i === 0 || mapWidth[m] == null || !tableFixed) {
+                if (i === 0 || mapWidth[m] == null || !layoutFixed) {
                     if (!columnWidth || columnWidth === 'auto') {
                         if (mapWidth[m] == null) {
                             mapWidth[m] = columnWidth || '0px';
@@ -141,6 +143,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 if (!multiLine) {
                     multiLine = td.multiLine;
                 }
+                if (td.length > 0 || td.inlineText) {
+                    rowWidth[i] += td.bounds.width + horizontal;
+                }
                 columnIndex[i] += element.colSpan;
             }
         }
@@ -169,7 +174,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
             else if (pxWidth > node.viewWidth) {
                 node.css('width', 'auto');
-                if (!tableFixed) {
+                if (!layoutFixed) {
                     node.cascade().forEach(item => item.css('width', 'auto'));
                 }
             }
@@ -203,6 +208,18 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         if (caption) {
             if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
+            }
+            if (!caption.hasWidth) {
+                if (caption.textElement) {
+                    if (!caption.has('maxWidth')) {
+                        caption.css('maxWidth', formatPX(caption.bounds.width));
+                    }
+                }
+                else {
+                    if (caption.bounds.width > Math.max.apply(null, rowWidth)) {
+                        setBoundsWidth(caption as T);
+                    }
+                }
             }
             rowCount++;
             caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
@@ -276,7 +293,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                                     td.data(EXT_NAME.TABLE, 'downsized', false);
                                 }
                                 else {
-                                    if (tableFixed) {
+                                    if (layoutFixed) {
                                         setAutoWidth(td);
                                         td.data(EXT_NAME.TABLE, 'downsized', true);
                                     }
@@ -301,7 +318,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                                 td.css('width', '0px');
                             }
                             else {
-                                if (tableFixed) {
+                                if (layoutFixed) {
                                     td.data(EXT_NAME.TABLE, 'downsized', true);
                                 }
                                 else {

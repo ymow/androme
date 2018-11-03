@@ -5,15 +5,12 @@ import { DOM_REGEX } from '../lib/constant';
 import Node from './node';
 import NodeList from './nodelist';
 import Svg from './svg';
-import SvgGroup from './svggroup';
-import SvgImage from './svgimage';
-import SvgPath from './svgpath';
 import Application from './application';
 import File from './file';
 
-import { convertInt, convertPX, hasValue, isNumber, isPercent, isString, resolvePath } from '../lib/util';
-import { cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
-import { replaceEntities } from '../lib/xml';
+import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
+import { cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
+import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -502,19 +499,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     else if (node.inlineText) {
                         name = node.textContent.trim();
-                        value = replaceEntities(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
+                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
                         [value, inlineTrim] = replaceWhiteSpace(node, value);
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
                     else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
-                        value = replaceEntities(element.innerText);
+                        value = replaceEntity(element.innerText);
                         performTrim = false;
                     }
                 }
                 else if (node.plainText) {
                     name = node.textContent.trim();
-                    value = replaceEntities(node.textContent);
+                    value = replaceEntity(node.textContent);
                     value = value.replace(/&[A-Za-z]+;/g, match => match.replace('&', '&amp;'));
                     [value, inlineTrim] = replaceWhiteSpace(node, value);
                 }
@@ -553,7 +550,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         (node.multiLine && hasLineBreak(element))
                                     ) ? '' : '&#160;')
                                 );
-                                value = value.replace(/\s+$/, nextSibling && nextSibling.lineBreak ? '' : '&#160;');
+                                value = value.replace(/\s+$/, node.css('display') === 'table-cell' || (nextSibling && nextSibling.lineBreak) ? '' : '&#160;');
                             }
                             else if (value.length > 0) {
                                 value = '&#160;' + value.substring(1);
@@ -595,7 +592,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 continue;
                             }
                             if (value !== '') {
-                                stringArray.push(value);
+                                stringArray.push(replaceEntity(value));
                             }
                         }
                     }
@@ -609,187 +606,24 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setImageSource() {
-        function addClipPath(svg: Svg, clipPath: SVGClipPathElement) {
-            if (clipPath.id) {
-                const result: SvgPath[] = [];
-                for (const item of Array.from(clipPath.children)) {
-                    const path = Svg.createSvgPath(<SVGGraphicsElement> item);
-                    if (path) {
-                        result.push(path);
-                    }
-                }
-                if (result.length > 0) {
-                    svg.defs.clipPath.set(`${clipPath.id}`, result);
-                }
-            }
-        }
-        function getColorStop(gradient: SVGGradientElement) {
-            const result: ColorStop[] = [];
-            for (const stop of Array.from(gradient.getElementsByTagName('stop'))) {
-                const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
-                if (color) {
-                    result.push({
-                        color,
-                        offset: cssAttribute(stop, 'offset'),
-                        opacity: color.alpha
-                    });
-                }
-            }
-            return result;
-        }
         for (const node of this.cache.visible) {
             if (this.checkPermissions(node, NODE_RESOURCE.IMAGE_SOURCE, 'imageSource')) {
                 if (node.svgElement) {
                     const element = <SVGSVGElement> node.element;
                     if (element.children.length > 0) {
                         const result = new Svg(element);
-                        result.name = element.id;
-                        result.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
-                        result.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
-                        result.setOpacity(node.css('opacity'));
-                        element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((item: SVGElement) => {
-                            switch (item.tagName) {
-                                case 'clipPath': {
-                                    addClipPath(result, <SVGClipPathElement> item);
-                                    break;
+                        result.defs.image.forEach(item => {
+                            const dimensions = this.imageAssets.get(item.uri);
+                            if (dimensions) {
+                                Object.assign(item.imageAsset, dimensions);
+                                if (item.width === 0) {
+                                    item.width = item.imageAsset.width;
                                 }
-                                case 'linearGradient': {
-                                    const gradient = <SVGLinearGradientElement> item;
-                                    result.defs.gradient.set(`@${gradient.id}`, <LinearGradient> {
-                                        type: 'linear',
-                                        x1: gradient.x1.baseVal.value,
-                                        x2: gradient.x2.baseVal.value,
-                                        y1: gradient.y1.baseVal.value,
-                                        y2: gradient.y2.baseVal.value,
-                                        x1AsString: gradient.x1.baseVal.valueAsString,
-                                        x2AsString: gradient.x2.baseVal.valueAsString,
-                                        y1AsString: gradient.y1.baseVal.valueAsString,
-                                        y2AsString: gradient.y2.baseVal.valueAsString,
-                                        colorStop: getColorStop(gradient)
-                                    });
-                                    break;
-                                }
-                                case 'radialGradient': {
-                                    const gradient = <SVGRadialGradientElement> item;
-                                    result.defs.gradient.set(`@${gradient.id}`, <RadialGradient> {
-                                        type: 'radial',
-                                        cx: gradient.cx.baseVal.value,
-                                        cy: gradient.cy.baseVal.value,
-                                        r: gradient.r.baseVal.value,
-                                        cxAsString: gradient.cx.baseVal.valueAsString,
-                                        cyAsString: gradient.cy.baseVal.valueAsString,
-                                        rAsString: gradient.r.baseVal.valueAsString,
-                                        fx: gradient.fx.baseVal.value,
-                                        fy: gradient.fy.baseVal.value,
-                                        fxAsString: gradient.fx.baseVal.valueAsString,
-                                        fyAsString: gradient.fy.baseVal.valueAsString,
-                                        colorStop: getColorStop(gradient)
-                                    });
-                                    break;
-                                }
-                                case 'image': {
-                                    const image = <SVGImageElement> item;
-                                    const uri = resolvePath(image.href.baseVal);
-                                    const svgImage = new SvgImage(image, uri);
-                                    svgImage.width = image.width.baseVal.value;
-                                    svgImage.height = image.height.baseVal.value;
-                                    const dimensions = this.imageAssets.get(uri);
-                                    if (dimensions) {
-                                        Object.assign(svgImage.imageAsset, dimensions);
-                                        if (svgImage.width === 0) {
-                                            svgImage.width = svgImage.imageAsset.width;
-                                        }
-                                        if (svgImage.height === 0) {
-                                            svgImage.height = svgImage.imageAsset.height;
-                                        }
-                                        svgImage.imageAsset.position = {
-                                            x: image.x.baseVal.value,
-                                            y: image.y.baseVal.value
-                                        };
-                                    }
-                                    result.defs.image.push(svgImage);
-                                    break;
+                                if (item.height === 0) {
+                                    item.height = item.imageAsset.height;
                                 }
                             }
                         });
-                        const baseTags = new Set(['svg', 'g']);
-                        [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item: SVGGraphicsElement, index) => {
-                            const group = new SvgGroup(item);
-                            group.name = item.id;
-                            if (index > 0 && item.tagName === 'svg') {
-                                const svg = <SVGSVGElement> item;
-                                group.x = svg.x.baseVal.value;
-                                group.y = svg.y.baseVal.value;
-                                group.width = svg.width.baseVal.value;
-                                group.height = svg.height.baseVal.value;
-                            }
-                            for (let i = 0; i < item.children.length; i++) {
-                                const path = Svg.createSvgPath(<SVGGraphicsElement> item.children[i]);
-                                if (path) {
-                                    group.append(path);
-                                }
-                            }
-                            result.append(group);
-                        });
-                        element.querySelectorAll('use').forEach((item: SVGUseElement) => {
-                            if (Svg.isVisible(item)) {
-                                let pathParent: SvgPath | undefined;
-                                result.some(parent => {
-                                    return parent.some(path => {
-                                        if (item.href.baseVal === `#${path.name}`) {
-                                            pathParent = path;
-                                            return true;
-                                        }
-                                        return false;
-                                    });
-                                });
-                                if (pathParent) {
-                                    const usePath = Svg.createSvgPath(item);
-                                    if (usePath) {
-                                        if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
-                                            result.some(groupItem => {
-                                                if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
-                                                    groupItem.append(usePath);
-                                                    return true;
-                                                }
-                                                return false;
-                                            });
-                                        }
-                                        else {
-                                            const useGroup = new SvgGroup(item);
-                                            useGroup.name = item.id;
-                                            useGroup.x = item.x.baseVal.value;
-                                            useGroup.y = item.y.baseVal.value;
-                                            useGroup.width = item.width.baseVal.value;
-                                            useGroup.height = item.height.baseVal.value;
-                                            useGroup.append(usePath);
-                                            result.append(useGroup);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        const sorted = new Set<SvgGroup>();
-                        for (const item of Array.from(element.children)) {
-                            const children = new Set(Array.from(item.querySelectorAll('*')));
-                            for (const group of result) {
-                                if (group instanceof SvgGroup && group.length > 0) {
-                                    if (group.element && (group.element === item || children.has(group.element))) {
-                                        sorted.delete(group);
-                                        sorted.add(group);
-                                        break;
-                                    }
-                                    for (const path of group) {
-                                        if (path.element && (path.element === item || children.has(path.element))) {
-                                            sorted.delete(group);
-                                            sorted.add(group);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        result.replace([...result.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
                         if (result.length > 0 || result.defs.image.length > 0) {
                             setElementCache(element, 'imageSource', result);
                         }

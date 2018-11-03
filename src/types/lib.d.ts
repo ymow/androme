@@ -66,7 +66,7 @@ declare global {
             export function getBoxRect(): BoxRect;
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;
-            export function convertClientUnit(value: string, dimension: number, fontSize?: string, percent?: boolean): number;
+            export function convertClientUnit(value: string, dimension: number, fontSize?: Null<string>, percent?: boolean): number;
             export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
@@ -75,7 +75,7 @@ declare global {
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
-            export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string, percent?: boolean): BoxPosition;
+            export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective?: boolean, percent?: boolean): BoxPosition;
             export function getFirstElementChild(elements: Element[]): Element | undefined;
             export function getLastElementChild(elements: Element[]): Element | undefined;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
@@ -98,10 +98,16 @@ declare global {
             export function removePlaceholderAll(value: string): string;
             export function replaceIndent(value: string, depth: number): string;
             export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
-            export function replaceEntities(value: string): string;
+            export function replaceEntity(value: string): string;
+            export function replaceCharacter(value: string): string;
             export function parseTemplate(template: string): StringMap;
             export function createTemplate(template: StringMap, data: TemplateData, index?: string, include?: {}, exclude?: {}): string;
             export function getTemplateBranch(data: {}, ...levels: string[]): {};
+        }
+        namespace svg {
+            export function getColorStop(gradient: SVGGradientElement): ColorStop[];
+            export function isVisible(element: SVGGraphicsElement): boolean;
+            export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
         }
         namespace color {
             export function getColorByName(value: string): Color | undefined;

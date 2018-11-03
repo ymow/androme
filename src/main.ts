@@ -2,6 +2,7 @@ import Node from './base/node';
 import NodeList from './base/nodelist';
 import NodeGroup from './base/nodegroup';
 import Svg from './base/svg';
+import SvgElement from './base/svgelement';
 import SvgGroup from './base/svggroup';
 import SvgImage from './base/svgimage';
 import SvgPath from './base/svgpath';
@@ -28,6 +29,7 @@ import * as constant from './lib/constant';
 import * as util from './lib/util';
 import * as dom from './lib/dom';
 import * as xml from './lib/xml';
+import * as svg from './lib/svg';
 import * as color from './lib/color';
 
 type T = Node;
@@ -199,6 +201,7 @@ const lib = {
         NodeList,
         NodeGroup,
         Svg,
+        SvgElement,
         SvgGroup,
         SvgImage,
         SvgPath,
@@ -226,6 +229,7 @@ const lib = {
     util,
     dom,
     xml,
+    svg,
     color
 };
 

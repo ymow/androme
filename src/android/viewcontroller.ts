@@ -2169,12 +2169,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
                 const dimension = node.pageflow ? 'bounds' : 'linear';
                 const position = percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[index === 0 ? 'width' : 'height'] : 0;
-                if (!percent && node.alignOrigin) {
+                if (!percent) {
+                    const direction = $util.capitalize(value);
                     found = parent.renderChildren.some(item => {
-                        if (item !== node && item.constraint[value] && (
-                                !item.constraint[`chain${$util.capitalize(value)}`] || item.constraint[`margin${$util.capitalize(value)}`]
-                           ))
-                        {
+                        if (item !== node && item.constraint[value] && (!item.constraint[`chain${direction}`] || item.constraint[`margin${direction}`])) {
                             if ($util.withinFraction(node.linear[LT] + offset, item.linear[RB])) {
                                 node.anchor(map[LTRB], item.stringId, value, true);
                                 return true;

@@ -54,6 +54,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
         groove: '',
         ridge: ''
     };
+    const style = border.style;
     Object.assign(result, {
         double: result.solid,
         inset: result.solid,
@@ -61,53 +62,56 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
         dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
         dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
     });
-    const groove = border.style === 'groove';
-    if (parseInt(border.width) > 1 && $util.isString(border.color) && (groove || border.style === 'ridge')) {
-        let colorName = border.color;
-        const hex = ResourceHandler.getColor(border.color);
-        if (hex !== '') {
-            const hexAlpha = $color.parseRGBA($color.reduceRGBA(hex, groove || hex === '#000000' ? 0.3 : -0.3));
-            if (hexAlpha && hexAlpha.visible) {
-                colorName = ResourceHandler.addColor(hexAlpha);
+    const groove = style === 'groove';
+    if (parseInt(border.width) > 1 && $util.isString(border.color) && (groove || style === 'ridge')) {
+        const color = $color.parseRGBA(border.color);
+        if (color) {
+            let colorName = '';
+            const reduced = $color.parseRGBA($color.reduceRGBA(color.valueRGBA, groove || color.valueRGB === '#000000' ? 0.5 : -0.5));
+            if (reduced && reduced.visible) {
+                colorName = ResourceHandler.addColor(reduced);
             }
-        }
-        const colorReduced = `android:color="@color/${colorName}"`;
-        const style1 = halfSize ? 'groove' : 'ridge';
-        const style2 = halfSize ? 'ridge' : 'groove';
-        if (halfSize) {
-            switch (direction) {
-                case 0:
-                    result[style1] = colorReduced;
-                    break;
-                case 1:
-                    result[style1] = colorReduced;
-                    break;
-                case 2:
-                    result[style1] = result.solid;
-                    break;
-                case 3:
-                    result[style1] = result.solid;
-                    break;
-            }
-        }
-        else {
-            switch (direction) {
-                case 0:
-                    result[style2] = result.solid;
-                    break;
-                case 1:
-                    result[style2] = result.solid;
-                    break;
-                case 2:
-                    result[style2] = colorReduced;
-                    break;
-                case 3:
-                    result[style2] = colorReduced;
-                    break;
+            if (colorName !== '') {
+                colorName = `android:color="@color/${colorName}"`;
+                if (groove) {
+                    halfSize = !halfSize;
+                }
+                if (halfSize) {
+                    switch (direction) {
+                        case 0:
+                            result[style] = colorName;
+                            break;
+                        case 1:
+                            result[style] = result.solid;
+                            break;
+                        case 2:
+                            result[style] = result.solid;
+                            break;
+                        case 3:
+                            result[style] = colorName;
+                            break;
+                    }
+                }
+                else {
+                    switch (direction) {
+                        case 0:
+                            result[style] = result.solid;
+                            break;
+                        case 1:
+                            result[style] = colorName;
+                            break;
+                        case 2:
+                            result[style] = colorName;
+                            break;
+                        case 3:
+                            result[style] = result.solid;
+                            break;
+                    }
+                }
             }
         }
     }
-    return result[border.style] || result.solid;
+    return result[style] || result.solid;
 }
 
 export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
@@ -1140,13 +1144,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (match) {
                         switch (match[0]) {
                             case 'underline':
-                                stored.value = `<u>${stored.value}</u>`;
+                                stored.value = `<u>${$xml.replaceCharacter(stored.value)}</u>`;
                                 break;
                             case 'line-through':
-                                stored.value = `<strike>${stored.value}</strike>`;
+                                stored.value = `<strike>${$xml.replaceCharacter(stored.value)}</strike>`;
                                 break;
                         }
                     }
+                    else {
+                        stored.value = $xml.replaceCharacter(stored.value);
+                    }
+                }
+                else {
+                    stored.value = $xml.replaceCharacter(stored.value);
                 }
                 const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
                 if (name !== '' && node.toInt('textIndent') + node.bounds.width > 0) {
@@ -1173,7 +1183,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 if (stored.stringArray) {
                     result.push(
                         ...stored.stringArray.map(value => {
-                            const name = ResourceHandler.addString(value, '', this.settings);
+                            const name = ResourceHandler.addString($xml.replaceCharacter(value), '', this.settings);
                             return name !== '' ? `@string/${name}` : '';
                         })
                         .filter(name => name)
@@ -1252,47 +1262,51 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 }
                             }
                             for (const item of group) {
-                                const clipPaths: TemplateData[] = [];
-                                if (item.clipPath !== '') {
-                                    const clipPath = stored.defs.clipPath.get(item.clipPath);
-                                    if (clipPath) {
-                                        clipPath.forEach(path => clipPaths.push({ name: path.name, d: path.d }));
-                                    }
-                                }
-                                ['fill', 'stroke'].forEach(value => {
-                                    if ($util.isString(item[value])) {
-                                        if (item[value].charAt(0) === '@') {
-                                            const gradient = stored.defs.gradient.get(item[value]);
-                                            if (gradient) {
-                                                item[value] = [{ gradients: this.buildBackgroundGradient(node, [gradient]) }];
-                                                namespace.add('aapt');
-                                                return;
-                                            }
-                                            else {
-                                                item[value] = item.color;
-                                            }
-                                        }
-                                        if (this.settings.vectorColorResourceValue) {
-                                            const color = ResourceHandler.addColor(item[value]);
-                                            if (color !== '') {
-                                                item[value] = `@color/${color}`;
-                                            }
+                                if (item.visibility) {
+                                    const clipPaths: TemplateData[] = [];
+                                    if (item.clipPath !== '') {
+                                        const clipPath = stored.defs.clipPath.get(item.clipPath);
+                                        if (clipPath) {
+                                            clipPath.forEach(path => clipPaths.push({ name: path.name, d: path.d }));
                                         }
                                     }
-                                });
-                                if (item.fillRule) {
-                                    switch (item.fillRule) {
-                                        case 'evenodd':
-                                            item.fillRule = 'evenOdd';
-                                            break;
-                                        default:
-                                            item.fillRule = 'nonZero';
-                                            break;
+                                    ['fill', 'stroke'].forEach(value => {
+                                        if ($util.isString(item[value])) {
+                                            if (item[value].charAt(0) === '@') {
+                                                const gradient = stored.defs.gradient.get(item[value]);
+                                                if (gradient) {
+                                                    item[value] = [{ gradients: this.buildBackgroundGradient(node, [gradient]) }];
+                                                    namespace.add('aapt');
+                                                    return;
+                                                }
+                                                else {
+                                                    item[value] = item.color;
+                                                }
+                                            }
+                                            if (this.settings.vectorColorResourceValue) {
+                                                const color = ResourceHandler.addColor(item[value]);
+                                                if (color !== '') {
+                                                    item[value] = `@color/${color}`;
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (item.fillRule) {
+                                        switch (item.fillRule) {
+                                            case 'evenodd':
+                                                item.fillRule = 'evenOdd';
+                                                break;
+                                            default:
+                                                item.fillRule = 'nonZero';
+                                                break;
+                                        }
                                     }
+                                    data['2'].push(Object.assign({}, item, { clipPaths }));
                                 }
-                                data['2'].push(Object.assign({}, item, { clipPaths }));
                             }
-                            groups.push(data);
+                            if (data['2'].length) {
+                                groups.push(data);
+                            }
                         }
                         const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
                             namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
@@ -1428,7 +1442,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     else {
                         let boxPosition: BoxPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
-                            boxPosition = $dom.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
+                            boxPosition = $dom.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), true, !hasStop);
                         }
                         if (hasStop) {
                             gradient.gradientRadius = node.bounds.width.toString();

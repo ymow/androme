@@ -847,7 +847,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (this.pageflow) {
                 const renderParent = this.renderParent;
                 if (this.documentParent === renderParent && !renderParent.documentBody && renderParent.blockStatic) {
-                    const elements = this.map(item => item.baseElement);
+                    const elements = renderParent.map(item => item.baseElement);
                     [[$dom.getFirstElementChild(elements), 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
                      [$dom.getLastElementChild(elements), 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]]
                         .forEach((item: [HTMLElement, string, number, number], index: number) => {
