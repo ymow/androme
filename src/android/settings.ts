@@ -38,7 +38,7 @@ const settings: SettingsAndroid = {
     floatOverlapDisabled: false,
     hideOffScreenElements: true,
     collapseUnattributedElements: true,
-    customizationsOverwritePrivilege: false,
+    customizationsOverwritePrivilege: true,
     showAttributes: true,
     insertSpaces: 4,
     convertPixels: 'dp',

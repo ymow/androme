@@ -1,4 +1,4 @@
-/* androme 2.1.3
+/* androme 2.2.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -69,7 +69,8 @@
         NODE_PROCEDURE[NODE_PROCEDURE["OPTIMIZATION"] = 16] = "OPTIMIZATION";
         NODE_PROCEDURE[NODE_PROCEDURE["CUSTOMIZATION"] = 32] = "CUSTOMIZATION";
         NODE_PROCEDURE[NODE_PROCEDURE["ACCESSIBILITY"] = 64] = "ACCESSIBILITY";
-        NODE_PROCEDURE[NODE_PROCEDURE["ALL"] = 126] = "ALL";
+        NODE_PROCEDURE[NODE_PROCEDURE["LOCALIZATION"] = 128] = "LOCALIZATION";
+        NODE_PROCEDURE[NODE_PROCEDURE["ALL"] = 254] = "ALL";
     })(NODE_PROCEDURE || (NODE_PROCEDURE = {}));
     var NODE_STANDARD;
     (function (NODE_STANDARD) {
@@ -242,11 +243,13 @@
         GRID: 'androme.grid',
         LIST: 'androme.list',
         ORIGIN: 'androme.origin',
+        PERCENT: 'androme.percent',
         SPRITE: 'androme.sprite',
         TABLE: 'androme.table'
     };
     const DOM_REGEX = {
-        URL: /url\("?(.*?)"?\)/
+        CSS_URL: /url\("?(.*?)"?\)/,
+        URI: /^[A-Za-z]+:\/\//
     };
 
     var constant = /*#__PURE__*/Object.freeze({
@@ -256,6 +259,97 @@
         EXT_NAME: EXT_NAME,
         DOM_REGEX: DOM_REGEX
     });
+
+    class Container {
+        constructor() {
+            this._children = [];
+        }
+        [Symbol.iterator]() {
+            const list = this._children;
+            let i = 0;
+            return {
+                next() {
+                    if (i < list.length) {
+                        return { done: false, value: list[i++] };
+                    }
+                    else {
+                        return { done: true, value: undefined };
+                    }
+                }
+            };
+        }
+        item(index, value) {
+            if (index != null && value != null) {
+                if (index >= 0 && index < this._children.length) {
+                    this._children[index] = value;
+                    return value;
+                }
+            }
+            else {
+                if (index == null) {
+                    return this._children[this._children.length - 1];
+                }
+                return this._children[index];
+            }
+            return undefined;
+        }
+        append(value) {
+            this._children.push(value);
+        }
+        remove(value) {
+            for (let i = 0; i < this.list.length; i++) {
+                if (value === this.list[i]) {
+                    return this.list.splice(i, 1);
+                }
+            }
+            return [];
+        }
+        replace(value) {
+            this._children = value;
+        }
+        duplicate() {
+            return this._children.slice();
+        }
+        clear() {
+            this._children.length = 0;
+            return this;
+        }
+        each(predicate) {
+            this._children.forEach(predicate);
+            return this;
+        }
+        contains(value) {
+            return this._children.includes(value);
+        }
+        find(predicate, value) {
+            if (typeof predicate === 'string') {
+                return this._children.find(item => item[predicate] === value);
+            }
+            return this._children.find(predicate);
+        }
+        filter(predicate) {
+            return this._children.filter(predicate);
+        }
+        map(predicate) {
+            return this._children.map(predicate);
+        }
+        sort(predicate) {
+            this._children.sort(predicate);
+            return this;
+        }
+        every(predicate) {
+            return this.length > 0 && this._children.every(predicate);
+        }
+        some(predicate) {
+            return this.length > 0 && this._children.some(predicate);
+        }
+        get list() {
+            return this._children;
+        }
+        get length() {
+            return this._children.length;
+        }
+    }
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const NUMERALS = [
@@ -311,7 +405,7 @@
         }
         return value;
     }
-    function camelToLowerCase(value) {
+    function convertUnderscore(value) {
         value = value.charAt(0).toLowerCase() + value.substring(1);
         const result = value.match(/([a-z][A-Z])/g);
         if (result) {
@@ -339,6 +433,9 @@
     function convertFloat(value) {
         return (value && parseFloat(value)) || 0;
     }
+    function convertPercent(value, precision = 0) {
+        return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
+    }
     function convertPX(value, fontSize) {
         if (hasValue(value)) {
             if (isNumber(value)) {
@@ -353,7 +450,7 @@
                             result *= 4 / 3;
                             break;
                         case 'em':
-                            result *= convertInt(convertPX(fontSize)) || 16;
+                            result *= parseInt(convertPX(fontSize)) || 16;
                             break;
                     }
                 }
@@ -412,6 +509,9 @@
     function isString(value) {
         return typeof value === 'string' && value !== '';
     }
+    function isArray(value) {
+        return Array.isArray(value) && value.length > 0;
+    }
     function isUnit(value) {
         return isString(value) ? /^-?[\d.]+(px|pt|em)$/.test(value.trim()) : false;
     }
@@ -429,7 +529,7 @@
             const attrs = value.split('.');
             let i = 0;
             do {
-                result = result[attrs[i]] != null ? result[attrs[i]] : null;
+                result = result[attrs[i]] != null ? result[attrs[i]] : undefined;
             } while (result != null &&
                 ++i < attrs.length &&
                 typeof result !== 'string' &&
@@ -439,7 +539,7 @@
         }
         switch (type) {
             case 'object':
-                return valid ? result : null;
+                return valid ? result : undefined;
             case 'number':
                 return valid && !isNaN(parseInt(result)) ? parseInt(result) : 0;
             case 'boolean':
@@ -449,7 +549,7 @@
         }
     }
     function resolvePath(value) {
-        if (!/^\w+:\/\//.test(value)) {
+        if (!DOM_REGEX.URI.test(value)) {
             let pathname = location.pathname.split('/');
             pathname.pop();
             if (value.charAt(0) === '/') {
@@ -485,10 +585,10 @@
         return value ? trimStart(trimEnd(value, char), char) : '';
     }
     function trimStart(value, char) {
-        return value.replace(new RegExp(`^${char}+`, 'g'), '');
+        return value ? value.replace(new RegExp(`^${char}+`, 'g'), '') : '';
     }
     function trimEnd(value, char) {
-        return value.replace(new RegExp(`${char}+$`, 'g'), '');
+        return value ? value.replace(new RegExp(`${char}+$`, 'g'), '') : '';
     }
     function repeat(many, value = '\t') {
         return value.repeat(many);
@@ -505,7 +605,7 @@
     function lastIndexOf(value, char = '/') {
         return value.substring(value.lastIndexOf(char) + 1);
     }
-    function sameValue(obj1, obj2, ...attrs) {
+    function hasSameValue(obj1, obj2, ...attrs) {
         for (const attr of attrs) {
             const result = compareObject(obj1, obj2, attr);
             if (!result || result[0] !== result[1]) {
@@ -593,12 +693,13 @@
 
     var util = /*#__PURE__*/Object.freeze({
         formatString: formatString,
-        camelToLowerCase: camelToLowerCase,
+        convertUnderscore: convertUnderscore,
         convertCamelCase: convertCamelCase,
         convertWord: convertWord,
         capitalize: capitalize,
         convertInt: convertInt,
         convertFloat: convertFloat,
+        convertPercent: convertPercent,
         convertPX: convertPX,
         convertAlpha: convertAlpha,
         convertRoman: convertRoman,
@@ -607,6 +708,7 @@
         hasBit: hasBit,
         isNumber: isNumber,
         isString: isString,
+        isArray: isArray,
         isUnit: isUnit,
         isPercent: isPercent,
         includes: includes,
@@ -619,7 +721,7 @@
         repeat: repeat,
         indexOf: indexOf,
         lastIndexOf: lastIndexOf,
-        sameValue: sameValue,
+        hasSameValue: hasSameValue,
         searchObject: searchObject,
         hasValue: hasValue,
         withinRange: withinRange,
@@ -643,7 +745,7 @@
         }
         return hasBit(value, client);
     }
-    function getBoxRect() {
+    function newBoxRect() {
         return {
             top: 0,
             left: 0,
@@ -651,10 +753,10 @@
             bottom: 0
         };
     }
-    function getClientRect() {
-        return Object.assign({ width: 0, height: 0 }, getBoxRect());
+    function newClientRect() {
+        return Object.assign({ width: 0, height: 0 }, newBoxRect());
     }
-    function getBoxModel() {
+    function newBoxModel() {
         return {
             marginTop: 0,
             marginRight: 0,
@@ -666,19 +768,19 @@
             paddingLeft: 0
         };
     }
-    function convertClientPX(value, dimension, fontSize, percent = false) {
+    function convertClientUnit(value, dimension, fontSize, percent = false) {
         if (percent) {
-            return isPercent(value) ? value : `${((parseFloat(convertPX(value)) / dimension) * 100).toFixed(2)}%`;
+            return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
         }
         else {
-            return isPercent(value) ? formatPX(dimension * (convertInt(value) / 100)) : convertPX(value, fontSize);
+            return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, fontSize));
         }
     }
     function getRangeClientRect(element) {
         const range = document.createRange();
         range.selectNodeContents(element);
         const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
-        let result = getClientRect();
+        let result = newClientRect();
         let multiLine = false;
         if (domRect.length > 0) {
             result = assignBounds(domRect[0]);
@@ -766,7 +868,7 @@
         return result;
     }
     function cssResolveUrl(value) {
-        const match = value.match(DOM_REGEX.URL);
+        const match = value.match(DOM_REGEX.CSS_URL);
         if (match) {
             return resolvePath(match[1]);
         }
@@ -810,6 +912,148 @@
     }
     function cssAttribute(element, attr) {
         return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
+    }
+    function getBackgroundPosition(value, dimension, fontSize, leftPerspective = false, percent = false) {
+        const result = {
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            horizontal: 'left',
+            vertical: 'top',
+            originalX: '',
+            originalY: ''
+        };
+        const orientation = value.split(' ');
+        if (orientation.length === 4) {
+            orientation.forEach((position, index) => {
+                switch (index) {
+                    case 0:
+                        result.horizontal = position;
+                        break;
+                    case 2:
+                        result.vertical = position;
+                        break;
+                    case 1:
+                    case 3:
+                        const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                        if (index === 1) {
+                            if (leftPerspective) {
+                                if (result.horizontal === 'right') {
+                                    if (isPercent(position)) {
+                                        result.originalX = `${100 - parseInt(position)}%`;
+                                    }
+                                    else {
+                                        result.originalX = formatPX(dimension.width - parseInt(convertPX(position, fontSize)));
+                                    }
+                                    result.right = clientXY;
+                                    result.left = percent ? 1 - clientXY : dimension.width - clientXY;
+                                }
+                                else {
+                                    result.left = clientXY;
+                                    result.originalX = position;
+                                }
+                            }
+                            else {
+                                if (result.horizontal !== 'center') {
+                                    result[result.horizontal] = clientXY;
+                                }
+                            }
+                        }
+                        else {
+                            if (leftPerspective) {
+                                if (result.vertical === 'bottom') {
+                                    if (isPercent(position)) {
+                                        result.originalY = `${100 - parseInt(position)}%`;
+                                    }
+                                    else {
+                                        result.originalY = formatPX(dimension.height - parseInt(convertPX(position, fontSize)));
+                                    }
+                                    result.bottom = clientXY;
+                                    result.top = percent ? 1 - clientXY : dimension.height - clientXY;
+                                }
+                                else {
+                                    result.top = clientXY;
+                                    result.originalY = position;
+                                }
+                            }
+                            else {
+                                if (result.vertical !== 'center') {
+                                    result[result.vertical] = clientXY;
+                                }
+                            }
+                        }
+                        break;
+                }
+            });
+        }
+        else if (orientation.length === 2) {
+            orientation.forEach((position, index) => {
+                const offsetParent = index === 0 ? dimension.width : dimension.height;
+                const direction = index === 0 ? 'left' : 'top';
+                const original = index === 0 ? 'originalX' : 'originalY';
+                const clientXY = convertClientUnit(position, offsetParent, fontSize, percent);
+                if (isPercent(position)) {
+                    result[direction] = clientXY;
+                    result[original] = position;
+                }
+                else {
+                    if (/^[a-z]+$/.test(position)) {
+                        result[index === 0 ? 'horizontal' : 'vertical'] = position;
+                        if (leftPerspective) {
+                            switch (position) {
+                                case 'left':
+                                case 'top':
+                                    result[original] = '0%';
+                                    break;
+                                case 'right':
+                                case 'bottom':
+                                    result[direction] = percent ? 1 : offsetParent;
+                                    result[original] = '100%';
+                                    break;
+                                case 'center':
+                                    result[direction] = percent ? 0.5 : Math.round(offsetParent / 2);
+                                    result[original] = '50%';
+                                    break;
+                            }
+                        }
+                    }
+                    else {
+                        result[direction] = clientXY;
+                        result[original] = position;
+                    }
+                }
+            });
+        }
+        return result;
+    }
+    function getFirstElementChild(elements) {
+        if (elements.length > 0) {
+            const parentElement = elements[0].parentElement;
+            if (parentElement) {
+                for (let i = 0; i < parentElement.childNodes.length; i++) {
+                    const element = parentElement.childNodes[i];
+                    if (elements.includes(element)) {
+                        return element;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+    function getLastElementChild(elements) {
+        if (elements.length > 0) {
+            const parentElement = elements[0].parentElement;
+            if (parentElement) {
+                for (let i = parentElement.childNodes.length - 1; i >= 0; i--) {
+                    const element = parentElement.childNodes[i];
+                    if (elements.includes(element)) {
+                        return element;
+                    }
+                }
+            }
+        }
+        return undefined;
     }
     function hasFreeFormText(element, maxDepth = 0, whiteSpace = true) {
         let depth = -1;
@@ -959,7 +1203,7 @@
         }
         return false;
     }
-    function findNestedExtension(element, name) {
+    function getNestedExtension(element, name) {
         if (isStyleElement(element)) {
             return Array.from(element.children).find((item) => includes(item.dataset.ext, name));
         }
@@ -971,7 +1215,7 @@
         }
     }
     function getElementCache(element, attr) {
-        return element ? element[`__${attr}`] : null;
+        return element ? element[`__${attr}`] : undefined;
     }
     function deleteElementCache(element, ...attrs) {
         if (element) {
@@ -981,15 +1225,15 @@
         }
     }
     function getNodeFromElement(element) {
-        return getElementCache(element, 'node');
+        return element ? getElementCache(element, 'node') : undefined;
     }
 
     var dom = /*#__PURE__*/Object.freeze({
         isUserAgent: isUserAgent,
-        getBoxRect: getBoxRect,
-        getClientRect: getClientRect,
-        getBoxModel: getBoxModel,
-        convertClientPX: convertClientPX,
+        newBoxRect: newBoxRect,
+        newClientRect: newClientRect,
+        newBoxModel: newBoxModel,
+        convertClientUnit: convertClientUnit,
         getRangeClientRect: getRangeClientRect,
         assignBounds: assignBounds,
         getStyle: getStyle,
@@ -999,6 +1243,9 @@
         cssParent: cssParent,
         cssFromParent: cssFromParent,
         cssAttribute: cssAttribute,
+        getBackgroundPosition: getBackgroundPosition,
+        getFirstElementChild: getFirstElementChild,
+        getLastElementChild: getLastElementChild,
         hasFreeFormText: hasFreeFormText,
         isPlainText: isPlainText,
         hasLineBreak: hasLineBreak,
@@ -1006,15 +1253,16 @@
         getElementsBetweenSiblings: getElementsBetweenSiblings,
         isStyleElement: isStyleElement,
         isElementVisible: isElementVisible,
-        findNestedExtension: findNestedExtension,
+        getNestedExtension: getNestedExtension,
         setElementCache: setElementCache,
         getElementCache: getElementCache,
         deleteElementCache: deleteElementCache,
         getNodeFromElement: getNodeFromElement
     });
 
-    class Node {
+    class Node extends Container {
         constructor(id, element) {
+            super();
             this.id = id;
             this.styleMap = {};
             this.nodeType = 0;
@@ -1026,24 +1274,27 @@
             this.excludeSection = 0;
             this.excludeProcedure = 0;
             this.excludeResource = 0;
-            this.renderExtension = new Set();
             this.documentRoot = false;
             this.auto = true;
             this.visible = true;
             this.excluded = false;
             this.rendered = false;
+            this.renderExtension = new Set();
             this._data = {};
             this._initialized = false;
             this.initial = {
                 depth: -1,
                 children: [],
                 styleMap: {},
-                bounds: getClientRect()
+                bounds: newClientRect()
             };
             if (element) {
                 this._element = element;
                 this.init();
             }
+        }
+        static getNodeFromElement(element) {
+            return getNodeFromElement(element);
         }
         init() {
             if (!this._initialized) {
@@ -1081,7 +1332,7 @@
             }
             return this[name][attr] || '';
         }
-        get(obj) {
+        namespace(obj) {
             const name = `_${obj || '_'}`;
             return this[name] || {};
         }
@@ -1100,19 +1351,21 @@
                 }
             }
         }
-        apply(options = {}) {
-            for (const obj in options) {
-                const attrs = options[obj];
-                if (typeof attrs === 'object') {
-                    for (const attr in attrs) {
-                        this.attr(obj, attr, attrs[attr]);
+        apply(options) {
+            if (typeof options === 'object') {
+                for (const obj in options) {
+                    const attrs = options[obj];
+                    if (typeof attrs === 'object') {
+                        for (const attr in attrs) {
+                            this.attr(obj, attr, attrs[attr]);
+                        }
+                        delete options[obj];
                     }
-                    delete options[obj];
                 }
             }
         }
         each(predicate, rendered = false) {
-            (rendered ? this.renderChildren : this.children).forEach(predicate);
+            (rendered ? this.renderChildren : this.list).forEach(predicate);
             return this;
         }
         render(parent) {
@@ -1133,7 +1386,7 @@
                     this._data[obj][attr] = value;
                 }
             }
-            return this._data[obj] != null ? this._data[obj][attr] : null;
+            return this._data[obj] != null ? this._data[obj][attr] : undefined;
         }
         ascend(generated = false, levels = -1) {
             const result = [];
@@ -1151,8 +1404,8 @@
         }
         cascade() {
             function cascade(node) {
-                const current = [...node.children];
-                for (const item of node.children) {
+                const current = [...node.list];
+                for (const item of node) {
                     current.push(...cascade(item));
                 }
                 return current;
@@ -1316,7 +1569,7 @@
         cssParent(attr, startChild = false, ignoreHidden = false) {
             let result = '';
             if (this.baseElement) {
-                let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement);
+                let current = startChild ? this : Node.getNodeFromElement(this.baseElement.parentElement);
                 while (current) {
                     result = current.initial.styleMap[attr] || '';
                     if (result || current.documentBody) {
@@ -1325,7 +1578,7 @@
                         }
                         break;
                     }
-                    current = getNodeFromElement(current.baseElement.parentElement);
+                    current = Node.getNodeFromElement(current.baseElement.parentElement);
                 }
             }
             return result;
@@ -1513,13 +1766,13 @@
                 this._multiLine = false;
             }
         }
-        getParentElementAsNode(negative = false, containerDefault) {
+        getParentElementAsNode(negative = false) {
             if (this._element) {
-                let parent = getNodeFromElement(this._element.parentElement);
+                let parent = Node.getNodeFromElement(this._element.parentElement);
                 if (!this.pageflow) {
                     let found = false;
-                    let previous = null;
-                    let relativeParent = null;
+                    let previous;
+                    let relativeParent;
                     let outside = false;
                     while (parent && parent.id !== 0) {
                         if (!relativeParent && this.position === 'absolute') {
@@ -1558,28 +1811,20 @@
                             }
                         }
                         previous = parent;
-                        parent = getNodeFromElement(parent.element.parentElement);
+                        parent = Node.getNodeFromElement(parent.element.parentElement);
                     }
-                    if (!found) {
-                        parent = outside && containerDefault ? containerDefault : relativeParent;
+                    if (!found && !outside) {
+                        parent = relativeParent;
                     }
                 }
                 return parent;
             }
-            return null;
+            return undefined;
         }
-        removeChild(node) {
-            for (let i = 0; i < this.children.length; i++) {
-                if (node === this.children[i]) {
-                    this.children.splice(i, 1);
-                    break;
-                }
-            }
-        }
-        replaceChild(node, withNode, append = true) {
-            for (let i = 0; i < this.children.length; i++) {
-                if (node === this.children[i]) {
-                    this.children[i] = withNode;
+        replaceNode(node, withNode, append = true) {
+            for (let i = 0; i < this.length; i++) {
+                if (node === this.item(i)) {
+                    this.item(i, withNode);
                     withNode.parent = this;
                     return true;
                 }
@@ -1624,16 +1869,16 @@
             }
         }
         previousSibling(pageflow = false, lineBreak = true, excluded = true) {
-            let element = null;
+            let element;
             if (this._element) {
                 element = this._element.previousSibling;
             }
             else if (this.initial.children.length > 0) {
                 const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
-                element = list.length > 0 ? list[0].element.previousSibling : null;
+                element = list.length > 0 ? list[0].element.previousSibling : undefined;
             }
             while (element) {
-                const node = getNodeFromElement(element);
+                const node = Node.getNodeFromElement(element);
                 if (node &&
                     !(node.lineBreak && !lineBreak) &&
                     !(node.excluded && !excluded) && ((pageflow && node.pageflow) ||
@@ -1642,19 +1887,19 @@
                 }
                 element = element.previousSibling;
             }
-            return null;
+            return undefined;
         }
         nextSibling(pageflow = false, lineBreak = true, excluded = true) {
-            let element = null;
+            let element;
             if (this._element) {
                 element = this._element.nextSibling;
             }
             else if (this.initial.children.length > 0) {
                 const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
-                element = list.length > 0 ? list[0].element.nextSibling : null;
+                element = list.length > 0 ? list[0].element.nextSibling : undefined;
             }
             while (element) {
-                const node = getNodeFromElement(element);
+                const node = Node.getNodeFromElement(element);
                 if (node &&
                     !(node.lineBreak && !lineBreak) &&
                     !(node.excluded && !excluded) &&
@@ -1663,7 +1908,7 @@
                 }
                 element = element.nextSibling;
             }
-            return null;
+            return undefined;
         }
         actualLeft(dimension = 'linear') {
             return this.companion && !this.companion.visible && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
@@ -1708,13 +1953,13 @@
         set parent(value) {
             if (value !== this._parent) {
                 if (this._parent) {
-                    this._parent.removeChild(this);
+                    this._parent.remove(this);
                 }
                 this._parent = value;
             }
             if (value) {
-                if (!value.children.includes(this)) {
-                    value.children.push(this);
+                if (!value.contains(this)) {
+                    value.append(this);
                     if (!value.styleElement && this.siblingIndex !== -1) {
                         value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                     }
@@ -1743,6 +1988,9 @@
         }
         get element() {
             return this._element || { dataset: {}, style: {} };
+        }
+        set baseElement(value) {
+            this._baseElement = value;
         }
         get baseElement() {
             return this._baseElement || this.element;
@@ -1825,7 +2073,7 @@
             if (this.rendered) {
                 if (this._lineHeight == null) {
                     this._lineHeight = 0;
-                    if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
+                    if (this.length === 0 && !this.renderParent.linearHorizontal) {
                         const lineHeight = this.toInt('lineHeight');
                         if (this.inlineElement) {
                             this._lineHeight = lineHeight || this.documentParent.toInt('lineHeight');
@@ -1938,7 +2186,7 @@
                             hasFreeFormText(this._element) &&
                             (this.initial.children.length === 0 || this.initial.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                             (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element) => {
-                                const node = getNodeFromElement(element);
+                                const node = Node.getNodeFromElement(element);
                                 return !!node && !node.lineBreak && (!node.excluded || !node.visible);
                             })));
                         break;
@@ -2062,10 +2310,7 @@
             }
         }
         get nodes() {
-            return this.rendered ? this.renderChildren : this.children;
-        }
-        get length() {
-            return this.nodes.length;
+            return this.rendered ? this.renderChildren : this.list;
         }
         get previousElementSibling() {
             let element = this.baseElement.previousSibling;
@@ -2075,7 +2320,7 @@
                 }
                 element = element.previousSibling;
             }
-            return null;
+            return undefined;
         }
         get nextElementSibling() {
             let element = this.baseElement.nextSibling;
@@ -2085,37 +2330,7 @@
                 }
                 element = element.nextSibling;
             }
-            return null;
-        }
-        get firstElementChild() {
-            const element = this.baseElement;
-            if (isStyleElement(element)) {
-                for (let i = 0; i < element.childNodes.length; i++) {
-                    const childElement = element.childNodes[i];
-                    if (childElement instanceof Element) {
-                        return childElement;
-                    }
-                    else if (isPlainText(childElement)) {
-                        return childElement;
-                    }
-                }
-            }
-            return null;
-        }
-        get lastElementChild() {
-            const element = this.baseElement;
-            if (isStyleElement(element)) {
-                for (let i = element.childNodes.length - 1; i >= 0; i--) {
-                    const childElement = element.childNodes[i];
-                    if (childElement instanceof Element) {
-                        return childElement;
-                    }
-                    else if (isPlainText(childElement)) {
-                        return childElement;
-                    }
-                }
-            }
-            return null;
+            return undefined;
         }
         get center() {
             return {
@@ -2133,13 +2348,12 @@
         }
         return nodes[0].documentParent;
     }
-    class NodeList {
-        constructor(nodes, parent) {
-            this.parent = parent;
+    class NodeList extends Container {
+        constructor(children) {
+            super();
             this._currentId = 0;
-            this._list = [];
-            if (Array.isArray(nodes)) {
-                this._list = nodes;
+            if (Array.isArray(children)) {
+                this.replace(children);
             }
         }
         static outerRegion(list, dimension = 'linear') {
@@ -2190,27 +2404,27 @@
             return new Set(list.map(node => node.float).filter(value => value !== 'none'));
         }
         static cleared(list) {
-            const nodes = new Map();
+            const result = new Map();
             const floated = new Set();
-            list.forEach(node => {
+            for (const node of list) {
                 if (node.siblingflow) {
                     const clear = node.css('clear');
                     if (floated.size > 0) {
                         if (clear === 'both') {
-                            nodes.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
+                            result.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
                             floated.clear();
                         }
                         else if (floated.has(clear)) {
                             floated.delete(clear);
-                            nodes.set(node, clear);
+                            result.set(node, clear);
                         }
                     }
                     if (node.floating) {
                         floated.add(node.float);
                     }
                 }
-            });
-            return nodes;
+            }
+            return result;
         }
         static textBaseline(list) {
             let baseline = [];
@@ -2219,10 +2433,10 @@
                     let nodeTypeA = a.nodeType;
                     let nodeTypeB = b.nodeType;
                     if (a.layoutHorizontal) {
-                        nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                        nodeTypeA = Math.min.apply(null, a.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                     }
                     if (b.layoutHorizontal) {
-                        nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                        nodeTypeB = Math.min.apply(null, b.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                     }
                     return nodeTypeA === nodeTypeB ? (a.id < b.id ? -1 : 1) : (nodeTypeA < nodeTypeB ? -1 : 1);
                 });
@@ -2414,120 +2628,59 @@
             return a.siblingIndex <= b.siblingIndex ? -1 : 1;
         }
         static clearedSiblings(parent) {
-            return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element)).filter(node => node));
+            return this.cleared(Array.from(parent.baseElement.children).map(element => Node.getNodeFromElement(element)).filter(node => node));
         }
-        [Symbol.iterator]() {
-            const list = this._list;
-            let i = 0;
-            return {
-                next() {
-                    if (i < list.length) {
-                        return { done: false, value: list[i++] };
-                    }
-                    else {
-                        return { done: true, value: undefined };
-                    }
-                }
-            };
+        append(node, delegate = true) {
+            super.append(node);
+            if (delegate && this.delegateAppend) {
+                this.delegateAppend.call(this, node);
+            }
+            return this;
         }
         reset() {
             this._currentId = 0;
             this.clear();
             return this;
         }
-        append(node, delegate = true) {
-            this._list.push(node);
-            if (delegate && this.delegateAppend) {
-                this.delegateAppend.call(this, node);
-            }
-            return this;
-        }
-        each(predicate) {
-            this._list.forEach(predicate);
-            return this;
-        }
-        clear() {
-            this._list.length = 0;
-            return this;
-        }
-        sort(predicate) {
-            this._list.sort(predicate);
-            return this;
-        }
-        sortAsc(...attrs) {
-            sortAsc(this._list, ...attrs);
-            return this;
-        }
-        sortDesc(...attrs) {
-            sortDesc(this._list, ...attrs);
-            return this;
-        }
-        get(index) {
-            if (index == null) {
-                return this._list[this._list.length - 1];
-            }
-            return this._list[index];
-        }
-        remove(start, deleteCount = 1) {
-            return this._list.splice(start, deleteCount);
-        }
-        clone() {
-            return new NodeList(this._list.slice());
-        }
         partition(predicate) {
-            const [valid, invalid] = partition(this._list, predicate);
+            const [valid, invalid] = partition(this.list, predicate);
             return [new NodeList(valid), new NodeList(invalid)];
         }
-        find(attr, value) {
-            if (typeof attr === 'string') {
-                return this._list.find(node => node[attr] === value);
-            }
-            return this._list.find(attr);
-        }
-        sliceSort(predicate) {
-            return new NodeList(this._list.slice().sort(predicate));
-        }
-        get length() {
-            return this._list.length;
-        }
-        get list() {
-            return this._list;
-        }
         get visible() {
-            return this._list.filter(node => node.visible);
+            return this.list.filter(node => node.visible);
         }
         get elements() {
-            return this._list.filter(node => node.visible && node.styleElement);
+            return this.list.filter(node => node.visible && node.styleElement);
         }
         get nextId() {
             return ++this._currentId;
         }
         get linearX() {
-            return NodeList.linearX(this._list);
+            return NodeList.linearX(this.list);
         }
         get linearY() {
-            return NodeList.linearY(this._list);
+            return NodeList.linearY(this.list);
         }
     }
 
     class NodeGroup extends Node {
         init() {
             super.init();
-            if (this.children.length > 0) {
-                this.children.forEach(item => {
+            if (this.length > 0) {
+                for (const item of this) {
                     this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
                     item.parent = this;
-                });
-                this.parent.children.sort(NodeList.siblingIndex);
-                this.initial.children.push(...this.children.slice());
+                }
+                this.parent.sort(NodeList.siblingIndex);
+                this.initial.children.push(...this.duplicate());
             }
             this.setBounds();
             this.css('direction', this.documentParent.dir);
         }
         setBounds(calibrate = false) {
             if (!calibrate) {
-                if (this.children.length > 0) {
-                    const nodes = NodeList.outerRegion(this.children);
+                if (this.length > 0) {
+                    const nodes = NodeList.outerRegion(this.list);
                     this.bounds = {
                         top: nodes.top[0].linear.top,
                         right: nodes.right[0].linear.right,
@@ -2538,7 +2691,7 @@
                     };
                 }
                 else {
-                    this.bounds = getClientRect();
+                    this.bounds = newClientRect();
                 }
                 this.bounds.width = this.bounds.right - this.bounds.left;
                 this.bounds.height = this.bounds.bottom - this.bounds.top;
@@ -2548,28 +2701,30 @@
             this.setDimensions();
         }
         previousSibling(pageflow = false, lineBreak = true, excluded = true) {
-            return this.children.length > 0 ? this.children[0].previousSibling(pageflow, lineBreak, excluded) : null;
+            const node = this.item(0);
+            return node ? node.previousSibling(pageflow, lineBreak, excluded) : undefined;
         }
         nextSibling(pageflow = false, lineBreak = true, excluded = true) {
-            return this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(pageflow, lineBreak, excluded) : null;
+            const node = this.item(0);
+            return node ? node.nextSibling(pageflow, lineBreak, excluded) : undefined;
         }
         get inline() {
-            return this.children.every(node => node.inline);
+            return this.every(node => node.inline);
         }
         get pageflow() {
-            return this.children.every(node => node.pageflow);
+            return this.every(node => node.pageflow);
         }
         get siblingflow() {
-            return this.children.every(node => node.siblingflow);
+            return this.every(node => node.siblingflow);
         }
         get inlineElement() {
             return this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
         }
         get inlineStatic() {
-            return this.children.every(node => node.inlineStatic);
+            return this.every(node => node.inlineStatic);
         }
         get blockStatic() {
-            return this.children.every(node => node.blockStatic);
+            return this.every(node => node.blockStatic);
         }
         get floating() {
             return this.hasAlign(NODE_ALIGNMENT.FLOAT);
@@ -2581,69 +2736,857 @@
             return 'none';
         }
         get baseline() {
-            return this.children.every(node => node.baseline);
+            return this.every(node => node.baseline);
         }
         get multiLine() {
-            return this.children.some(node => node.multiLine);
+            return this.some(node => node.multiLine);
         }
         get display() {
-            return this.css('display') || (this.children.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.children.every(node => node.inline) ? 'inline' : 'inline-block');
+            return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
         }
         get baseElement() {
             function cascade(nodes) {
-                for (let i = 0; i < nodes.length; i++) {
-                    const item = nodes[i];
-                    if (item.styleElement || item.plainText) {
-                        return item.element;
+                for (const node of nodes) {
+                    if (node.domElement) {
+                        return node.element;
                     }
-                    else if (item.length > 0) {
-                        const element = cascade(item.nodes);
+                    else if (node.length > 0) {
+                        const element = cascade(node.nodes);
                         if (element) {
                             return element;
                         }
                     }
                 }
-                return null;
+                return undefined;
             }
             return cascade(this.nodes) || super.baseElement;
         }
-        get firstElementChild() {
-            const element = this.documentParent.element;
-            if (isStyleElement(element)) {
-                for (let i = 0; i < element.childNodes.length; i++) {
-                    const childElement = element.childNodes[i];
-                    if (this.nodes.includes(getNodeFromElement(childElement))) {
-                        return childElement;
-                    }
-                }
-            }
-            return null;
+    }
+
+    const X11_CSS3 = {
+        'Pink': { 'hex': '#FFC0CB' },
+        'LightPink': { 'hex': '#FFB6C1' },
+        'HotPink': { 'hex': '#FF69B4' },
+        'DeepPink': { 'hex': '#FF1493' },
+        'PaleVioletRed': { 'hex': '#DB7093' },
+        'MediumVioletRed': { 'hex': '#C71585' },
+        'LightSalmon': { 'hex': '#FFA07A' },
+        'Salmon': { 'hex': '#FA8072' },
+        'DarkSalmon': { 'hex': '#E9967A' },
+        'LightCoral': { 'hex': '#F08080' },
+        'IndianRed': { 'hex': '#CD5C5C' },
+        'Crimson': { 'hex': '#DC143C' },
+        'Firebrick': { 'hex': '#B22222' },
+        'DarkRed': { 'hex': '#8B0000' },
+        'Red': { 'hex': '#FF0000' },
+        'OrangeRed': { 'hex': '#FF4500' },
+        'Tomato': { 'hex': '#FF6347' },
+        'Coral': { 'hex': '#FF7F50' },
+        'Orange': { 'hex': '#FFA500' },
+        'DarkOrange': { 'hex': '#FF8C00' },
+        'Yellow': { 'hex': '#FFFF00' },
+        'LightYellow': { 'hex': '#FFFFE0' },
+        'LemonChiffon': { 'hex': '#FFFACD' },
+        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
+        'PapayaWhip': { 'hex': '#FFEFD5' },
+        'Moccasin': { 'hex': '#FFE4B5' },
+        'PeachPuff': { 'hex': '#FFDAB9' },
+        'PaleGoldenrod': { 'hex': '#EEE8AA' },
+        'Khaki': { 'hex': '#F0E68C' },
+        'DarkKhaki': { 'hex': '#BDB76B' },
+        'Gold': { 'hex': '#FFD700' },
+        'Cornsilk': { 'hex': '#FFF8DC' },
+        'BlanchedAlmond': { 'hex': '#FFEBCD' },
+        'Bisque': { 'hex': '#FFE4C4' },
+        'NavajoWhite': { 'hex': '#FFDEAD' },
+        'Wheat': { 'hex': '#F5DEB3' },
+        'Burlywood': { 'hex': '#DEB887' },
+        'Tan': { 'hex': '#D2B48C' },
+        'RosyBrown': { 'hex': '#BC8F8F' },
+        'SandyBrown': { 'hex': '#F4A460' },
+        'Goldenrod': { 'hex': '#DAA520' },
+        'DarkGoldenrod': { 'hex': '#B8860B' },
+        'Peru': { 'hex': '#CD853F' },
+        'Chocolate': { 'hex': '#D2691E' },
+        'SaddleBrown': { 'hex': '#8B4513' },
+        'Sienna': { 'hex': '#A0522D' },
+        'Brown': { 'hex': '#A52A2A' },
+        'Maroon': { 'hex': '#800000' },
+        'DarkOliveGreen': { 'hex': '#556B2F' },
+        'Olive': { 'hex': '#808000' },
+        'OliveDrab': { 'hex': '#6B8E23' },
+        'YellowGreen': { 'hex': '#9ACD32' },
+        'LimeGreen': { 'hex': '#32CD32' },
+        'Lime': { 'hex': '#00FF00' },
+        'LawnGreen': { 'hex': '#7CFC00' },
+        'Chartreuse': { 'hex': '#7FFF00' },
+        'GreenYellow': { 'hex': '#ADFF2F' },
+        'SpringGreen': { 'hex': '#00FF7F' },
+        'MediumSpringGreen': { 'hex': '#00FA9A' },
+        'LightGreen': { 'hex': '#90EE90' },
+        'PaleGreen': { 'hex': '#98FB98' },
+        'DarkSeaGreen': { 'hex': '#8FBC8F' },
+        'MediumAquamarine': { 'hex': '#66CDAA' },
+        'MediumSeaGreen': { 'hex': '#3CB371' },
+        'SeaGreen': { 'hex': '#2E8B57' },
+        'ForestGreen': { 'hex': '#228B22' },
+        'Green': { 'hex': '#008000' },
+        'DarkGreen': { 'hex': '#006400' },
+        'Aqua': { 'hex': '#00FFFF' },
+        'Cyan': { 'hex': '#00FFFF' },
+        'LightCyan': { 'hex': '#E0FFFF' },
+        'PaleTurquoise': { 'hex': '#AFEEEE' },
+        'Aquamarine': { 'hex': '#7FFFD4' },
+        'Turquoise': { 'hex': '#40E0D0' },
+        'DarkTurquoise': { 'hex': '#00CED1' },
+        'MediumTurquoise': { 'hex': '#48D1CC' },
+        'LightSeaGreen': { 'hex': '#20B2AA' },
+        'CadetBlue': { 'hex': '#5F9EA0' },
+        'DarkCyan': { 'hex': '#008B8B' },
+        'Teal': { 'hex': '#008080' },
+        'LightSteelBlue': { 'hex': '#B0C4DE' },
+        'PowderBlue': { 'hex': '#B0E0E6' },
+        'LightBlue': { 'hex': '#ADD8E6' },
+        'SkyBlue': { 'hex': '#87CEEB' },
+        'LightSkyBlue': { 'hex': '#87CEFA' },
+        'DeepSkyBlue': { 'hex': '#00BFFF' },
+        'DodgerBlue': { 'hex': '#1E90FF' },
+        'Cornflower': { 'hex': '#6495ED' },
+        'SteelBlue': { 'hex': '#4682B4' },
+        'RoyalBlue': { 'hex': '#4169E1' },
+        'Blue': { 'hex': '#0000FF' },
+        'MediumBlue': { 'hex': '#0000CD' },
+        'DarkBlue': { 'hex': '#00008B' },
+        'Navy': { 'hex': '#000080' },
+        'MidnightBlue': { 'hex': '#191970' },
+        'Lavender': { 'hex': '#E6E6FA' },
+        'Thistle': { 'hex': '#D8BFD8' },
+        'Plum': { 'hex': '#DDA0DD' },
+        'Violet': { 'hex': '#EE82EE' },
+        'Orchid': { 'hex': '#DA70D6' },
+        'Fuchsia': { 'hex': '#FF00FF' },
+        'Magenta': { 'hex': '#FF00FF' },
+        'MediumOrchid': { 'hex': '#BA55D3' },
+        'MediumPurple': { 'hex': '#9370DB' },
+        'BlueViolet': { 'hex': '#8A2BE2' },
+        'DarkViolet': { 'hex': '#9400D3' },
+        'DarkOrchid': { 'hex': '#9932CC' },
+        'DarkMagenta': { 'hex': '#8B008B' },
+        'Purple': { 'hex': '#800080' },
+        'RebeccaPurple': { 'hex': '#663399' },
+        'Indigo': { 'hex': '#4B0082' },
+        'DarkSlateBlue': { 'hex': '#483D8B' },
+        'SlateBlue': { 'hex': '#6A5ACD' },
+        'MediumSlateBlue': { 'hex': '#7B68EE' },
+        'White': { 'hex': '#FFFFFF' },
+        'Snow': { 'hex': '#FFFAFA' },
+        'Honeydew': { 'hex': '#F0FFF0' },
+        'MintCream': { 'hex': '#F5FFFA' },
+        'Azure': { 'hex': '#F0FFFF' },
+        'AliceBlue': { 'hex': '#F0F8FF' },
+        'GhostWhite': { 'hex': '#F8F8FF' },
+        'WhiteSmoke': { 'hex': '#F5F5F5' },
+        'Seashell': { 'hex': '#FFF5EE' },
+        'Beige': { 'hex': '#F5F5DC' },
+        'OldLace': { 'hex': '#FDF5E6' },
+        'FloralWhite': { 'hex': '#FFFAF0' },
+        'Ivory': { 'hex': '#FFFFF0' },
+        'AntiqueWhite': { 'hex': '#FAEBD7' },
+        'Linen': { 'hex': '#FAF0E6' },
+        'LavenderBlush': { 'hex': '#FFF0F5' },
+        'MistyRose': { 'hex': '#FFE4E1' },
+        'Gainsboro': { 'hex': '#DCDCDC' },
+        'LightGray': { 'hex': '#D3D3D3' },
+        'Silver': { 'hex': '#C0C0C0' },
+        'DarkGray': { 'hex': '#A9A9A9' },
+        'Gray': { 'hex': '#808080' },
+        'DimGray': { 'hex': '#696969' },
+        'LightSlateGray': { 'hex': '#778899' },
+        'SlateGray': { 'hex': '#708090' },
+        'DarkSlateGray': { 'hex': '#2F4F4F' },
+        'Black': { 'hex': '#000000' }
+    };
+    const HSL_SORTED = [];
+    for (const name in X11_CSS3) {
+        const x11 = X11_CSS3[name];
+        x11.name = name;
+        const rgba = convertRGBA(x11.hex);
+        if (rgba) {
+            x11.rgba = rgba;
+            x11.hsl = convertHSL(x11.rgba);
+            HSL_SORTED.push(x11);
         }
-        get lastElementChild() {
-            const element = this.baseElement;
-            if (isStyleElement(element)) {
-                for (let i = element.childNodes.length - 1; i >= 0; i--) {
-                    const childElement = element.childNodes[i];
-                    if (this.nodes.includes(getNodeFromElement(childElement))) {
-                        return childElement;
+    }
+    HSL_SORTED.sort(sortHSL);
+    function convertHSL({ r = 0, g = 0, b = 0 }) {
+        r = r / 255;
+        g = g / 255;
+        b = b / 255;
+        const min = Math.min(r, g, b);
+        const max = Math.max(r, g, b);
+        let h = (max + min) / 2;
+        let s = h;
+        const l = h;
+        if (max === min) {
+            h = 0;
+            s = 0;
+        }
+        else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+                case g:
+                    h = (b - r) / d + 2;
+                    break;
+                case b:
+                    h = (r - g) / d + 4;
+                    break;
+            }
+            h /= 6;
+        }
+        return {
+            h: h * 360,
+            s: s * 100,
+            l: l * 100
+        };
+    }
+    function sortHSL(a, b) {
+        if (a.hsl && b.hsl) {
+            let [c, d] = [a.hsl.h, b.hsl.h];
+            if (c === d) {
+                [c, d] = [a.hsl.s, b.hsl.s];
+                if (c === d) {
+                    [c, d] = [a.hsl.l, b.hsl.l];
+                }
+            }
+            return c >= d ? 1 : -1;
+        }
+        return 0;
+    }
+    function formatRGBA(rgba) {
+        return `rgb${rgba.a < 1 ? 'a' : ''}(${rgba.r}, ${rgba.g}, ${rgba.b}${rgba.a < 1 ? `, ${rgba.a.toFixed(2)}` : ''})`;
+    }
+    function convertAlpha$1(value) {
+        return parseFloat(value) < 1 ? convertHex('255', parseFloat(value)) : 'FF';
+    }
+    function getColorByName(value) {
+        for (const color in X11_CSS3) {
+            if (color.toLowerCase() === value.trim().toLowerCase()) {
+                return X11_CSS3[color];
+            }
+        }
+        return undefined;
+    }
+    function getColorByShade(value) {
+        const result = HSL_SORTED.slice();
+        let index = result.findIndex(item => item.hex === value);
+        if (index !== -1) {
+            return result[index];
+        }
+        else {
+            const rgb = convertRGBA(value);
+            if (rgb) {
+                const hsl = convertHSL(rgb);
+                if (hsl) {
+                    result.push({
+                        name: '',
+                        hsl,
+                        rgba: { r: -1, g: -1, b: -1, a: 1 },
+                        hex: ''
+                    });
+                    result.sort(sortHSL);
+                    index = result.findIndex(item => item.name === '');
+                    return result[Math.min(index + 1, result.length - 1)];
+                }
+            }
+            return undefined;
+        }
+    }
+    function convertHex(value, opacity = 1) {
+        const hex = '0123456789ABCDEF';
+        let rgb = parseInt(value) * opacity;
+        if (isNaN(rgb)) {
+            return '00';
+        }
+        rgb = Math.max(0, Math.min(rgb, 255));
+        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
+    }
+    function convertRGBA(value) {
+        value = value.replace(/#/g, '').trim();
+        if (/[A-Za-z\d]{3,}/.test(value)) {
+            let a = 1;
+            switch (value.length) {
+                case 4:
+                    a = parseInt(value.charAt(3).repeat(2), 16);
+                case 3:
+                    value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+                    break;
+                case 5:
+                    value += value.charAt(4);
+                    break;
+                default:
+                    value = value.substring(0, 6);
+                    if (value.length >= 8) {
+                        a = parseInt(value.substring(6, 8), 16);
+                    }
+                    break;
+            }
+            if (value.length === 6) {
+                return {
+                    r: parseInt(value.substring(0, 2), 16),
+                    g: parseInt(value.substring(2, 4), 16),
+                    b: parseInt(value.substring(4), 16),
+                    a
+                };
+            }
+        }
+        return undefined;
+    }
+    function parseRGBA(value, opacity = '1') {
+        if (value && value !== 'initial' && value !== 'transparent') {
+            if (opacity === '') {
+                opacity = '1';
+            }
+            if (value.charAt(0) === '#') {
+                const rgba = convertRGBA(value);
+                if (rgba) {
+                    value = formatRGBA(rgba);
+                }
+            }
+            else if (!value.startsWith('rgb')) {
+                const color = getColorByName(value);
+                if (color && color.rgba) {
+                    color.rgba.a = parseFloat(opacity);
+                    value = formatRGBA(color.rgba);
+                }
+            }
+            const match = value.match(/rgba?\((\d+), (\d+), (\d+),?\s*([\d.]+)?\)/);
+            if (match && match.length >= 4 && (match[4] == null || parseFloat(match[4]) > 0)) {
+                if (match[4] == null) {
+                    match[4] = parseFloat(opacity).toFixed(2);
+                }
+                const valueHex = convertHex(match[1]) + convertHex(match[2]) + convertHex(match[3]);
+                const valueA = convertAlpha$1(match[4]);
+                const valueRGBA = `#${valueHex + valueA}`;
+                const alpha = parseFloat(match[4]);
+                return {
+                    valueRGB: `#${valueHex}`,
+                    valueRGBA,
+                    valueARGB: `#${valueA + valueHex}`,
+                    alpha,
+                    rgba: convertRGBA(valueRGBA),
+                    opaque: alpha < 1,
+                    visible: alpha > 0
+                };
+            }
+        }
+        return undefined;
+    }
+    function reduceRGBA(value, percent) {
+        const rgba = convertRGBA(value);
+        if (rgba) {
+            const base = percent < 0 ? 0 : 255;
+            percent = Math.abs(percent);
+            rgba.r = Math.round((base - rgba.r) * percent) + rgba.r;
+            rgba.g = Math.round((base - rgba.g) * percent) + rgba.g;
+            rgba.b = Math.round((base - rgba.b) * percent) + rgba.b;
+            return parseRGBA(formatRGBA(rgba));
+        }
+        return undefined;
+    }
+
+    var color = /*#__PURE__*/Object.freeze({
+        getColorByName: getColorByName,
+        getColorByShade: getColorByShade,
+        convertHex: convertHex,
+        convertRGBA: convertRGBA,
+        parseRGBA: parseRGBA,
+        reduceRGBA: reduceRGBA
+    });
+
+    function createColorStop(element) {
+        const result = [];
+        for (const stop of Array.from(element.getElementsByTagName('stop'))) {
+            const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
+            if (color && color.visible) {
+                result.push({
+                    color: color.valueRGBA,
+                    offset: cssAttribute(stop, 'offset'),
+                    opacity: color.alpha
+                });
+            }
+        }
+        return result;
+    }
+    function createTransform(element) {
+        const data = {
+            translateX: 0,
+            translateY: 0,
+            scaleX: 1,
+            scaleY: 1,
+            rotateAngle: 0,
+            rotateX: 0,
+            rotateY: 0,
+            skewX: 0,
+            skewY: 0
+        };
+        for (let i = 0; i < element.transform.baseVal.numberOfItems; i++) {
+            const item = element.transform.baseVal.getItem(i);
+            switch (item.type) {
+                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                    data.translateX += item.matrix.e;
+                    data.translateY += item.matrix.f;
+                    break;
+                case SVGTransform.SVG_TRANSFORM_SCALE:
+                    data.scaleX *= item.matrix.a;
+                    data.scaleY *= item.matrix.d;
+                    break;
+                case SVGTransform.SVG_TRANSFORM_ROTATE:
+                    data.rotateAngle += item.angle;
+                    if (item.matrix.e > 0) {
+                        data.rotateX = Math.round((item.matrix.e - item.matrix.f) / 2);
+                        data.rotateY = item.matrix.e - data.rotateX;
+                    }
+                    break;
+                case SVGTransform.SVG_TRANSFORM_SKEWX:
+                    data.skewX += item.angle;
+                    break;
+                case SVGTransform.SVG_TRANSFORM_SKEWY:
+                    data.skewY += item.angle;
+                    break;
+            }
+        }
+        const style = getStyle(element);
+        if (style.transformOrigin) {
+            switch (style.transformOrigin) {
+                case '0px 0px':
+                case '0% 0%':
+                case 'left top':
+                    break;
+                default:
+                    data.origin = getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), style.fontSize, true);
+                    break;
+            }
+        }
+        return data;
+    }
+    function isSvgVisible(element) {
+        return cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'));
+    }
+
+    var svg = /*#__PURE__*/Object.freeze({
+        createColorStop: createColorStop,
+        createTransform: createTransform,
+        isSvgVisible: isSvgVisible
+    });
+
+    var SvgElementBase = (Base) => {
+        return class SvgElement extends Base {
+            constructor(element) {
+                super();
+                this.name = '';
+                this.visibility = true;
+                if (element) {
+                    this.setElement(element);
+                    this.build();
+                    if (this._element) {
+                        this.visibility = isSvgVisible(element);
                     }
                 }
             }
-            return null;
+            setElement(element) {
+                if (element instanceof SVGGraphicsElement) {
+                    this._element = element;
+                }
+            }
+            build() {
+                const element = this._element;
+                if (element) {
+                    this.name = element.id;
+                    this.transform = createTransform(element);
+                }
+            }
+            get element() {
+                return this._element;
+            }
+        };
+    };
+
+    class Container$SvgPath extends Container {
+    }
+
+    class SvgGroup extends SvgElementBase(Container$SvgPath) {
+    }
+
+    class SvgPath {
+        constructor(element, d) {
+            this.visibility = true;
+            if (element) {
+                this.setElement(element);
+                this.build();
+            }
+            if (d) {
+                this.d = d;
+            }
+        }
+        setElement(element) {
+            if (element instanceof SVGGraphicsElement) {
+                this._element = element;
+            }
+        }
+        build() {
+            const element = this._element;
+            if (element) {
+                switch (element.tagName) {
+                    case 'path': {
+                        this.d = cssAttribute(element, 'd');
+                        break;
+                    }
+                    case 'line': {
+                        const item = element;
+                        if (item.x1.baseVal.value !== 0 || item.y1.baseVal.value !== 0 || item.x2.baseVal.value !== 0 || item.y2.baseVal.value !== 0) {
+                            this.d = `M${item.x1.baseVal.value},${item.y1.baseVal.value} L${item.x2.baseVal.value},${item.y2.baseVal.value}`;
+                        }
+                        break;
+                    }
+                    case 'rect': {
+                        const item = element;
+                        if (item.width.baseVal.value > 0 && item.height.baseVal.value > 0) {
+                            const x = item.x.baseVal.value;
+                            const y = item.y.baseVal.value;
+                            this.d = `M${x},${y} H${x + item.width.baseVal.value} V${y + item.height.baseVal.value} H${x} Z`;
+                        }
+                        break;
+                    }
+                    case 'polyline':
+                    case 'polygon': {
+                        const item = element;
+                        if (item.points.numberOfItems > 0) {
+                            const data = [];
+                            for (let j = 0; j < item.points.numberOfItems; j++) {
+                                const pt = item.points.getItem(j);
+                                data.push(`${pt.x},${pt.y}`);
+                            }
+                            this.d = `M${data.join(' ') + (element.tagName === 'polygon' ? ' Z' : '')}`;
+                        }
+                        break;
+                    }
+                    case 'circle': {
+                        const item = element;
+                        const r = item.r.baseVal.value;
+                        if (r > 0) {
+                            this.d = `M${item.cx.baseVal.value},${item.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`;
+                        }
+                        break;
+                    }
+                    case 'ellipse': {
+                        const item = element;
+                        const rx = item.rx.baseVal.value;
+                        const ry = item.ry.baseVal.value;
+                        if (rx > 0 && ry > 0) {
+                            this.d = `M${item.cx.baseVal.value - rx},${item.cy.baseVal.value} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0`;
+                        }
+                        break;
+                    }
+                }
+                const values = {
+                    fill: cssAttribute(element, 'fill'),
+                    stroke: cssAttribute(element, 'stroke')
+                };
+                const color = parseRGBA(cssAttribute(element, 'color')) || parseRGBA(cssInherit(element, 'color'));
+                const pattern = /url\(#(.*?)\)/;
+                for (const attr in values) {
+                    const match = pattern.exec(values[attr]);
+                    if (match) {
+                        values[attr] = `@${match[1]}`;
+                    }
+                    else if (isString(values[attr])) {
+                        switch (values[attr].toLowerCase()) {
+                            case 'none':
+                            case 'transparent':
+                                values[attr] = '';
+                                break;
+                            case 'currentcolor':
+                                values[attr] = color ? color.valueRGB : '';
+                                break;
+                            default:
+                                const rgba = parseRGBA(values[attr]);
+                                if (rgba) {
+                                    values[attr] = rgba.valueRGB;
+                                }
+                                break;
+                        }
+                    }
+                }
+                let clipPath = '';
+                const href = pattern.exec(cssAttribute(element, 'clip-path'));
+                if (href) {
+                    clipPath = href[1];
+                }
+                const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
+                const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
+                this.name = element.id;
+                this.color = color ? color.valueRGB : '';
+                this.fillRule = cssAttribute(element, 'fill-rule');
+                this.fill = values.fill;
+                this.stroke = values.stroke;
+                this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
+                this.fillOpacity = !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1;
+                this.strokeOpacity = !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1;
+                this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
+                this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
+                this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
+                this.clipPath = clipPath;
+                this.clipRule = cssAttribute(element, 'clip-rule');
+                this.visibility = isSvgVisible(element);
+            }
+        }
+        get element() {
+            return this._element;
         }
     }
 
-    function replaceWhiteSpace(value) {
-        value = value.replace(/\u00A0/g, '&#160;');
-        value = value.replace(/\u2002/g, '&#8194;');
-        value = value.replace(/\u2003/g, '&#8195;');
-        value = value.replace(/\u2009/g, '&#8201;');
-        value = value.replace(/\u200C/g, '&#8204;');
-        value = value.replace(/\u200D/g, '&#8205;');
-        value = value.replace(/\u200E/g, '&#8206;');
-        value = value.replace(/\u200F/g, '&#8207;');
-        return value;
+    class SvgElement extends SvgElementBase(Object) {
     }
+
+    class SvgImage extends SvgElement {
+        constructor(element, uri) {
+            super(element);
+            this.uri = '';
+            if (uri) {
+                this.uri = uri;
+            }
+        }
+        setElement(element) {
+            if (element instanceof SVGImageElement) {
+                this._element = element;
+            }
+        }
+    }
+
+    class Svg extends Container {
+        constructor(element) {
+            super();
+            this.defs = {
+                image: [],
+                clipPath: new Map(),
+                gradient: new Map()
+            };
+            this._width = 0;
+            this._height = 0;
+            this._viewBoxWidth = 0;
+            this._viewBoxHeight = 0;
+            this._opacity = 1;
+            if (element) {
+                this.setElement(element);
+                this.build();
+            }
+        }
+        static createClipPath(element) {
+            const result = [];
+            if (element.id) {
+                for (const item of Array.from(element.children)) {
+                    const path = new SvgPath(item);
+                    if (path) {
+                        result.push(path);
+                    }
+                }
+            }
+            return result;
+        }
+        setElement(element) {
+            if (element instanceof SVGSVGElement) {
+                this._element = element;
+            }
+        }
+        setDimensions(width, height) {
+            this._width = width;
+            this._height = height;
+        }
+        setViewBox(width, height) {
+            this._viewBoxWidth = width;
+            this._viewBoxHeight = height;
+        }
+        setOpacity(value) {
+            value = parseFloat(value.toString());
+            this._opacity = !isNaN(value) && value < 1 ? value : 1;
+        }
+        build() {
+            const element = this._element;
+            if (element) {
+                this.name = element.id;
+                this.defs.image = [];
+                this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
+                this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
+                this.setOpacity(cssAttribute(element, 'opacity'));
+                element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((item) => {
+                    switch (item.tagName) {
+                        case 'clipPath': {
+                            const clipPath = Svg.createClipPath(item);
+                            if (clipPath.length > 0) {
+                                this.defs.clipPath.set(`${item.id}`, clipPath);
+                            }
+                            break;
+                        }
+                        case 'linearGradient': {
+                            const gradient = item;
+                            this.defs.gradient.set(`@${gradient.id}`, {
+                                type: 'linear',
+                                x1: gradient.x1.baseVal.value,
+                                x2: gradient.x2.baseVal.value,
+                                y1: gradient.y1.baseVal.value,
+                                y2: gradient.y2.baseVal.value,
+                                x1AsString: gradient.x1.baseVal.valueAsString,
+                                x2AsString: gradient.x2.baseVal.valueAsString,
+                                y1AsString: gradient.y1.baseVal.valueAsString,
+                                y2AsString: gradient.y2.baseVal.valueAsString,
+                                colorStop: createColorStop(gradient)
+                            });
+                            break;
+                        }
+                        case 'radialGradient': {
+                            const gradient = item;
+                            this.defs.gradient.set(`@${gradient.id}`, {
+                                type: 'radial',
+                                cx: gradient.cx.baseVal.value,
+                                cy: gradient.cy.baseVal.value,
+                                r: gradient.r.baseVal.value,
+                                cxAsString: gradient.cx.baseVal.valueAsString,
+                                cyAsString: gradient.cy.baseVal.valueAsString,
+                                rAsString: gradient.r.baseVal.valueAsString,
+                                fx: gradient.fx.baseVal.value,
+                                fy: gradient.fy.baseVal.value,
+                                fxAsString: gradient.fx.baseVal.valueAsString,
+                                fyAsString: gradient.fy.baseVal.valueAsString,
+                                colorStop: createColorStop(gradient)
+                            });
+                            break;
+                        }
+                        case 'image': {
+                            const image = item;
+                            const svgImage = new SvgImage(image, resolvePath(image.href.baseVal));
+                            svgImage.width = image.width.baseVal.value;
+                            svgImage.height = image.height.baseVal.value;
+                            svgImage.x = image.x.baseVal.value;
+                            svgImage.y = image.y.baseVal.value;
+                            this.defs.image.push(svgImage);
+                            break;
+                        }
+                    }
+                });
+                const baseTags = new Set(['svg', 'g']);
+                [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item, index) => {
+                    const group = new SvgGroup(item);
+                    if (index > 0 && item.tagName === 'svg') {
+                        const svg = item;
+                        group.x = svg.x.baseVal.value;
+                        group.y = svg.y.baseVal.value;
+                        group.width = svg.width.baseVal.value;
+                        group.height = svg.height.baseVal.value;
+                    }
+                    for (let i = 0; i < item.children.length; i++) {
+                        const subitem = item.children[i];
+                        switch (subitem.tagName) {
+                            case 'g':
+                            case 'use':
+                            case 'image':
+                            case 'clipPath':
+                            case 'linearGradient':
+                            case 'radialGradient':
+                                break;
+                            default:
+                                const path = new SvgPath(item.children[i]);
+                                if (path.d && path.d !== 'none') {
+                                    group.append(path);
+                                }
+                                break;
+                        }
+                    }
+                    this.append(group);
+                });
+                element.querySelectorAll('use').forEach((item) => {
+                    if (cssAttribute(item, 'display') !== 'none') {
+                        let pathParent;
+                        this.some(parent => {
+                            return parent.some(path => {
+                                if (item.href.baseVal === `#${path.name}`) {
+                                    pathParent = path;
+                                    return true;
+                                }
+                                return false;
+                            });
+                        });
+                        if (pathParent) {
+                            const use = new SvgPath(item, pathParent.d);
+                            if (use) {
+                                let found = false;
+                                if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
+                                    this.some(groupItem => {
+                                        if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
+                                            groupItem.append(use);
+                                            found = true;
+                                            return true;
+                                        }
+                                        return false;
+                                    });
+                                }
+                                if (!found) {
+                                    const group = new SvgGroup(item);
+                                    group.x = item.x.baseVal.value;
+                                    group.y = item.y.baseVal.value;
+                                    group.width = item.width.baseVal.value;
+                                    group.height = item.height.baseVal.value;
+                                    group.append(use);
+                                    this.append(group);
+                                }
+                            }
+                        }
+                    }
+                });
+                const sorted = new Set();
+                for (const item of Array.from(element.children)) {
+                    const nested = new Set(Array.from(item.querySelectorAll('*')));
+                    for (const group of this.list) {
+                        if (group.element && (group.element === item || nested.has(group.element))) {
+                            sorted.delete(group);
+                            sorted.add(group);
+                            break;
+                        }
+                        for (const path of group) {
+                            if (path.element && (path.element === item || nested.has(path.element))) {
+                                sorted.delete(group);
+                                sorted.add(group);
+                                break;
+                            }
+                        }
+                    }
+                }
+                this.replace([...this.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
+            }
+        }
+        get element() {
+            return this._element;
+        }
+        get width() {
+            return this._width;
+        }
+        get height() {
+            return this._height;
+        }
+        get viewBoxWidth() {
+            return this._viewBoxWidth;
+        }
+        get viewBoxHeight() {
+            return this._viewBoxHeight;
+        }
+        get opacity() {
+            return this._opacity;
+        }
+    }
+
     function formatPlaceholder(id, symbol = ':') {
         return `{${symbol + id.toString()}}`;
     }
@@ -2671,57 +3614,78 @@
         }
         return value;
     }
-    function replaceTab(value, { insertSpaces = 4 }, preserve = false) {
-        if (insertSpaces > 0) {
+    function replaceTab(value, spaces = 4, preserve = false) {
+        if (spaces > 0) {
             if (preserve) {
                 value = value.split('\n').map(line => {
                     const match = line.match(/^(\t+)(.*)$/);
                     if (match) {
-                        return ' '.repeat(insertSpaces * match[1].length) + match[2];
+                        return ' '.repeat(spaces * match[1].length) + match[2];
                     }
                     return line;
                 })
                     .join('\n');
             }
             else {
-                value = value.replace(/\t/g, ' '.repeat(insertSpaces));
+                value = value.replace(/\t/g, ' '.repeat(spaces));
             }
         }
         return value;
     }
     function replaceEntity(value) {
-        value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
-        value = value.replace(/&nbsp;/g, '&#160;');
-        return replaceWhiteSpace(value);
+        return (value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)))
+            .replace(/\u00A0/g, '&#160;')
+            .replace(/\u2002/g, '&#8194;')
+            .replace(/\u2003/g, '&#8195;')
+            .replace(/\u2009/g, '&#8201;')
+            .replace(/\u200C/g, '&#8204;')
+            .replace(/\u200D/g, '&#8205;')
+            .replace(/\u200E/g, '&#8206;')
+            .replace(/\u200F/g, '&#8207;'));
     }
-    function parseTemplate(template) {
-        const result = {};
+    function replaceCharacter(value) {
+        return (value.replace(/&nbsp;/g, '&#160;')
+            .replace(/&(?!#?[A-Za-z0-9]{2,};)/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/'/g, '&apos;')
+            .replace(/"/g, '&quot;'));
+    }
+    function parseTemplate(value) {
+        const result = { '__root': value };
         let pattern = null;
         let match = false;
-        let section = 0;
-        let characters = template.length;
+        let characters = value.length;
+        let section = '';
         do {
             if (match) {
-                const segment = match[0].replace(new RegExp(match[1], 'g'), '');
+                const segment = match[0].replace(new RegExp(`^${match[1]}\\n`), '').replace(new RegExp(`${match[1]}$`), '');
                 for (const index in result) {
                     result[index] = result[index].replace(new RegExp(match[0], 'g'), `{%${match[2]}}`);
                 }
                 result[match[2]] = segment;
                 characters -= match[0].length;
+                section = match[2];
             }
             if (match == null || characters === 0) {
-                template = result[section++];
-                if (!template) {
+                if (section) {
+                    value = result[section];
+                    if (!value) {
+                        break;
+                    }
+                    characters = value.length;
+                    section = '';
+                    match = null;
+                }
+                else {
                     break;
                 }
-                characters = template.length;
-                match = null;
             }
             if (!match) {
-                pattern = /(!(\d+)\n?)[\w\W]*\1/g;
+                pattern = /(!(\w+))\n[\w\W]*\n*\1/g;
             }
             if (pattern) {
-                match = pattern.exec(template);
+                match = pattern.exec(value);
             }
             else {
                 break;
@@ -2729,41 +3693,53 @@
         } while (true);
         return result;
     }
-    function getTemplateBranch(data, ...levels) {
-        let current = data;
-        for (const level of levels) {
-            const [index, array = '0'] = level.split('-');
-            current = current[index][array];
-        }
-        return current;
-    }
-    function createTemplate(template, data, index) {
-        let output = index ? template[index] : '';
-        for (const i in data) {
-            let value = '';
-            if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
-                output = output.replace(`{%${i}}`, '');
-                continue;
-            }
-            else if (Array.isArray(data[i])) {
-                for (const j in data[i]) {
-                    value += createTemplate(template, data[i][j], i);
+    function createTemplate(value, data, index) {
+        let output = index != null ? value[index] : value['__root'].trim();
+        for (const attr in data) {
+            let result = '';
+            if (isArray(data[attr])) {
+                for (let i = 0; i < data[attr].length; i++) {
+                    result += createTemplate(value, data[attr][i], attr.toString());
                 }
+                result = trimEnd(result, '\\n');
             }
             else {
-                value = data[i];
+                result = data[attr];
             }
-            if (isString(value)) {
-                output = index ? output.replace(new RegExp(`{[%@&]?${i}}`, 'g'), value) : value.trim();
+            let hash = '';
+            if (isString(result)) {
+                if (isArray(data[attr])) {
+                    hash = '%';
+                }
+                else {
+                    hash = '[&~]';
+                }
+                output = output.replace(new RegExp(`{${hash + attr}}`, 'g'), result);
             }
-            else if (value === false || new RegExp(`{%${i}}`).test(output)) {
-                output = output.replace(`{%${i}}`, '');
+            if (result === false || (Array.isArray(result) && result.length === 0) || (hash && hash !== '%')) {
+                output = output.replace(new RegExp(`{%${attr}}\\n*`, 'g'), '');
             }
-            else if (new RegExp(`{&${i}}`).test(output)) {
+            if (hash === '' && new RegExp(`{&${attr}}`).test(output)) {
                 output = '';
             }
         }
-        return output.replace(/\s+[\w:]+="[^"]*{@\w+}"/g, '');
+        if (index == null) {
+            output = output.replace(/\n{%\w+}\n/g, '\n');
+        }
+        return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
+    }
+    function getTemplateSection(data, ...levels) {
+        let current = data;
+        for (const level of levels) {
+            const [index, array = '0'] = level.split('-');
+            if (current[index] && current[index][parseInt(array)]) {
+                current = current[index][parseInt(array)];
+            }
+            else {
+                return {};
+            }
+        }
+        return current;
     }
 
     var xml = /*#__PURE__*/Object.freeze({
@@ -2773,9 +3749,10 @@
         replaceIndent: replaceIndent,
         replaceTab: replaceTab,
         replaceEntity: replaceEntity,
+        replaceCharacter: replaceCharacter,
         parseTemplate: parseTemplate,
-        getTemplateBranch: getTemplateBranch,
-        createTemplate: createTemplate
+        createTemplate: createTemplate,
+        getTemplateSection: getTemplateSection
     });
 
     function prioritizeExtensions(extensions, element) {
@@ -2818,7 +3795,7 @@
             this.cacheImage = new Map();
             this.cacheSession = new NodeList();
             this.cacheProcessing = new NodeList();
-            this.elements = new Set();
+            this.viewElements = new Set();
             this.extensions = [];
             this._cacheRoot = new Set();
             this._renderPosition = {};
@@ -2839,8 +3816,8 @@
             const visible = nodes.filter(node => node.visible);
             const floated = NodeList.floated(nodes);
             const [floating, pageflow] = new NodeList(nodes).partition(node => node.floating);
-            const flowIndex = pageflow.length > 0 ? Math.min.apply(null, pageflow.list.map(node => node.siblingIndex)) : Number.MAX_VALUE;
-            const floatIndex = floating.length > 0 ? Math.max.apply(null, floating.list.map(node => node.siblingIndex)) : -1;
+            const flowIndex = pageflow.length > 0 ? Math.min.apply(null, pageflow.map(node => node.siblingIndex)) : Number.MAX_VALUE;
+            const floatIndex = floating.length > 0 ? Math.max.apply(null, floating.map(node => node.siblingIndex)) : -1;
             const linearX = NodeList.linearX(nodes);
             if (visible.some(node => node.autoMarginHorizontal)) {
                 return false;
@@ -2893,19 +3870,19 @@
                     node.setLayout();
                 }
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
-                    node.setAlignment(this.settings);
+                    node.setAlignment();
                 }
             }
             for (const node of visible) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                    node.applyOptimizations(this.settings);
+                    node.applyOptimizations();
                 }
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
-                    node.applyCustomizations(this.settings);
+                    node.applyCustomizations();
                 }
             }
             this.viewController.setBoxSpacing(this.viewData);
-            this.appendRenderQueue();
+            this.processRenderQueue();
             this.viewController.finalize(this.viewData, this.resourceHandler.finalize(this.viewData));
             for (const ext of this.extensions) {
                 for (const node of ext.subscribers) {
@@ -2919,7 +3896,7 @@
             this.resourceHandler.file.saveAllToDisk(this.viewData);
         }
         reset() {
-            this.cacheSession.each(node => deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
+            this.cacheSession.each(node => node.element instanceof Element && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
             for (const element of this._cacheRoot) {
                 delete element.dataset.iteration;
                 delete element.dataset.layoutName;
@@ -2964,7 +3941,7 @@
         }
         parseDocument(...elements) {
             let __THEN;
-            this.elements.clear();
+            this.viewElements.clear();
             this.loading = false;
             this.setStyleMap();
             if (this.appName === '' && elements.length === 0) {
@@ -2973,24 +3950,26 @@
             for (const item of elements) {
                 const element = typeof item === 'string' ? document.getElementById(item) : item;
                 if (element && isStyleElement(element)) {
-                    this.elements.add(element);
+                    this.viewElements.add(element);
                 }
             }
-            const rootElement = this.elements.values().next().value;
+            const rootElement = this.viewElements.values().next().value;
             const parseResume = () => {
                 this.loading = false;
-                if (this.settings.preloadImages && rootElement) {
+                if (this.settings.preloadImages) {
                     Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
                 }
-                this.resourceHandler.imageDimensions = this.cacheImage;
-                for (const element of this.elements) {
+                for (const [uri, image] of this.cacheImage.entries()) {
+                    this.resourceHandler.imageAssets.set(uri, image);
+                }
+                for (const element of this.viewElements) {
                     if (this.appName === '') {
                         if (element.id === '') {
                             element.id = 'untitled';
                         }
                         this.appName = element.id;
                     }
-                    let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${this.viewController.settingsInternal.layout.fileExtension}$`), '');
+                    let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${this.viewController.localSettings.layout.fileExtension}$`), '');
                     if (filename === '') {
                         if (element.id === '') {
                             element.id = `document_${this.size}`;
@@ -3011,7 +3990,15 @@
                     __THEN.call(this);
                 }
             };
-            if (this.settings.preloadImages && rootElement) {
+            if (this.settings.preloadImages) {
+                Array.from(rootElement.querySelectorAll('image')).forEach((item) => {
+                    const uri = resolvePath(item.href.baseVal);
+                    this.cacheImage.set(uri, {
+                        width: item.width.baseVal.value,
+                        height: item.height.baseVal.value,
+                        uri
+                    });
+                });
                 for (const image of this.cacheImage.values()) {
                     if (image.width === 0 && image.height === 0 && image.uri) {
                         const imageElement = document.createElement('IMG');
@@ -3028,7 +4015,7 @@
                     }
                 }
             }
-            const images = Array.from(this.elements).map(element => {
+            const images = Array.from(this.viewElements).map(element => {
                 const incomplete = [];
                 Array.from(element.querySelectorAll('IMG')).forEach((item) => {
                     if (item.complete) {
@@ -3054,13 +4041,13 @@
                 });
                 Promise.all(queue).then((result) => {
                     if (Array.isArray(result)) {
-                        result.forEach(item => {
+                        for (const item of result) {
                             try {
                                 this.setImageCache(item.srcElement);
                             }
                             catch (_a) {
                             }
-                        });
+                        }
                     }
                     parseResume();
                 })
@@ -3088,7 +4075,7 @@
                 Array.from(document.body.childNodes).some((item) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
             }
             const elements = rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
-            this.cacheProcessing.parent = undefined;
+            this.nodeProcessing = undefined;
             this.cacheProcessing.delegateAppend = undefined;
             this.cacheProcessing.clear();
             for (const ext of this.extensions) {
@@ -3099,14 +4086,14 @@
             if (rootNode) {
                 rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body, this.viewController.delegateNodeInit);
                 rootNode.documentRoot = true;
-                this.cacheProcessing.parent = rootNode;
+                this.nodeProcessing = rootNode;
             }
             else {
                 return false;
             }
-            const settingsInternal = this.viewController.settingsInternal;
-            const inlineAlways = settingsInternal.inline.always;
-            const inlineSupport = this.settings.renderInlineText ? [] : settingsInternal.inline.tagName;
+            const localSettings = this.viewController.localSettings;
+            const inlineAlways = localSettings.inline.always;
+            const inlineSupport = this.settings.renderInlineText ? [] : localSettings.inline.tagName;
             function inlineElement(element) {
                 const styleMap = getElementCache(element, 'styleMap');
                 return ((!styleMap || Object.keys(styleMap).length === 0) &&
@@ -3114,9 +4101,9 @@
                     inlineSupport.includes(element.tagName));
             }
             for (const element of Array.from(elements)) {
-                if (!this.elements.has(element)) {
+                if (!this.viewElements.has(element)) {
                     prioritizeExtensions(this.extensions, element).some(item => item.init(element));
-                    if (!this.elements.has(element) && !settingsInternal.unsupported.tagName.includes(element.tagName)) {
+                    if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.includes(element.tagName)) {
                         if (inlineAlways.includes(element.tagName) || (inlineElement(element) &&
                             element.parentElement &&
                             Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
@@ -3128,7 +4115,7 @@
                             if (current === rootElement) {
                                 break;
                             }
-                            else if (current !== rootElement && this.elements.has(current)) {
+                            else if (current !== rootElement && this.viewElements.has(current)) {
                                 valid = false;
                                 break;
                             }
@@ -3163,7 +4150,7 @@
                             }
                         }
                         else if (element.tagName !== 'BR') {
-                            const elementNode = getNodeFromElement(element);
+                            const elementNode = Node.getNodeFromElement(element);
                             if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                                 valid = true;
                             }
@@ -3238,8 +4225,8 @@
                             }
                         }
                     }
-                    if (node.children.length === 1) {
-                        const firstNode = node.children[0];
+                    if (node.length === 1) {
+                        const firstNode = node.item(0);
                         if (!firstNode.pageflow &&
                             firstNode.toInt('top') === 0 &&
                             firstNode.toInt('right') === 0 &&
@@ -3251,9 +4238,9 @@
                 }
                 for (const node of this.cacheProcessing) {
                     if (!node.documentRoot) {
-                        let parent = node.getParentElementAsNode(this.settings.supportNegativeLeftTop, this.cacheProcessing.parent);
+                        let parent = node.getParentElementAsNode(this.settings.supportNegativeLeftTop);
                         if (!parent && !node.pageflow) {
-                            parent = this.cacheProcessing.parent;
+                            parent = this.nodeProcessing;
                         }
                         if (parent) {
                             node.parent = parent;
@@ -3268,16 +4255,16 @@
                     if (node.htmlElement) {
                         let i = 0;
                         Array.from(node.element.childNodes).forEach((element) => {
-                            const item = getNodeFromElement(element);
+                            const item = Node.getNodeFromElement(element);
                             if (item && !item.excluded && item.pageflow) {
                                 item.siblingIndex = i++;
                             }
                         });
-                        node.children.sort(NodeList.siblingIndex);
-                        node.initial.children.push(...node.children.slice());
+                        node.sort(NodeList.siblingIndex);
+                        node.initial.children.push(...node.duplicate());
                     }
                 }
-                this.cacheProcessing.sortAsc('depth', 'id');
+                sortAsc(this.cacheProcessing.list, 'depth', 'id');
                 for (const ext of this.extensions) {
                     ext.setTarget(rootNode);
                     ext.afterInit();
@@ -3287,10 +4274,10 @@
             return false;
         }
         createDocument() {
-            const settingsInternal = this.viewController.settingsInternal;
+            const localSettings = this.viewController.localSettings;
             const mapX = [];
             const mapY = new Map();
-            let baseTemplate = settingsInternal.baseTemplate;
+            let baseTemplate = localSettings.baseTemplate;
             let empty = true;
             function setMapY(depth, id, node) {
                 if (!mapY.has(depth)) {
@@ -3311,7 +4298,7 @@
                     }
                 }
             }
-            setMapY(-1, 0, this.cacheProcessing.parent.parent);
+            setMapY(-1, 0, this.nodeProcessing.parent);
             let maxDepth = 0;
             for (const node of this.cacheProcessing.visible) {
                 const x = Math.floor(node.linear.left);
@@ -3375,7 +4362,7 @@
                             insertNodeTemplate(external, node, current, output, current);
                         }
                         else {
-                            if (!this.elements.has(node.element)) {
+                            if (!this.viewElements.has(node.element)) {
                                 if (node.dataset.target) {
                                     const target = document.getElementById(node.dataset.target);
                                     if (target && target !== parent.element) {
@@ -3398,14 +4385,14 @@
                     }
                 };
                 for (const parent of depth.values()) {
-                    if (parent.children.length === 0 || parent.children.every(node => node.rendered)) {
+                    if (parent.length === 0 || parent.every(node => node.rendered)) {
                         continue;
                     }
                     const axisY = [];
                     const below = [];
                     const middle = [];
                     const above = [];
-                    for (const node of parent.children) {
+                    parent.each((node) => {
                         if (node.documentRoot) {
                             axisY.push(node);
                         }
@@ -3420,14 +4407,14 @@
                                 below.push(node);
                             }
                         }
-                    }
+                    });
                     NodeList.sortByAlignment(middle, NODE_ALIGNMENT.NONE, parent);
                     axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
                     axisY.push(...middle);
                     axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
-                    const documentParent = parent.children.filter(item => item.siblingflow).map(item => item.documentParent);
+                    const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
                     const cleared = NodeList.cleared(new Set(documentParent).size === 1
-                        ? Array.from(documentParent[0].baseElement.children).map((element) => getNodeFromElement(element)).filter(item => item)
+                        ? Array.from(documentParent[0].baseElement.children).map((element) => Node.getNodeFromElement(element)).filter(item => item)
                         : axisY);
                     const includes$$1 = [];
                     let current = '';
@@ -3437,12 +4424,12 @@
                     }
                     while (++k < axisY.length) {
                         let nodeY = axisY[k];
-                        if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.elements.has(nodeY.element))) {
+                        if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.viewElements.has(nodeY.element))) {
                             continue;
                         }
                         let parentY = nodeY.parent;
                         let currentY = '';
-                        if (settingsInternal.includes) {
+                        if (localSettings.includes) {
                             if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                                 const filename = trimNull(nodeY.dataset.include);
                                 if (filename !== '' && includes$$1.indexOf(filename) === -1) {
@@ -3463,7 +4450,7 @@
                             }
                         }
                         if (nodeY.renderAs) {
-                            parentY.removeChild(nodeY);
+                            parentY.remove(nodeY);
                             nodeY.hide();
                             nodeY = nodeY.renderAs;
                         }
@@ -3570,7 +4557,7 @@
                                         }
                                     }
                                 }
-                                let group = null;
+                                let group;
                                 let groupOutput = '';
                                 if (horizontal.length > 1) {
                                     const clearedPartial = NodeList.cleared(horizontal);
@@ -3618,7 +4605,7 @@
                                         !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node)))) {
                                         if (parentY.linearVertical && !hasValue(nodeY.dataset.ext)) {
                                             group = nodeY;
-                                            groupOutput = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
+                                            groupOutput = this.writeFrameLayoutVertical(undefined, parentY, vertical, clearedPartial);
                                         }
                                         else {
                                             group = this.viewController.createGroup(parentY, nodeY, vertical);
@@ -3659,6 +4646,9 @@
                                 if (result.output !== '') {
                                     renderNode(nodeY, parentY, result.output, currentY);
                                 }
+                                if (result.renderAs && result.renderOutput) {
+                                    renderNode(result.renderAs, parentY, result.renderOutput, currentY);
+                                }
                                 if (result.parent) {
                                     parentY = result.parent;
                                 }
@@ -3679,6 +4669,9 @@
                                             const result = item.processNode(mapX, mapY);
                                             if (result.output !== '') {
                                                 renderNode(nodeY, parentY, result.output, currentY);
+                                            }
+                                            if (result.renderAs && result.renderOutput) {
+                                                renderNode(result.renderAs, parentY, result.renderOutput, currentY);
                                             }
                                             if (result.parent) {
                                                 parentY = result.parent;
@@ -3702,23 +4695,12 @@
                         }
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
                             let output = '';
-                            if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
-                                !nodeY.imageElement &&
-                                nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
-                                (parentY.linearVertical || (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild))) {
-                                const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
-                                const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
-                                group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                                renderNode(group, parentY, groupOutput, currentY);
-                                this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.viewController.renderColumnSpace(group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
-                                parentY = group;
-                            }
                             if (nodeY.controlName === '') {
                                 const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                                const backgroundImage = DOM_REGEX.URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.URL.test(nodeY.css('background'));
+                                const backgroundImage = DOM_REGEX.CSS_URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.CSS_URL.test(nodeY.css('background'));
                                 const backgroundColor = nodeY.has('backgroundColor');
                                 const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
-                                if (nodeY.children.length === 0) {
+                                if (nodeY.length === 0) {
                                     const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
                                     if (freeFormText || (borderVisible && nodeY.textContent.length > 0)) {
                                         output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
@@ -3741,7 +4723,7 @@
                                             !hasValue(nodeY.element.id) &&
                                             !hasValue(nodeY.dataset.ext) &&
                                             !backgroundVisible) {
-                                            parentY.removeChild(nodeY);
+                                            parentY.remove(nodeY);
                                             nodeY.hide();
                                         }
                                         else if (backgroundVisible) {
@@ -3753,12 +4735,12 @@
                                     }
                                 }
                                 else {
-                                    if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow) || nodeY.has('columnCount')) {
+                                    if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.has('columnCount')) {
                                         output = this.writeConstraintLayout(nodeY, parentY);
                                     }
                                     else {
-                                        if (nodeY.children.length === 1) {
-                                            const targeted = nodeY.children.filter(node => {
+                                        if (nodeY.length === 1) {
+                                            const targeted = nodeY.filter(node => {
                                                 if (node.dataset.target) {
                                                     const element = document.getElementById(node.dataset.target);
                                                     return element != null && hasValue(element.dataset.ext) && element !== parentY.element;
@@ -3777,7 +4759,7 @@
                                                 nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
                                                 !this.viewController.hasAppendProcessing(nodeY.id)) ||
                                                 (nodeY.documentRoot && targeted.length === 1)) {
-                                                const child = nodeY.children[0];
+                                                const child = nodeY.item(0);
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.siblingIndex = nodeY.siblingIndex;
                                                 if (parentY.id !== 0) {
@@ -3800,7 +4782,7 @@
                                             }
                                         }
                                         else {
-                                            const children = nodeY.children;
+                                            const children = nodeY.list;
                                             const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
                                             const clearedInside = NodeList.cleared(children);
                                             const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
@@ -3865,7 +4847,7 @@
                             }
                             renderNode(nodeY, parentY, output, currentY);
                         }
-                        if (settingsInternal.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
+                        if (localSettings.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
                             includes$$1.pop();
                         }
                     }
@@ -3901,70 +4883,72 @@
                         }
                     }
                 }
-                if (settingsInternal.includes) {
+                if (localSettings.includes) {
                     for (const [filename, templates] of external.entries()) {
                         const content = Array.from(templates.values());
                         if (content.length > 0) {
                             const output = this.viewController.renderMerge(filename, content);
-                            this.createIncludeFile(filename, output);
+                            this.addIncludeFile(filename, output);
                         }
                     }
                 }
             }
-            const root = this.cacheProcessing.parent;
-            if (root.dataset.layoutName && (!hasValue(root.dataset.target) || root.renderExtension.size === 0)) {
-                this.createLayoutFile(trimString(trimNull(root.dataset.pathname), '/'), root.dataset.layoutName, !empty ? baseTemplate : '', root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot));
-            }
-            if (!empty) {
-                for (const ext of this.extensions) {
-                    ext.setTarget(root);
-                    ext.afterRender();
+            const root = this.nodeProcessing;
+            if (root) {
+                if (root.dataset.layoutName && (!hasValue(root.dataset.target) || root.renderExtension.size === 0)) {
+                    this.addLayoutFile(trimString(trimNull(root.dataset.pathname), '/'), root.dataset.layoutName, !empty ? baseTemplate : '', root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot));
                 }
-            }
-            else if (root.renderExtension.size === 0) {
-                root.hide();
-            }
-            this.cacheProcessing.sort((a, b) => {
-                if (!a.visible) {
-                    return 1;
-                }
-                else if (!b.visible) {
-                    return -1;
-                }
-                else if (a.renderDepth !== b.renderDepth) {
-                    return a.renderDepth < b.renderDepth ? -1 : 1;
-                }
-                else {
-                    if (!a.domElement) {
-                        const nodeA = getNodeFromElement(a.baseElement);
-                        if (nodeA) {
-                            a = nodeA;
-                        }
-                        else {
-                            return 1;
-                        }
+                if (!empty) {
+                    for (const ext of this.extensions) {
+                        ext.setTarget(root);
+                        ext.afterRender();
                     }
-                    if (!b.domElement) {
-                        const nodeB = getNodeFromElement(a.baseElement);
-                        if (nodeB) {
-                            b = nodeB;
-                        }
-                        else {
-                            return -1;
-                        }
+                }
+                else if (root.renderExtension.size === 0) {
+                    root.hide();
+                }
+                this.cacheProcessing.sort((a, b) => {
+                    if (!a.visible) {
+                        return 1;
                     }
-                    if (a.documentParent !== b.documentParent) {
-                        return a.documentParent.id < b.documentParent.id ? -1 : 1;
+                    else if (!b.visible) {
+                        return -1;
+                    }
+                    else if (a.renderDepth !== b.renderDepth) {
+                        return a.renderDepth < b.renderDepth ? -1 : 1;
                     }
                     else {
-                        return a.renderIndex < b.renderIndex ? -1 : 1;
+                        if (!a.domElement) {
+                            const nodeA = Node.getNodeFromElement(a.baseElement);
+                            if (nodeA) {
+                                a = nodeA;
+                            }
+                            else {
+                                return 1;
+                            }
+                        }
+                        if (!b.domElement) {
+                            const nodeB = Node.getNodeFromElement(a.baseElement);
+                            if (nodeB) {
+                                b = nodeB;
+                            }
+                            else {
+                                return -1;
+                            }
+                        }
+                        if (a.documentParent !== b.documentParent) {
+                            return a.documentParent.id < b.documentParent.id ? -1 : 1;
+                        }
+                        else {
+                            return a.renderIndex < b.renderIndex ? -1 : 1;
+                        }
                     }
-                }
-            });
-            this.cacheSession.list.push(...this.cacheProcessing.list);
+                });
+                this.cacheSession.list.push(...this.cacheProcessing.list);
+            }
         }
         writeFrameLayout(node, parent, children = false) {
-            if (!children && node.children.length === 0) {
+            if (!children && node.length === 0) {
                 return this.viewController.renderNode(node, parent, NODE_STANDARD.FRAME);
             }
             else {
@@ -4269,7 +5253,7 @@
                 group.alignmentType |= NODE_ALIGNMENT.FLOAT;
             }
             if (layers.length > 0) {
-                let floatgroup = null;
+                let floatgroup;
                 layers.forEach((item, index) => {
                     if (Array.isArray(item[0])) {
                         const grouping = [];
@@ -4294,7 +5278,7 @@
                         floatgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                     }
                     else {
-                        floatgroup = null;
+                        floatgroup = undefined;
                     }
                     (Array.isArray(item[0]) ? item : [item]).forEach(section => {
                         let basegroup = group;
@@ -4312,10 +5296,10 @@
                             }
                             else {
                                 groupOutput = this.writeLinearLayout(subgroup, basegroup, NodeList.linearX(section));
-                                if (floatRight && subgroup.children.some(node => node.marginLeft < 0)) {
+                                if (floatRight && subgroup.some(node => node.marginLeft < 0)) {
                                     const sorted = [];
                                     let marginRight = 0;
-                                    subgroup.children.slice().forEach((node) => {
+                                    subgroup.duplicate().forEach((node) => {
                                         let prepend = false;
                                         if (marginRight < 0) {
                                             if (Math.abs(marginRight) > node.bounds.width) {
@@ -4344,8 +5328,8 @@
                                             sorted.push(node);
                                         }
                                     });
-                                    subgroup.children = sorted.reverse();
-                                    this.preserveRenderPosition(subgroup.id, subgroup.children);
+                                    subgroup.replace(sorted.reverse());
+                                    this.preserveRenderPosition(subgroup);
                                 }
                             }
                             subgroup.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
@@ -4375,13 +5359,13 @@
         }
         writeFrameLayoutVertical(group, parent, nodes, cleared) {
             let output = '';
-            if (!group) {
-                group = parent;
-                output = formatPlaceholder(group.id);
-            }
-            else {
+            if (group) {
                 output = this.writeLinearLayout(group, parent, false);
                 group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+            }
+            else {
+                group = parent;
+                output = formatPlaceholder(group.id);
             }
             const rowsCurrent = [];
             const rowsFloated = [];
@@ -4435,7 +5419,7 @@
                         const baseNode = floating[0] || pageflow[0];
                         const basegroup = this.viewController.createGroup(group, baseNode, []);
                         const children = [];
-                        let subgroup = null;
+                        let subgroup;
                         if (floating.length > 1) {
                             subgroup = this.viewController.createGroup(basegroup, floating[0], floating);
                             basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
@@ -4450,7 +5434,7 @@
                             if (i === 0 && leadingMargin > 0) {
                                 subgroup.modifyBox(BOX_STANDARD.MARGIN_TOP, leadingMargin);
                             }
-                            subgroup = null;
+                            subgroup = undefined;
                         }
                         if (pageflow.length > 1) {
                             subgroup = this.viewController.createGroup(basegroup, pageflow[0], pageflow);
@@ -4480,7 +5464,7 @@
             }
             return output;
         }
-        appendRenderQueue() {
+        processRenderQueue() {
             for (const ext of this.extensions) {
                 for (const node of ext.subscribers) {
                     ext.setTarget(node);
@@ -4489,16 +5473,16 @@
             }
             const template = {};
             for (const id in this.renderQueue) {
-                const [originalId] = id.split(':');
-                let replaceId = originalId;
+                const [nodeId] = id.split(':');
+                let replaceId = nodeId;
                 if (!isNumber(replaceId)) {
-                    const target = getNodeFromElement(document.getElementById(replaceId));
+                    const target = Node.getNodeFromElement(document.getElementById(replaceId));
                     if (target) {
                         replaceId = target.id.toString();
                     }
                 }
                 let output = this.renderQueue[id].join('\n');
-                if (replaceId !== originalId) {
+                if (replaceId !== nodeId) {
                     const target = this.cacheSession.find('id', parseInt(replaceId));
                     if (target) {
                         const depth = target.renderDepth + 1;
@@ -4533,7 +5517,7 @@
                 for (const id in template) {
                     value.content = value.content.replace(formatPlaceholder(id), template[id]);
                 }
-                value.content = this.viewController.appendRenderQueue(value.content);
+                value.content = this.viewController.replaceRenderQueue(value.content);
             }
             for (const ext of this.extensions) {
                 for (const node of ext.subscribers) {
@@ -4542,8 +5526,8 @@
                 }
             }
         }
-        createLayoutFile(pathname, filename, content, documentRoot = false) {
-            pathname = pathname || this.viewController.settingsInternal.layout.pathName;
+        addLayoutFile(pathname, filename, content, documentRoot = false) {
+            pathname = pathname || this.viewController.localSettings.layout.pathName;
             const layout = {
                 pathname,
                 filename,
@@ -4557,9 +5541,9 @@
                 this.layoutProcessing = layout;
             }
         }
-        createIncludeFile(filename, content) {
+        addIncludeFile(filename, content) {
             this._includes.push({
-                pathname: this.viewController.settingsInternal.layout.pathName,
+                pathname: this.viewController.localSettings.layout.pathName,
                 filename,
                 content
             });
@@ -4570,11 +5554,11 @@
             }
             this.renderQueue[id].push(...views);
         }
-        preserveRenderPosition(id, nodes) {
-            this._renderPosition[id.toString()] = nodes.map(node => node.id);
+        preserveRenderPosition(node) {
+            this._renderPosition[node.id.toString()] = node.map(item => item.id);
         }
         insertNode(element, parent) {
-            let node = null;
+            let node;
             if (element.nodeName.charAt(0) === '#') {
                 if (element.nodeName === '#text') {
                     if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
@@ -4707,9 +5691,9 @@
                         }
                         catch (error) {
                             if (!warning) {
-                                alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). ' +
-                                    'Either use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. ' +
-                                    'See the README for further instructions.\n\n' +
+                                alert('External CSS files cannot be parsed with Chrome 64+ when loading HTML pages directly from your hard drive [file://]. ' +
+                                    'Either use a local web server [http://], embed your CSS into a &lt;style&gt; element, or use a different browser. ' +
+                                    'See the README for more detailed instructions.\n\n' +
                                     `${styleSheet.href}\n\n${error}`);
                                 warning = true;
                             }
@@ -4727,6 +5711,9 @@
             return this.resourceHandler ? this.resourceHandler.file.appName : '';
         }
         set settings(value) {
+            if (typeof value !== 'object') {
+                value = {};
+            }
             this._settings = value;
             if (this.viewController) {
                 this.viewController.settings = value;
@@ -4736,7 +5723,7 @@
             }
         }
         get settings() {
-            return this._settings ? this._settings : {};
+            return this._settings;
         }
         set layoutProcessing(value) {
             this._currentIndex = this._views.length;
@@ -4769,7 +5756,7 @@
             this._before = {};
             this._after = {};
         }
-        appendRenderQueue(output) {
+        replaceRenderQueue(output) {
             for (const id in this._before) {
                 output = output.replace(`{<${id}}`, this._before[id].join(''));
             }
@@ -4805,409 +5792,11 @@
         }
     }
 
-    const X11_CSS3 = {
-        'Pink': { 'hex': '#FFC0CB' },
-        'LightPink': { 'hex': '#FFB6C1' },
-        'HotPink': { 'hex': '#FF69B4' },
-        'DeepPink': { 'hex': '#FF1493' },
-        'PaleVioletRed': { 'hex': '#DB7093' },
-        'MediumVioletRed': { 'hex': '#C71585' },
-        'LightSalmon': { 'hex': '#FFA07A' },
-        'Salmon': { 'hex': '#FA8072' },
-        'DarkSalmon': { 'hex': '#E9967A' },
-        'LightCoral': { 'hex': '#F08080' },
-        'IndianRed': { 'hex': '#CD5C5C' },
-        'Crimson': { 'hex': '#DC143C' },
-        'Firebrick': { 'hex': '#B22222' },
-        'DarkRed': { 'hex': '#8B0000' },
-        'Red': { 'hex': '#FF0000' },
-        'OrangeRed': { 'hex': '#FF4500' },
-        'Tomato': { 'hex': '#FF6347' },
-        'Coral': { 'hex': '#FF7F50' },
-        'Orange': { 'hex': '#FFA500' },
-        'DarkOrange': { 'hex': '#FF8C00' },
-        'Yellow': { 'hex': '#FFFF00' },
-        'LightYellow': { 'hex': '#FFFFE0' },
-        'LemonChiffon': { 'hex': '#FFFACD' },
-        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
-        'PapayaWhip': { 'hex': '#FFEFD5' },
-        'Moccasin': { 'hex': '#FFE4B5' },
-        'PeachPuff': { 'hex': '#FFDAB9' },
-        'PaleGoldenrod': { 'hex': '#EEE8AA' },
-        'Khaki': { 'hex': '#F0E68C' },
-        'DarkKhaki': { 'hex': '#BDB76B' },
-        'Gold': { 'hex': '#FFD700' },
-        'Cornsilk': { 'hex': '#FFF8DC' },
-        'BlanchedAlmond': { 'hex': '#FFEBCD' },
-        'Bisque': { 'hex': '#FFE4C4' },
-        'NavajoWhite': { 'hex': '#FFDEAD' },
-        'Wheat': { 'hex': '#F5DEB3' },
-        'Burlywood': { 'hex': '#DEB887' },
-        'Tan': { 'hex': '#D2B48C' },
-        'RosyBrown': { 'hex': '#BC8F8F' },
-        'SandyBrown': { 'hex': '#F4A460' },
-        'Goldenrod': { 'hex': '#DAA520' },
-        'DarkGoldenrod': { 'hex': '#B8860B' },
-        'Peru': { 'hex': '#CD853F' },
-        'Chocolate': { 'hex': '#D2691E' },
-        'SaddleBrown': { 'hex': '#8B4513' },
-        'Sienna': { 'hex': '#A0522D' },
-        'Brown': { 'hex': '#A52A2A' },
-        'Maroon': { 'hex': '#800000' },
-        'DarkOliveGreen': { 'hex': '#556B2F' },
-        'Olive': { 'hex': '#808000' },
-        'OliveDrab': { 'hex': '#6B8E23' },
-        'YellowGreen': { 'hex': '#9ACD32' },
-        'LimeGreen': { 'hex': '#32CD32' },
-        'Lime': { 'hex': '#00FF00' },
-        'LawnGreen': { 'hex': '#7CFC00' },
-        'Chartreuse': { 'hex': '#7FFF00' },
-        'GreenYellow': { 'hex': '#ADFF2F' },
-        'SpringGreen': { 'hex': '#00FF7F' },
-        'MediumSpringGreen': { 'hex': '#00FA9A' },
-        'LightGreen': { 'hex': '#90EE90' },
-        'PaleGreen': { 'hex': '#98FB98' },
-        'DarkSeaGreen': { 'hex': '#8FBC8F' },
-        'MediumAquamarine': { 'hex': '#66CDAA' },
-        'MediumSeaGreen': { 'hex': '#3CB371' },
-        'SeaGreen': { 'hex': '#2E8B57' },
-        'ForestGreen': { 'hex': '#228B22' },
-        'Green': { 'hex': '#008000' },
-        'DarkGreen': { 'hex': '#006400' },
-        'Aqua': { 'hex': '#00FFFF' },
-        'Cyan': { 'hex': '#00FFFF' },
-        'LightCyan': { 'hex': '#E0FFFF' },
-        'PaleTurquoise': { 'hex': '#AFEEEE' },
-        'Aquamarine': { 'hex': '#7FFFD4' },
-        'Turquoise': { 'hex': '#40E0D0' },
-        'DarkTurquoise': { 'hex': '#00CED1' },
-        'MediumTurquoise': { 'hex': '#48D1CC' },
-        'LightSeaGreen': { 'hex': '#20B2AA' },
-        'CadetBlue': { 'hex': '#5F9EA0' },
-        'DarkCyan': { 'hex': '#008B8B' },
-        'Teal': { 'hex': '#008080' },
-        'LightSteelBlue': { 'hex': '#B0C4DE' },
-        'PowderBlue': { 'hex': '#B0E0E6' },
-        'LightBlue': { 'hex': '#ADD8E6' },
-        'SkyBlue': { 'hex': '#87CEEB' },
-        'LightSkyBlue': { 'hex': '#87CEFA' },
-        'DeepSkyBlue': { 'hex': '#00BFFF' },
-        'DodgerBlue': { 'hex': '#1E90FF' },
-        'Cornflower': { 'hex': '#6495ED' },
-        'SteelBlue': { 'hex': '#4682B4' },
-        'RoyalBlue': { 'hex': '#4169E1' },
-        'Blue': { 'hex': '#0000FF' },
-        'MediumBlue': { 'hex': '#0000CD' },
-        'DarkBlue': { 'hex': '#00008B' },
-        'Navy': { 'hex': '#000080' },
-        'MidnightBlue': { 'hex': '#191970' },
-        'Lavender': { 'hex': '#E6E6FA' },
-        'Thistle': { 'hex': '#D8BFD8' },
-        'Plum': { 'hex': '#DDA0DD' },
-        'Violet': { 'hex': '#EE82EE' },
-        'Orchid': { 'hex': '#DA70D6' },
-        'Fuchsia': { 'hex': '#FF00FF' },
-        'Magenta': { 'hex': '#FF00FF' },
-        'MediumOrchid': { 'hex': '#BA55D3' },
-        'MediumPurple': { 'hex': '#9370DB' },
-        'BlueViolet': { 'hex': '#8A2BE2' },
-        'DarkViolet': { 'hex': '#9400D3' },
-        'DarkOrchid': { 'hex': '#9932CC' },
-        'DarkMagenta': { 'hex': '#8B008B' },
-        'Purple': { 'hex': '#800080' },
-        'RebeccaPurple': { 'hex': '#663399' },
-        'Indigo': { 'hex': '#4B0082' },
-        'DarkSlateBlue': { 'hex': '#483D8B' },
-        'SlateBlue': { 'hex': '#6A5ACD' },
-        'MediumSlateBlue': { 'hex': '#7B68EE' },
-        'White': { 'hex': '#FFFFFF' },
-        'Snow': { 'hex': '#FFFAFA' },
-        'Honeydew': { 'hex': '#F0FFF0' },
-        'MintCream': { 'hex': '#F5FFFA' },
-        'Azure': { 'hex': '#F0FFFF' },
-        'AliceBlue': { 'hex': '#F0F8FF' },
-        'GhostWhite': { 'hex': '#F8F8FF' },
-        'WhiteSmoke': { 'hex': '#F5F5F5' },
-        'Seashell': { 'hex': '#FFF5EE' },
-        'Beige': { 'hex': '#F5F5DC' },
-        'OldLace': { 'hex': '#FDF5E6' },
-        'FloralWhite': { 'hex': '#FFFAF0' },
-        'Ivory': { 'hex': '#FFFFF0' },
-        'AntiqueWhite': { 'hex': '#FAEBD7' },
-        'Linen': { 'hex': '#FAF0E6' },
-        'LavenderBlush': { 'hex': '#FFF0F5' },
-        'MistyRose': { 'hex': '#FFE4E1' },
-        'Gainsboro': { 'hex': '#DCDCDC' },
-        'LightGray': { 'hex': '#D3D3D3' },
-        'Silver': { 'hex': '#C0C0C0' },
-        'DarkGray': { 'hex': '#A9A9A9' },
-        'Gray': { 'hex': '#808080' },
-        'DimGray': { 'hex': '#696969' },
-        'LightSlateGray': { 'hex': '#778899' },
-        'SlateGray': { 'hex': '#708090' },
-        'DarkSlateGray': { 'hex': '#2F4F4F' },
-        'Black': { 'hex': '#000000' }
-    };
-    const HSL_SORTED = [];
-    for (const name in X11_CSS3) {
-        const x11 = X11_CSS3[name];
-        x11.name = name;
-        const rgb = convertToRGB(x11.hex);
-        if (rgb) {
-            x11.rgb = rgb;
-            x11.hsl = convertToHSL(x11.rgb);
-            HSL_SORTED.push(x11);
-        }
-    }
-    HSL_SORTED.sort(sortHSL);
-    function convertToHSL({ r = 0, g = 0, b = 0 }) {
-        r = r / 255;
-        g = g / 255;
-        b = b / 255;
-        const min = Math.min(r, g, b);
-        const max = Math.max(r, g, b);
-        let h = (max + min) / 2;
-        let s = h;
-        const l = h;
-        if (max === min) {
-            h = 0;
-            s = 0;
-        }
-        else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            switch (max) {
-                case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-                case g:
-                    h = (b - r) / d + 2;
-                    break;
-                case b:
-                    h = (r - g) / d + 4;
-                    break;
-            }
-            h /= 6;
-        }
-        return {
-            h: h * 360,
-            s: s * 100,
-            l: l * 100
-        };
-    }
-    function sortHSL(a, b) {
-        if (a.hsl && b.hsl) {
-            let [c, d] = [a.hsl.h, b.hsl.h];
-            if (c === d) {
-                [c, d] = [a.hsl.s, b.hsl.s];
-                if (c === d) {
-                    [c, d] = [a.hsl.l, b.hsl.l];
-                }
-            }
-            return c >= d ? 1 : -1;
-        }
-        return 0;
-    }
-    function formatRGB(rgb) {
-        return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
-    }
-    function getColorByName(value) {
-        for (const color in X11_CSS3) {
-            if (color.toLowerCase() === value.trim().toLowerCase()) {
-                return X11_CSS3[color];
-            }
-        }
-        return null;
-    }
-    function convertToHex(value, opacity = 1) {
-        const hex = '0123456789ABCDEF';
-        let rgb = parseInt(value) * opacity;
-        if (isNaN(rgb)) {
-            return '00';
-        }
-        rgb = Math.max(0, Math.min(rgb, 255));
-        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
-    }
-    function convertToRGB(value) {
-        value = value.replace('#', '').trim();
-        if (value.length === 3) {
-            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-        }
-        if (value.length === 6) {
-            return {
-                r: parseInt(value.substring(0, 2), 16),
-                g: parseInt(value.substring(2, 4), 16),
-                b: parseInt(value.substring(4), 16)
-            };
-        }
-        return null;
-    }
-    function getColorNearest(value) {
-        const result = HSL_SORTED.slice();
-        let index = result.findIndex(item => item.hex === value);
-        if (index !== -1) {
-            return result[index];
-        }
-        else {
-            const rgb = convertToRGB(value);
-            if (rgb) {
-                const hsl = convertToHSL(rgb);
-                if (hsl) {
-                    result.push({
-                        name: '',
-                        hsl,
-                        rgb: { r: -1, g: -1, b: -1 },
-                        hex: ''
-                    });
-                    result.sort(sortHSL);
-                    index = result.findIndex(item => item.name === '');
-                    return result[Math.min(index + 1, result.length - 1)];
-                }
-            }
-            return null;
-        }
-    }
-    function parseRGBA(value, opacity = '1') {
-        if (value !== '') {
-            if (value === 'initial') {
-                return [];
-            }
-            else if (value === 'transparent') {
-                value = '#000000';
-                opacity = '0';
-            }
-            else {
-                const color = getColorByName(value);
-                if (color) {
-                    return [color.hex, formatRGB(color.rgb), opacity];
-                }
-            }
-            const rgb = convertToRGB(value);
-            if (rgb) {
-                value = formatRGB(rgb);
-            }
-            const match = value.match(/rgba?\((\d+), (\d+), (\d+),?\s*([\d.]+)?\)/);
-            if (match && match.length >= 4 && match[4] !== '0') {
-                if (match[4] == null) {
-                    match[4] = opacity;
-                }
-                return [
-                    `#${convertToHex(match[1]) + convertToHex(match[2]) + convertToHex(match[3])}`,
-                    match[0],
-                    parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
-                ];
-            }
-        }
-        return [];
-    }
-    function parseHex(value) {
-        if (value !== '') {
-            value = value.trim();
-            const color = parseRGBA(value);
-            if (color.length > 0) {
-                value = color[0];
-            }
-            if (/^#[a-zA-Z\d]{3,8}$/.test(value)) {
-                if (value.length === 9) {
-                    value = `#${value.substring(3)}`;
-                }
-                const rgb = convertToRGB(value);
-                return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
-            }
-        }
-        return '';
-    }
-    function reduceToRGB(value, percent) {
-        const rgb = convertToRGB(value);
-        if (rgb) {
-            const base = percent < 0 ? 0 : 255;
-            percent = Math.abs(percent);
-            return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;
-        }
-        return value;
-    }
-
-    var color = /*#__PURE__*/Object.freeze({
-        getColorByName: getColorByName,
-        convertToHex: convertToHex,
-        convertToRGB: convertToRGB,
-        getColorNearest: getColorNearest,
-        parseRGBA: parseRGBA,
-        parseHex: parseHex,
-        reduceToRGB: reduceToRGB
-    });
-
     class Resource {
         constructor(file) {
             this.file = file;
+            this.imageAssets = new Map();
             this.file.stored = Resource.STORED;
-        }
-        static parseBackgroundPosition(value, dimension, fontSize, percent = false) {
-            const result = {
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                horizontal: 'left',
-                vertical: 'top'
-            };
-            const orientation = value.split(' ');
-            if (orientation.length === 4) {
-                orientation.forEach((position, index) => {
-                    switch (index) {
-                        case 0:
-                            result.horizontal = position;
-                            break;
-                        case 2:
-                            result.vertical = position;
-                            break;
-                        case 1:
-                        case 3:
-                            const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                            result[position[index - 1]] = convertInt(clientXY);
-                            break;
-                    }
-                });
-            }
-            else if (orientation.length === 2) {
-                orientation.forEach((position, index) => {
-                    switch (position) {
-                        case '0%':
-                            break;
-                        case '50%':
-                            if (index === 0) {
-                                result.horizontal = 'center';
-                            }
-                            else {
-                                result.vertical = 'center';
-                            }
-                            break;
-                        case '100%':
-                            if (index === 0) {
-                                result.horizontal = 'right';
-                            }
-                            else {
-                                result.vertical = 'bottom';
-                            }
-                            break;
-                        default:
-                            if (/^[a-z]+$/.test(position)) {
-                                if (index === 0) {
-                                    result.horizontal = position;
-                                }
-                                else {
-                                    result.vertical = position;
-                                }
-                            }
-                            else {
-                                const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                                result[index === 0 ? 'left' : 'top'] = convertInt(clientXY);
-                            }
-                            break;
-                    }
-                });
-            }
-            return result;
         }
         static insertStoredAsset(asset, name, value) {
             const stored = Resource.STORED[asset];
@@ -5242,7 +5831,7 @@
             return '';
         }
         static isBorderVisible(border) {
-            return border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
+            return border != null && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
         }
         static hasDrawableBackground(object) {
             return (object != null && (this.isBorderVisible(object.borderTop) ||
@@ -5261,28 +5850,9 @@
             }
             this.file.reset();
         }
-        setBoxSpacing() {
-            this.cache.elements.forEach(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') ||
-                    this.settings.alwaysReevaluateResources)) {
-                    const result = getBoxSpacing(node.element);
-                    const formatted = {};
-                    for (const attr in result) {
-                        if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
-                            formatted[attr] = '0px';
-                        }
-                        else {
-                            formatted[attr] = convertPX(result[attr], node.css('fontSize'));
-                        }
-                    }
-                    setElementCache(node.element, 'boxSpacing', formatted);
-                }
-            });
-        }
         setBoxStyle() {
-            this.cache.elements.forEach(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') ||
-                    this.settings.alwaysReevaluateResources)) {
+            for (const node of this.cache.elements) {
+                if (this.checkPermissions(node, NODE_RESOURCE.BOX_STYLE, 'boxStyle')) {
                     const boxStyle = {
                         background: null,
                         borderTop: null,
@@ -5319,10 +5889,11 @@
                                 if (style === 'inset' && width === '0px') {
                                     width = '1px';
                                 }
+                                const color = parseRGBA(cssColor, node.css('opacity'));
                                 boxStyle[attr] = {
                                     width,
                                     style,
-                                    color: style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : ''
+                                    color: style !== 'none' && color ? color.valueRGBA : ''
                                 };
                                 break;
                             }
@@ -5342,7 +5913,13 @@
                                 break;
                             }
                             case 'backgroundColor': {
-                                boxStyle.backgroundColor = parseRGBA(value, node.css('opacity'));
+                                if (!node.has('backgroundColor') && (value === node.cssParent('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
+                                    boxStyle.backgroundColor = '';
+                                }
+                                else {
+                                    const color = parseRGBA(value, node.css('opacity'));
+                                    boxStyle.backgroundColor = color ? color.valueRGBA : '';
+                                }
                                 break;
                             }
                             case 'backgroundSize': {
@@ -5374,14 +5951,21 @@
                             case 'background':
                             case 'backgroundImage': {
                                 if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
-                                    const colorStop = '(?:,?\\s*(rgba?\\(\\d+, \\d+, \\d+(?:,\\s*[\\d.]+)?\\)|[a-z]+)\\s*(\\d+[a-z%]+)?)';
+                                    function colorStop(parse) {
+                                        return `${parse ? '' : '(?:'},?\\s*(${parse ? '' : '?:'}rgba?\\(\\d+, \\d+, \\d+(?:, [\\d.]+)?\\)|[a-z]+)\\s*(${parse ? '' : '?:'}\\d+%)?${parse ? '' : ')'}`;
+                                    }
                                     const gradients = [];
-                                    let pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
+                                    let pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?(${colorStop(false)}+)\\)`, 'g');
                                     let match = null;
                                     while ((match = pattern.exec(value)) != null) {
+                                        let gradient;
                                         if (match[1] === 'linear') {
-                                            gradients.push({
+                                            gradient = {
                                                 type: 'linear',
+                                                x1: 0,
+                                                y1: 0,
+                                                x2: 0,
+                                                y2: 0,
                                                 angle: (() => {
                                                     switch (match[2]) {
                                                         case 'to top':
@@ -5399,20 +5983,20 @@
                                                         case 'to left':
                                                             return 270;
                                                         case 'to left top':
-                                                            return 305;
+                                                            return 315;
                                                         default:
                                                             return convertInt(match[2]);
                                                     }
                                                 })(),
-                                                startColor: parseRGBA(match[3]),
-                                                startColorStop: match[4],
-                                                endColor: parseRGBA(match[5]),
-                                                endColorStop: match[6]
-                                            });
+                                                colorStop: []
+                                            };
                                         }
                                         else {
-                                            gradients.push({
+                                            gradient = {
                                                 type: 'radial',
+                                                cx: 0,
+                                                cy: 0,
+                                                r: 0,
                                                 shapePosition: (() => {
                                                     const result = ['ellipse', 'center'];
                                                     if (match[2]) {
@@ -5436,28 +6020,41 @@
                                                     }
                                                     return result;
                                                 })(),
-                                                startColor: parseRGBA(match[3]),
-                                                startColorStop: match[4],
-                                                endColor: parseRGBA(match[7] || match[5]),
-                                                endColorStop: match[8] || match[6],
-                                                centerColor: match[7] ? parseRGBA(match[5]) : [],
-                                                centerColorStop: match[8] ? match[6] : undefined
-                                            });
+                                                colorStop: []
+                                            };
+                                        }
+                                        const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
+                                        const opacity = node.css('opacity');
+                                        for (let i = 0; i < stopMatch.length; i += 3) {
+                                            const rgba = stopMatch[i + 1];
+                                            if (isString(rgba)) {
+                                                const color = parseRGBA(stopMatch[i + 1], rgba.startsWith('rgba') ? undefined : opacity);
+                                                if (color && color.visible) {
+                                                    gradient.colorStop.push({
+                                                        color: color.valueRGBA,
+                                                        offset: stopMatch[i + 2],
+                                                        opacity: color.alpha
+                                                    });
+                                                }
+                                            }
+                                        }
+                                        if (gradient.colorStop.length > 1) {
+                                            gradients.push(gradient);
                                         }
                                     }
                                     if (gradients.length > 0) {
                                         boxStyle.backgroundGradient = gradients.reverse();
                                     }
                                     else {
-                                        const result = [];
-                                        pattern = new RegExp(DOM_REGEX.URL, 'g');
+                                        const images = [];
+                                        pattern = new RegExp(DOM_REGEX.CSS_URL, 'g');
                                         match = null;
                                         while ((match = pattern.exec(value)) != null) {
                                             if (match) {
-                                                result.push(match[0]);
+                                                images.push(match[0]);
                                             }
                                         }
-                                        boxStyle.backgroundImage = result;
+                                        boxStyle.backgroundImage = images;
                                     }
                                 }
                                 break;
@@ -5470,10 +6067,6 @@
                             }
                         }
                     }
-                    if (Array.isArray(boxStyle.backgroundColor) && !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
-                        (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
-                        boxStyle.backgroundColor.length = 0;
-                    }
                     const borderTop = JSON.stringify(boxStyle.borderTop);
                     if (borderTop === JSON.stringify(boxStyle.borderRight) &&
                         borderTop === JSON.stringify(boxStyle.borderBottom) &&
@@ -5482,26 +6075,20 @@
                     }
                     setElementCache(node.element, 'boxStyle', boxStyle);
                 }
-            });
+            }
         }
         setFontStyle() {
-            this.cache.each(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (!getElementCache(node.element, 'fontStyle') ||
-                    this.settings.alwaysReevaluateResources)) {
+            for (const node of this.cache) {
+                if (this.checkPermissions(node, NODE_RESOURCE.FONT_STYLE, 'fontStyle')) {
                     const backgroundImage = Resource.hasDrawableBackground(getElementCache(node.element, 'boxStyle'));
-                    if (node.length > 0 ||
-                        node.imageElement ||
-                        node.tagName === 'HR' ||
-                        (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === '')) {
-                        return;
-                    }
-                    else {
-                        const color = parseRGBA(node.css('color'), node.css('opacity'));
-                        const backgroundColor = [];
+                    if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
+                        const opacity = node.css('opacity');
+                        const color = parseRGBA(node.css('color'), opacity);
+                        let backgroundColor;
                         if (!(backgroundImage ||
-                            (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
-                            (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
-                            backgroundColor.push(...parseRGBA(node.css('backgroundColor'), node.css('opacity')));
+                            (node.cssParent('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.styleMap.backgroundColor)) ||
+                            (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
+                            backgroundColor = parseRGBA(node.css('backgroundColor'), opacity);
                         }
                         let fontFamily = node.css('fontFamily');
                         let fontSize = node.css('fontSize');
@@ -5562,225 +6149,33 @@
                             fontStyle: node.css('fontStyle'),
                             fontSize,
                             fontWeight,
-                            color,
-                            backgroundColor
+                            color: color ? color.valueRGBA : '',
+                            backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                         };
                         setElementCache(node.element, 'fontStyle', result);
                     }
                 }
-            });
+            }
         }
-        setImageSource() {
-            this.cache.visible.forEach(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) && (!getElementCache(node.element, 'imageSource') ||
-                    this.settings.alwaysReevaluateResources)) {
-                    if (node.svgElement) {
-                        const element = node.element;
-                        if (element.children.length > 0) {
-                            function getPath(item, d, clipPath) {
-                                if (d === '') {
-                                    d = cssAttribute(item, 'd');
-                                }
-                                if (d && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
-                                    let fillColor = cssAttribute(item, 'fill');
-                                    let strokeColor = cssAttribute(item, 'stroke');
-                                    const color = parseHex(cssAttribute(item, 'color'));
-                                    if (fillColor !== '') {
-                                        switch (fillColor.toLowerCase()) {
-                                            case 'none':
-                                            case 'transparent':
-                                                fillColor = '';
-                                                break;
-                                            case 'currentcolor':
-                                                fillColor = color || parseHex(cssInherit(item, 'color'));
-                                                break;
-                                            default:
-                                                fillColor = parseHex(fillColor);
-                                                break;
-                                        }
-                                    }
-                                    if (strokeColor !== '') {
-                                        switch (strokeColor.toLowerCase()) {
-                                            case 'none':
-                                            case 'transparent':
-                                                strokeColor = '';
-                                                break;
-                                            case 'currentcolor':
-                                                strokeColor = color || parseHex(cssInherit(item, 'color'));
-                                                break;
-                                            default:
-                                                strokeColor = parseHex(strokeColor);
-                                                break;
-                                        }
-                                    }
-                                    const fillAlpha = parseFloat(cssAttribute(item, 'fill-opacity'));
-                                    const strokeAlpha = parseFloat(cssAttribute(item, 'stroke-opacity'));
-                                    return {
-                                        name: item.id,
-                                        color,
-                                        fillColor,
-                                        strokeColor,
-                                        strokeWidth: convertInt(cssAttribute(item, 'stroke-width')).toString(),
-                                        fillAlpha: !isNaN(fillAlpha) && fillAlpha < 1 ? fillAlpha : 1,
-                                        strokeAlpha: !isNaN(strokeAlpha) && strokeAlpha < 1 ? strokeAlpha : 1,
-                                        strokeLineCap: cssAttribute(item, 'stroke-linecap'),
-                                        strokeLineJoin: cssAttribute(item, 'stroke-linejoin'),
-                                        strokeMiterLimit: cssAttribute(item, 'stroke-miterlimit'),
-                                        clipPath,
-                                        d
-                                    };
-                                }
-                                return null;
-                            }
-                            const opacity = convertFloat(node.css('opacity'));
-                            const svg = {
-                                element,
-                                name: element.id,
-                                width: element.width.baseVal.value,
-                                height: element.height.baseVal.value,
-                                viewBoxWidth: element.viewBox.baseVal.width,
-                                viewBoxHeight: element.viewBox.baseVal.height,
-                                opacity: !isNaN(opacity) && opacity < 1 ? opacity : 1,
-                                children: []
-                            };
-                            const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g');
-                            [element, ...gOrSvg].forEach((item, index) => {
-                                const group = {
-                                    element: item,
-                                    name: element.id || `group_${index}`,
-                                    translateX: 0,
-                                    translateY: 0,
-                                    scaleX: 1,
-                                    scaleY: 1,
-                                    rotation: 0,
-                                    skewX: 0,
-                                    skewY: 0,
-                                    nestedSVG: false,
-                                    children: []
-                                };
-                                if (item.tagName === 'g') {
-                                    const g = item;
-                                    for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
-                                        const transform = g.transform.baseVal.getItem(i);
-                                        switch (transform.type) {
-                                            case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                                                group.translateX = transform.matrix.e;
-                                                group.translateY = transform.matrix.f;
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SCALE:
-                                                group.scaleX = transform.matrix.a;
-                                                group.scaleY = transform.matrix.d;
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_ROTATE:
-                                                group.rotation = transform.angle;
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SKEWX:
-                                                group.skewX = transform.angle;
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SKEWY:
-                                                group.skewY = transform.angle;
-                                                break;
-                                        }
-                                    }
-                                }
-                                else {
-                                    if (index > 0) {
-                                        group.x = item.x.baseVal.value;
-                                        group.y = item.y.baseVal.value;
-                                        group.nestedSVG = true;
-                                    }
-                                }
-                                const clipPath = Array.from(item.children).filter(path => path.tagName === 'clipPath');
-                                [item, ...clipPath].forEach((shape, layerIndex) => {
-                                    for (let i = 0; i < shape.children.length; i++) {
-                                        const tagName = shape.children[i].tagName;
-                                        const clipped = layerIndex > 0;
-                                        switch (tagName) {
-                                            case 'path': {
-                                                const subitem = shape.children[i];
-                                                const path = getPath(subitem, '', clipped);
-                                                if (path) {
-                                                    group.children.push(path);
-                                                }
-                                                break;
-                                            }
-                                            case 'line': {
-                                                const subitem = shape.children[i];
-                                                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
-                                                    const path = getPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`, clipped);
-                                                    if (path && path.strokeColor) {
-                                                        path.fillColor = '';
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'rect': {
-                                                const subitem = shape.children[i];
-                                                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
-                                                    const x = subitem.x.baseVal.value;
-                                                    const y = subitem.y.baseVal.value;
-                                                    const path = getPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'polyline':
-                                            case 'polygon': {
-                                                const subitem = shape.children[i];
-                                                if (subitem.points.numberOfItems > 0) {
-                                                    const d = [];
-                                                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
-                                                        const point = subitem.points.getItem(j);
-                                                        d.push(`${point.x},${point.y}`);
-                                                    }
-                                                    const path = getPath(subitem, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'circle': {
-                                                const subitem = shape.children[i];
-                                                const r = subitem.r.baseVal.value;
-                                                if (r > 0) {
-                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'ellipse': {
-                                                const subitem = shape.children[i];
-                                                const rx = subitem.rx.baseVal.value;
-                                                const ry = subitem.ry.baseVal.value;
-                                                if (rx > 0 && ry > 0) {
-                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                                svg.children.push(group);
-                            });
-                            if (svg.children.length > 0) {
-                                setElementCache(element, 'imageSource', svg);
-                            }
+        setBoxSpacing() {
+            for (const node of this.cache.elements) {
+                if (this.checkPermissions(node, NODE_RESOURCE.BOX_SPACING, 'boxSpacing')) {
+                    const boxSpacing = getBoxSpacing(node.element);
+                    const result = {};
+                    for (const attr in boxSpacing) {
+                        if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                            result[attr] = '0px';
+                        }
+                        else {
+                            result[attr] = convertPX(boxSpacing[attr], node.css('fontSize'));
                         }
                     }
+                    setElementCache(node.element, 'boxSpacing', result);
                 }
-            });
+            }
         }
         setValueString() {
-            function parseWhiteSpace(node, value) {
+            function replaceWhiteSpace(node, value) {
                 if (node.multiLine && !node.renderParent.linearVertical) {
                     value = value.replace(/^\s*\n/, '');
                 }
@@ -5811,10 +6206,9 @@
                 }
                 return [value, true];
             }
-            this.cache.visible.forEach(node => {
+            for (const node of this.cache.visible) {
                 const element = node.element;
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') ||
-                    this.settings.alwaysReevaluateResources)) {
+                if (this.checkPermissions(node, NODE_RESOURCE.VALUE_STRING, 'valueString')) {
                     let name = '';
                     let value = '';
                     let inlineTrim = false;
@@ -5847,7 +6241,7 @@
                         else if (node.inlineText) {
                             name = node.textContent.trim();
                             value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
-                            [value, inlineTrim] = parseWhiteSpace(node, value);
+                            [value, inlineTrim] = replaceWhiteSpace(node, value);
                             value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                             value = value.replace(/\s+(class|style)=".*?"/g, '');
                         }
@@ -5860,7 +6254,7 @@
                         name = node.textContent.trim();
                         value = replaceEntity(node.textContent);
                         value = value.replace(/&[A-Za-z]+;/g, match => match.replace('&', '&amp;'));
-                        [value, inlineTrim] = parseWhiteSpace(node, value);
+                        [value, inlineTrim] = replaceWhiteSpace(node, value);
                     }
                     if (value !== '') {
                         if (performTrim) {
@@ -5892,7 +6286,7 @@
                                         previousSibling.lineBreak ||
                                         (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
                                         (node.multiLine && hasLineBreak(element))) ? '' : '&#160;'));
-                                    value = value.replace(/\s+$/, nextSibling && nextSibling.lineBreak ? '' : '&#160;');
+                                    value = value.replace(/\s+$/, node.css('display') === 'table-cell' || (nextSibling && nextSibling.lineBreak) ? '' : '&#160;');
                                 }
                                 else if (value.length > 0) {
                                     value = '&#160;' + value.substring(1);
@@ -5910,15 +6304,12 @@
                         }
                     }
                 }
-            });
+            }
         }
         setOptionArray() {
-            this.cache.list.filter(node => node.visible &&
-                node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY))
-                .forEach(node => {
-                const element = node.element;
-                if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
+            for (const node of this.cache) {
+                if (node.tagName === 'SELECT' && node.visible && this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')) {
+                    const element = node.element;
                     const stringArray = [];
                     let numberArray = [];
                     let i = -1;
@@ -5932,21 +6323,50 @@
                             else {
                                 if (numberArray && numberArray.length > 0) {
                                     i = -1;
-                                    numberArray = null;
+                                    numberArray = undefined;
                                     continue;
                                 }
                                 if (value !== '') {
-                                    stringArray.push(value);
+                                    stringArray.push(replaceEntity(value));
                                 }
                             }
                         }
                     }
                     setElementCache(element, 'optionArray', {
-                        stringArray: stringArray.length > 0 ? stringArray : null,
-                        numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                        stringArray: stringArray.length > 0 ? stringArray : undefined,
+                        numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
                     });
                 }
-            });
+            }
+        }
+        setImageSource() {
+            for (const node of this.cache.visible) {
+                if (this.checkPermissions(node, NODE_RESOURCE.IMAGE_SOURCE, 'imageSource')) {
+                    if (node.svgElement) {
+                        const element = node.element;
+                        if (element.children.length > 0) {
+                            const result = new Svg(element);
+                            result.defs.image.forEach(item => {
+                                const dimensions = this.imageAssets.get(item.uri);
+                                if (dimensions) {
+                                    if (item.width === 0) {
+                                        item.width = dimensions.width;
+                                    }
+                                    if (item.height === 0) {
+                                        item.height = dimensions.height;
+                                    }
+                                }
+                            });
+                            if (result.length > 0 || result.defs.image.length > 0) {
+                                setElementCache(element, 'imageSource', result);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        checkPermissions(node, resourceFlag, storedName) {
+            return !node.hasBit('excludeResource', resourceFlag) && (!getElementCache(node.element, storedName) || this.settings.alwaysReevaluateResources);
         }
     }
     Resource.STORED = {
@@ -6009,7 +6429,7 @@
                 alert('SERVER (required): See README for instructions');
                 return;
             }
-            if (Array.isArray(files) && files.length > 0) {
+            if (files.length > 0) {
                 files.push(...this.queue);
                 fetch(`/api/savetodisk` +
                     `?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}` +
@@ -6063,8 +6483,11 @@
         is(node) {
             return this.tagNames.length === 0 || this.tagNames.includes(node.tagName);
         }
-        require(value, init = false) {
-            this.dependencies.push({ name: value, init });
+        require(value, preload = false) {
+            this.dependencies.push({
+                name: value,
+                preload
+            });
         }
         included(element) {
             if (!element) {
@@ -6074,7 +6497,7 @@
         }
         beforeInit(internal = false) {
             if (!internal && this.included()) {
-                this.dependencies.filter(item => item.init).forEach(item => {
+                this.dependencies.filter(item => item.preload).forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext) {
                         ext.setTarget(this.node, this.parent, this.element);
@@ -6088,7 +6511,7 @@
         }
         afterInit(init = false) {
             if (!init && this.included()) {
-                this.dependencies.filter(item => item.init).forEach(item => {
+                this.dependencies.filter(item => item.preload).forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext) {
                         ext.setTarget(this.node, this.parent, this.element);
@@ -6154,7 +6577,7 @@
 
     class Accessibility extends Extension {
         afterInit() {
-            Array.from(this.application.cacheProcessing.elements).forEach(node => {
+            for (const node of Array.from(this.application.cacheProcessing.elements)) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                     const element = node.element;
                     if (element instanceof HTMLInputElement) {
@@ -6162,21 +6585,23 @@
                             case 'radio':
                             case 'checkbox':
                                 [node.nextElementSibling, node.previousElementSibling].some((sibling) => {
-                                    const label = getNodeFromElement(sibling);
-                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null;
-                                    if (label && label.visible && label.pageflow) {
-                                        if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
-                                            node.companion = label;
-                                        }
-                                        else if (label.textElement && labelParent) {
-                                            node.companion = label;
-                                            labelParent.renderAs = node;
-                                        }
-                                        if (node.companion) {
-                                            if (this.options && !this.options.showLabel) {
-                                                label.hide();
+                                    if (sibling) {
+                                        const label = Node.getNodeFromElement(sibling);
+                                        const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? Node.getNodeFromElement(sibling.parentElement) : undefined;
+                                        if (label && label.visible && label.pageflow) {
+                                            if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                                node.companion = label;
                                             }
-                                            return true;
+                                            else if (label.textElement && labelParent) {
+                                                node.companion = label;
+                                                labelParent.renderAs = node;
+                                            }
+                                            if (node.companion) {
+                                                if (this.options && !this.options.showLabel) {
+                                                    label.hide();
+                                                }
+                                                return true;
+                                            }
                                         }
                                     }
                                     return false;
@@ -6185,7 +6610,7 @@
                         }
                     }
                 }
-            });
+            }
         }
     }
 
@@ -6210,7 +6635,7 @@
             const data = this.getData();
             let output = '';
             if (data.tag) {
-                if (node.children.length > 0) {
+                if (node.length > 0) {
                     output = this.application.viewController.renderGroup(node, parent, data.tag);
                 }
                 else {
@@ -6219,12 +6644,12 @@
                 node.nodeType = node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE;
             }
             if (data.tagChild) {
-                node.each(item => {
+                for (const item of node) {
                     if (item.styleElement) {
                         item.dataset.ext = this.name;
                         item.dataset.andromeCustomTag = data.tagChild;
                     }
-                });
+                }
             }
             return { output, complete: false };
         }
@@ -6247,7 +6672,7 @@
         }
         init(element) {
             if (this.included(element)) {
-                this.application.elements.add(element);
+                this.application.viewElements.add(element);
             }
             return false;
         }
@@ -6279,10 +6704,10 @@
         condition() {
             const node = this.node;
             return (this.included() ||
-                (node.children.length > 1 && ((node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
-                    (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (node.css('listStyle') === 'none' ||
-                        node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                        (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement)))))));
+                (node.length > 1 && ((node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
+                    (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (node.css('listStyle') === 'none' ||
+                        node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
+                        (!hasValue(node.dataset.ext) && !node.flex.enabled && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement)))))));
         }
         processNode(mapX) {
             const node = this.node;
@@ -6291,7 +6716,7 @@
             let output = '';
             let columns = [];
             const mainData = {
-                padding: getBoxRect(),
+                padding: newBoxRect(),
                 columnEnd: [],
                 columnCount: 0
             };
@@ -6299,10 +6724,8 @@
                 const dimensions = [];
                 node.each((item, index) => {
                     dimensions[index] = [];
-                    for (let l = 0; l < item.children.length; l++) {
-                        dimensions[index].push(item.children[l].bounds.width);
-                    }
-                    columns.push(item.children.slice());
+                    item.each(subitem => dimensions[index].push(subitem.bounds.width));
+                    columns.push(item.duplicate());
                 });
                 const base = columns[dimensions.findIndex(item => {
                     const column = dimensions.reduce((a, b) => {
@@ -6471,13 +6894,10 @@
                     mainData.columnEnd[mainData.columnEnd.length - 1] = node.box.right;
                 }
             }
-            if (columns.length > 1 && columns[0].length === node.children.length) {
+            if (columns.length > 1 && columns[0].length === node.length) {
                 mainData.columnCount = columnBalance ? columns[0].length : columns.length;
                 output = this.application.writeGridLayout(node, parent, mainData.columnCount);
-                node.children.slice().forEach(item => {
-                    node.removeChild(item);
-                    item.hide();
-                });
+                node.duplicate().forEach(item => node.remove(item) && item.hide());
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
                     for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -6540,7 +6960,7 @@
                         }
                     }
                 }
-                sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
+                sortAsc(node.list, 'documentParent.siblingIndex', 'siblingIndex');
                 if (node.display === 'table') {
                     if (node.css('borderCollapse') === 'collapse') {
                         node.modifyBox(BOX_STANDARD.PADDING_TOP, null);
@@ -6568,13 +6988,13 @@
                 else {
                     const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                     siblings = Array.from(node.documentParent.element.children).map(element => {
-                        const item = getNodeFromElement(element);
+                        const item = Node.getNodeFromElement(element);
                         return (item &&
                             item.visible &&
                             !item.excluded &&
                             !item.rendered &&
                             item.linear.left >= node.linear.right &&
-                            item.linear.right <= columnEnd ? item : null);
+                            item.linear.right <= columnEnd ? item : undefined);
                     })
                         .filter(item => item);
                 }
@@ -6603,34 +7023,37 @@
         }
     }
 
+    function hasSingleImage(node) {
+        return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
+    }
     class List extends Extension {
         condition() {
-            const children = this.node.children;
+            const node = this.node;
             return (super.condition() &&
-                children.length > 0 && (children.every(item => item.blockStatic) ||
-                children.every(item => item.inlineElement) ||
-                (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
-                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))) && (children.some((item) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
-                children.every((item) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))));
+                node.length > 0 && (node.every(item => item.blockStatic) ||
+                node.every(item => item.inlineElement) ||
+                (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
+                node.every((item, index) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && node.item(index - 1).blockStatic && node.item(index + 1).blockStatic)))) && (node.some((item) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
+                node.every((item) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))));
         }
         processNode() {
             const node = this.node;
             const parent = this.parent;
             let output = '';
-            if (NodeList.linearY(node.children)) {
-                output = this.application.writeGridLayout(node, parent, node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
+            if (NodeList.linearY(node.list)) {
+                output = this.application.writeGridLayout(node, parent, node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
             }
             else {
                 output = this.application.writeLinearLayout(node, parent, true);
             }
             let i = 0;
-            node.each((item) => {
+            for (const item of node) {
                 const mainData = {
                     ordinal: '',
                     imageSrc: '',
                     imagePosition: ''
                 };
-                if (item.display === 'list-item' || item.has('listStyleType') || this.hasSingleImage(item)) {
+                if (item.display === 'list-item' || item.has('listStyleType') || hasSingleImage(item)) {
                     let src = item.css('listStyleImage');
                     if (src && src !== 'none') {
                         mainData.imageSrc = src;
@@ -6685,7 +7108,7 @@
                     i++;
                 }
                 item.data(EXT_NAME.LIST, 'mainData', mainData);
-            });
+            }
             return { output, complete: true };
         }
         afterRender() {
@@ -6693,9 +7116,6 @@
                 node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                 node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
             }
-        }
-        hasSingleImage(node) {
-            return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
         }
     }
 
@@ -6712,7 +7132,7 @@
                     valid = Array.from(element.children).every(item => item.tagName === tagName);
                     let current = element.parentElement;
                     while (current) {
-                        if (current.tagName === 'NAV' && this.application.elements.has(current)) {
+                        if (current.tagName === 'NAV' && this.application.viewElements.has(current)) {
                             valid = false;
                             break;
                         }
@@ -6726,7 +7146,7 @@
                             item.style.display = 'block';
                         }
                     });
-                    this.application.elements.add(element);
+                    this.application.viewElements.add(element);
                 }
             }
             return false;
@@ -6753,8 +7173,8 @@
                 node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
                 node.setBounds(true);
             }
-            Array.from(this.application.cacheProcessing.elements).forEach(node => {
-                const outside = node.children.some(current => {
+            for (const node of Array.from(this.application.cacheProcessing.elements)) {
+                const outside = node.some(current => {
                     if (current.pageflow) {
                         return (current.float !== 'right' &&
                             current.marginLeft < 0 &&
@@ -6770,7 +7190,7 @@
                 if (outside) {
                     const marginLeft = [];
                     const marginRight = [];
-                    node.each((current) => {
+                    for (const current of node) {
                         let leftType = 0;
                         if (current.pageflow) {
                             const left = current.marginLeft;
@@ -6793,17 +7213,17 @@
                             }
                         }
                         marginLeft.push(leftType);
-                    });
+                    }
                     if (marginRight.length > 0) {
-                        const [sectionLeft, sectionRight] = new androme.lib.base.NodeList(node.children).partition((item) => !marginRight.includes(item));
+                        const [sectionLeft, sectionRight] = partition(node.list, (item) => !marginRight.includes(item));
                         if (sectionLeft.length > 0 && sectionRight.length > 0) {
                             if (node.style.marginLeft && node.autoMarginLeft) {
                                 node.css('marginLeft', node.style.marginLeft);
                             }
                             node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                            const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
-                            const widthRight = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
-                            sectionLeft.each(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
+                            const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.map(item => item.bounds.width));
+                            const widthRight = Math.max.apply(null, sectionRight.map(item => Math.abs(item.toInt('right'))));
+                            sectionLeft.forEach(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                             node.css('width', formatPX(widthLeft + widthRight));
                         }
                     }
@@ -6828,7 +7248,29 @@
                         modifyMarginLeft(node, node.marginLeft, true);
                     }
                 }
-            });
+            }
+        }
+    }
+
+    class Percent extends Extension {
+        condition() {
+            const node = this.node;
+            const parent = this.parent;
+            return this.included() || (node.alignmentType === NODE_ALIGNMENT.NONE &&
+                node.pageflow &&
+                node.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
+                (parent.linearVertical || (parent.is(NODE_STANDARD.FRAME) && node.singleChild)) &&
+                !node.imageElement);
+        }
+        processNode() {
+            const node = this.node;
+            const parent = this.parent;
+            const controller = this.application.viewController;
+            const group = controller.createGroup(parent, node, [node]);
+            const renderOutput = this.application.writeGridLayout(group, parent, 2, 1);
+            group.alignmentType |= NODE_ALIGNMENT.PERCENT;
+            controller[node.float === 'right' || node.autoMarginLeft ? 'prependBefore' : 'appendAfter'](node.id, controller.renderColumnSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`));
+            return { output: '', parent: group, renderAs: group, renderOutput, complete: true };
         }
     }
 
@@ -6836,11 +7278,11 @@
         condition() {
             const node = this.node;
             let valid = false;
-            if (node.hasWidth && node.hasHeight && node.children.length === 0 && !node.inlineText) {
+            if (node.hasWidth && node.hasHeight && node.length === 0 && !node.inlineText) {
                 let url = node.css('backgroundImage');
                 if (!url || url === 'none') {
                     url = '';
-                    const match = DOM_REGEX.URL.exec(node.css('background'));
+                    const match = DOM_REGEX.CSS_URL.exec(node.css('background'));
                     if (match) {
                         url = match[0];
                     }
@@ -6850,9 +7292,9 @@
                     const image = this.application.cacheImage.get(url);
                     if (image) {
                         const fontSize = node.css('fontSize');
-                        const width = convertInt(convertClientPX(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize));
-                        const height = convertInt(convertClientPX(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, fontSize));
-                        const position = Resource.parseBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
+                        const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize);
+                        const height = convertClientUnit(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, fontSize);
+                        const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
                         if (width > 0 && position.left <= 0 && image.width > width &&
                             height > 0 && position.top <= 0 && image.height > height) {
                             image.position = { x: position.left, y: position.top };
@@ -6878,21 +7320,21 @@
             const node = this.node;
             const parent = this.parent;
             const table = [];
-            const thead = node.children.filter(item => item.tagName === 'THEAD');
-            const tbody = node.children.filter(item => item.tagName === 'TBODY');
-            const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
+            const thead = node.filter(item => item.tagName === 'THEAD');
+            const tbody = node.filter(item => item.tagName === 'TBODY');
+            const tfoot = node.filter(item => item.tagName === 'TFOOT');
             const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
             const tableWidth = node.css('width');
             if (thead.length > 0) {
                 thead[0].cascade()
                     .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                     .forEach(item => item.inherit(thead[0], 'styleMap'));
-                table.push(...thead[0].children);
+                table.push(...thead[0].list);
                 thead.forEach(item => item.hide());
             }
             if (tbody.length > 0) {
                 tbody.forEach(item => {
-                    table.push(...item.children);
+                    table.push(...item.list);
                     item.hide();
                 });
             }
@@ -6900,10 +7342,10 @@
                 tfoot[0].cascade()
                     .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                     .forEach(item => item.inherit(tfoot[0], 'styleMap'));
-                table.push(...tfoot[0].children);
+                table.push(...tfoot[0].list);
                 tfoot.forEach(item => item.hide());
             }
-            const tableFixed = node.css('tableLayout') === 'fixed';
+            const layoutFixed = node.css('tableLayout') === 'fixed';
             const borderCollapse = node.css('borderCollapse') === 'collapse';
             const [horizontal, vertical] = borderCollapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value));
             if (horizontal > 0) {
@@ -6926,13 +7368,15 @@
             const spacingHeight = formatPX(vertical > 1 ? Math.round(vertical / 2) : vertical);
             const mapWidth = [];
             const mapBounds = [];
+            const rowWidth = [];
             let columnIndex = new Array(table.length).fill(0);
             let multiLine = false;
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
-                for (let j = 0; j < tr.children.length; j++) {
-                    const td = tr.children[j];
-                    const element = tr.children[j].element;
+                rowWidth[i] = horizontal;
+                for (let j = 0; j < tr.length; j++) {
+                    const td = tr.item(j);
+                    const element = td.element;
                     for (let k = 0; k < element.rowSpan - 1; k++) {
                         const l = (i + 1) + k;
                         if (columnIndex[l] != null) {
@@ -6965,7 +7409,7 @@
                     }
                     const columnWidth = td.styleMap.width;
                     const m = columnIndex[i];
-                    if (i === 0 || mapWidth[m] == null || !tableFixed) {
+                    if (i === 0 || mapWidth[m] == null || !layoutFixed) {
                         if (!columnWidth || columnWidth === 'auto') {
                             if (mapWidth[m] == null) {
                                 mapWidth[m] = columnWidth || '0px';
@@ -6990,12 +7434,15 @@
                     }
                     td.css({
                         marginTop: i === 0 ? '0px' : spacingHeight,
-                        marginRight: j < tr.children.length - 1 ? spacingWidth : '0px',
+                        marginRight: j < tr.length - 1 ? spacingWidth : '0px',
                         marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                         marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
                     });
                     if (!multiLine) {
                         multiLine = td.multiLine;
+                    }
+                    if (td.length > 0 || td.inlineText) {
+                        rowWidth[i] += td.bounds.width + horizontal;
                     }
                     columnIndex[i] += element.colSpan;
                 }
@@ -7025,7 +7472,7 @@
                 }
                 else if (pxWidth > node.viewWidth) {
                     node.css('width', 'auto');
-                    if (!tableFixed) {
+                    if (!layoutFixed) {
                         node.cascade().forEach(item => item.css('width', 'auto'));
                     }
                 }
@@ -7037,7 +7484,7 @@
                 }
                 if (mapWidth.every(value => value === mapWidth[0])) {
                     if (multiLine) {
-                        return node.children.some(td => td.has('height')) ? 2 : 3;
+                        return node.some(td => td.has('height')) ? 2 : 3;
                     }
                     if (mapWidth[0] === 'auto') {
                         return node.has('width') ? 3 : 0;
@@ -7054,11 +7501,23 @@
             if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
                 node.data(EXT_NAME.TABLE, 'expand', true);
             }
-            const caption = node.children.find(item => item.tagName === 'CAPTION');
-            node.children.length = 0;
+            const caption = node.find(item => item.tagName === 'CAPTION');
+            node.clear();
             if (caption) {
                 if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                     caption.css('textAlign', 'center');
+                }
+                if (!caption.hasWidth) {
+                    if (caption.textElement) {
+                        if (!caption.has('maxWidth')) {
+                            caption.css('maxWidth', formatPX(caption.bounds.width));
+                        }
+                    }
+                    else {
+                        if (caption.bounds.width > Math.max.apply(null, rowWidth)) {
+                            setBoundsWidth(caption);
+                        }
+                    }
                 }
                 rowCount++;
                 caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
@@ -7068,7 +7527,7 @@
             let borderInside = 0;
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
-                const children = tr.children.slice();
+                const children = tr.duplicate();
                 for (let j = 0; j < children.length; j++) {
                     const td = children[j];
                     const element = td.element;
@@ -7132,7 +7591,7 @@
                                         td.data(EXT_NAME.TABLE, 'downsized', false);
                                     }
                                     else {
-                                        if (tableFixed) {
+                                        if (layoutFixed) {
                                             setAutoWidth(td);
                                             td.data(EXT_NAME.TABLE, 'downsized', true);
                                         }
@@ -7157,7 +7616,7 @@
                                     td.css('width', '0px');
                                 }
                                 else {
-                                    if (tableFixed) {
+                                    if (layoutFixed) {
                                         td.data(EXT_NAME.TABLE, 'downsized', true);
                                     }
                                     else {
@@ -7342,6 +7801,11 @@
             Node,
             NodeList,
             NodeGroup,
+            Svg,
+            SvgElement,
+            SvgGroup,
+            SvgImage,
+            SvgPath,
             Application,
             Controller,
             Resource,
@@ -7356,6 +7820,7 @@
                 List,
                 Nav,
                 Origin,
+                Percent,
                 Sprite,
                 Table
             }
@@ -7365,6 +7830,7 @@
         util,
         dom,
         xml,
+        svg,
         color
     };
 

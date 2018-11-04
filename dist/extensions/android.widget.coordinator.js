@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.2.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -22,16 +22,16 @@ this.android.widget.coordinator = (function () {
     class Coordinator extends androme.lib.base.Extension {
         processNode() {
             const node = this.node;
-            const parent = this.parent;
-            const output = this.application.viewController.renderGroup(node, parent, $const_android.VIEW_SUPPORT.COORDINATOR);
+            const output = this.application.viewController.renderGroup(node, this.parent, $const_android.VIEW_SUPPORT.COORDINATOR);
             node.apply(this.options[node.element.id]);
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
             node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-            const toolbar = $dom.getNodeFromElement($dom.findNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
+            const toolbar = $dom.getNodeFromElement($dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
             if (toolbar) {
                 const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
                 if (ext) {
-                    if (ext.options[toolbar.element.id] && ext.options[toolbar.element.id].collapsingToolbar) {
+                    const options = ext.options[toolbar.element.id];
+                    if (typeof options === 'object' && options.hasOwnProperty('collapsingToolbar')) {
                         node.android('fitsSystemWindows', 'true');
                     }
                 }

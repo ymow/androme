@@ -152,15 +152,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.setLayout();
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
-                node.setAlignment(this.settings);
+                node.setAlignment();
             }
         }
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                node.applyOptimizations(this.settings);
+                node.applyOptimizations();
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
-                node.applyCustomizations(this.settings);
+                node.applyCustomizations();
             }
         }
         this.viewController.setBoxSpacing(this.viewData);

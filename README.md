@@ -39,7 +39,7 @@ GitHub
     androme.settings.targetAPI = 26;
     androme.settings.density = 160;
 
-    // without Express: use either console.log() or element.innerHTML to display using "write" commands
+    // without Express: use either console.log() or element.innerHTML to display using "system.write" commands
 
     document.addEventListener('DOMContentLoaded', function() {
         // required
@@ -96,14 +96,14 @@ androme.settings = {
     targetAPI: 26,
     density: 160,
     supportRTL: true,
+    renderInlineText: true,
+    ellipsisOnTextOverflow: true,
+    preloadImages: true,
     dimensResourceValue: true,
     numberResourceValue: false,
     fontAliasResourceValue: true,
     vectorColorResourceValue: true,
     alwaysReevaluateResources: true,
-    renderInlineText: true,
-    ellipsisOnTextOverflow: true,
-    preloadImages: true,
     autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,
     whitespaceHorizontalOffset: 3.5, // Chrome/Safari/Edge: 3.5 | Firefox: 3
@@ -117,7 +117,7 @@ androme.settings = {
     floatOverlapDisabled: false,
     hideOffScreenElements: true,
     collapseUnattributedElements: true,
-    customizationsOverwritePrivilege: false,
+    customizationsOverwritePrivilege: true,
     showAttributes: true,
     insertSpaces: 4, // tabs: 0
     convertPixels: 'dp',
@@ -133,7 +133,7 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 ### Standard
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
+Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for SVG and most of the common floating techniques.
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
@@ -176,7 +176,7 @@ Most of the Android support library extensions can be configured using the same 
 
 <img src="demos/android/menu.png" alt="toolbar: menu" />
 
-### Extensions: Configuration
+### Extensions: Configuration (example)
 
 ```javascript
 <script src="/dist/extensions/android.widget.coordinator.min.js"></script>
@@ -188,18 +188,6 @@ Most of the Android support library extensions can be configured using the same 
     androme.registerExtension(android.widget.menu);
     androme.registerExtension(android.widget.toolbar);
 
-    // create an extension (third-party)
-    // framework: universal = 0; android = 2;
-    class Sample extends androme.lib.base.Extension {
-        constructor(name, framework = 0, tagNames = [], options = {}) {
-            super(name, framework, tagNames, options);
-        }
-    }
-
-    // register an extension (third-party)
-    var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
-    androme.registerExtension(sample);
-
     // configure an extension
     androme.configureExtension('android.widget.toolbar', { // optional: default configuration is usually provided
         'elementId': { // HTML DOM
@@ -210,6 +198,18 @@ Most of the Android support library extensions can be configured using the same 
             }
         }
     });
+
+    // third-party: create an extension
+    class Sample extends androme.lib.base.Extension {
+        constructor(name, framework = 0, tagNames = [], options = {}) {
+            // framework: universal = 0; android = 2;
+            super(name, framework, tagNames, options);
+        }
+    }
+
+    // third-party: register an extension
+    var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
+    androme.registerExtension(sample);
 </script>
 ```
 ### API: Public properties and methods

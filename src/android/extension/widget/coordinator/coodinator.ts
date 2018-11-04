@@ -17,7 +17,8 @@ export default class Coordinator<T extends View> extends androme.lib.base.Extens
         if (toolbar) {
             const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
             if (ext) {
-                if (typeof ext.options[toolbar.element.id] === 'object' && ext.options[toolbar.element.id].hasOwnProperty('collapsingToolbar')) {
+                const options = ext.options[toolbar.element.id];
+                if (typeof options === 'object' && options.hasOwnProperty('collapsingToolbar')) {
                     node.android('fitsSystemWindows', 'true');
                 }
             }

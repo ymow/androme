@@ -1,4 +1,4 @@
-/* android.widget 2.1.3
+/* android.widget 2.2.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -28,9 +28,13 @@ this.android.widget.floatingactionbutton = (function () {
             const parent = this.parent;
             const target = $util.hasValue(node.dataset.target);
             const element = node.element;
-            const options = Object.assign({}, this.options[element.id]);
+            const options = $util_android.createViewAttribute(this.options[element.id]);
             const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-            $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${$resource_android.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
+            let colorValue = '';
+            if (backgroundColor) {
+                colorValue = $resource_android.addColor(backgroundColor);
+            }
+            $util.overwriteDefault(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
             if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 $util.overwriteDefault(options, 'android', 'focusable', 'false');
             }
@@ -54,20 +58,19 @@ this.android.widget.floatingactionbutton = (function () {
             if (src !== '') {
                 $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
             }
-            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.FLOATING_ACTION_BUTTON, target ? -1 : parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', node);
+            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.FLOATING_ACTION_BUTTON, target ? -1 : parent.renderDepth + 1, $resource_android.formatOptions(options, this.application.settings), 'wrap_content', 'wrap_content', node);
             node.nodeType = $enum.NODE_STANDARD.BUTTON;
             node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
             if (!node.pageflow || target) {
-                const settings = this.application.settings;
-                const horizontalBias = node.horizontalBias(settings);
-                const verticalBias = node.verticalBias(settings);
+                const horizontalBias = node.horizontalBias();
+                const verticalBias = node.verticalBias();
                 const documentParent = node.documentParent;
                 const gravity = [];
                 if (horizontalBias < 0.5) {
-                    gravity.push($util_android.parseRTL('left', settings));
+                    gravity.push(node.localizeString('left'));
                 }
                 else if (horizontalBias > 0.5) {
-                    gravity.push($util_android.parseRTL('right', settings));
+                    gravity.push(node.localizeString('right'));
                 }
                 else {
                     gravity.push('center_horizontal');

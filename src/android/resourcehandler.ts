@@ -74,7 +74,10 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
                     if (direction === 0 || direction === 2) {
                         halfSize = !halfSize;
                     }
-                    if (color.valueRGB === '#000000') {
+                    if (color.valueRGB === '#000000' && (
+                            (groove && (direction === 1 || direction === 3)) || (!groove && (direction === 0 || direction === 2))
+                       ))
+                    {
                         halfSize = !halfSize;
                     }
                     if (halfSize) {
@@ -842,11 +845,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                             else {
                                 const hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
-                                const topVisible = $resource.isBorderVisible(stored.borderTop);
                                 data['7'].push({
-                                    top: topVisible ? '' : hideWidth,
+                                    top: $resource.isBorderVisible(stored.borderTop) ? '' : hideWidth,
                                     right: $resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
-                                    bottom: $resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
+                                    bottom: $resource.isBorderVisible(stored.borderBottom) ? '' : hideWidth,
                                     left: $resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
                                     'stroke': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
                                     'corners': borderRadius
@@ -854,13 +856,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                         }
                         else {
-                            let topVisible = false;
                             for (let i = 0; i < borders.length; i++) {
                                 const border = borders[i];
                                 if ($resource.isBorderVisible(border)) {
-                                    if (i === 0) {
-                                        topVisible = true;
-                                    }
                                     const width = parseInt(border.width);
                                     if (width > 2 && border.style === 'double') {
                                         insertDoubleBorder.apply(null, [
@@ -878,7 +876,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         data['7'].push({
                                             top:  i === 0 ? '' : hideWidth,
                                             right: i === 1 ? '' : hideWidth,
-                                            bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                            bottom: i === 2 ? '' : hideWidth,
                                             left: i === 3 ? '' : hideWidth,
                                             'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             'corners': borderRadius
@@ -888,7 +886,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                             data['7'].unshift({
                                                 top:  i === 0 ? '' : hideWidth,
                                                 right: i === 1 ? '' : hideWidth,
-                                                bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                                bottom: i === 2 ? '' : hideWidth,
                                                 left: i === 3 ? '' : hideWidth,
                                                 'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
                                                 'corners': false

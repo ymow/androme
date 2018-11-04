@@ -80,10 +80,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public abstract setNodeType(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
-    public abstract setAlignment(settings: Settings): void;
-    public abstract setBoxSpacing(settings: Settings): void;
-    public abstract applyOptimizations(settings: Settings): void;
-    public abstract applyCustomizations(settings: Settings): void;
+    public abstract setAlignment(): void;
+    public abstract setBoxSpacing(): void;
+    public abstract applyOptimizations(): void;
+    public abstract applyCustomizations(): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
     public abstract localizeString(value: string): string;
@@ -164,14 +164,16 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public apply(options = {}) {
-        for (const obj in options) {
-            const attrs = options[obj];
-            if (typeof attrs === 'object') {
-                for (const attr in attrs) {
-                    this.attr(obj, attr, attrs[attr]);
+    public apply(options: {}) {
+        if (typeof options === 'object') {
+            for (const obj in options) {
+                const attrs = options[obj];
+                if (typeof attrs === 'object') {
+                    for (const attr in attrs) {
+                        this.attr(obj, attr, attrs[attr]);
+                    }
+                    delete options[obj];
                 }
-                delete options[obj];
             }
         }
     }

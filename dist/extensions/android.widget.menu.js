@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.2.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -18,6 +18,8 @@ this.android.widget.menu = (function () {
 
     var $enum = androme.lib.enumeration;
     var $const_android = android.lib.constant;
+    var $util_android = android.lib.util;
+    var $dom = androme.lib.dom;
     var $resource_android = android.lib.base.Resource;
     const VIEW_NAVIGATION = {
         MENU: 'menu',
@@ -52,9 +54,8 @@ this.android.widget.menu = (function () {
         menuCategory: /^(container|system|secondary|alternative)$/,
         orderInCategory: /^[0-9]+$/
     };
-    const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
     function hasInputType(node, value) {
-        return node.children.length > 0 && node.children.some(item => item.element.type === value);
+        return node.some(item => item.element.type === value);
     }
     class Menu extends androme.lib.base.extensions.Nav {
         condition() {
@@ -79,13 +80,13 @@ this.android.widget.menu = (function () {
                 return { output: '', complete: true, next: true };
             }
             const element = node.element;
-            const options = { android: {}, app: {} };
+            const options = $util_android.createViewAttribute();
             let nodeName = VIEW_NAVIGATION.ITEM;
             let title = '';
             let next = false;
             let layout = false;
-            if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
-                if (node.children.some(item => item.tagName === 'NAV')) {
+            if (node.some(item => (!item.inlineElement || !item.blockStatic) && item.length > 0)) {
+                if (node.some(item => item.tagName === 'NAV')) {
                     if (element.title !== '') {
                         title = element.title;
                     }
@@ -116,20 +117,20 @@ this.android.widget.menu = (function () {
                 else {
                     nodeName = VIEW_NAVIGATION.GROUP;
                     let checkable = '';
-                    if (node.children.every((item) => hasInputType(item, 'radio'))) {
+                    if (node.every((item) => hasInputType(item, 'radio'))) {
                         checkable = 'single';
                     }
-                    else if (node.children.every((item) => hasInputType(item, 'checkbox'))) {
+                    else if (node.every((item) => hasInputType(item, 'checkbox'))) {
                         checkable = 'all';
                     }
-                    options.android.checkableBehavior = checkable;
+                    options['android'].checkableBehavior = checkable;
                 }
                 layout = true;
             }
             else {
                 if (parent.android('checkableBehavior') === '') {
                     if (hasInputType(node, 'checkbox')) {
-                        options.android.checkable = 'true';
+                        options['android'].checkable = 'true';
                     }
                 }
                 title = (element.title || element.innerText).trim();
@@ -138,16 +139,17 @@ this.android.widget.menu = (function () {
                 case VIEW_NAVIGATION.ITEM:
                     this.parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') === '') {
-                        let src = $resource_android.addImageURL(element.style.backgroundImage, $const_android.DRAWABLE_PREFIX.MENU);
+                        const style = $dom.getStyle(element);
+                        let src = $resource_android.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $const_android.DRAWABLE_PREFIX.MENU);
                         if (src !== '') {
-                            options.android.icon = `@drawable/${src}`;
+                            options['android'].icon = `@drawable/${src}`;
                         }
                         else {
-                            const image = node.children.find(item => item.imageElement);
+                            const image = node.find(item => item.imageElement);
                             if (image) {
                                 src = $resource_android.addImageSrcSet(image.element, $const_android.DRAWABLE_PREFIX.MENU);
                                 if (src !== '') {
-                                    options.android.icon = `@drawable/${src}`;
+                                    options['android'].icon = `@drawable/${src}`;
                                 }
                             }
                         }
@@ -163,10 +165,10 @@ this.android.widget.menu = (function () {
                     if (name !== '') {
                         title = `@string/${name}`;
                     }
-                    options.android.title = title;
+                    options['android'].title = title;
                 }
             }
-            if (!options.android.id) {
+            if (!options['android'].id) {
                 node.setNodeType(nodeName);
             }
             else {
@@ -179,8 +181,9 @@ this.android.widget.menu = (function () {
             return { output, complete: true, next };
         }
         afterRender() {
+            const node = this.node;
             super.afterRender();
-            if (this.included(this.node.element)) {
+            if (this.included(node.element)) {
                 this.application.layoutProcessing.pathname = 'res/menu';
             }
         }
@@ -190,8 +193,7 @@ this.android.widget.menu = (function () {
                 if (value && validator[attr]) {
                     const match = value.match(validator[attr]);
                     if (match) {
-                        const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                        options[namespace][attr] = Array.from(new Set(match)).join('|');
+                        options['android'][attr] = Array.from(new Set(match)).join('|');
                     }
                 }
             }

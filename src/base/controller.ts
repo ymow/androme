@@ -17,10 +17,10 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderMerge(name: string, content: string[]): string;
+    public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract baseRenderDepth(name: string): number;
     public abstract setConstraints(): void;
     public abstract setBoxSpacing(data: ViewData<NodeList<T>>): void;
-    public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>, callbackArray: FunctionVoid[]): void;
     public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 

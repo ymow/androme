@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.2.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -17,19 +17,17 @@ this.android.widget.drawer = (function () {
     };
 
     const template = [
-        '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
-        '	<style name="{@appTheme}" parent="{@parentTheme}">',
+        '	<style name="{&appTheme}" parent="{~parentTheme}">',
         '		<item name="android:windowDrawsSystemBarBackgrounds">true</item>',
         '		<item name="android:statusBarColor">@android:color/transparent</item>',
         '		<item name="android:windowTranslucentStatus">true</item>',
         '!1',
-        '		<item name="{name}">{value}</item>',
+        '		<item name="{&name}">{&value}</item>',
         '!1',
         '	</style>',
-        '</resources>',
-        '!0'
+        '</resources>'
     ];
     var EXTENSION_DRAWER_TMPL = template.join('\n');
 
@@ -39,6 +37,7 @@ this.android.widget.drawer = (function () {
     var $util = androme.lib.util;
     var $util_android = android.lib.util;
     var $dom = androme.lib.dom;
+    var $resource_android = android.lib.base.Resource;
     class Drawer extends androme.lib.base.Extension {
         constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -54,27 +53,27 @@ this.android.widget.drawer = (function () {
                         item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
                     }
                 });
-                this.application.elements.add(element);
+                this.application.viewElements.add(element);
                 return true;
             }
             return false;
         }
         processNode() {
             const node = this.node;
-            const options = Object.assign({}, this.options.self);
-            if ($dom.findNestedExtension(node.element, WIDGET_NAME.MENU)) {
+            const options = $util_android.createViewAttribute(this.options.self);
+            if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
                 $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-                this.createResourceTheme();
+                this.setResourceTheme();
             }
             else {
-                const optionsNavigationView = Object.assign({}, this.options.navigationView);
-                $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
-                const navView = node.children[node.children.length - 1];
+                const optionsNavigationView = $util_android.createViewAttribute(this.options.navigationView);
+                $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
+                const navView = node.item();
                 navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
                 navView.android('layout_height', 'match_parent');
                 navView.auto = false;
             }
-            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
+            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.DRAWER, node.depth, $resource_android.formatOptions(options, this.application.settings), 'match_parent', 'match_parent', node, true);
             node.documentRoot = true;
             node.rendered = true;
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
@@ -91,9 +90,9 @@ this.android.widget.drawer = (function () {
                     delete application.renderQueue[node.nodeId];
                 }
             }
-            const menu = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-            const headerLayout = $util.optional($dom.findNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
-            const options = Object.assign({}, this.options.navigation);
+            const options = $util_android.createViewAttribute(this.options.navigation);
+            const menu = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+            const headerLayout = $util.optional($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
             if (menu !== '') {
                 $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
             }
@@ -103,13 +102,14 @@ this.android.widget.drawer = (function () {
             if (menu !== '' || headerLayout !== '') {
                 $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
                 $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-                $util.overwriteDefault(options, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
-                const output = application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
+                $util.overwriteDefault(options, 'android', 'layout_gravity', node.localizeString('left'));
+                const output = application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, $resource_android.formatOptions(options, this.application.settings), 'wrap_content', 'match_parent');
                 application.addRenderQueue(node.id.toString(), [output]);
             }
         }
         afterInsert() {
-            const element = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
+            const node = this.node;
+            const element = $dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL);
             if (element) {
                 const header = $dom.getNodeFromElement(element);
                 if (header && !header.hasHeight) {
@@ -117,20 +117,18 @@ this.android.widget.drawer = (function () {
                 }
             }
         }
-        createResourceTheme() {
+        setResourceTheme() {
             const options = Object.assign({}, this.options.resource);
             $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
             $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
             const data = {
-                '0': [{
-                        'appTheme': options.appTheme,
-                        'parentTheme': options.parentTheme,
-                        '1': []
-                    }]
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                '1': []
             };
             $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
             $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-            this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
+            this.application.resourceHandler.addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
         }
     }
 

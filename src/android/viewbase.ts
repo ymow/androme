@@ -105,11 +105,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return this._app[attr] || '';
         }
 
-        public apply(options = {}) {
-            const local = Object.assign({}, options);
-            super.apply(local);
-            for (const obj in local) {
-                this.formatted(`${obj}="${local[obj]}"`);
+        public apply(options: {}) {
+            if (typeof options === 'object') {
+                const local = Object.assign({}, options);
+                super.apply(local);
+                for (const obj in local) {
+                    this.formatted(`${obj}="${local[obj]}"`);
+                }
             }
         }
 
@@ -951,7 +953,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
                 else if (this.is($enum.NODE_STANDARD.BUTTON) && layoutHeight === 0) {
-                    this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
+                    if (!this.has('minHeight')) {
+                        this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
+                    }
                 }
                 else if (this.is($enum.NODE_STANDARD.LINE)) {
                     if (layoutHeight > 0 && this.has('height', 0, { map: 'initial' }) && this.tagName !== 'HR') {

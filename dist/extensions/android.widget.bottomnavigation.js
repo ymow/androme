@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.2.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -17,23 +17,23 @@ this.android.widget.bottomnavigation = (function () {
     };
 
     const template = [
-        '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
-        '	<style name="{@appTheme}" parent="{@parentTheme}">',
+        '	<style name="{&appTheme}" parent="{~parentTheme}">',
         '!1',
-        '		<item name="{name}">{value}</item>',
+        '		<item name="{&name}">{&value}</item>',
         '!1',
         '	</style>',
-        '</resources>',
-        '!0'
+        '</resources>'
     ];
     var EXTENSION_GENERIC_TMPL = template.join('\n');
 
     var $enum = androme.lib.enumeration;
     var $const_android = android.lib.constant;
     var $util = androme.lib.util;
+    var $util_android = android.lib.util;
     var $dom = androme.lib.dom;
+    var $resource_android = android.lib.base.Resource;
     class BottomNavigation extends androme.lib.base.Extension {
         constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -42,25 +42,26 @@ this.android.widget.bottomnavigation = (function () {
         processNode() {
             const node = this.node;
             const parent = this.parent;
-            const options = Object.assign({}, this.options[node.element.id]);
+            const options = $util_android.createViewAttribute(this.options[node.element.id]);
             $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent', 'wrap_content', node);
-            for (let i = 5; i < node.children.length; i++) {
-                node.children[i].hide();
-                node.children[i].cascade().forEach(item => item.hide());
+            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, $resource_android.formatOptions(options, this.application.settings), parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent', 'wrap_content', node);
+            for (let i = 5; i < node.length; i++) {
+                const item = node.item(i);
+                item.hide();
+                item.cascade().forEach(child => child.hide());
             }
             node.cascade().forEach(item => this.subscribersChild.add(item));
             node.render(parent);
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
             node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-            this.createResourceTheme();
+            this.setResourceTheme();
             return { output, complete: true };
         }
         beforeInsert() {
             const node = this.node;
-            const menu = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+            const menu = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
             if (menu !== '') {
-                const options = Object.assign({}, this.options[node.element.id]);
+                const options = $util_android.createViewAttribute(this.options[node.element.id]);
                 $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
                 node.app('menu', options.app.menu);
             }
@@ -75,20 +76,18 @@ this.android.widget.bottomnavigation = (function () {
                 renderParent.android('layout_height', 'match_parent');
             }
         }
-        createResourceTheme() {
+        setResourceTheme() {
             const options = Object.assign({}, this.options.resource);
             $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
             $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
             const data = {
-                '0': [{
-                        'appTheme': options.appTheme,
-                        'parentTheme': options.parentTheme,
-                        '1': []
-                    }]
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                '1': []
             };
             $util.overwriteDefault(options, 'output', 'path', 'res/values');
             $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-            this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
+            this.application.resourceHandler.addStyleTheme(EXTENSION_GENERIC_TMPL, data, options);
         }
     }
 
