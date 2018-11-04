@@ -15,23 +15,23 @@ function hasSingleImage<T extends Node>(node: T) {
 
 export default abstract class List<T extends Node> extends Extension<T> {
     public condition() {
-        const children = this.node.list;
+        const node = this.node as T;
         return (
             super.condition() &&
-            children.length > 0 && (
-                children.every(item => item.blockStatic) ||
-                children.every(item => item.inlineElement) ||
-                (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
-                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))
+            node.length > 0 && (
+                node.every(item => item.blockStatic) ||
+                node.every(item => item.inlineElement) ||
+                (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
+                node.every((item, index: number) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
             ) && (
-                children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
-                children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
+                node.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
+                node.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
             )
         );
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         let output = '';
         if (NodeList.linearY(node.list)) {

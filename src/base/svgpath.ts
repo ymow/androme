@@ -1,10 +1,11 @@
 import { convertInt, isString } from '../lib/util';
 import { cssAttribute, cssInherit } from '../lib/dom';
-import { isVisible } from '../lib/svg';
+import { isSvgVisible } from '../lib/svg';
 import { parseRGBA } from '../lib/color';
 
 export default class SvgPath implements androme.lib.base.SvgPath {
     public name: string;
+    public visibility = true;
     public d: string;
     public color: string;
     public fillRule: string;
@@ -18,7 +19,6 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     public strokeMiterlimit: string;
     public clipPath: string;
     public clipRule: string;
-    public visibility = true;
 
     private _element: SVGGraphicsElement | undefined;
 
@@ -142,7 +142,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
             this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
             this.clipPath = clipPath;
             this.clipRule = cssAttribute(element, 'clip-rule');
-            this.visibility = isVisible(element);
+            this.visibility = isSvgVisible(element);
         }
     }
 

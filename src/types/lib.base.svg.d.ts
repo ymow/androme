@@ -1,12 +1,15 @@
 declare global {
     namespace androme.lib.base {
         export interface SvgBase {
+            name: string;
+            width?: number;
+            height?: number;
             readonly element: SVGGraphicsElement | undefined;
             setElement(element: SVGGraphicsElement): void;
             build(): void;
         }
+
         export interface Svg extends Container<SvgGroup>, SvgBase {
-            name: string;
             readonly defs: SvgDefs<SvgImage, SvgPath>;
             readonly width: number;
             readonly height: number;
@@ -17,6 +20,7 @@ declare global {
             setViewBox(width: number, height: number): void;
             setOpacity(value: string | number): void;
         }
+
         export class Svg implements Svg {}
     }
 }

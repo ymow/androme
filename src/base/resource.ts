@@ -60,7 +60,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (typeof border.color === 'object' && !border.color.visible));
+        return border != null && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
     }
 
     public static hasDrawableBackground(object?: BoxStyle) {
@@ -141,7 +141,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             boxStyle[attr] = {
                                 width,
                                 style,
-                                color: style !== 'none' && color && color.visible ? color : ''
+                                color: style !== 'none' && color ? color.valueRGBA : ''
                             };
                             break;
                         }
@@ -169,7 +169,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                             else {
                                 const color = parseRGBA(value, node.css('opacity'));
-                                boxStyle.backgroundColor = color && color.visible ? color : '';
+                                boxStyle.backgroundColor = color ? color.valueRGBA : '';
                             }
                             break;
                         }
@@ -282,7 +282,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                             const color = parseRGBA(stopMatch[i + 1], rgba.startsWith('rgba') ? undefined : opacity);
                                             if (color && color.visible) {
                                                 gradient.colorStop.push({
-                                                    color,
+                                                    color: color.valueRGBA,
                                                     offset: stopMatch[i + 2],
                                                     opacity: color.alpha
                                                 });
@@ -336,16 +336,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
                 if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
-                    const color = parseRGBA(node.css('color'), opacity) || '';
-                    let backgroundColor: string | ColorHexAlpha = node.css('backgroundColor');
+                    const color = parseRGBA(node.css('color'), opacity);
+                    let backgroundColor: ColorHexAlpha | undefined;
                     if (!(backgroundImage ||
-                        (node.cssParent('backgroundColor', false, true) === backgroundColor && (node.plainText || backgroundColor !== node.styleMap.backgroundColor)) ||
+                        (node.cssParent('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.styleMap.backgroundColor)) ||
                         (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))))
                     {
-                        backgroundColor = parseRGBA(node.css('backgroundColor'), opacity) || '';
-                    }
-                    else {
-                        backgroundColor = '';
+                        backgroundColor = parseRGBA(node.css('backgroundColor'), opacity);
                     }
                     let fontFamily = node.css('fontFamily');
                     let fontSize = node.css('fontSize');
@@ -406,8 +403,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         fontStyle: node.css('fontStyle'),
                         fontSize,
                         fontWeight,
-                        color,
-                        backgroundColor
+                        color: color ? color.valueRGBA : '',
+                        backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                     };
                     setElementCache(node.element, 'fontStyle', result);
                 }
@@ -615,12 +612,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         result.defs.image.forEach(item => {
                             const dimensions = this.imageAssets.get(item.uri);
                             if (dimensions) {
-                                Object.assign(item.imageAsset, dimensions);
                                 if (item.width === 0) {
-                                    item.width = item.imageAsset.width;
+                                    item.width = dimensions.width;
                                 }
                                 if (item.height === 0) {
-                                    item.height = item.imageAsset.height;
+                                    item.height = dimensions.height;
                                 }
                             }
                         });

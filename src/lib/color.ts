@@ -211,7 +211,7 @@ function formatRGBA(rgba: RGBA) {
     return `rgb${rgba.a < 1 ? 'a' : ''}(${rgba.r}, ${rgba.g}, ${rgba.b}${rgba.a < 1 ? `, ${rgba.a.toFixed(2)}` : ''})`;
 }
 
-function getHexAlpha(value: string) {
+function convertAlpha(value: string) {
     return parseFloat(value) < 1 ? convertHex('255', parseFloat(value)) : 'FF';
 }
 
@@ -224,7 +224,7 @@ export function getColorByName(value: string) {
     return undefined;
 }
 
-export function getColorNearest(value: string) {
+export function getColorByShade(value: string) {
     const result = HSL_SORTED.slice();
     let index = result.findIndex(item => item.hex === value);
     if (index !== -1) {
@@ -260,7 +260,7 @@ export function convertHex(value: string, opacity = 1) {
     return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
 }
 
-export function convertRGBA(value: string): RGBA | undefined {
+export function convertRGBA(value: string) {
     value = value.replace(/#/g, '').trim();
     if (/[A-Za-z\d]{3,}/.test(value)) {
         let a = 1;
@@ -281,7 +281,7 @@ export function convertRGBA(value: string): RGBA | undefined {
                 break;
         }
         if (value.length === 6) {
-            return {
+            return <RGBA> {
                 r: parseInt(value.substring(0, 2), 16),
                 g: parseInt(value.substring(2, 4), 16),
                 b: parseInt(value.substring(4), 16),
@@ -292,7 +292,7 @@ export function convertRGBA(value: string): RGBA | undefined {
     return undefined;
 }
 
-export function parseRGBA(value: string, opacity = '1'): ColorHexAlpha | undefined {
+export function parseRGBA(value: string, opacity = '1') {
     if (value && value !== 'initial' && value !== 'transparent') {
         if (opacity === '') {
             opacity = '1';
@@ -316,10 +316,10 @@ export function parseRGBA(value: string, opacity = '1'): ColorHexAlpha | undefin
                 match[4] = parseFloat(opacity).toFixed(2);
             }
             const valueHex = convertHex(match[1]) + convertHex(match[2]) + convertHex(match[3]);
-            const valueA = getHexAlpha(match[4]);
+            const valueA = convertAlpha(match[4]);
             const valueRGBA = `#${valueHex + valueA}`;
             const alpha = parseFloat(match[4]);
-            return {
+            return <ColorHexAlpha> {
                 valueRGB: `#${valueHex}`,
                 valueRGBA,
                 valueARGB: `#${valueA + valueHex}`,
@@ -341,7 +341,7 @@ export function reduceRGBA(value: string, percent: number) {
         rgba.r = Math.round((base - rgba.r) * percent) + rgba.r;
         rgba.g = Math.round((base - rgba.g) * percent) + rgba.g;
         rgba.b = Math.round((base - rgba.b) * percent) + rgba.b;
-        return formatRGBA(rgba);
+        return parseRGBA(formatRGBA(rgba));
     }
-    return value;
+    return undefined;
 }

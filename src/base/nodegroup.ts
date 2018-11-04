@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, getClientRect } from '../lib/dom';
+import { assignBounds, newClientRect } from '../lib/dom';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     public init() {
@@ -34,7 +34,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
                 };
             }
             else {
-                this.bounds = getClientRect();
+                this.bounds = newClientRect();
             }
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;

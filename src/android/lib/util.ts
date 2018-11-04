@@ -1,5 +1,9 @@
+import { ViewAttribute } from '../types/local';
+
 import { BUILD_ANDROID } from './enumeration';
 import { XMLNS_ANDROID } from './constant';
+
+const $xml = androme.lib.xml;
 
 let MAP_ID: ObjectMap<string[]>;
 
@@ -38,6 +42,10 @@ export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 
+export function createViewAttribute(options?: {}): ViewAttribute {
+    return Object.assign({ android: {}, app: {} }, typeof options === 'object' ? options : {});
+}
+
 export function convertUnit(value: any, dpi = 160, font = false) {
     if (value) {
         value = parseFloat(value);
@@ -63,6 +71,10 @@ export function replaceUnit(value: string, { density = 160, convertPixels = 'dp'
     }
 }
 
+export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
+    return $xml.replaceTab(value, insertSpaces, preserve);
+}
+
 export function calculateBias(start: number, end: number, accuracy = 4) {
     if (start === 0) {
         return 0;
@@ -75,7 +87,7 @@ export function calculateBias(start: number, end: number, accuracy = 4) {
     }
 }
 
-export function parseRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {
+export function replaceRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {
     if (supportRTL && targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
         value = value.replace(/left/g, 'start').replace(/right/g, 'end');
         value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');

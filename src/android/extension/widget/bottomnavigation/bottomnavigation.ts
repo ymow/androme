@@ -8,6 +8,7 @@ import View = android.lib.base.View;
 import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
+import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
 import $resource_android = android.lib.base.Resource;
 
@@ -23,9 +24,9 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
-        const options = Object.assign({}, this.options[node.element.id]);
+        const options = $util_android.createViewAttribute(this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(
             $const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION,
@@ -44,22 +45,22 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         node.render(parent);
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-        this.createResourceTheme();
+        this.setResourceTheme();
         return { output, complete: true };
     }
 
     public beforeInsert() {
-        const node = this.node;
-        const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const node = this.node as T;
+        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
-            const options = Object.assign({}, this.options[node.element.id]);
+            const options = $util_android.createViewAttribute(this.options[node.element.id]);
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', options.app.menu);
         }
     }
 
     public afterInsert() {
-        const node = this.node;
+        const node = this.node as T;
         const renderParent = node.renderParent as T;
         if (!renderParent.has('width')) {
             renderParent.android('layout_width', 'match_parent');
@@ -69,8 +70,8 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         }
     }
 
-    private createResourceTheme() {
-        const options = Object.assign({}, this.options.resource);
+    private setResourceTheme() {
+        const options: ExternalData = Object.assign({}, this.options.resource);
         $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
@@ -80,6 +81,6 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-        (<android.lib.base.Resource<T>> this.application.resourceHandler).addTheme(EXTENSION_GENERIC_TMPL, data, options);
+        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

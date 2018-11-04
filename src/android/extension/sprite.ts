@@ -10,7 +10,7 @@ import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.base.extensions.Sprite<T> {
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
         let output = '';

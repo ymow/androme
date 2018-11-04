@@ -10,6 +10,7 @@ import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
+import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
 import $resource_android = android.lib.base.Resource;
 
@@ -41,14 +42,14 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
-        const options = Object.assign({}, this.options.self);
-        if ($dom.findNestedExtension(node.element, WIDGET_NAME.MENU)) {
+        const node = this.node as T;
+        const options = $util_android.createViewAttribute(this.options.self);
+        if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            this.createResourceTheme();
+            this.setResourceTheme();
         }
         else {
-            const optionsNavigationView = Object.assign({}, this.options.navigationView);
+            const optionsNavigationView = $util_android.createViewAttribute(this.options.navigationView);
             $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
             const navView = node.item() as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
@@ -73,7 +74,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
 
     public beforeInsert() {
         const application = this.application;
-        const node = this.node;
+        const node = this.node as T;
         if (application.renderQueue[node.nodeId]) {
             const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $const_android.VIEW_SUPPORT.COORDINATOR);
             if (target) {
@@ -81,9 +82,9 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
                 delete application.renderQueue[node.nodeId];
             }
         }
-        const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-        const headerLayout: string = $util.optional($dom.findNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
-        const options: {} = Object.assign({}, this.options.navigation);
+        const options = $util_android.createViewAttribute(this.options.navigation);
+        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const headerLayout: string = $util.optional($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         if (menu !== '') {
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
         }
@@ -106,7 +107,8 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     }
 
     public afterInsert() {
-        const element = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
+        const node = this.node as T;
+        const element = $dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL);
         if (element) {
             const header = $dom.getNodeFromElement<T>(element);
             if (header && !header.hasHeight) {
@@ -115,8 +117,8 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         }
     }
 
-    private createResourceTheme() {
-        const options = Object.assign({}, this.options.resource);
+    private setResourceTheme() {
+        const options: ExternalData = Object.assign({}, this.options.resource);
         $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
@@ -126,6 +128,6 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        (<android.lib.base.Resource<T>> this.application.resourceHandler).addTheme(EXTENSION_DRAWER_TMPL, data, options);
+        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

@@ -23,6 +23,7 @@ declare global {
             appendAfter(id: number, output: string, index?: number): void;
             hasAppendProcessing(id: number): boolean;
         }
+
         export class Controller<T extends Node> implements Controller<T> {
             public static getEnclosingTag(depth: number, controlName: string, id: number, xml?: string, preXml?: string, postXml?: string): string;
         }

@@ -12,6 +12,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
+
     private _node?: T;
     private _parent?: T;
     private _element?: Element;
@@ -135,7 +136,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public get node() {
-        return this._node as T;
+        return this._node;
     }
 
     public get parent() {

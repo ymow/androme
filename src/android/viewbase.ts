@@ -1,4 +1,4 @@
-import { Constraint, LocalSettings, SettingsAndroid } from './types/local';
+import { Constraint, LocalSettings } from './types/local';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
@@ -6,7 +6,7 @@ import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customization
 
 import NodeList = androme.lib.base.NodeList;
 
-import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
+import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -14,7 +14,7 @@ import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
 export default (Base: Constructor<androme.lib.base.Node>) => {
-    return class View extends Base {
+    return class View extends Base implements androme.lib.base.Node {
         public static documentBody() {
             if (View._documentBody == null) {
                 const body = new View(0, document.body);
@@ -27,13 +27,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string) {
             for (const build of [API_ANDROID[api], API_ANDROID[0]]) {
-                if (build &&
-                    build.customizations &&
-                    build.customizations[tagName] &&
-                    build.customizations[tagName][obj] &&
-                    $util.isString(build.customizations[tagName][obj][attr]))
-                {
-                    return build.customizations[tagName][obj][attr];
+                const value = $util.optional(build, `customizations.${tagName}.${obj}.${attr}`);
+                if ($util.isString(value)) {
+                    return value;
                 }
             }
             return '';
@@ -49,16 +45,15 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
         }
 
-        public constraint: Constraint;
+        public readonly constraint: Constraint = { current: {} } as any;
         public readonly renderChildren: View[] = [];
-        public renderExtension = new Set<androme.lib.base.Extension<View>>();
 
         protected _namespaces = new Set(['android', 'app']);
         protected _controlName: string;
         protected _renderParent: View;
         protected _documentParent: View;
-        protected readonly _boxAdjustment: BoxModel = $dom.getBoxModel();
-        protected readonly _boxReset: BoxModel = $dom.getBoxModel();
+        protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
+        protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
         private _android: StringMap = {};
         private _app: StringMap = {};
@@ -73,7 +68,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             afterInit?: SelfWrapped<View, void>)
         {
             super(id, element);
-            this.constraint = { current: {} } as any;
             if (afterInit) {
                 afterInit(this);
             }
@@ -260,7 +254,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public localizeString(value: string) {
             if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
-                return parseRTL(value, this.localSettings);
+                return replaceRTL(value, this.localSettings);
             }
             return value;
         }
@@ -818,15 +812,15 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public applyOptimizations(settings: SettingsAndroid) {
+        public applyOptimizations() {
             this.setBlockSpacing();
             this.bindWhiteSpace();
-            this.autoSizeBoxModel(settings);
-            this.alignLinearLayout(settings);
+            this.autoSizeBoxModel();
+            this.alignLinearLayout();
             this.alignRelativePosition();
         }
 
-        public applyCustomizations(settings: SettingsAndroid) {
+        public applyCustomizations() {
             for (const build of [API_ANDROID[0], API_ANDROID[this.localSettings.targetAPI]]) {
                 if (build && build.customizations) {
                     for (const nodeName of [this.tagName, this.controlName]) {
@@ -834,7 +828,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (customizations) {
                             for (const obj in customizations) {
                                 for (const attr in customizations[obj]) {
-                                    this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
+                                    this.attr(obj, attr, customizations[obj][attr], this.localSettings.customizationsOverwritePrivilege);
                                 }
                             }
                         }
@@ -902,8 +896,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        private autoSizeBoxModel(settings: SettingsAndroid) {
-            if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
+        private autoSizeBoxModel() {
+            if (this.localSettings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
                 const renderParent = this.renderParent;
                 let layoutWidth = $util.convertInt(this.android('layout_width'));
                 let layoutHeight = $util.convertInt(this.android('layout_height'));
@@ -1078,7 +1072,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
                                     return getPreviousBottom(previous.renderParent.renderChildren.slice());
                                 }
-                                else if (!previous.domElement && previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                                else if (previous.layoutHorizontal && previous.length > 0 && !previous.styleElement && previous.renderChildren.some(item => !item.floating)) {
                                     return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                 }
                                 return previous.linear.bottom;
@@ -1096,7 +1090,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        private alignLinearLayout(settings: SettingsAndroid) {
+        private alignLinearLayout() {
             if (this.linearHorizontal) {
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
@@ -1172,7 +1166,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     }
                 }
-                if (settings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
+                if (this.localSettings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
                     const node = renderChildren[renderChildren.length - 1];
                     if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                         node.android('singleLine', 'true');

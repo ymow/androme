@@ -1,23 +1,19 @@
-import { cssAttribute, getStyle, parseBackgroundPosition } from './dom';
+import { cssAttribute, getStyle, getBackgroundPosition } from './dom';
 import { parseRGBA } from './color';
 
-export function getColorStop(gradient: SVGGradientElement) {
+export function createColorStop(element: SVGGradientElement) {
     const result: ColorStop[] = [];
-    for (const stop of Array.from(gradient.getElementsByTagName('stop'))) {
+    for (const stop of Array.from(element.getElementsByTagName('stop'))) {
         const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
-        if (color) {
+        if (color && color.visible) {
             result.push({
-                color,
+                color: color.valueRGBA,
                 offset: cssAttribute(stop, 'offset'),
                 opacity: color.alpha
             });
         }
     }
     return result;
-}
-
-export function isVisible(element: SVGGraphicsElement) {
-    return cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'));
 }
 
 export function createTransform(element: SVGGraphicsElement) {
@@ -59,8 +55,20 @@ export function createTransform(element: SVGGraphicsElement) {
         }
     }
     const style = getStyle(element);
-    if (style.transformOrigin && style.transformOrigin !== '0px 0px' && style.transformOrigin !== 'left top') {
-        data.origin = parseBackgroundPosition(style.transformOrigin, element.getBoundingClientRect() || '', style.fontSize, true);
+    if (style.transformOrigin) {
+        switch (style.transformOrigin) {
+            case '0px 0px':
+            case '0% 0%':
+            case 'left top':
+                break;
+            default:
+                data.origin = getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), style.fontSize, true);
+                break;
+        }
     }
     return data;
+}
+
+export function isSvgVisible(element: SVGGraphicsElement) {
+    return cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'));
 }

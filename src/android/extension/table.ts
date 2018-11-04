@@ -6,7 +6,7 @@ import $util = androme.lib.util;
 export default class <T extends View> extends androme.lib.base.extensions.Table<T> {
     public processNode(): ExtensionResult {
         const result = super.processNode();
-        const node = this.node;
+        const node = this.node as T;
         const columnCount = $util.convertInt(node.android('columnCount'));
         if (columnCount > 1) {
             let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
@@ -68,7 +68,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const rowSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'rowSpan'));
         const columnSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'colSpan'));
         const spaceSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'spaceSpan'));

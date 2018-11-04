@@ -3,12 +3,6 @@ import NodeList from './nodelist';
 
 import { lastIndexOf, trimString } from '../lib/util';
 
-type ExpressResult = {
-    zipname: string;
-    application: string;
-    system: string;
-};
-
 export default abstract class File<T extends Node> implements androme.lib.base.File<T> {
     public static downloadToDisk(data: Blob, filename: string, mime = '') {
         const blob = new Blob([data], { type: mime || 'application/octet-stream' });
@@ -69,6 +63,11 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     }
 
     public saveToDisk(files: FileAsset[]) {
+        type ExpressResult = {
+            zipname: string;
+            application: string;
+            system: string;
+        };
         if (!location.protocol.startsWith('http')) {
             alert('SERVER (required): See README for instructions');
             return;

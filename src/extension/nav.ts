@@ -45,7 +45,7 @@ export default abstract class Nav<T extends Node> extends Extension<T> {
     }
 
     public afterRender() {
-        const node = this.node;
+        const node = this.node as T;
         if (this.included(<HTMLElement> node.element)) {
             Array.from(node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = getElementCache(item, 'andromeExternalDisplay');

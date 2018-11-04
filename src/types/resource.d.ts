@@ -133,7 +133,7 @@ interface Color {
 }
 
 interface ColorStop {
-    color: string | ColorHexAlpha;
+    color: string;
     offset: string;
     opacity: number;
 }
@@ -151,7 +151,7 @@ interface ColorHexAlpha {
 interface BorderAttribute {
     width: string;
     style: string;
-    color: string | ColorHexAlpha;
+    color: string;
 }
 
 interface FontAttribute {
@@ -159,8 +159,8 @@ interface FontAttribute {
     fontStyle: string;
     fontSize: string;
     fontWeight: string;
-    color: string | ColorHexAlpha;
-    backgroundColor: string | ColorHexAlpha;
+    color: string;
+    backgroundColor: string;
 }
 
 interface BoxStyle {
@@ -170,7 +170,7 @@ interface BoxStyle {
     borderBottom: BorderAttribute;
     borderLeft: BorderAttribute;
     borderRadius: string[];
-    backgroundColor: string | ColorHexAlpha;
+    backgroundColor: string;
     background?: string;
     backgroundImage?: string[];
     backgroundGradient?: Gradient[];

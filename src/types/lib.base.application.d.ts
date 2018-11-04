@@ -40,14 +40,15 @@ declare global {
             writeNode(node: T, parent: T, nodeName: number | string): string;
             writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
             writeFrameLayoutVertical(group: T | undefined, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            createLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
-            createIncludeFile(filename: string, content: string): void;
+            addLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
+            addIncludeFile(filename: string, content: string): void;
             addRenderQueue(id: string, views: string[]): void;
             preserveRenderPosition(node: T): void;
             getExtension(name: string): Extension<T> | undefined;
             insertNode(element: Element, parent?: T): T | undefined;
             toString(): string;
         }
+
         export class Application<T extends Node> implements Application<T> {
             constructor(framework: number);
         }

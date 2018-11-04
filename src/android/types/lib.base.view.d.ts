@@ -3,7 +3,8 @@ import { Constraint, LocalSettings } from './local';
 declare global {
     namespace android.lib.base {
         export interface View extends androme.lib.base.Node {
-            constraint: Constraint;
+            readonly constraint: Constraint;
+            readonly renderChildren: View[];
             readonly stringId: string;
             readonly anchored: boolean;
             readonly localSettings: LocalSettings;
@@ -17,7 +18,7 @@ declare global {
             supported(obj: string, attr: string, result?: {}): boolean;
             combine(...objs: string[]): string[];
         }
-        export class View {
+        export class View implements View {
             public static documentBody(): View;
             public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string): string;
             public static getControlName(nodeType: number): string;

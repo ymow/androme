@@ -16,6 +16,7 @@ declare global {
             setValueString(): void;
             setOptionArray(): void;
         }
+
         export class Resource<T extends Node> implements Resource<T> {
             public static STORED: ResourceMap;
             public static getSvgTransform(element: SVGGraphicsElement): SvgTransformAttributes;

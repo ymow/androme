@@ -1,6 +1,6 @@
 declare global {
     namespace androme.lib.base {
-        export interface NodeList<T extends Node> extends Container<T>, Iterable<T> {
+        export interface NodeList<T extends Node> extends Container<T> {
             delegateAppend?: (node: T) => void;
             readonly visible: T[];
             readonly elements: T[];
@@ -11,6 +11,7 @@ declare global {
             reset(): void;
             partition(predicate: (value: T) => boolean): NodeList<T>[];
         }
+
         export class NodeList<T extends Node> implements NodeList<T> {
             public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;
             public static floated<T>(list: T[]): Set<string>;

@@ -19,7 +19,7 @@ export function isUserAgent(value: number) {
     return hasBit(value, client);
 }
 
-export function getBoxRect(): BoxRect {
+export function newBoxRect(): BoxRect {
     return {
         top: 0,
         left: 0,
@@ -28,11 +28,11 @@ export function getBoxRect(): BoxRect {
     };
 }
 
-export function getClientRect(): BoxDimensions {
-    return Object.assign({ width: 0, height: 0 }, getBoxRect());
+export function newClientRect(): BoxDimensions {
+    return Object.assign({ width: 0, height: 0 }, newBoxRect());
 }
 
-export function getBoxModel(): BoxModel {
+export function newBoxModel(): BoxModel {
     return {
         marginTop: 0,
         marginRight: 0,
@@ -58,7 +58,7 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
-    let result: BoxDimensions = getClientRect();
+    let result: BoxDimensions = newClientRect();
     let multiLine = false;
     if (domRect.length > 0) {
         result = assignBounds(domRect[0]);
@@ -125,7 +125,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
 
 export function getBoxSpacing(element: Element, complete = false, merge = false) {
     const result = {};
-    const node = getNodeFromElement<T>(element);
+    const node = getNodeFromElement(element);
     const style = getStyle(element);
     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
         let total = 0;
@@ -205,7 +205,7 @@ export function cssAttribute(element: Element, attr: string): string {
     return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
 }
 
-export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective = false, percent = false) {
+export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective = false, percent = false) {
     const result: BoxPosition = {
         top: 0,
         left: 0,
@@ -458,7 +458,7 @@ export function getElementsBetweenSiblings(firstElement: Element | undefined, se
                     result = result.filter(element => element.nodeName !== '#comment');
                 }
                 if (cacheNode) {
-                    result = result.filter(element => getNodeFromElement<T>(element));
+                    result = result.filter(element => getNodeFromElement(element));
                 }
                 return result;
             }
@@ -517,7 +517,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
     return false;
 }
 
-export function findNestedExtension(element: Element, name: string) {
+export function getNestedExtension(element: Element, name: string) {
     if (isStyleElement(element)) {
         return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }

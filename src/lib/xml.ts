@@ -31,20 +31,20 @@ export function replaceIndent(value: string, depth: number) {
     return value;
 }
 
-export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
-    if (insertSpaces > 0) {
+export function replaceTab(value: string, spaces = 4, preserve = false) {
+    if (spaces > 0) {
         if (preserve) {
             value = value.split('\n').map(line => {
                 const match = line.match(/^(\t+)(.*)$/);
                 if (match) {
-                    return ' '.repeat(insertSpaces * match[1].length) + match[2];
+                    return ' '.repeat(spaces * match[1].length) + match[2];
                 }
                 return line;
             })
             .join('\n');
         }
         else {
-            value = value.replace(/\t/g, ' '.repeat(insertSpaces));
+            value = value.replace(/\t/g, ' '.repeat(spaces));
         }
     }
     return value;
@@ -75,11 +75,11 @@ export function replaceCharacter(value: string) {
     );
 }
 
-export function parseTemplate(template: string) {
-    const result: StringMap = { '__root': template };
+export function parseTemplate(value: string) {
+    const result: StringMap = { '__root': value };
     let pattern: Null<RegExp> = null;
     let match: Null<RegExpExecArray> | boolean = false;
-    let characters = template.length;
+    let characters = value.length;
     let section = '';
     do {
         if (match) {
@@ -93,11 +93,11 @@ export function parseTemplate(template: string) {
         }
         if (match == null || characters === 0) {
             if (section) {
-                template = result[section];
-                if (!template) {
+                value = result[section];
+                if (!value) {
                     break;
                 }
-                characters = template.length;
+                characters = value.length;
                 section = '';
                 match = null;
             }
@@ -109,7 +109,7 @@ export function parseTemplate(template: string) {
             pattern = /(!(\w+))\n[\w\W]*\n*\1/g;
         }
         if (pattern) {
-            match = pattern.exec(template);
+            match = pattern.exec(value);
         }
         else {
             break;
@@ -119,30 +119,30 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function createTemplate(template: StringMap, data: TemplateData, index?: string) {
-    let output = index != null ? template[index] : template['__root'].trim();
+export function createTemplate(value: StringMap, data: TemplateData, index?: string) {
+    let output = index != null ? value[index] : value['__root'].trim();
     for (const attr in data) {
-        let value: any = '';
+        let result: any = '';
         if (isArray(data[attr])) {
             for (let i = 0; i < data[attr].length; i++) {
-                value += createTemplate(template, data[attr][i], attr.toString());
+                result += createTemplate(value, data[attr][i], attr.toString());
             }
-            value = trimEnd(value, '\\n');
+            result = trimEnd(result, '\\n');
         }
         else {
-            value = data[attr];
+            result = data[attr];
         }
         let hash = '';
-        if (isString(value)) {
+        if (isString(result)) {
             if (isArray(data[attr])) {
                 hash = '%';
             }
             else {
                 hash = '[&~]';
             }
-            output = output.replace(new RegExp(`{${hash + attr}}`, 'g'), value);
+            output = output.replace(new RegExp(`{${hash + attr}}`, 'g'), result);
         }
-        if (value === false || (Array.isArray(value) && value.length === 0) || (hash && hash !== '%')) {
+        if (result === false || (Array.isArray(result) && result.length === 0) || (hash && hash !== '%')) {
             output = output.replace(new RegExp(`{%${attr}}\\n*`, 'g'), '');
         }
         if (hash === '' && new RegExp(`{&${attr}}`).test(output)) {
@@ -155,7 +155,7 @@ export function createTemplate(template: StringMap, data: TemplateData, index?: 
     return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
 }
 
-export function getTemplateBranch(data: {}, ...levels: string[]) {
+export function getTemplateSection(data: TemplateData, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');

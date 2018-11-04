@@ -19,6 +19,7 @@ declare global {
             reset(): void;
             saveToDisk(files: FileAsset[]): void;
         }
+
         export class File<T extends Node> implements File<T> {
             public static downloadToDisk(data: Blob, filename: string, mime?: string): void;
         }

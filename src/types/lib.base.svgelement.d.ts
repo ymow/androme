@@ -1,22 +1,22 @@
 declare global {
     namespace androme.lib.base {
         export interface SvgElement extends SvgBase {
-            name: string;
-            x: number;
-            y: number;
-            width: number;
-            height: number;
+            x?: number;
+            y?: number;
             visibility: boolean;
-            transform: SvgTransformAttributes | undefined;
+            transform?: SvgTransformAttributes;
         }
-        export interface SvgGroup extends SvgElement, Container<SvgPath> {}
-        export interface SvgImage extends SvgElement {
-            element: SVGImageElement;
-            uri: string;
-            readonly imageAsset: ImageAsset;
-        }
+
         export class SvgElement implements SvgElement {}
+
+        export interface SvgGroup extends SvgElement, Container<SvgPath> {}
+
         export class SvgGroup implements SvgGroup {}
+
+        export interface SvgImage extends SvgElement {
+            uri: string;
+        }
+
         export class SvgImage implements SvgImage {}
     }
 }

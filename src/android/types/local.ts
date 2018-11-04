@@ -23,6 +23,9 @@ export interface EnvironmentSettings {
 
 export interface LocalSettings extends EnvironmentSettings {
     constraintPercentAccuracy?: number;
+    customizationsOverwritePrivilege?: boolean;
+    autoSizePaddingAndBorderWidth?: boolean;
+    ellipsisOnTextOverflow?: boolean;
 }
 
 export type Constraint = {

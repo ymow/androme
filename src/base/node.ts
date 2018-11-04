@@ -5,14 +5,16 @@ import Container from './container';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
-import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
+import { assignBounds, newClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
 
 type T = Node;
 
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
-    public abstract constraint: {};
+    public static getNodeFromElement<T extends Node>(element: Null<Element>) {
+        return getNodeFromElement<T>(element);
+    }
+
     public abstract readonly renderChildren: T[];
-    public abstract renderExtension: Set<Extension<T>>;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public nodeId: string;
@@ -34,6 +36,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public visible = true;
     public excluded = false;
     public rendered = false;
+    public renderExtension = new Set<Extension<T>>();
     public readonly initial: InitialData<T>;
 
     protected abstract _namespaces: Set<string>;
@@ -67,7 +70,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             depth: -1,
             children: [],
             styleMap: {},
-            bounds: getClientRect()
+            bounds: newClientRect()
         };
         if (element) {
             this._element = element;
@@ -401,7 +404,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
         if (this.baseElement) {
-            let current = startChild ? this : getNodeFromElement<T>(this.baseElement.parentElement);
+            let current = startChild ? this : Node.getNodeFromElement(this.baseElement.parentElement);
             while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
@@ -410,7 +413,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     }
                     break;
                 }
-                current = getNodeFromElement<T>(current.baseElement.parentElement);
+                current = Node.getNodeFromElement(current.baseElement.parentElement);
             }
         }
         return result;
@@ -610,7 +613,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public getParentElementAsNode(negative = false) {
         if (this._element) {
-            let parent = getNodeFromElement<T>(this._element.parentElement);
+            let parent = Node.getNodeFromElement(this._element.parentElement);
             if (!this.pageflow) {
                 let found = false;
                 let previous: T | undefined;
@@ -658,7 +661,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         }
                     }
                     previous = parent;
-                    parent = getNodeFromElement<T>(parent.element.parentElement);
+                    parent = Node.getNodeFromElement(parent.element.parentElement);
                 }
                 if (!found && !outside) {
                     parent = relativeParent;
@@ -730,7 +733,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             element = list.length > 0 ? <Element> list[0].element.previousSibling : undefined;
         }
         while (element) {
-            const node = getNodeFromElement<T>(element);
+            const node = Node.getNodeFromElement(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
@@ -755,7 +758,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             element = list.length > 0 ? <Element> list[0].element.nextSibling : undefined;
         }
         while (element) {
-            const node = getNodeFromElement<T>(element);
+            const node = Node.getNodeFromElement(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) &&
@@ -1085,7 +1088,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         hasFreeFormText(this._element) &&
                         (this.initial.children.length === 0 || this.initial.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
-                            const node = getNodeFromElement<T>(element);
+                            const node = Node.getNodeFromElement(element);
                             return !!node && !node.lineBreak && (!node.excluded || !node.visible);
                         }))
                     );

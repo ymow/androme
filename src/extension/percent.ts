@@ -5,7 +5,7 @@ import Extension from '../base/extension';
 
 export default abstract class Percent<T extends Node> extends Extension<T> {
     public condition() {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         return this.included() || (
             node.alignmentType === NODE_ALIGNMENT.NONE &&
@@ -17,7 +17,7 @@ export default abstract class Percent<T extends Node> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const controller = this.application.viewController;
         const group = controller.createGroup(parent, node, [node]);

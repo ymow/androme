@@ -58,7 +58,7 @@ export function formatString(value: string, ...params: string[]) {
     return value;
 }
 
-export function camelToLowerCase(value: string) {
+export function convertUnderscore(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
     const result = value.match(/([a-z][A-Z])/g);
     if (result) {
@@ -289,7 +289,7 @@ export function lastIndexOf(value: string, char = '/') {
     return value.substring(value.lastIndexOf(char) + 1);
 }
 
-export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
+export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     for (const attr of attrs) {
         const result = compareObject(obj1, obj2, attr);
         if (!result || result[0] !== result[1]) {

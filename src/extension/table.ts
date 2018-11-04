@@ -16,7 +16,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         function setBoundsWidth(td: T) {
             td.css('width', formatPX(td.bounds.width));
         }
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');

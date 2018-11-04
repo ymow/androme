@@ -1,4 +1,4 @@
-import { EnvironmentSettings, SettingsAndroid } from './local';
+import { EnvironmentSettings, SettingsAndroid, ViewAttribute } from './local';
 
 import * as $enum from '../lib/enumeration';
 import * as $const from '../lib/constant';
@@ -28,11 +28,13 @@ declare global {
                 export function resetId(): void;
                 export function generateId(section: string, name: string, start: number): string;
                 export function stripId(value: string): string;
+                export function createViewAttribute(options?: {}): ViewAttribute;
                 export function convertUnit(value: any, dpi?: number, font?: boolean): string;
                 export function delimitUnit(nodeName: string, attr: string, size: string, settings: SettingsAndroid): string;
-                export function replaceUnit(value: string, settings: Settings, font?: boolean): string;
+                export function replaceUnit(value: string, settings?: SettingsAndroid, font?: boolean): string;
+                export function replaceTab(value: string, settings: Settings, preserve?: boolean): string;
                 export function calculateBias(start: number, end: number, accuracy: number): number;
-                export function parseRTL(value: string, settings: EnvironmentSettings): string;
+                export function replaceRTL(value: string, settings: EnvironmentSettings): string;
                 export function getXmlNs(value: string): string;
             }
         }

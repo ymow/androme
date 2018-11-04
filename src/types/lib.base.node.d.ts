@@ -25,7 +25,6 @@ declare global {
             excluded: boolean;
             rendered: boolean;
             companion: Node;
-            constraint: {};
             readonly initial: InitialData<Node>;
             readonly renderChildren: Node[];
             readonly documentParent: Node;
@@ -168,7 +167,11 @@ declare global {
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
         }
-        export class Node implements Node {}
+
+        export class Node implements Node {
+            public static getNodeFromElement<T>(element: Null<Element>): T | undefined;
+        }
+
         export class NodeGroup<T extends Node> extends Node {}
     }
 }

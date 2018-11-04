@@ -8,17 +8,16 @@ import $dom = androme.lib.dom;
 
 export default class Coordinator<T extends View> extends androme.lib.base.Extension<T> {
     public processNode(): ExtensionResult {
-        const node = this.node;
-        const parent = this.parent as T;
-        const output = this.application.viewController.renderGroup(node, parent, $const_android.VIEW_SUPPORT.COORDINATOR);
+        const node = this.node as T;
+        const output = this.application.viewController.renderGroup(node, this.parent as T, $const_android.VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-        const toolbar = $dom.getNodeFromElement<T>($dom.findNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
+        const toolbar = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
         if (toolbar) {
             const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
             if (ext) {
-                if (ext.options[toolbar.element.id] && ext.options[toolbar.element.id].collapsingToolbar) {
+                if (typeof ext.options[toolbar.element.id] === 'object' && ext.options[toolbar.element.id].hasOwnProperty('collapsingToolbar')) {
                     node.android('fitsSystemWindows', 'true');
                 }
             }
@@ -27,7 +26,7 @@ export default class Coordinator<T extends View> extends androme.lib.base.Extens
     }
 
     public afterInsert() {
-        const node = this.node;
+        const node = this.node as T;
         if (node.documentRoot) {
             node.android('layout_width', 'match_parent');
             node.android('layout_height', 'match_parent');

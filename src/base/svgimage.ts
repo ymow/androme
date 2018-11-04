@@ -1,16 +1,21 @@
 import SvgElement from './svgelement';
 
-export default class SvgImage extends SvgElement {
-    public element: SVGImageElement;
-    public readonly imageAsset: ImageAsset = {
-        width: 0,
-        height: 0
-    };
+export default class SvgImage extends SvgElement implements androme.lib.base.SvgImage {
+    public uri = '';
 
     constructor(
-        element: SVGImageElement | undefined,
-        public uri: string)
+        element?: SVGImageElement,
+        uri?: string)
     {
         super(element);
+        if (uri) {
+            this.uri = uri;
+        }
+    }
+
+    public setElement(element: SVGImageElement) {
+        if (element instanceof SVGImageElement) {
+            this._element = element;
+        }
     }
 }

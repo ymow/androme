@@ -9,11 +9,11 @@ import Application from '../base/application';
 import Extension from '../base/extension';
 
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
-import { getBoxRect, getNodeFromElement, isStyleElement } from '../lib/dom';
+import { newBoxRect, isStyleElement } from '../lib/dom';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition() {
-        const node = this.node;
+        const node = this.node as T;
         return (
             this.included() ||
             (node.length > 1 && (
@@ -28,13 +28,13 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     }
 
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const columnBalance = !!this.options.columnBalance;
         let output = '';
         let columns: T[][] = [];
         const mainData: GridData = {
-            padding: getBoxRect(),
+            padding: newBoxRect(),
             columnEnd: [],
             columnCount: 0
         };
@@ -296,7 +296,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const mainData: GridData = parent.data(EXT_NAME.GRID, 'mainData');
         const cellData: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
@@ -309,7 +309,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings = Array.from(node.documentParent.element.children).map(element => {
-                    const item = getNodeFromElement<T>(element);
+                    const item = Node.getNodeFromElement(element);
                     return (
                         item &&
                         item.visible &&

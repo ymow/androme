@@ -15,7 +15,7 @@ import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.List<T> {
     public processChild(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');
         if (mainData) {
             const parent = this.parent as T;
@@ -67,7 +67,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 let left = 0;
                 let top = 0;
                 if (mainData.imageSrc !== '') {
-                    const boxPosition = $dom.parseBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
+                    const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
                     left = boxPosition.left;
                     top = boxPosition.top;
                     image = ResourceHandler.addImageURL(mainData.imageSrc);
@@ -183,7 +183,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
     }
 
     public beforeInsert() {
-        const node = this.node;
+        const node = this.node as T;
         if (node.is($enum.NODE_STANDARD.GRID)) {
             const columnCount = node.android('columnCount');
             for (let i = 0; i < node.renderChildren.length; i++) {
@@ -226,7 +226,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
     }
 
     public afterInsert() {
-        const node = this.node;
+        const node = this.node as T;
         if (node.is($enum.NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
             node.android('layout_width', 'match_parent');
         }

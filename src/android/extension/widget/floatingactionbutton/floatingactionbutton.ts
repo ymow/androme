@@ -7,18 +7,23 @@ import View = android.lib.base.View;
 import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
+import $util_android = android.lib.util;
 import $color = androme.lib.color;
 import $resource_android = android.lib.base.Resource;
 
 export default class FloatingActionButton<T extends View> extends androme.lib.base.extensions.Button<T> {
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const target = $util.hasValue(node.dataset.target);
         const element = node.element;
-        const options = Object.assign({}, this.options[element.id]);
+        const options = $util_android.createViewAttribute(this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor && backgroundColor.visible ? `@color/${$resource_android.addColor(backgroundColor)}` : '?attr/colorAccent');
+        let colorValue = '';
+        if (backgroundColor) {
+            colorValue = $resource_android.addColor(backgroundColor);
+        }
+        $util.overwriteDefault(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
             $util.overwriteDefault(options, 'android', 'focusable', 'false');
         }
@@ -119,7 +124,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
     }
 
     public afterInsert() {
-        const node = this.node;
+        const node = this.node as T;
         node.android('layout_width', 'wrap_content');
         node.android('layout_height', 'wrap_content');
     }

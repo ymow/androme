@@ -16,7 +16,7 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         const data = this.getData();
         let output = '';

@@ -4,7 +4,6 @@ import Node from '../base/node';
 import Extension from '../base/extension';
 
 import { hasValue } from '../lib/util';
-import { getNodeFromElement } from '../lib/dom';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {
@@ -17,8 +16,8 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                         case 'checkbox':
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                 if (sibling) {
-                                    const label = getNodeFromElement<T>(sibling);
-                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : undefined;
+                                    const label = Node.getNodeFromElement(sibling);
+                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? Node.getNodeFromElement(sibling.parentElement) : undefined;
                                     if (label && label.visible && label.pageflow) {
                                         if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             node.companion = label;

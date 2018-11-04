@@ -8,7 +8,7 @@ import Resource from './resource';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
-import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(extensions: Extension<T>[], element: Element) {
@@ -447,7 +447,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     }
                     else if (element.tagName !== 'BR') {
-                        const elementNode = getNodeFromElement<T>(element);
+                        const elementNode = Node.getNodeFromElement(element);
                         if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                             valid = true;
                         }
@@ -553,7 +553,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (node.htmlElement) {
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
-                        const item = getNodeFromElement<T>(element);
+                        const item = Node.getNodeFromElement(element);
                         if (item && !item.excluded && item.pageflow) {
                             item.siblingIndex = i++;
                         }
@@ -714,7 +714,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
                 const cleared = NodeList.cleared(
                     new Set(documentParent).size === 1
-                        ? Array.from(documentParent[0].baseElement.children).map((element: Element) => getNodeFromElement(element) as T).filter(item => item)
+                        ? Array.from(documentParent[0].baseElement.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item)
                         : axisY
                 );
                 const includes: string[] = [];
@@ -1200,7 +1200,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     const content = Array.from(templates.values());
                     if (content.length > 0) {
                         const output = this.viewController.renderMerge(filename, content);
-                        this.createIncludeFile(filename, output);
+                        this.addIncludeFile(filename, output);
                     }
                 }
             }
@@ -1208,7 +1208,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const root = this.nodeProcessing;
         if (root) {
             if (root.dataset.layoutName && (!hasValue(root.dataset.target) || root.renderExtension.size === 0)) {
-                this.createLayoutFile(
+                this.addLayoutFile(
                     trimString(trimNull(root.dataset.pathname), '/'),
                     root.dataset.layoutName,
                     !empty ? baseTemplate : '',
@@ -1236,18 +1236,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 else {
                     if (!a.domElement) {
-                        const nodeA = getNodeFromElement<T>(a.baseElement);
+                        const nodeA = Node.getNodeFromElement(a.baseElement);
                         if (nodeA) {
-                            a = nodeA;
+                            a = nodeA as T;
                         }
                         else {
                             return 1;
                         }
                     }
                     if (!b.domElement) {
-                        const nodeB = getNodeFromElement<T>(a.baseElement);
+                        const nodeB = Node.getNodeFromElement(a.baseElement);
                         if (nodeB) {
-                            b = nodeB;
+                            b = nodeB as T;
                         }
                         else {
                             return -1;
@@ -1803,7 +1803,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             const [nodeId] = id.split(':');
             let replaceId = nodeId;
             if (!isNumber(replaceId)) {
-                const target = getNodeFromElement<T>(document.getElementById(replaceId));
+                const target = Node.getNodeFromElement(document.getElementById(replaceId));
                 if (target) {
                     replaceId = target.id.toString();
                 }
@@ -1854,7 +1854,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    public createLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
+    public addLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
         pathname = pathname || this.viewController.localSettings.layout.pathName;
         const layout: FileAsset = {
             pathname,
@@ -1870,7 +1870,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    public createIncludeFile(filename: string, content: string) {
+    public addIncludeFile(filename: string, content: string) {
         this._includes.push({
             pathname: this.viewController.localSettings.layout.pathName,
             filename,
@@ -2048,6 +2048,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     set settings(value) {
+        if (typeof value !== 'object') {
+            value = {} as Settings;
+        }
         this._settings = value;
         if (this.viewController) {
             this.viewController.settings = value;
@@ -2057,7 +2060,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
     get settings() {
-        return this._settings ? this._settings : {} as Settings;
+        return this._settings;
     }
 
     set layoutProcessing(value) {

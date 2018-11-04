@@ -1,14 +1,14 @@
 import { DOM_REGEX, EXT_NAME } from '../lib/constant';
 
 import { hasValue } from '../lib/util';
-import { convertClientUnit, cssResolveUrl, parseBackgroundPosition } from '../lib/dom';
+import { convertClientUnit, cssResolveUrl, getBackgroundPosition } from '../lib/dom';
 
 import Node from '../base/node';
 import Extension from '../base/extension';
 
 export default abstract class Sprite<T extends Node> extends Extension<T> {
     public condition() {
-        const node = this.node;
+        const node = this.node as T;
         let valid = false;
         if (node.hasWidth && node.hasHeight && node.length === 0 && !node.inlineText) {
             let url = node.css('backgroundImage');
@@ -26,7 +26,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
                     const fontSize = node.css('fontSize');
                     const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize);
                     const height = convertClientUnit(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, fontSize);
-                    const position = parseBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
+                    const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
                     if (width > 0 && position.left <= 0 && image.width > width &&
                         height > 0 && position.top <= 0 && image.height > height)
                     {

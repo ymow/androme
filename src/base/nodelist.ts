@@ -4,7 +4,7 @@ import Node from './node';
 import Container from './container';
 
 import { convertInt, hasBit, partition } from '../lib/util';
-import { getNodeFromElement, isUserAgent } from '../lib/dom';
+import { isUserAgent } from '../lib/dom';
 
 function getDocumentParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {
@@ -300,7 +300,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
-        return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement<T>(element) as T).filter(node => node));
+        return this.cleared(Array.from(parent.baseElement.children).map(element => Node.getNodeFromElement(element) as T).filter(node => node));
     }
 
     public delegateAppend?: (node: T) => void;

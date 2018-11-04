@@ -13,7 +13,7 @@ import DRAWABLE_TMPL from './template/resource/drawable';
 
 import View from './view';
 
-import { getXmlNs, replaceUnit } from './lib/util';
+import { getXmlNs, replaceTab, replaceUnit } from './lib/util';
 
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
@@ -145,7 +145,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             });
         }
         let xml = $xml.createTemplate($xml.parseTemplate(STRING_TMPL), data);
-        xml = $xml.replaceTab(xml, this.settings, true);
+        xml = replaceTab(xml, this.settings, true);
         if (saveToDisk) {
             this.saveToDisk(parseFileDetails(xml));
         }
@@ -164,7 +164,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STRINGARRAY_TMPL), data);
-            xml = $xml.replaceTab(xml, this.settings, true);
+            xml = replaceTab(xml, this.settings, true);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -196,7 +196,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             if (this.settings.targetAPI < BUILD_ANDROID.OREO) {
                 xml = xml.replace(/android/g, 'app');
             }
-            xml = $xml.replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -216,7 +216,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(COLOR_TMPL), data);
-            xml = $xml.replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -246,7 +246,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             }
             xml = $xml.createTemplate($xml.parseTemplate(STYLE_TMPL), data);
             xml = replaceUnit(xml, this.settings, true);
-            xml = $xml.replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -267,7 +267,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             }
             xml = $xml.createTemplate($xml.parseTemplate(DIMEN_TMPL), data);
             xml = replaceUnit(xml, this.settings);
-            xml = $xml.replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -302,7 +302,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                 }
             }
             xml = replaceUnit(xml.trim(), this.settings);
-            xml = $xml.replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk([...parseImageDetails(xml), ...parseFileDetails(xml)]);
             }

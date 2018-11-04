@@ -14,6 +14,7 @@ declare global {
             export import BOX_STANDARD = $enum.BOX_STANDARD;
             export import CSS_STANDARD = $enum.CSS_STANDARD;
         }
+
         namespace constant {
             export import MAP_ELEMENT = $const.MAP_ELEMENT;
             export import BLOCK_ELEMENT = $const.BLOCK_ELEMENT;
@@ -21,9 +22,10 @@ declare global {
             export import EXT_NAME = $const.EXT_NAME;
             export import DOM_REGEX = $const.DOM_REGEX;
         }
+
         namespace util {
             export function formatString(value: string, ...params: string[]): string;
-            export function camelToLowerCase(value: string): string;
+            export function convertUnderscore(value: string): string;
             export function convertCamelCase(value: string, char?: string): string;
             export function convertWord(value: string): string;
             export function capitalize(value: string, upper?: boolean): string;
@@ -51,7 +53,7 @@ declare global {
             export function repeat(many: number, value?: string): string;
             export function indexOf(value: string, ...terms: string[]): number;
             export function lastIndexOf(value: string, char?: string): string;
-            export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]): boolean;
+            export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]): boolean;
             export function searchObject(obj: StringMap, value: string | StringMap): any[][];
             export function hasValue(value: any): boolean;
             export function withinRange(a: number, b: number, offset?: number): boolean;
@@ -61,11 +63,12 @@ declare global {
             export function sortAsc<T>(list: T[], ...attrs: string[]): T[];
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];
         }
+
         namespace dom {
             export function isUserAgent(value: number): boolean;
-            export function getBoxRect(): BoxRect;
-            export function getClientRect(): BoxDimensions;
-            export function getBoxModel(): BoxModel;
+            export function newBoxRect(): BoxRect;
+            export function newClientRect(): BoxDimensions;
+            export function newBoxModel(): BoxModel;
             export function convertClientUnit(value: string, dimension: number, fontSize?: Null<string>, percent?: boolean): number;
             export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
@@ -75,47 +78,50 @@ declare global {
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
-            export function parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective?: boolean, percent?: boolean): BoxPosition;
+            export function cssAttribute(element: Element, attr: string): string;
+            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective?: boolean, percent?: boolean): BoxPosition;
             export function getFirstElementChild(elements: Element[]): Element | undefined;
             export function getLastElementChild(elements: Element[]): Element | undefined;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
-            export function cssAttribute(element: Element, attr: string): string;
             export function isPlainText(element: Element | undefined, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Element | undefined): boolean;
             export function isLineBreak(element: Element | undefined, excluded?: boolean): boolean;
             export function getElementsBetweenSiblings(firstElement: Element | undefined, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
             export function isStyleElement(element: Element | undefined): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
-            export function findNestedExtension(element: Element, name: string): HTMLElement | undefined;
+            export function getNestedExtension(element: Element, name: string): HTMLElement | undefined;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
             export function getNodeFromElement<T>(element: Null<Element>): T | undefined;
         }
+
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;
             export function replacePlaceholder(value: string, id: string | number, content: string, before?: boolean): string;
             export function removePlaceholderAll(value: string): string;
             export function replaceIndent(value: string, depth: number): string;
-            export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
+            export function replaceTab(value: string, spaces?: number, preserve?: boolean): string;
             export function replaceEntity(value: string): string;
             export function replaceCharacter(value: string): string;
-            export function parseTemplate(template: string): StringMap;
-            export function createTemplate(template: StringMap, data: TemplateData, index?: string, include?: {}, exclude?: {}): string;
-            export function getTemplateBranch(data: {}, ...levels: string[]): {};
+            export function parseTemplate(value: string): StringMap;
+            export function createTemplate(value: StringMap, data: TemplateData, index?: string): string;
+            export function getTemplateSection(data: TemplateData, ...levels: string[]): {};
         }
+
         namespace svg {
-            export function getColorStop(gradient: SVGGradientElement): ColorStop[];
-            export function isVisible(element: SVGGraphicsElement): boolean;
+            export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
+            export function isSvgVisible(element: SVGGraphicsElement): boolean;
         }
+
         namespace color {
             export function getColorByName(value: string): Color | undefined;
-            export function getColorNearest(value: string): Color | undefined;
+            export function getColorByShade(value: string): Color | undefined;
             export function convertHex(value: string, opacity?: number): string;
             export function convertRGBA(value: string): RGBA | undefined;
             export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | undefined;
-            export function reduceRGBA(value: string, percent: number): string;
+            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | undefined;
         }
     }
 }

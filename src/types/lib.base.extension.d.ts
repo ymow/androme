@@ -10,7 +10,7 @@ declare global {
             readonly dependencies: ExtensionDependency[];
             readonly subscribers: Set<T>;
             readonly subscribersChild: Set<T>;
-            readonly node: T;
+            readonly node: T | undefined;
             readonly parent: T | undefined;
             readonly element: Element | undefined;
             setTarget(node?: T, parent?: T, element?: Element): void;
@@ -29,9 +29,11 @@ declare global {
             afterInsert(): void;
             finalize(): void;
         }
+
         export class Extension<T extends Node> implements Extension<T> {
             constructor(name: string, framework: number, tagNames?: string[], options?: {});
         }
+
         namespace extensions {
             export class Accessibility<T extends Node> extends Extension<T> {}
             export class Button<T extends Node> extends Extension<T> {}

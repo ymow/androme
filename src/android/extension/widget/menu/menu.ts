@@ -4,6 +4,7 @@ import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
+import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
 import $resource_android = android.lib.base.Resource;
 
@@ -43,8 +44,6 @@ const VALIDATE_GROUP = {
     orderInCategory: /^[0-9]+$/
 };
 
-const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
-
 function hasInputType(node: View, value: string) {
     return node.some(item => (<HTMLInputElement> item.element).type === value);
 }
@@ -55,7 +54,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const output = this.application.viewController.renderNodeStatic(
             VIEW_NAVIGATION.MENU,
             0,
@@ -75,14 +74,14 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node;
+        const node = this.node as T;
         const parent = this.parent as T;
         if (node.plainText) {
             node.hide();
             return { output: '', complete: true, next: true };
         }
         const element = <HTMLElement> node.element;
-        const options: ViewAttribute = { android: {}, app: {} };
+        const options = $util_android.createViewAttribute();
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let next = false;
@@ -125,14 +124,14 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                 else if (node.every((item: T) => hasInputType(item, 'checkbox'))) {
                     checkable = 'all';
                 }
-                options.android.checkableBehavior = checkable;
+                options['android'].checkableBehavior = checkable;
             }
             layout = true;
         }
         else {
             if (parent.android('checkableBehavior') === '') {
                 if (hasInputType(node, 'checkbox')) {
-                    options.android.checkable = 'true';
+                    options['android'].checkable = 'true';
                 }
             }
             title = (element.title || element.innerText).trim();
@@ -144,14 +143,14 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                     const style = $dom.getStyle(element);
                     let src = $resource_android.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $const_android.DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
-                        options.android.icon = `@drawable/${src}`;
+                        options['android'].icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.find(item => item.imageElement);
                         if (image) {
                             src = $resource_android.addImageSrcSet(<HTMLImageElement> image.element, $const_android.DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
-                                options.android.icon = `@drawable/${src}`;
+                                options['android'].icon = `@drawable/${src}`;
                             }
                         }
                     }
@@ -167,10 +166,10 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                 if (name !== '') {
                     title = `@string/${name}`;
                 }
-                options.android.title = title;
+                options['android'].title = title;
             }
         }
-        if (!options.android.id) {
+        if (!options['android'].id) {
             node.setNodeType(nodeName);
         }
         else {
@@ -192,20 +191,20 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
     }
 
     public afterRender() {
+        const node = this.node as T;
         super.afterRender();
-        if (this.included(<HTMLElement> this.node.element)) {
+        if (this.included(<HTMLElement> node.element)) {
             this.application.layoutProcessing.pathname = 'res/menu';
         }
     }
 
-    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: {}) {
+    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: ViewAttribute) {
         for (const attr in element.dataset) {
             const value = element.dataset[attr];
             if (value && validator[attr]) {
                 const match = value.match(validator[attr]);
                 if (match) {
-                    const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                    options[namespace][attr] = Array.from(new Set(match)).join('|');
+                    options['android'][attr] = Array.from(new Set(match)).join('|');
                 }
             }
         }
