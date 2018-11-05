@@ -29,14 +29,14 @@ function compareObject(obj1: {}, obj2: {}, attr: string) {
     let current1: any = obj1;
     let current2: any = obj2;
     for (const name of namespaces) {
-        if (current1[name] != null && current2[name] != null) {
+        if (current1[name] !== undefined && current2[name] !== undefined) {
             current1 = current1[name];
             current2 = current2[name];
         }
-        else if (current1[name] == null && current2[name] == null) {
+        else if (current1[name] === undefined && current2[name] === undefined) {
             return false;
         }
-        else if (current1[name] != null) {
+        else if (current1[name] !== undefined) {
             return [1, 0];
         }
         else {
@@ -96,7 +96,7 @@ export function convertPercent(value: number, precision = 0) {
     return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
 }
 
-export function convertPX(value: any, fontSize?: Null<string>) {
+export function convertPX(value: any, fontSize?: string | null) {
     if (hasValue(value)) {
         if (isNumber(value)) {
             return `${Math.round(value)}px`;
@@ -193,24 +193,25 @@ export function includes(source: string | undefined, value: string, delimiter = 
     return source ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false;
 }
 
-export function optional(obj: {} | undefined, value: string, type?: string) {
+export function optional(obj: UndefNull<{}>, value: string, type?: string) {
     let valid = false;
-    let result: any = null;
+    let result;
     if (typeof obj === 'object') {
         result = obj;
         const attrs = value.split('.');
         let i = 0;
         do {
-            result = result[attrs[i]] != null ? result[attrs[i]] : undefined;
+            result = result[attrs[i]];
         }
         while (
-            result != null &&
+            result !== null &&
+            result !== undefined &&
             ++i < attrs.length &&
             typeof result !== 'string' &&
             typeof result !== 'number' &&
             typeof result !== 'boolean'
         );
-        valid = result != null && i === attrs.length;
+        valid = result !== undefined && result !== null && i === attrs.length;
     }
     switch (type) {
         case 'object':
@@ -347,18 +348,29 @@ export function withinFraction(lower: number, upper: number) {
     );
 }
 
-export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {
-    if (namespace !== '') {
-        if (options[namespace] == null) {
-            options[namespace] = {};
+export function overwriteDefault(options: {}, ...attrs: string[]) {
+    let current = options;
+    for (let i = 0 ; i < attrs.length - 1; i++) {
+        const value = attrs[i];
+        if (i === attrs.length - 2) {
+            if (!hasValue(current[value])) {
+                current[value] = attrs[i + 1];
+            }
         }
-        if (options[namespace][attr] == null) {
-            options[namespace][attr] = value;
+        else if (isString(value)) {
+            if (typeof current[value] === 'object') {
+                current = options[value];
+            }
+            else if (options[value] === undefined) {
+                options[value] = {};
+                current = options[value];
+            }
+            else {
+                break;
+            }
         }
-    }
-    else {
-        if (options[attr] == null) {
-            options[attr] = value;
+        else {
+            break;
         }
     }
 }

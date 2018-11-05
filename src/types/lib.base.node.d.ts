@@ -1,4 +1,3 @@
-
 declare global {
     namespace androme.lib.base {
         export interface Node extends Container<Node>, BoxModel {
@@ -100,8 +99,8 @@ declare global {
             readonly dir: string;
             readonly nodes: Node[];
             readonly length: number;
-            readonly previousElementSibling: Element | undefined;
-            readonly nextElementSibling: Element | undefined;
+            readonly previousElementSibling: Element | null;
+            readonly nextElementSibling: Element | null;
             readonly center: Point;
             parent: Node;
             controlName: string;
@@ -137,7 +136,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previous: Node | undefined, cleared?: Map<Node, string>, firstT?: boolean): boolean;
+            alignedVertically(previous: Node | null, cleared?: Map<Node, string>, firstT?: boolean): boolean;
             intersect(rect: BoxDimensions, dimension?: string): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
@@ -145,11 +144,10 @@ declare global {
             withinY(rect: BoxDimensions, dimension?: string): boolean;
             outsideX(rect: BoxDimensions, dimension?: string): boolean;
             outsideY(rect: BoxDimensions, dimension?: string): boolean;
-            css(attr: string | object, value?: string): string;
+            css(attr: object | string, value?: string): string;
             cssInitial(attr: string, complete?: boolean): string;
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
             has(attr: string, checkType?: number, options?: {}): boolean;
-            isSet(obj: string, attr: string): boolean;
             hasBit(attr: string, value: number): boolean;
             toInt(attr: string, defaultValue?: number, options?: StringMap): number;
             hasAlign(value: number): boolean;
@@ -157,19 +155,19 @@ declare global {
             setBounds(calibrate?: boolean): void;
             setDimensions(region?: string[]): void;
             setMultiLine(): void;
-            getParentElementAsNode(negative?: boolean): Node | undefined;
-            replaceNode(node: Node, withT: Node, append?: boolean): void;
+            replaceNode(node: Node, withNode: Node, append?: boolean): void;
             appendRendered(node: Node): void;
             resetBox(region: number, node?: Node, negative?: boolean): void;
             removeElement(): void;
-            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | undefined;
-            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | undefined;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
+            getParentElementAsNode(negative?: boolean): Node | null;
+            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
+            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
         }
 
         export class Node implements Node {
-            public static getNodeFromElement<T>(element: Null<Element>): T | undefined;
+            public static getNodeFromElement<T>(element: UndefNull<Element>): T | null;
         }
 
         export class NodeGroup<T extends Node> extends Node {}

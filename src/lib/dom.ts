@@ -45,7 +45,7 @@ export function newBoxModel(): BoxModel {
     };
 }
 
-export function convertClientUnit(value: string, dimension: number, fontSize?: Null<string>, percent = false) {
+export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent = false) {
     if (percent) {
         return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
     }
@@ -75,10 +75,7 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
         if (top.size > 1 && bottom.size > 1) {
             result.top = Math.min.apply(null, Array.from(top));
             result.bottom = Math.max.apply(null, Array.from(bottom));
-            if (domRect[domRect.length - 1].top >= domRect[0].bottom &&
-                element.textContent &&
-                (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent)))
-            {
+            if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
                 multiLine = true;
             }
         }
@@ -97,7 +94,7 @@ export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {
     };
 }
 
-export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
+export function getStyle(element: Element | null, cache = true): CSSStyleDeclaration {
     if (element) {
         if (cache) {
             const node = getNodeFromElement<T>(element);
@@ -161,7 +158,7 @@ export function cssResolveUrl(value: string) {
 export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]) {
     let result = '';
     let current = element.parentElement;
-    while (current && (tagNames == null || !tagNames.includes(current.tagName))) {
+    while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
         result = getStyle(current)[attr] || '';
         if (result === 'inherit' || (exclude && exclude.some(value => result.indexOf(value) !== -1))) {
             result = '';
@@ -205,7 +202,7 @@ export function cssAttribute(element: Element, attr: string): string {
     return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
 }
 
-export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective = false, percent = false) {
+export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective = false, percent = false) {
     const result: BoxPosition = {
         top: 0,
         left: 0,
@@ -332,7 +329,7 @@ export function getFirstElementChild(elements: Element[]) {
             }
         }
     }
-    return undefined;
+    return null;
 }
 
 export function getLastElementChild(elements: Element[]) {
@@ -347,7 +344,7 @@ export function getLastElementChild(elements: Element[]) {
             }
         }
     }
-    return undefined;
+    return null;
 }
 
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
@@ -381,7 +378,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
     }
 }
 
-export function isPlainText(element: Element | undefined, whiteSpace = false) {
+export function isPlainText(element: Element, whiteSpace = false) {
     if (element && element.nodeName === '#text' && element.textContent) {
         if (whiteSpace) {
             const value = element.textContent;
@@ -407,7 +404,7 @@ export function isPlainText(element: Element | undefined, whiteSpace = false) {
     return false;
 }
 
-export function hasLineBreak(element: Element | undefined) {
+export function hasLineBreak(element: Element) {
     if (element) {
         const node = getNodeFromElement<T>(element);
         const fromParent = element.nodeName === '#text';
@@ -423,7 +420,7 @@ export function hasLineBreak(element: Element | undefined) {
     return false;
 }
 
-export function isLineBreak(element: Element | undefined, excluded = true) {
+export function isLineBreak(element: Element, excluded = true) {
     const node = getNodeFromElement<T>(element);
     if (node) {
         return (
@@ -437,7 +434,7 @@ export function isLineBreak(element: Element | undefined, excluded = true) {
     return false;
 }
 
-export function getElementsBetweenSiblings(firstElement: Element | undefined, secondElement: Element, cacheNode = false, whiteSpace = false) {
+export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode = false, whiteSpace = false) {
     if (!firstElement || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
         if (parentElement) {
@@ -467,7 +464,7 @@ export function getElementsBetweenSiblings(firstElement: Element | undefined, se
     return [];
 }
 
-export function isStyleElement(element: Element | undefined): element is HTMLElement {
+export function isStyleElement(element: Element): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
@@ -519,9 +516,9 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
 
 export function getNestedExtension(element: Element, name: string) {
     if (isStyleElement(element)) {
-        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
+        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement || null;
     }
-    return undefined;
+    return null;
 }
 
 export function setElementCache(element: Element, attr: string, data: any) {
@@ -542,6 +539,6 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T>(element: Null<Element>): T | undefined {
-    return element ? getElementCache(element, 'node') : undefined;
+export function getNodeFromElement<T>(element?: Element | null): T | null {
+    return element ? getElementCache(element, 'node') || null : null;
 }

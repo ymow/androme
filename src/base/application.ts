@@ -13,7 +13,7 @@ import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml
 
 function prioritizeExtensions<T extends Node>(extensions: Extension<T>[], element: Element) {
     let result: string[] = [];
-    let current: Null<HTMLElement> = <HTMLElement> element;
+    let current: HTMLElement | null = <HTMLElement> element;
     while (current) {
         result = [
             ...result,
@@ -183,7 +183,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public reset() {
-        this.cacheSession.each(node => node.element instanceof Element && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
+        this.cacheSession.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
         for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
@@ -389,7 +389,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (
-                (!styleMap || Object.keys(styleMap).length === 0) &&
+                (styleMap === undefined || Object.keys(styleMap).length === 0) &&
                 element.children.length === 0 &&
                 inlineSupport.includes(element.tagName)
             );
@@ -420,13 +420,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (valid) {
                         let styleMap = getElementCache(element, 'styleMap');
-                        if (!styleMap) {
+                        if (styleMap === undefined) {
                             styleMap = {};
                             setElementCache(element, 'styleMap', styleMap);
                         }
                         switch (element.tagName) {
                             case 'SELECT':
-                                if (styleMap.verticalAlign == null && (<HTMLSelectElement> element).size > 1) {
+                                if (styleMap.verticalAlign === undefined && (<HTMLSelectElement> element).size > 1) {
                                     styleMap.verticalAlign = 'text-bottom';
                                 }
                                 break;
@@ -536,7 +536,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const node of this.cacheProcessing) {
                 if (!node.documentRoot) {
-                    let parent: T | undefined = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T;
+                    let parent: T | null = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T;
                     if (!parent && !node.pageflow) {
                         parent = this.nodeProcessing;
                     }
@@ -601,10 +601,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
         let maxDepth = 0;
         for (const node of this.cacheProcessing.visible) {
             const x = Math.floor(node.linear.left);
-            if (mapX[node.depth] == null) {
+            if (mapX[node.depth] === undefined) {
                 mapX[node.depth] = {};
             }
-            if (mapX[node.depth][x] == null) {
+            if (mapX[node.depth][x] === undefined) {
                 mapX[node.depth][x] = [];
             }
             mapX[node.depth][x].push(node);
@@ -1053,7 +1053,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const targeted = nodeY.filter(node => {
                                             if (node.dataset.target) {
                                                 const element = document.getElementById(node.dataset.target);
-                                                return element != null && hasValue(element.dataset.ext) && element !== parentY.element;
+                                                return element !== null && hasValue(element.dataset.ext) && element !== parentY.element;
                                             }
                                             return false;
                                         });
@@ -1815,9 +1815,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     const depth = target.renderDepth + 1;
                     output = replaceIndent(output, depth);
                     const pattern = /{@(\d+)}/g;
-                    let match: Null<RegExpExecArray> = null;
+                    let match: RegExpExecArray | null;
                     let i = 0;
-                    while ((match = pattern.exec(output)) != null) {
+                    while ((match = pattern.exec(output)) !== null) {
                         const node = this.cacheSession.find('id', parseInt(match[1]));
                         if (node) {
                             if (i++ === 0) {
@@ -1879,7 +1879,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public addRenderQueue(id: string, views: string[]) {
-        if (this.renderQueue[id] == null) {
+        if (this.renderQueue[id] === undefined) {
             this.renderQueue[id] = [];
         }
         this.renderQueue[id].push(...views);
@@ -1890,7 +1890,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public insertNode(element: Element, parent?: T) {
-        let node: T | undefined;
+        let node: T | null = null;
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
@@ -1931,7 +1931,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public getExtension(name: string) {
-        return this.extensions.find(item => item.name === name);
+        return this.extensions.find(item => item.name === name) || null;
     }
 
     public toString() {
@@ -1954,43 +1954,47 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             const style = getStyle(element);
                             const styleMap: StringMap = {};
                             for (const attr of attrs) {
-                                const value: string = rule.style[attr];
                                 if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
                                 }
-                                else if (style[attr] === value) {
-                                    styleMap[attr] = style[attr];
-                                }
-                                else if (value) {
-                                    switch (attr) {
-                                        case 'fontSize':
-                                            styleMap[attr] = style[attr] || value;
-                                            break;
-                                        case 'width':
-                                        case 'height':
-                                        case 'lineHeight':
-                                        case 'verticalAlign':
-                                        case 'textIndent':
-                                        case 'columnGap':
-                                        case 'top':
-                                        case 'right':
-                                        case 'bottom':
-                                        case 'left':
-                                        case 'marginTop':
-                                        case 'marginRight':
-                                        case 'marginBottom':
-                                        case 'marginLeft':
-                                        case 'paddingTop':
-                                        case 'paddingRight':
-                                        case 'paddingBottom':
-                                        case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, style.fontSize);
-                                            break;
-                                        default:
-                                            if (styleMap[attr] == null) {
-                                                styleMap[attr] = value;
+                                else {
+                                    const value: string = rule.style[attr];
+                                    if (hasValue(value)) {
+                                        if (style[attr] === value) {
+                                            styleMap[attr] = style[attr];
+                                        }
+                                        else {
+                                            switch (attr) {
+                                                case 'fontSize':
+                                                    styleMap[attr] = style[attr] || value;
+                                                    break;
+                                                case 'width':
+                                                case 'height':
+                                                case 'lineHeight':
+                                                case 'verticalAlign':
+                                                case 'textIndent':
+                                                case 'columnGap':
+                                                case 'top':
+                                                case 'right':
+                                                case 'bottom':
+                                                case 'left':
+                                                case 'marginTop':
+                                                case 'marginRight':
+                                                case 'marginBottom':
+                                                case 'marginLeft':
+                                                case 'paddingTop':
+                                                case 'paddingRight':
+                                                case 'paddingBottom':
+                                                case 'paddingLeft':
+                                                    styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, style.fontSize);
+                                                    break;
+                                                default:
+                                                    if (styleMap[attr] === undefined) {
+                                                        styleMap[attr] = value;
+                                                    }
+                                                    break;
                                             }
-                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -2004,7 +2008,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                     });
                             }
-                            if (clientFirefox && styleMap.display == null) {
+                            if (clientFirefox && styleMap.display === undefined) {
                                 switch (element.tagName) {
                                     case 'INPUT':
                                     case 'TEXTAREA':

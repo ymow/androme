@@ -2,26 +2,28 @@ import { SettingsAndroid } from '../../../types/local';
 
 import WIDGET_NAME from '../namespace';
 
-import View = android.lib.base.View;
+import $View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
-import $const_android = android.lib.constant;
 import $util = androme.lib.util;
-import $util_android = android.lib.util;
 import $color = androme.lib.color;
-import $resource_android = android.lib.base.Resource;
 
-export default class FloatingActionButton<T extends View> extends androme.lib.base.extensions.Button<T> {
+import $android_Resource = android.lib.base.Resource;
+
+import $android_const = android.lib.constant;
+import $android_util = android.lib.util;
+
+export default class FloatingActionButton<T extends $View> extends androme.lib.base.extensions.Button<T> {
     public processNode(): ExtensionResult {
         const node = this.node as T;
         const parent = this.parent as T;
         const target = $util.hasValue(node.dataset.target);
         const element = node.element;
-        const options = $util_android.createViewAttribute(this.options[element.id]);
+        const options = $android_util.createViewAttribute(this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
         let colorValue = '';
         if (backgroundColor) {
-            colorValue = $resource_android.addColor(backgroundColor);
+            colorValue = $android_Resource.addColor(backgroundColor);
         }
         $util.overwriteDefault(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -30,27 +32,27 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = $resource_android.addImageSrcSet(<HTMLImageElement> element, $const_android.DRAWABLE_PREFIX.DIALOG);
+                src = $android_Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = $resource_android.addImage({ mdpi: (<HTMLInputElement> element).src }, $const_android.DRAWABLE_PREFIX.DIALOG);
+                    src = $android_Resource.addImage({ mdpi: (<HTMLInputElement> element).src }, $android_const.DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);
+                    src = $android_Resource.addImageURL(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);
+                src = $android_Resource.addImageURL(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {
             $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const output = this.application.viewController.renderNodeStatic(
-            $const_android.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
+            $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
-            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
+            $android_Resource.formatOptions(options, <SettingsAndroid> this.application.settings),
             'wrap_content',
             'wrap_content',
             node
@@ -100,7 +102,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
             }
             if (target) {
                 let anchor = parent.stringId;
-                if (parent.controlName === $const_android.VIEW_SUPPORT.TOOLBAR) {
+                if (parent.controlName === $android_const.VIEW_SUPPORT.TOOLBAR) {
                     const outerParent: string = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                     if (outerParent) {
                         anchor = outerParent;

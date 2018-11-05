@@ -32,7 +32,7 @@ declare global {
             export function convertInt(value: any): number;
             export function convertFloat(value: any): number;
             export function convertPercent(value: number, precision?: number): string;
-            export function convertPX(value: any, fontSize?: Null<string>): string;
+            export function convertPX(value: any, fontSize?: string | null): string;
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
             export function convertEnum(value: number, base: {}, derived: {}): string;
@@ -44,7 +44,7 @@ declare global {
             export function isUnit(value: string): boolean;
             export function isPercent(value: string): boolean;
             export function includes(source: string | undefined, value: string, delimiter?: string): boolean;
-            export function optional(obj: {} | undefined, value: string, type?: string): any;
+            export function optional(obj: UndefNull<{}>, value: string, type?: string): any;
             export function resolvePath(value: string): string;
             export function trimNull(value: string | undefined): string;
             export function trimString(value: string | undefined, char: string): string;
@@ -58,7 +58,7 @@ declare global {
             export function hasValue(value: any): boolean;
             export function withinRange(a: number, b: number, offset?: number): boolean;
             export function withinFraction(lower: number, upper: number): boolean;
-            export function overwriteDefault(options: {}, namespace: string, attr: string, value: string): void;
+            export function overwriteDefault(options: {}, ...attrs: string[]): void;
             export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]];
             export function sortAsc<T>(list: T[], ...attrs: string[]): T[];
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];
@@ -69,31 +69,31 @@ declare global {
             export function newBoxRect(): BoxRect;
             export function newClientRect(): BoxDimensions;
             export function newBoxModel(): BoxModel;
-            export function convertClientUnit(value: string, dimension: number, fontSize?: Null<string>, percent?: boolean): number;
+            export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
             export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
-            export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
+            export function getStyle(element: Element | null, cache?: boolean): CSSStyleDeclaration;
             export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
             export function cssResolveUrl(value: string): string;
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
             export function cssAttribute(element: Element, attr: string): string;
-            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: Null<string>, leftPerspective?: boolean, percent?: boolean): BoxPosition;
-            export function getFirstElementChild(elements: Element[]): Element | undefined;
-            export function getLastElementChild(elements: Element[]): Element | undefined;
+            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective?: boolean, percent?: boolean): BoxPosition;
+            export function getFirstElementChild(elements: Element[]): Element | null;
+            export function getLastElementChild(elements: Element[]): Element | null;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
-            export function isPlainText(element: Element | undefined, whiteSpace?: boolean): boolean;
-            export function hasLineBreak(element: Element | undefined): boolean;
-            export function isLineBreak(element: Element | undefined, excluded?: boolean): boolean;
-            export function getElementsBetweenSiblings(firstElement: Element | undefined, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
-            export function isStyleElement(element: Element | undefined): element is HTMLElement;
+            export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
+            export function hasLineBreak(element: Element): boolean;
+            export function isLineBreak(element: Element, excluded?: boolean): boolean;
+            export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
+            export function isStyleElement(element: Element): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
-            export function getNestedExtension(element: Element, name: string): HTMLElement | undefined;
+            export function getNestedExtension(element: Element, name: string): HTMLElement | null;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: Null<Element>): T | undefined;
+            export function getNodeFromElement<T>(element: UndefNull<Element>): T | null;
         }
 
         namespace xml {
@@ -116,12 +116,12 @@ declare global {
         }
 
         namespace color {
-            export function getColorByName(value: string): Color | undefined;
-            export function getColorByShade(value: string): Color | undefined;
             export function convertHex(value: string, opacity?: number): string;
-            export function convertRGBA(value: string): RGBA | undefined;
-            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | undefined;
-            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | undefined;
+            export function getColorByName(value: string): Color | null;
+            export function getColorByShade(value: string): Color | null;
+            export function convertRGBA(value: string): RGBA | null;
+            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
+            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | null;
         }
     }
 }

@@ -27,7 +27,7 @@ declare global {
             finalize(): void;
             saveAllToDisk(): void;
             reset(): void;
-            parseDocument(...elements: Null<string | Element>[]): FunctionMap<void>;
+            parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
             setConstraints(): void;
             setResources(): void;
             createCache(rootElement: HTMLElement): boolean;
@@ -44,8 +44,8 @@ declare global {
             addIncludeFile(filename: string, content: string): void;
             addRenderQueue(id: string, views: string[]): void;
             preserveRenderPosition(node: T): void;
-            getExtension(name: string): Extension<T> | undefined;
-            insertNode(element: Element, parent?: T): T | undefined;
+            getExtension(name: string): Extension<T> | null;
+            insertNode(element: Element, parent?: T): T | null;
             toString(): string;
         }
 

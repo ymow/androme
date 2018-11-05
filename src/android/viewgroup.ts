@@ -1,5 +1,5 @@
-import View from './view';
 import ViewBase from './viewbase';
+import View from './view';
 
 export default class ViewGroup<T extends View> extends ViewBase(androme.lib.base.NodeGroup) {
     constructor(

@@ -77,8 +77,8 @@ export function replaceCharacter(value: string) {
 
 export function parseTemplate(value: string) {
     const result: StringMap = { '__root': value };
-    let pattern: Null<RegExp> = null;
-    let match: Null<RegExpExecArray> | boolean = false;
+    let pattern: RegExp | undefined;
+    let match: RegExpExecArray | null | boolean = false;
     let characters = value.length;
     let section = '';
     do {
@@ -91,7 +91,7 @@ export function parseTemplate(value: string) {
             characters -= match[0].length;
             section = match[2];
         }
-        if (match == null || characters === 0) {
+        if (match === null || characters === 0) {
             if (section) {
                 value = result[section];
                 if (!value) {
@@ -120,7 +120,7 @@ export function parseTemplate(value: string) {
 }
 
 export function createTemplate(value: StringMap, data: TemplateData, index?: string) {
-    let output = index != null ? value[index] : value['__root'].trim();
+    let output = index === undefined ? value['__root'].trim() : value[index];
     for (const attr in data) {
         let result: any = '';
         if (isArray(data[attr])) {
@@ -149,7 +149,7 @@ export function createTemplate(value: StringMap, data: TemplateData, index?: str
             output = '';
         }
     }
-    if (index == null) {
+    if (index === undefined) {
         output = output.replace(/\n{%\w+}\n/g, '\n');
     }
     return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');

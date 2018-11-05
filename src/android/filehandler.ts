@@ -21,8 +21,8 @@ import $xml = androme.lib.xml;
 function parseImageDetails(xml: string) {
     const result: FileAsset[] = [];
     const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
-    let match: Null<RegExpExecArray>;
-    while ((match = pattern.exec(xml)) != null) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(xml)) !== null) {
         result.push({
             uri: match[1],
             pathname: match[2],
@@ -37,8 +37,8 @@ function parseImageDetails(xml: string) {
 function parseFileDetails(xml: string) {
     const result: FileAsset[] = [];
     const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
-    let match: Null<RegExpExecArray>;
-    while ((match = pattern.exec(xml)) != null) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(xml)) !== null) {
         result.push({
             content: match[0].replace(match[1], '').trim(),
             pathname: match[2],

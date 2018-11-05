@@ -1,4 +1,5 @@
-type Null<T> = T | null | undefined;
+type Undefined<T> = T | undefined;
+type UndefNull<T> = Undefined<T> | null;
 
 type Constructor<T> = new(...args: any[]) => T;
 

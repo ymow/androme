@@ -14,7 +14,7 @@ export function resetId() {
 }
 
 export function generateId(section: string, name: string, start: number) {
-    if (MAP_ID == null) {
+    if (MAP_ID === undefined) {
         resetId();
     }
     const prefix = name;
@@ -22,7 +22,7 @@ export function generateId(section: string, name: string, start: number) {
     if (start === 1) {
         name += `_${i.toString()}`;
     }
-    if (MAP_ID[section] == null) {
+    if (MAP_ID[section] === undefined) {
         MAP_ID[section] = [];
     }
     do {

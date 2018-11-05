@@ -3,16 +3,18 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
-import View = android.lib.base.View;
+import $View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
-import $const_android = android.lib.constant;
 import $util = androme.lib.util;
-import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
-import $resource_android = android.lib.base.Resource;
 
-export default class BottomNavigation<T extends View> extends androme.lib.base.Extension<T> {
+import $android_Resource = android.lib.base.Resource;
+
+import $android_const = android.lib.constant;
+import $android_util = android.lib.util;
+
+export default class BottomNavigation<T extends $View> extends androme.lib.base.Extension<T> {
     constructor(
         name: string,
         framework: number,
@@ -26,12 +28,12 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
     public processNode(): ExtensionResult {
         const node = this.node as T;
         const parent = this.parent as T;
-        const options = $util_android.createViewAttribute(this.options[node.element.id]);
+        const options = $android_util.createViewAttribute(this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(
-            $const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION,
+            $android_const.VIEW_SUPPORT.BOTTOM_NAVIGATION,
             node.depth,
-            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
+            $android_Resource.formatOptions(options, <SettingsAndroid> this.application.settings),
             parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
             'wrap_content',
             node
@@ -53,7 +55,7 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         const node = this.node as T;
         const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
-            const options = $util_android.createViewAttribute(this.options[node.element.id]);
+            const options = $android_util.createViewAttribute(this.options[node.element.id]);
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', options.app.menu);
         }
@@ -72,8 +74,8 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
 
     private setResourceTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-        $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        $util.overwriteDefault(options, 'appTheme', 'AppTheme');
+        $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,

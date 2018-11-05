@@ -59,7 +59,7 @@ const appBase: AppFramework<T> = {
         customize(build: number, widget: string, options: {}) {
             if (API_ANDROID[build]) {
                 const customizations = API_ANDROID[build].customizations;
-                if (customizations[widget] == null) {
+                if (customizations[widget] === undefined) {
                     customizations[widget] = {};
                 }
                 Object.assign(customizations[widget], options);

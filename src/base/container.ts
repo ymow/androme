@@ -17,14 +17,14 @@ export default abstract class Container<T> implements androme.lib.base.Container
     }
 
     public item(index?: number, value?: T): T | undefined {
-        if (index != null && value != null) {
+        if (index !== undefined && value !== undefined) {
             if (index >= 0 && index < this._children.length) {
                 this._children[index] = value;
                 return value;
             }
         }
         else {
-            if (index == null) {
+            if (index === undefined) {
                 return this._children[this._children.length - 1];
             }
             return this._children[index];
@@ -32,21 +32,25 @@ export default abstract class Container<T> implements androme.lib.base.Container
         return undefined;
     }
 
-    public append(value: T) {
-        this._children.push(value);
+    public append(item: T) {
+        this._children.push(item);
     }
 
-    public remove(value: T) {
+    public remove(item: T) {
         for (let i = 0; i < this.list.length; i++) {
-            if (value === this.list[i]) {
+            if (item === this.list[i]) {
                 return this.list.splice(i, 1);
             }
         }
         return [];
     }
 
-    public replace(value: T[]) {
-        this._children = value;
+    public contains(item: T) {
+        return this._children.includes(item);
+    }
+
+    public replace(item: T[]) {
+        this._children = item;
     }
 
     public duplicate() {
@@ -61,10 +65,6 @@ export default abstract class Container<T> implements androme.lib.base.Container
     public each(predicate: IteratorPredicate<T, void>) {
         this._children.forEach(predicate);
         return this;
-    }
-
-    public contains(value: T) {
-        return this._children.includes(value);
     }
 
     public find(predicate: string | IteratorPredicate<T, boolean>, value?: any) {

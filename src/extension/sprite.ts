@@ -1,10 +1,10 @@
 import { DOM_REGEX, EXT_NAME } from '../lib/constant';
 
-import { hasValue } from '../lib/util';
-import { convertClientUnit, cssResolveUrl, getBackgroundPosition } from '../lib/dom';
-
 import Node from '../base/node';
 import Extension from '../base/extension';
+
+import { hasValue } from '../lib/util';
+import { convertClientUnit, cssResolveUrl, getBackgroundPosition } from '../lib/dom';
 
 export default abstract class Sprite<T extends Node> extends Extension<T> {
     public condition() {

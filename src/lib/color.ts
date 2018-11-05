@@ -215,13 +215,23 @@ function convertAlpha(value: string) {
     return parseFloat(value) < 1 ? convertHex('255', parseFloat(value)) : 'FF';
 }
 
+export function convertHex(value: string, opacity = 1) {
+    const hex = '0123456789ABCDEF';
+    let rgb = parseInt(value) * opacity;
+    if (isNaN(rgb)) {
+        return '00';
+    }
+    rgb = Math.max(0, Math.min(rgb, 255));
+    return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
+}
+
 export function getColorByName(value: string) {
     for (const color in X11_CSS3) {
         if (color.toLowerCase() === value.trim().toLowerCase()) {
             return <Color> X11_CSS3[color];
         }
     }
-    return undefined;
+    return null;
 }
 
 export function getColorByShade(value: string) {
@@ -246,18 +256,8 @@ export function getColorByShade(value: string) {
                 return result[Math.min(index + 1, result.length - 1)];
             }
         }
-        return undefined;
+        return null;
     }
-}
-
-export function convertHex(value: string, opacity = 1) {
-    const hex = '0123456789ABCDEF';
-    let rgb = parseInt(value) * opacity;
-    if (isNaN(rgb)) {
-        return '00';
-    }
-    rgb = Math.max(0, Math.min(rgb, 255));
-    return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
 }
 
 export function convertRGBA(value: string) {
@@ -289,7 +289,7 @@ export function convertRGBA(value: string) {
             };
         }
     }
-    return undefined;
+    return null;
 }
 
 export function parseRGBA(value: string, opacity = '1') {
@@ -311,8 +311,8 @@ export function parseRGBA(value: string, opacity = '1') {
             }
         }
         const match = value.match(/rgba?\((\d+), (\d+), (\d+),?\s*([\d.]+)?\)/);
-        if (match && match.length >= 4 && (match[4] == null || parseFloat(match[4]) > 0)) {
-            if (match[4] == null) {
+        if (match && match.length >= 4 && (match[4] === undefined || parseFloat(match[4]) > 0)) {
+            if (match[4] === undefined) {
                 match[4] = parseFloat(opacity).toFixed(2);
             }
             const valueHex = convertHex(match[1]) + convertHex(match[2]) + convertHex(match[3]);
@@ -330,7 +330,7 @@ export function parseRGBA(value: string, opacity = '1') {
             };
         }
     }
-    return undefined;
+    return null;
 }
 
 export function reduceRGBA(value: string, percent: number) {
@@ -343,5 +343,5 @@ export function reduceRGBA(value: string, percent: number) {
         rgba.b = Math.round((base - rgba.b) * percent) + rgba.b;
         return parseRGBA(formatRGBA(rgba));
     }
-    return undefined;
+    return null;
 }

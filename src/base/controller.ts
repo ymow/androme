@@ -40,7 +40,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     }
 
     public prependBefore(id: number, output: string, index = -1) {
-        if (this._before[id] == null) {
+        if (this._before[id] === undefined) {
             this._before[id] = [];
         }
         if (index !== -1 && index < this._before[id].length) {
@@ -52,7 +52,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     }
 
     public appendAfter(id: number, output: string, index = -1) {
-        if (this._after[id] == null) {
+        if (this._after[id] === undefined) {
             this._after[id] = [];
         }
         if (index !== -1 && index < this._after[id].length) {
@@ -64,6 +64,6 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     }
 
     public hasAppendProcessing(id: number) {
-        return this._before[id] != null || this._after[id] != null;
+        return this._before[id] !== undefined || this._after[id] !== undefined;
     }
 }

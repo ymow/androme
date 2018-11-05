@@ -17,7 +17,7 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                 if (sibling) {
                                     const label = Node.getNodeFromElement(sibling);
-                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? Node.getNodeFromElement(sibling.parentElement) : undefined;
+                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? Node.getNodeFromElement(sibling.parentElement) : null;
                                     if (label && label.visible && label.pageflow) {
                                         if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             node.companion = label;

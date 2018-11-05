@@ -76,7 +76,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
     reset();
 }
 
-export function parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
+export function parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
         if (settings.handleExtensionsAsync) {
             extensionsAsync.forEach(item => main.registerExtension(item));
@@ -164,6 +164,7 @@ export function ext(module: Extension<T> | string, options?: {}) {
             return getExtension(module);
         }
     }
+    return false;
 }
 
 export function ready() {

@@ -78,7 +78,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 const element = <HTMLTableCellElement> td.element;
                 for (let k = 0; k < element.rowSpan - 1; k++)  {
                     const l = (i + 1) + k;
-                    if (columnIndex[l] != null) {
+                    if (columnIndex[l] !== undefined) {
                         columnIndex[l] += element.colSpan;
                     }
                 }
@@ -108,9 +108,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
-                if (i === 0 || mapWidth[m] == null || !layoutFixed) {
+                if (i === 0 || mapWidth[m] === undefined || !layoutFixed) {
                     if (!columnWidth || columnWidth === 'auto') {
-                        if (mapWidth[m] == null) {
+                        if (mapWidth[m] === undefined) {
                             mapWidth[m] = columnWidth || '0px';
                             mapBounds[m] = 0;
                         }
@@ -118,7 +118,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     else {
                         const percentColumnWidth = isPercent(columnWidth);
                         const unitMapWidth = isUnit(mapWidth[m]);
-                        if (mapWidth[m] == null ||
+                        if (mapWidth[m] === undefined ||
                             td.bounds.width < mapBounds[m] ||
                             (td.bounds.width === mapBounds[m] && (
                                 (mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) ||
@@ -170,7 +170,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
             }
             else if (tableWidth === 'auto') {
-                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
+                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = mapBounds[index] === undefined ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
             }
             else if (pxWidth > node.viewWidth) {
                 node.css('width', 'auto');
@@ -235,7 +235,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 const element = <HTMLTableCellElement> td.element;
                 for (let k = 0; k < element.rowSpan - 1; k++)  {
                     const l = (i + 1) + k;
-                    if (columnIndex[l] != null) {
+                    if (columnIndex[l] !== undefined) {
                         columnIndex[l] += element.colSpan;
                     }
                 }

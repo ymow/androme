@@ -1,15 +1,16 @@
 import WIDGET_NAME from '../namespace';
 
-import View = android.lib.base.View;
+import $View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
-import $const_android = android.lib.constant;
 import $dom = androme.lib.dom;
 
-export default class Coordinator<T extends View> extends androme.lib.base.Extension<T> {
+import $android_const = android.lib.constant;
+
+export default class Coordinator<T extends $View> extends androme.lib.base.Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node as T;
-        const output = this.application.viewController.renderGroup(node, this.parent as T, $const_android.VIEW_SUPPORT.COORDINATOR);
+        const output = this.application.viewController.renderGroup(node, this.parent as T, $android_const.VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;

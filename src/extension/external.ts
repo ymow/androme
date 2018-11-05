@@ -8,7 +8,7 @@ export default abstract class External<T extends Node> extends Extension<T> {
         if (this.element && (init || this.included())) {
             if (!getElementCache(this.element, 'andromeExternalDisplay')) {
                 const display: string[] = [];
-                let current: Null<HTMLElement> = <HTMLElement> this.element;
+                let current: HTMLElement | null = <HTMLElement> this.element;
                 while (current) {
                     display.push(getStyle(current).display as string);
                     current.style.display = 'block';
@@ -31,7 +31,7 @@ export default abstract class External<T extends Node> extends Extension<T> {
             const data = getElementCache(this.element, 'andromeExternalDisplay');
             if (data) {
                 const display: string[] = data;
-                let current: Null<HTMLElement> = <HTMLElement> this.element;
+                let current: HTMLElement | null = <HTMLElement> this.element;
                 let i = 0;
                 while (current) {
                     current.style.display = display[i];

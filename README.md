@@ -424,7 +424,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol9675"
+                    android:text="@string/__symbol53710"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -574,7 +574,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol9675"
+                    android:text="@string/__symbol53710"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -764,7 +764,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/button_1"
                     android:background="@drawable/button_button_1"
                     android:focusable="false"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -778,7 +778,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/button_2"
                     android:background="@drawable/button_button_1"
                     android:focusable="false"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -901,7 +901,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Button
                     android:id="@+id/button_3"
                     android:background="@drawable/button_button_1"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start_1"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -955,7 +955,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Button
                     android:id="@+id/button_4"
                     android:background="@drawable/button_button_1"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start_1"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -968,7 +968,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Button
                     android:id="@+id/button_5"
                     android:background="@drawable/button_button_1"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -1011,7 +1011,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol9675"
+                    android:text="@string/__symbol53710"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1119,7 +1119,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Button
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
-                    android:layout_height="@dimen/button_height"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start_2"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
@@ -1142,7 +1142,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol59213">):</string>
+    <string name="__symbol53710">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1438,7 +1438,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="button_height">19dp</dimen>
     <dimen name="button_margin_start">3dp</dimen>
     <dimen name="button_margin_start_1">7dp</dimen>
     <dimen name="button_margin_start_2">4dp</dimen>

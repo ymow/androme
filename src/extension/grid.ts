@@ -9,7 +9,7 @@ import Application from '../base/application';
 import Extension from '../base/extension';
 
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
-import { newBoxRect, isStyleElement } from '../lib/dom';
+import { isStyleElement, newBoxRect } from '../lib/dom';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition() {
@@ -150,7 +150,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             nextX.element.style.cssFloat = 'right';
                         }
                         if (index === 0 || left >= columnRight[index - 1]) {
-                            if (columns[index] == null) {
+                            if (columns[index] === undefined) {
                                 columns[index] = [];
                             }
                             if (index === 0 || columns[0].length === nextAxisX.length) {
@@ -171,7 +171,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
                                     const rowIndex = getRowIndex(nextX);
-                                    if (rowIndex !== -1 && filtered[filtered.length - 1][rowIndex] == null) {
+                                    if (rowIndex !== -1 && filtered[filtered.length - 1][rowIndex] === undefined) {
                                         columns[current].length = 0;
                                     }
                                 }
@@ -181,10 +181,10 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
                 for (let l = 0, m = -1; l < columnRight.length; l++) {
-                    if (m === -1 && columns[l] == null) {
+                    if (m === -1 && columns[l] === undefined) {
                         m = l - 1;
                     }
-                    else if (columns[l] == null) {
+                    else if (columns[l] === undefined) {
                         if (m !== -1 && l === columnRight.length - 1) {
                             columnRight[m] = columnRight[l];
                         }
@@ -203,7 +203,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                 for (let l = 0; l < columnLength; l++) {
                     for (let m = 0; m < columns.length; m++) {
-                        if (columns[m][l] == null) {
+                        if (columns[m][l] === undefined) {
                             columns[m][l] = { spacer: 1 } as any;
                         }
                     }
@@ -316,7 +316,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         !item.excluded &&
                         !item.rendered &&
                         item.linear.left >= node.linear.right &&
-                        item.linear.right <= columnEnd ? item : undefined
+                        item.linear.right <= columnEnd ? item : null
                     );
                 })
                 .filter(item => item) as T[];

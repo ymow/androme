@@ -60,12 +60,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
+        return border !== undefined && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
     }
 
     public static hasDrawableBackground(object?: BoxStyle) {
         return (
-            object != null && (
+            object !== undefined && (
                 this.isBorderVisible(object.borderTop) ||
                 this.isBorderVisible(object.borderRight) ||
                 this.isBorderVisible(object.borderBottom) ||
@@ -138,7 +138,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 width = '1px';
                             }
                             const color = parseRGBA(cssColor, node.css('opacity'));
-                            boxStyle[attr] = {
+                            boxStyle[attr] = <BorderAttribute> {
                                 width,
                                 style,
                                 color: style !== 'none' && color ? color.valueRGBA : ''
@@ -182,13 +182,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     if (match[1] === 'auto' || match[2] === 'auto') {
                                         result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
                                     }
-                                    else if (isPercent(match[1]) && match[3] == null) {
+                                    else if (isPercent(match[1]) && match[3] === undefined) {
                                         result = [match[1], match[2]];
                                     }
-                                    else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
+                                    else if (match[2] === undefined || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
                                         result = [convertPX(match[1], fontSize)];
                                     }
-                                    else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
+                                    else if (match[3] === undefined || (match[1] === match[3] && match[2] === match[4])) {
                                         result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
                                     }
                                     else {
@@ -206,9 +206,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     return `${parse ? '' : '(?:'},?\\s*(${parse ? '' : '?:'}rgba?\\(\\d+, \\d+, \\d+(?:, [\\d.]+)?\\)|[a-z]+)\\s*(${parse ? '' : '?:'}\\d+%)?${parse ? '' : ')'}`;
                                 }
                                 const gradients: Gradient[] = [];
-                                let pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?(${colorStop(false)}+)\\)`, 'g');
-                                let match: Null<RegExpExecArray> = null;
-                                while ((match = pattern.exec(value)) != null) {
+                                let pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?(${colorStop(false)}+)\\)`, 'g');
+                                let match: RegExpExecArray | null;
+                                while ((match = pattern.exec(value)) !== null) {
                                     let gradient: Gradient;
                                     if (match[1] === 'linear') {
                                         gradient = <LinearGradient> {
@@ -300,7 +300,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     const images: string[] = [];
                                     pattern = new RegExp(DOM_REGEX.CSS_URL, 'g');
                                     match = null;
-                                    while ((match = pattern.exec(value)) != null) {
+                                    while ((match = pattern.exec(value)) !== null) {
                                         if (match) {
                                             images.push(match[0]);
                                         }
@@ -337,7 +337,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity);
-                    let backgroundColor: ColorHexAlpha | undefined;
+                    let backgroundColor: ColorHexAlpha | null = null;
                     if (!(backgroundImage ||
                         (node.cssParent('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.styleMap.backgroundColor)) ||
                         (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))))

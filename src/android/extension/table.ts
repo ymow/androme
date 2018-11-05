@@ -16,10 +16,10 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
                     item.android('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
                 }
                 else {
-                    const expand: boolean | null = item.data($const.EXT_NAME.TABLE, 'expand');
+                    const expand: boolean | undefined = item.data($const.EXT_NAME.TABLE, 'expand');
                     const exceed: boolean = !!item.data($const.EXT_NAME.TABLE, 'exceed');
                     const downsized: boolean = !!item.data($const.EXT_NAME.TABLE, 'downsized');
-                    if (expand != null) {
+                    if (typeof expand === 'boolean') {
                         if (expand) {
                             const percent = $util.convertFloat(item.data($const.EXT_NAME.TABLE, 'percent')) / 100;
                             if (percent > 0) {

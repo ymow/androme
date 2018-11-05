@@ -4,9 +4,9 @@ import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
 
-import NodeList = androme.lib.base.NodeList;
-
 import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
+
+import $NodeList = androme.lib.base.NodeList;
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -16,7 +16,7 @@ import $dom = androme.lib.dom;
 export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base implements androme.lib.base.Node {
         public static documentBody() {
-            if (View._documentBody == null) {
+            if (View._documentBody === undefined) {
                 const body = new View(0, document.body);
                 body.hide();
                 body.setBounds();
@@ -124,11 +124,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
             if (arguments.length === 1 ||
-                this.constraint.current[position] == null ||
+                this.constraint.current[position] === undefined ||
                 !this.constraint.current[position].overwrite ||
                 (orientation && !this.constraint[orientation]))
             {
-                if (overwrite == null) {
+                if (overwrite === undefined) {
                     overwrite = adjacent === 'parent' || adjacent === 'true';
                 }
                 this[this.renderParent.controlName === NODE_ANDROID.RELATIVE ? 'android' : 'app'](position, adjacent, overwrite);
@@ -178,8 +178,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
             if (offset !== 0 && (name !== '' || $util.isString(region))) {
                 const attr = $util.isString(region) ? region : name.replace('layout_', '');
-                if (this._boxReset[attr] != null) {
-                    if (offset == null) {
+                if (this._boxReset[attr] !== undefined) {
+                    if (offset === null) {
                         this._boxReset[attr] = 1;
                     }
                     else {
@@ -212,8 +212,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }
                 for (let i = this.localSettings.targetAPI; i <= BUILD_ANDROID.LATEST; i++) {
                     const version = API_ANDROID[i];
-                    if (version && version[obj] && version[obj][attr] != null) {
-                        const callback: boolean | FunctionResult = version[obj][attr];
+                    if (version && version[obj] && version[obj][attr] !== undefined) {
+                        const callback: FunctionResult | boolean = version[obj][attr];
                         if (typeof callback === 'boolean') {
                             return callback;
                         }
@@ -1049,7 +1049,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
                 children.forEach((node: View) => {
                     const previous = (() => {
-                        let current: View | undefined = node;
+                        let current: View | null = node;
                         do {
                             current = current.previousSibling(true, false, false) as View;
                         }
@@ -1057,9 +1057,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return current;
                     })();
                     const elements = $dom.getElementsBetweenSiblings(
-                        previous
-                            ? (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement)
-                            : undefined,
+                        previous === null ? null
+                                          : (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement),
                         node.baseElement
                     )
                     .filter(element => {
@@ -1164,7 +1163,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                         (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                     {
-                        const baseline = NodeList.textBaseline(renderChildren);
+                        const baseline = $NodeList.textBaseline(renderChildren);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                         }
@@ -1258,7 +1257,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             else {
                 const value: number = $const.MAP_ELEMENT[this.nodeName];
-                if (value != null) {
+                if (value !== undefined) {
                     this.nodeType = value;
                     return View.getControlName(value);
                 }
@@ -1300,7 +1299,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.linearHorizontal ||
                 this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
                 (this.nodes.filter(node => node.pageflow).length > 1 && (
-                    NodeList.linearX(this.nodes) ||
+                    $NodeList.linearX(this.nodes) ||
                     (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))
                 )
             );
@@ -1310,7 +1309,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.linearVertical ||
                 this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
                 (this.nodes.filter(node => node.pageflow).length > 1 && (
-                    NodeList.linearY(this.nodes)) ||
+                    $NodeList.linearY(this.nodes)) ||
                     (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))
                 )
             );
