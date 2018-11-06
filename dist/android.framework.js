@@ -1,4 +1,4 @@
-/* androme 2.2.0
+/* androme 2.2.1
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -234,6 +234,9 @@ var android = (function () {
         MENU: 'ic_menu_',
         DIALOG: 'ic_dialog_'
     };
+    if (androme.lib.dom.isUserAgent(androme.lib.enumeration.USER_AGENT.EDGE)) {
+        FONTREPLACE_ANDROID['consolas'] = 'monospace';
+    }
 
     var constant = /*#__PURE__*/Object.freeze({
         NODE_ANDROID: NODE_ANDROID,
@@ -842,7 +845,7 @@ var android = (function () {
         };
     }
     function generateId(section, name, start) {
-        if (MAP_ID == null) {
+        if (MAP_ID === undefined) {
             resetId();
         }
         const prefix = name;
@@ -850,7 +853,7 @@ var android = (function () {
         if (start === 1) {
             name += `_${i.toString()}`;
         }
-        if (MAP_ID[section] == null) {
+        if (MAP_ID[section] === undefined) {
             MAP_ID[section] = [];
         }
         do {
@@ -931,7 +934,7 @@ var android = (function () {
         getXmlNs: getXmlNs
     });
 
-    var NodeList = androme.lib.base.NodeList;
+    var $NodeList = androme.lib.base.NodeList;
     var $enum = androme.lib.enumeration;
     var $const = androme.lib.constant;
     var $util = androme.lib.util;
@@ -956,7 +959,7 @@ var android = (function () {
                 }
             }
             static documentBody() {
-                if (View._documentBody == null) {
+                if (View._documentBody === undefined) {
                     const body = new View(0, document.body);
                     body.hide();
                     body.setBounds();
@@ -1025,10 +1028,10 @@ var android = (function () {
             }
             anchor(position, adjacent, orientation, overwrite) {
                 if (arguments.length === 1 ||
-                    this.constraint.current[position] == null ||
+                    this.constraint.current[position] === undefined ||
                     !this.constraint.current[position].overwrite ||
                     (orientation && !this.constraint[orientation])) {
-                    if (overwrite == null) {
+                    if (overwrite === undefined) {
                         overwrite = adjacent === 'parent' || adjacent === 'true';
                     }
                     this[this.renderParent.controlName === NODE_ANDROID.RELATIVE ? 'android' : 'app'](position, adjacent, overwrite);
@@ -1074,8 +1077,8 @@ var android = (function () {
                 const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
                 if (offset !== 0 && (name !== '' || $util.isString(region))) {
                     const attr = $util.isString(region) ? region : name.replace('layout_', '');
-                    if (this._boxReset[attr] != null) {
-                        if (offset == null) {
+                    if (this._boxReset[attr] !== undefined) {
+                        if (offset === null) {
                             this._boxReset[attr] = 1;
                         }
                         else {
@@ -1106,7 +1109,7 @@ var android = (function () {
                     }
                     for (let i = this.localSettings.targetAPI; i <= BUILD_ANDROID.LATEST; i++) {
                         const version = API_ANDROID[i];
-                        if (version && version[obj] && version[obj][attr] != null) {
+                        if (version && version[obj] && version[obj][attr] !== undefined) {
                             const callback = version[obj][attr];
                             if (typeof callback === 'boolean') {
                                 return callback;
@@ -1282,9 +1285,7 @@ var android = (function () {
                     }
                     else {
                         if (this.android('layout_width') !== '0px') {
-                            if (this.toInt('width') > 0 && (!this.inlineStatic ||
-                                renderParent.is($enum.NODE_STANDARD.GRID) ||
-                                !this.has('width', 0, { map: 'initial' }))) {
+                            if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is($enum.NODE_STANDARD.GRID) || !this.has('width', 0, { map: 'initial' }))) {
                                 if (this.has('width', $enum.CSS_STANDARD.PERCENT)) {
                                     if (styleMap.width === '100%') {
                                         this.android('layout_width', 'match_parent', false);
@@ -1710,8 +1711,7 @@ var android = (function () {
                             [$dom.getLastElementChild(elements), 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]]
                             .forEach((item, index) => {
                             const node = $dom.getNodeFromElement(item[0]);
-                            if (node && !node.lineBreak && (node === this ||
-                                node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
+                            if (node && !node.lineBreak && (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
                                 const marginOffset = renderParent[`margin${item[1]}`];
                                 if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
                                     node.modifyBox(item[2], null);
@@ -1905,9 +1905,8 @@ var android = (function () {
                             } while (current && !this.initial.children.includes(current));
                             return current;
                         })();
-                        const elements = $dom.getElementsBetweenSiblings(previous
-                            ? (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement)
-                            : undefined, node.baseElement)
+                        const elements = $dom.getElementsBetweenSiblings(previous === null ? null
+                            : (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement), node.baseElement)
                             .filter(element => {
                             const item = $dom.getNodeFromElement(element);
                             return item && (item.lineBreak || (item.excluded && item.blockStatic));
@@ -1922,7 +1921,7 @@ var android = (function () {
                                     if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
                                         return getPreviousBottom(previous.renderParent.renderChildren.slice());
                                     }
-                                    else if (previous.layoutHorizontal && previous.length > 0 && !previous.styleElement && previous.renderChildren.some(item => !item.floating)) {
+                                    else if (previous.layoutHorizontal && previous.groupElement && previous.renderChildren.some(item => !item.floating)) {
                                         return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                     }
                                     return previous.linear.bottom;
@@ -2004,7 +2003,7 @@ var android = (function () {
                             renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
                             (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                             (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline))) {
-                            const baseline = NodeList.textBaseline(renderChildren);
+                            const baseline = $NodeList.textBaseline(renderChildren);
                             if (baseline.length > 0) {
                                 this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                             }
@@ -2020,7 +2019,7 @@ var android = (function () {
             }
             alignRelativePosition() {
                 const renderParent = this.renderParent;
-                if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
+                if ((this.inline || (this.imageElement && this.display === 'inline-block')) && !this.floating) {
                     const offset = this.toInt('verticalAlign');
                     if (offset !== 0) {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
@@ -2093,7 +2092,7 @@ var android = (function () {
                 }
                 else {
                     const value = $const.MAP_ELEMENT[this.nodeName];
-                    if (value != null) {
+                    if (value !== undefined) {
                         this.nodeType = value;
                         return View.getControlName(value);
                     }
@@ -2129,13 +2128,13 @@ var android = (function () {
             get layoutHorizontal() {
                 return (this.linearHorizontal ||
                     this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
-                    (this.nodes.filter(node => node.pageflow).length > 1 && (NodeList.linearX(this.nodes) ||
+                    (this.nodes.filter(node => node.pageflow).length > 1 && ($NodeList.linearX(this.nodes) ||
                         (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))));
             }
             get layoutVertical() {
                 return (this.linearVertical ||
                     this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
-                    (this.nodes.filter(node => node.pageflow).length > 1 && (NodeList.linearY(this.nodes)) ||
+                    (this.nodes.filter(node => node.pageflow).length > 1 && ($NodeList.linearY(this.nodes)) ||
                         (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))));
             }
             get linearHorizontal() {
@@ -2184,7 +2183,7 @@ var android = (function () {
         }
     }
 
-    var NodeList$1 = androme.lib.base.NodeList;
+    var $NodeList$1 = androme.lib.base.NodeList;
     var $enum$1 = androme.lib.enumeration;
     var $util$1 = androme.lib.util;
     var $dom$1 = androme.lib.dom;
@@ -2345,7 +2344,7 @@ var android = (function () {
                     if (nodes.length === 0) {
                         continue;
                     }
-                    const cleared = NodeList$1.cleared(node.initial.children);
+                    const cleared = $NodeList$1.cleared(node.initial.children);
                     if (relative) {
                         function checkSingleLine(item, nowrap = false, flexParent = false) {
                             if (item && item.textElement && (nowrap ||
@@ -2356,7 +2355,7 @@ var android = (function () {
                         }
                         function adjustBaseline(siblings) {
                             if (nodes.length > 1) {
-                                const textBaseline = NodeList$1.textBaseline(siblings.filter(item => item.baseline && item.toInt('top') === 0 && item.toInt('bottom') === 0));
+                                const textBaseline = $NodeList$1.textBaseline(siblings.filter(item => item.baseline && item.toInt('top') === 0 && item.toInt('bottom') === 0));
                                 if (textBaseline.length > 0) {
                                     const alignWith = textBaseline[0];
                                     const images = [];
@@ -2471,7 +2470,7 @@ var android = (function () {
                             else if (previous) {
                                 const items = rows[rows.length - 1];
                                 const siblings = $dom$1.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
-                                const viewGroup = !current.styleElement && current.length > 0 && !current.hasAlign($enum$1.NODE_ALIGNMENT.SEGMENTED);
+                                const viewGroup = current.groupElement && !current.hasAlign($enum$1.NODE_ALIGNMENT.SEGMENTED);
                                 const previousSibling = current.previousSibling();
                                 const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
                                 let connected = false;
@@ -2502,7 +2501,7 @@ var android = (function () {
                                             rowPreviousBottom = items[j];
                                         }
                                     }
-                                    if (viewGroup || (!previous.styleElement && previous.length > 0 && i === nodes.length - 1)) {
+                                    if (viewGroup || (previous.groupElement && i === nodes.length - 1)) {
                                         current.constraint.marginVertical = rowPreviousBottom.stringId;
                                     }
                                     current.anchor(mapLayout['topBottom'], rowPreviousBottom.stringId);
@@ -2605,7 +2604,7 @@ var android = (function () {
                             function boundsHeight(a, b) {
                                 return a.bounds.height >= b.bounds.height ? -1 : 1;
                             }
-                            const optimal = NodeList$1.textBaseline(nodes)[0];
+                            const optimal = $NodeList$1.textBaseline(nodes)[0];
                             const baseline = nodes.filter(item => item.textElement && item.baseline).sort(boundsHeight);
                             let images = nodes.filter(item => item.imageElement && item.baseline).sort(boundsHeight);
                             if (images.length > 0) {
@@ -2858,7 +2857,7 @@ var android = (function () {
                                 }
                                 for (const current of absolute) {
                                     let alignMarginLeft = false;
-                                    if (current.right != null && current.toInt('right') >= 0) {
+                                    if (current.right !== null && current.toInt('right') >= 0) {
                                         current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                         if (current.toInt('left') > 0) {
                                             current.anchor(mapLayout['left'], 'parent');
@@ -2866,17 +2865,17 @@ var android = (function () {
                                             alignMarginLeft = true;
                                         }
                                     }
-                                    if (!alignMarginLeft && current.left != null && current.toInt('left') === 0) {
+                                    if (!alignMarginLeft && current.left !== null && current.toInt('left') === 0) {
                                         current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                         if (current.toInt('right') > 0) {
                                             current.anchor(mapLayout['right'], 'parent');
                                             current.modifyBox($enum$1.BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
                                         }
                                     }
-                                    if (current.top != null && current.toInt('top') === 0) {
+                                    if (current.top !== null && current.toInt('top') === 0) {
                                         current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
                                     }
-                                    if (current.bottom != null && current.toInt('bottom') >= 0) {
+                                    if (current.bottom !== null && current.toInt('bottom') >= 0) {
                                         current.anchor(mapLayout['bottom'], 'parent', AXIS_ANDROID.VERTICAL);
                                     }
                                     if (current.left === 0 &&
@@ -2931,7 +2930,7 @@ var android = (function () {
                                         }
                                         for (const item of sorted) {
                                             const y = item.linear.top;
-                                            if (map[y] == null) {
+                                            if (map[y] === undefined) {
                                                 map[y] = [];
                                                 levels.push(y);
                                             }
@@ -2964,7 +2963,7 @@ var android = (function () {
                                             if (i > 0) {
                                                 j++;
                                             }
-                                            if (columns[j] == null) {
+                                            if (columns[j] === undefined) {
                                                 columns[j] = [];
                                             }
                                         }
@@ -3041,7 +3040,7 @@ var android = (function () {
                                     const verticalChain = pageflow.filter(current => !current.constraint.vertical);
                                     function availableChain(list) {
                                         const id = list.map(item => item.id).sort().join('-');
-                                        return !mapId.has(id) && mapId.add(id) != null;
+                                        return !mapId.has(id) && !!mapId.add(id);
                                     }
                                     pageflow.some(current => {
                                         const horizontalOutput = [];
@@ -3638,7 +3637,7 @@ var android = (function () {
                                         }
                                     }
                                     else {
-                                        if (left && right && current.right == null && current.hasWidth) {
+                                        if (left && right && current.right === null && current.hasWidth) {
                                             switch (current.cssParent('textAlign', true)) {
                                                 case 'center':
                                                 case 'right':
@@ -3649,7 +3648,7 @@ var android = (function () {
                                                     break;
                                             }
                                         }
-                                        if (top && bottom && current.bottom == null && current.hasHeight) {
+                                        if (top && bottom && current.bottom === null && current.hasHeight) {
                                             switch (current.css('verticalAlign')) {
                                                 case 'bottom':
                                                 case 'text-bottom':
@@ -3745,7 +3744,14 @@ var android = (function () {
                         if (current.constraint.marginVertical) {
                             const previous = this.findByStringId(current.constraint.marginVertical);
                             if (previous) {
-                                const offset = current.linear.top - previous.linear.bottom;
+                                let bottom = previous.linear.bottom;
+                                if ($dom$1.isUserAgent($enum$1.USER_AGENT.EDGE)) {
+                                    const elements = $dom$1.getElementsBetweenSiblings(previous.groupElement ? previous.item().baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
+                                    if (elements.length > 0) {
+                                        bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
+                                    }
+                                }
+                                const offset = current.linear.top - bottom;
                                 if (offset >= 1) {
                                     current.modifyBox($enum$1.BOX_STANDARD.MARGIN_TOP, offset);
                                 }
@@ -4015,7 +4021,7 @@ var android = (function () {
                                         input.name === element.name) {
                                         return item;
                                     }
-                                    return undefined;
+                                    return null;
                                 })
                                     .filter(item => item);
                                 if (radiogroup.length > 1) {
@@ -4031,7 +4037,7 @@ var android = (function () {
                                         }
                                         xml += this.renderNode(item, group, $enum$1.NODE_STANDARD.RADIO, true);
                                     });
-                                    group.android('orientation', NodeList$1.linearX(radiogroup, radiogroup.every(item => item.documentParent === radiogroup[0].documentParent)) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
+                                    group.android('orientation', $NodeList$1.linearX(radiogroup, radiogroup.every(item => item.documentParent === radiogroup[0].documentParent)) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
                                     group.alignmentType |= $enum$1.NODE_ALIGNMENT.SEGMENTED;
                                     if (checked !== '') {
                                         group.android('checkedButton', checked);
@@ -4192,13 +4198,13 @@ var android = (function () {
         addGuideline(node, orientation = '', percent, opposite) {
             const map = MAP_LAYOUT.constraint;
             if (node.pageflow) {
-                if (opposite == null) {
+                if (opposite === undefined) {
                     opposite = (node.float === 'right' ||
-                        (node.left == null && node.right != null) ||
+                        (node.left === null && node.right !== null) ||
                         (node.textElement && node.css('textAlign') === 'right') ||
                         node.alignParent('right'));
                 }
-                if (percent == null && opposite) {
+                if (percent === undefined && opposite) {
                     percent = true;
                 }
             }
@@ -4317,13 +4323,13 @@ var android = (function () {
                                 node.anchor(map[LT], stringId, value, true);
                                 node.delete('app', map[RB]);
                                 node.constraint[`${value}Guideline`] = stringId;
-                                if (guideline[value] == null) {
+                                if (guideline[value] === undefined) {
                                     guideline[value] = {};
                                 }
-                                if (guideline[value][beginPercent] == null) {
+                                if (guideline[value][beginPercent] === undefined) {
                                     guideline[value][beginPercent] = {};
                                 }
-                                if (guideline[value][beginPercent][LT] == null) {
+                                if (guideline[value][beginPercent][LT] === undefined) {
                                     guideline[value][beginPercent][LT] = {};
                                 }
                                 guideline[value][beginPercent][LT][stringId] = location;
@@ -4381,12 +4387,12 @@ var android = (function () {
         get delegateNodeInit() {
             return (self) => {
                 self.localSettings = {
-                    targetAPI: this.settings.targetAPI != null ? this.settings.targetAPI : 26,
-                    supportRTL: this.settings.supportRTL != null ? this.settings.supportRTL : true,
-                    constraintPercentAccuracy: this.settings.constraintPercentAccuracy != null ? this.settings.constraintPercentAccuracy : 4,
-                    customizationsOverwritePrivilege: this.settings.customizationsOverwritePrivilege != null ? this.settings.customizationsOverwritePrivilege : true,
-                    autoSizePaddingAndBorderWidth: this.settings.autoSizePaddingAndBorderWidth != null ? this.settings.autoSizePaddingAndBorderWidth : true,
-                    ellipsisOnTextOverflow: this.settings.ellipsisOnTextOverflow != null ? this.settings.ellipsisOnTextOverflow : true
+                    targetAPI: this.settings.targetAPI !== undefined ? this.settings.targetAPI : 26,
+                    supportRTL: this.settings.supportRTL !== undefined ? this.settings.supportRTL : true,
+                    constraintPercentAccuracy: this.settings.constraintPercentAccuracy !== undefined ? this.settings.constraintPercentAccuracy : 4,
+                    customizationsOverwritePrivilege: this.settings.customizationsOverwritePrivilege !== undefined ? this.settings.customizationsOverwritePrivilege : true,
+                    autoSizePaddingAndBorderWidth: this.settings.autoSizePaddingAndBorderWidth !== undefined ? this.settings.autoSizePaddingAndBorderWidth : true,
+                    ellipsisOnTextOverflow: this.settings.ellipsisOnTextOverflow !== undefined ? this.settings.ellipsisOnTextOverflow : true
                 };
             };
         }
@@ -4491,14 +4497,13 @@ var android = (function () {
     ];
     var LAYERLIST_TMPL = template$2.join('\n');
 
-    var NodeList$2 = androme.lib.base.NodeList;
+    var $Resource = androme.lib.base.Resource;
     var $enum$2 = androme.lib.enumeration;
     var $const$1 = androme.lib.constant;
     var $util$2 = androme.lib.util;
     var $dom$2 = androme.lib.dom;
     var $xml$2 = androme.lib.xml;
     var $color = androme.lib.color;
-    var $resource = androme.lib.base.Resource;
     const FONT_STYLE = {
         'fontFamily': 'android:fontFamily="{0}"',
         'fontStyle': 'android:textStyle="{0}"',
@@ -4508,7 +4513,7 @@ var android = (function () {
         'backgroundColor': 'android:background="@color/{0}"'
     };
     function getStoredDrawable(xml) {
-        for (const [name, value] of $resource.STORED.drawables.entries()) {
+        for (const [name, value] of $Resource.STORED.drawables.entries()) {
             if (value === xml) {
                 return name;
             }
@@ -4643,7 +4648,7 @@ var android = (function () {
                 }
                 const numeric = $util$2.isNumber(value);
                 if (!numeric || (settings && settings.numberResourceValue)) {
-                    for (const [resourceName, resourceValue] of $resource.STORED.strings.entries()) {
+                    for (const [resourceName, resourceValue] of $Resource.STORED.strings.entries()) {
                         if (resourceValue === value) {
                             return resourceName;
                         }
@@ -4662,10 +4667,10 @@ var android = (function () {
                     else if (name === '') {
                         name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                     }
-                    if ($resource.STORED.strings.has(name)) {
+                    if ($Resource.STORED.strings.has(name)) {
                         name = generateId('strings', name, 1);
                     }
-                    $resource.STORED.strings.set(name, value);
+                    $Resource.STORED.strings.set(name, value);
                 }
                 return name;
             }
@@ -4679,7 +4684,7 @@ var android = (function () {
                 srcset.split(',').forEach(value => {
                     const match = /^(.*?)\s*(\d+\.?\d*x)?$/.exec(value.trim());
                     if (match) {
-                        if (match[2] == null) {
+                        if (!$util$2.hasValue(match[2])) {
                             match[2] = '1x';
                         }
                         const src = filepath + $util$2.lastIndexOf(match[1]);
@@ -4706,7 +4711,7 @@ var android = (function () {
                     }
                 });
             }
-            if (images.mdpi == null) {
+            if (images.mdpi === undefined) {
                 images.mdpi = element.src;
             }
             return this.addImage(images, prefix);
@@ -4724,7 +4729,7 @@ var android = (function () {
                     case 'ico':
                     case 'jpg':
                     case 'png':
-                        src = $resource.insertStoredAsset('images', prefix + src, images);
+                        src = $Resource.insertStoredAsset('images', prefix + src, images);
                         break;
                     default:
                         src = '';
@@ -4746,7 +4751,7 @@ var android = (function () {
             }
             if (value && value.valueRGBA !== '#00000000') {
                 const valueARGB = getHexARGB(value);
-                let name = $resource.STORED.colors.get(valueARGB) || '';
+                let name = $Resource.STORED.colors.get(valueARGB) || '';
                 if (name === '') {
                     const shade = $color.getColorByShade(value.valueRGB);
                     if (shade) {
@@ -4757,7 +4762,7 @@ var android = (function () {
                         else {
                             name = generateId('color', shade.name, 1);
                         }
-                        $resource.STORED.colors.set(valueARGB, name);
+                        $Resource.STORED.colors.set(valueARGB, name);
                     }
                 }
                 return name;
@@ -4765,7 +4770,7 @@ var android = (function () {
             return '';
         }
         static getColor(value) {
-            for (const [hex, name] of $resource.STORED.colors.entries()) {
+            for (const [hex, name] of $Resource.STORED.colors.entries()) {
                 if (name === value) {
                     return hex;
                 }
@@ -4855,7 +4860,7 @@ var android = (function () {
                 }
             }
             for (const name in styles) {
-                $resource.STORED.styles.set(name, {
+                $Resource.STORED.styles.set(name, {
                     name,
                     attrs: styles[name].join(';'),
                     ids: []
@@ -4920,17 +4925,17 @@ var android = (function () {
                             stored.backgroundColor = backgroundColor;
                         }
                     }
-                    const hasBorder = ($resource.isBorderVisible(stored.borderTop) ||
-                        $resource.isBorderVisible(stored.borderRight) ||
-                        $resource.isBorderVisible(stored.borderBottom) ||
-                        $resource.isBorderVisible(stored.borderLeft) ||
-                        stored.borderRadius.length > 0);
+                    const hasBorder = ($Resource.isBorderVisible(stored.borderTop) ||
+                        $Resource.isBorderVisible(stored.borderRight) ||
+                        $Resource.isBorderVisible(stored.borderBottom) ||
+                        $Resource.isBorderVisible(stored.borderLeft) ||
+                        stored.borderRadius);
                     const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
                     if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
                         function getShapeAttribute(boxStyle, name, direction = -1, hasInset = false, isInset = false) {
                             switch (name) {
                                 case 'stroke':
-                                    if (boxStyle.border && $resource.isBorderVisible(boxStyle.border)) {
+                                    if (boxStyle.border && $Resource.isBorderVisible(boxStyle.border)) {
                                         if (!hasInset || isInset) {
                                             return [{
                                                     width: boxStyle.border.width,
@@ -4948,15 +4953,17 @@ var android = (function () {
                                 case 'backgroundColor':
                                     return $util$2.isString(boxStyle.backgroundColor) ? [{ color: boxStyle.backgroundColor }] : false;
                                 case 'radius':
-                                    if (boxStyle.borderRadius.length === 1) {
-                                        if (boxStyle.borderRadius[0] !== '0px') {
-                                            return [{ radius: boxStyle.borderRadius[0] }];
+                                    if (boxStyle.borderRadius) {
+                                        if (boxStyle.borderRadius.length === 1) {
+                                            if (boxStyle.borderRadius[0] !== '0px') {
+                                                return [{ radius: boxStyle.borderRadius[0] }];
+                                            }
                                         }
-                                    }
-                                    else if (boxStyle.borderRadius.length > 1) {
-                                        const result = {};
-                                        boxStyle.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                                        return [result];
+                                        else if (boxStyle.borderRadius.length > 1) {
+                                            const result = {};
+                                            boxStyle.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                                            return [result];
+                                        }
                                     }
                                     return false;
                             }
@@ -4968,9 +4975,11 @@ var android = (function () {
                             stored.borderBottom,
                             stored.borderLeft
                         ];
+                        const borderVisible = [];
                         borders.forEach(item => {
-                            if ($resource.isBorderVisible(item)) {
+                            if ($Resource.isBorderVisible(item)) {
                                 item.color = ResourceHandler.addColor(item.color);
+                                borderVisible.push(item);
                             }
                         });
                         const images5 = [];
@@ -4990,7 +4999,7 @@ var android = (function () {
                                 let tileMode = '';
                                 let tileModeX = '';
                                 let tileModeY = '';
-                                const imageRepeat = image == null || image.width < node.bounds.width || image.height < node.bounds.height;
+                                const imageRepeat = !image || image.width < node.bounds.width || image.height < node.bounds.height;
                                 switch (backgroundRepeat[i]) {
                                     case 'repeat-x':
                                         if (imageRepeat) {
@@ -5199,7 +5208,7 @@ var android = (function () {
                             let vector = getStoredDrawable(xml);
                             if (vector === '') {
                                 vector = `${node.nodeName.toLowerCase()}_${node.nodeId}_gradient`;
-                                $resource.STORED.drawables.set(vector, xml);
+                                $Resource.STORED.drawables.set(vector, xml);
                             }
                             backgroundVector.push({ vector });
                         }
@@ -5207,7 +5216,7 @@ var android = (function () {
                         if (stored.border && !((parseInt(stored.border.width) > 2 && stored.border.style === 'double') ||
                             (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')))) {
                             if (!hasBackgroundImage && backgroundGradient.length <= 1 && !vectorGradient) {
-                                if (borderRadius && borderRadius[0]['radius'] == null) {
+                                if (borderRadius && borderRadius[0]['radius'] === undefined) {
                                     borderRadius[0]['radius'] = '1px';
                                 }
                                 template = $xml$2.parseTemplate(SHAPE_TMPL);
@@ -5227,7 +5236,7 @@ var android = (function () {
                                     '4': false,
                                     '5': images5.length > 0 ? images5 : false,
                                     '6': images6.length > 0 ? images6 : false,
-                                    '7': $resource.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
+                                    '7': $Resource.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
                                 };
                             }
                         }
@@ -5245,7 +5254,6 @@ var android = (function () {
                                 '6': images6.length > 0 ? images6 : false,
                                 '7': []
                             };
-                            const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
                             const borderWidth = new Set(borderVisible.map(item => item.width));
                             const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
                             const borderData = borderVisible[0];
@@ -5284,19 +5292,19 @@ var android = (function () {
                                 if (width > 2 && borderData.style === 'double') {
                                     insertDoubleBorder.apply(null, [
                                         borderData,
-                                        $resource.isBorderVisible(stored.borderTop),
-                                        $resource.isBorderVisible(stored.borderRight),
-                                        $resource.isBorderVisible(stored.borderBottom),
-                                        $resource.isBorderVisible(stored.borderLeft)
+                                        $Resource.isBorderVisible(stored.borderTop),
+                                        $Resource.isBorderVisible(stored.borderRight),
+                                        $Resource.isBorderVisible(stored.borderBottom),
+                                        $Resource.isBorderVisible(stored.borderLeft)
                                     ]);
                                 }
                                 else {
                                     const hideWidth = `-${$util$2.formatPX(getHideWidth(width))}`;
                                     data['7'].push({
-                                        top: $resource.isBorderVisible(stored.borderTop) ? '' : hideWidth,
-                                        right: $resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
-                                        bottom: $resource.isBorderVisible(stored.borderBottom) ? '' : hideWidth,
-                                        left: $resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
+                                        top: $Resource.isBorderVisible(stored.borderTop) ? '' : hideWidth,
+                                        right: $Resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
+                                        bottom: $Resource.isBorderVisible(stored.borderBottom) ? '' : hideWidth,
+                                        left: $Resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
                                         'stroke': getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
                                         'corners': borderRadius
                                     });
@@ -5305,7 +5313,7 @@ var android = (function () {
                             else {
                                 for (let i = 0; i < borders.length; i++) {
                                     const border = borders[i];
-                                    if ($resource.isBorderVisible(border)) {
+                                    if ($Resource.isBorderVisible(border)) {
                                         const width = parseInt(border.width);
                                         if (width > 2 && border.style === 'double') {
                                             insertDoubleBorder.apply(null, [
@@ -5349,7 +5357,7 @@ var android = (function () {
                             resourceName = getStoredDrawable(xml);
                             if (resourceName === '') {
                                 resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                                $resource.STORED.drawables.set(resourceName, xml);
+                                $Resource.STORED.drawables.set(resourceName, xml);
                             }
                         }
                         node.android('background', `@drawable/${resourceName}`, node.renderExtension.size === 0);
@@ -5357,7 +5365,8 @@ var android = (function () {
                             node.data('RESOURCE', 'backgroundImage', true);
                             if (this.settings.autoSizeBackgroundImage &&
                                 !node.documentRoot &&
-                                !node.imageOrSvgElement &&
+                                !node.imageElement &&
+                                !node.svgElement &&
                                 node.renderParent.tagName !== 'TABLE' &&
                                 !node.hasBit('excludeProcedure', $enum$2.NODE_PROCEDURE.AUTOFIT)) {
                                 const sizeParent = { width: 0, height: 0 };
@@ -5415,7 +5424,7 @@ var android = (function () {
             for (const node of this.cache.visible) {
                 if (!node.hasBit('excludeResource', $enum$2.NODE_RESOURCE.FONT_STYLE)) {
                     if ($dom$2.getElementCache(node.element, 'fontStyle')) {
-                        if (nodeName[node.nodeName] == null) {
+                        if (nodeName[node.nodeName] === undefined) {
                             nodeName[node.nodeName] = [];
                         }
                         nodeName[node.nodeName].push(node);
@@ -5444,8 +5453,11 @@ var android = (function () {
             }
             for (const tag in nodeName) {
                 const sorted = [];
-                const nodes = new NodeList$2(nodeName[tag]);
-                nodes.each(node => {
+                let visible = 0;
+                nodeName[tag].forEach(node => {
+                    if (node.visible) {
+                        visible++;
+                    }
                     const nodeId = node.id;
                     const companion = node.companion;
                     if (companion && !companion.visible && companion.tagName === 'LABEL') {
@@ -5486,21 +5498,21 @@ var android = (function () {
                             delete stored.fontWeight;
                         }
                         if (!system) {
-                            const fonts = $resource.STORED.fonts.get(fontFamily) || {};
+                            const fonts = $Resource.STORED.fonts.get(fontFamily) || {};
                             fonts[`${fontStyle}-${fontWeight}`] = true;
-                            $resource.STORED.fonts.set(fontFamily, fonts);
+                            $Resource.STORED.fonts.set(fontFamily, fonts);
                         }
                     }
                     const keys = Object.keys(FONT_STYLE);
                     for (let i = 0; i < keys.length; i++) {
-                        if (sorted[i] == null) {
+                        if (sorted[i] === undefined) {
                             sorted[i] = {};
                         }
                         const value = stored[keys[i]];
                         if ($util$2.hasValue(value)) {
                             if (node.supported('android', keys[i])) {
                                 const attr = $util$2.formatString(FONT_STYLE[keys[i]], value);
-                                if (sorted[i][attr] == null) {
+                                if (sorted[i][attr] === undefined) {
                                     sorted[i][attr] = [];
                                 }
                                 sorted[i][attr].push(nodeId);
@@ -5520,10 +5532,10 @@ var android = (function () {
                             }
                         }
                     }
-                    this._tagCount[tag] += nodes.visible.length;
+                    this._tagCount[tag] += visible;
                 }
                 else {
-                    this._tagCount[tag] = nodes.visible.length;
+                    this._tagCount[tag] = visible;
                 }
                 this._tagStyle[tag] = sorted;
             }
@@ -5629,7 +5641,7 @@ var android = (function () {
                     if (result.length > 0) {
                         const arrayValue = result.join('-');
                         let arrayName = '';
-                        for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
+                        for (const [storedName, storedResult] of $Resource.STORED.arrays.entries()) {
                             if (arrayValue === storedResult.join('-')) {
                                 arrayName = storedName;
                                 break;
@@ -5637,7 +5649,7 @@ var android = (function () {
                         }
                         if (arrayName === '') {
                             arrayName = `${node.nodeId}_array`;
-                            $resource.STORED.arrays.set(arrayName, result);
+                            $Resource.STORED.arrays.set(arrayName, result);
                         }
                         node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
                     }
@@ -5756,7 +5768,7 @@ var android = (function () {
                             vectorName = getStoredDrawable(xml);
                             if (vectorName === '') {
                                 vectorName = `${node.nodeName.toLowerCase()}_${node.nodeId + (stored.defs.image.length > 0 ? '_vector' : '')}`;
-                                $resource.STORED.drawables.set(vectorName, xml);
+                                $Resource.STORED.drawables.set(vectorName, xml);
                             }
                         }
                         if (stored.defs.image.length > 0) {
@@ -5779,7 +5791,7 @@ var android = (function () {
                                     let y = (item.y || 0) * scaleY;
                                     let parent = item.element && item.element.parentElement;
                                     while (parent instanceof SVGSVGElement && parent !== node.element) {
-                                        const attributes = $resource.getSvgTransform(parent);
+                                        const attributes = $Resource.getSvgTransform(parent);
                                         x += parent.x.baseVal.value + attributes.translateX;
                                         y += parent.y.baseVal.value + attributes.translateY;
                                         parent = parent.parentElement;
@@ -5814,7 +5826,7 @@ var android = (function () {
                             result = getStoredDrawable(xml);
                             if (result === '') {
                                 result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                                $resource.STORED.drawables.set(result, xml);
+                                $Resource.STORED.drawables.set(result, xml);
                             }
                         }
                         else {
@@ -5905,7 +5917,6 @@ var android = (function () {
                         break;
                 }
                 if (hasStop) {
-                    shape.colorStop.sort();
                     for (let i = 0; i < shape.colorStop.length; i++) {
                         const item = shape.colorStop[i];
                         let offset = $util$2.convertInt(item.offset);
@@ -5966,9 +5977,6 @@ var android = (function () {
             }
             const style = {};
             const layout = {};
-            const resource = {};
-            const mapNode = {};
-            const inherit = new Set();
             for (const tag in this._tagStyle) {
                 style[tag] = {};
                 layout[tag] = {};
@@ -6044,7 +6052,7 @@ var android = (function () {
                                                 if (compare.length > 0) {
                                                     for (const nodeId of ids) {
                                                         if (compare.includes(nodeId)) {
-                                                            if (found[attr] == null) {
+                                                            if (found[attr] === undefined) {
                                                                 found[attr] = [];
                                                             }
                                                             found[attr].push(nodeId);
@@ -6121,6 +6129,9 @@ var android = (function () {
                     }
                 } while (sorted.length > 0);
             }
+            const resource = {};
+            const mapNode = {};
+            const parentStyle = new Set();
             for (const tagName in style) {
                 const tagData = style[tagName];
                 const styleData = [];
@@ -6144,7 +6155,7 @@ var android = (function () {
             for (const tagName in resource) {
                 for (const group of resource[tagName]) {
                     for (const id of group.ids) {
-                        if (mapNode[id] == null) {
+                        if (mapNode[id] === undefined) {
                             mapNode[id] = { styles: [], attrs: [] };
                         }
                         mapNode[id].styles.push(group.name);
@@ -6154,7 +6165,7 @@ var android = (function () {
                 if (tagData) {
                     for (const attr in tagData) {
                         for (const id of tagData[attr]) {
-                            if (mapNode[id] == null) {
+                            if (mapNode[id] === undefined) {
                                 mapNode[id] = { styles: [], attrs: [] };
                             }
                             mapNode[id].attrs.push(attr);
@@ -6168,7 +6179,7 @@ var android = (function () {
                     const styles = mapNode[id].styles;
                     const attrs = mapNode[id].attrs;
                     if (styles.length > 0) {
-                        inherit.add(styles.join('.'));
+                        parentStyle.add(styles.join('.'));
                         node.attr('_', 'style', `@style/${styles.pop()}`);
                     }
                     if (attrs.length > 0) {
@@ -6176,15 +6187,15 @@ var android = (function () {
                     }
                 }
             }
-            for (const styles of inherit) {
+            for (const name of parentStyle) {
                 let parent = '';
-                styles.split('.').forEach(value => {
+                name.split('.').forEach(value => {
                     const match = value.match(/^(\w*?)(?:_(\d+))?$/);
                     if (match) {
-                        const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
+                        const tagData = resource[match[1].toUpperCase()][match[2] === undefined ? 0 : parseInt(match[2])];
                         tagData.name = value;
                         tagData.parent = parent;
-                        $resource.STORED.styles.set(value, tagData);
+                        $Resource.STORED.styles.set(value, tagData);
                         parent = value;
                     }
                 });
@@ -6192,7 +6203,7 @@ var android = (function () {
         }
         processDimensions(data) {
             const groups = {};
-            const dimens = $resource.STORED.dimens;
+            const dimens = $Resource.STORED.dimens;
             function getResourceKey(key, value) {
                 return dimens.has(key) && dimens.get(key) !== value ? generateId('dimens', key, 1) : key;
             }
@@ -6205,14 +6216,14 @@ var android = (function () {
                         return;
                     }
                 }
-                if (group[dimen] == null) {
+                if (group[dimen] === undefined) {
                     group[dimen] = [];
                 }
                 group[dimen].push(node);
             }
             for (const node of data.cache.visible) {
                 const nodeName = node.nodeName.toLowerCase();
-                if (groups[nodeName] == null) {
+                if (groups[nodeName] === undefined) {
                     groups[nodeName] = {};
                 }
                 for (const key of Object.keys($enum$2.BOX_STANDARD)) {
@@ -6246,7 +6257,7 @@ var android = (function () {
                     let content = value.content;
                     const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
                     let match;
-                    while ((match = pattern.exec(content)) != null) {
+                    while ((match = pattern.exec(content)) !== null) {
                         const key = getResourceKey(`${match[2]}_${match[3]}`, match[4]);
                         dimens.set(key, match[4]);
                         content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
@@ -6343,7 +6354,7 @@ var android = (function () {
         const result = [];
         const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
         let match;
-        while ((match = pattern.exec(xml)) != null) {
+        while ((match = pattern.exec(xml)) !== null) {
             result.push({
                 uri: match[1],
                 pathname: match[2],
@@ -6358,7 +6369,7 @@ var android = (function () {
         const result = [];
         const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
         let match;
-        while ((match = pattern.exec(xml)) != null) {
+        while ((match = pattern.exec(xml)) !== null) {
             result.push({
                 content: match[0].replace(match[1], '').trim(),
                 pathname: match[2],
@@ -6632,7 +6643,7 @@ var android = (function () {
                             if (!node.companion) {
                                 [node.nextElementSibling, node.previousElementSibling].some((sibling) => {
                                     const label = $dom$3.getNodeFromElement(sibling);
-                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom$3.getNodeFromElement(sibling.parentElement) : undefined;
+                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom$3.getNodeFromElement(sibling.parentElement) : null;
                                     if (label && label.visible && label.pageflow) {
                                         if ($util$4.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             label.android('labelFor', node.stringId);
@@ -7010,7 +7021,7 @@ var android = (function () {
                         const expand = item.data($const$5.EXT_NAME.TABLE, 'expand');
                         const exceed = !!item.data($const$5.EXT_NAME.TABLE, 'exceed');
                         const downsized = !!item.data($const$5.EXT_NAME.TABLE, 'downsized');
-                        if (expand != null) {
+                        if (typeof expand === 'boolean') {
                             if (expand) {
                                 const percent = $util$8.convertFloat(item.data($const$5.EXT_NAME.TABLE, 'percent')) / 100;
                                 if (percent > 0) {
@@ -7105,7 +7116,7 @@ var android = (function () {
             customize(build, widget, options) {
                 if (API_ANDROID[build]) {
                     const customizations = API_ANDROID[build].customizations;
-                    if (customizations[widget] == null) {
+                    if (customizations[widget] === undefined) {
                         customizations[widget] = {};
                     }
                     Object.assign(customizations[widget], options);

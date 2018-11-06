@@ -98,7 +98,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 stroke: cssAttribute(element, 'stroke')
             };
             const color = parseRGBA(cssAttribute(element, 'color')) || parseRGBA(cssInherit(element, 'color'));
-            const pattern = /url\(#(.*?)\)/;
+            const pattern = /url\("?#(.*?)"?\)/;
             for (const attr in values) {
                 const match = pattern.exec(values[attr]);
                 if (match) {

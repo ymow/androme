@@ -473,7 +473,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     $Resource.isBorderVisible(stored.borderRight) ||
                     $Resource.isBorderVisible(stored.borderBottom) ||
                     $Resource.isBorderVisible(stored.borderLeft) ||
-                    stored.borderRadius.length > 0
+                    stored.borderRadius
                 );
                 const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
                 if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
@@ -498,15 +498,17 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             case 'backgroundColor':
                                 return $util.isString(boxStyle.backgroundColor) ? [{ color: boxStyle.backgroundColor }] : false;
                             case 'radius':
-                                if (boxStyle.borderRadius.length === 1) {
-                                    if (boxStyle.borderRadius[0] !== '0px') {
-                                        return [{ radius: boxStyle.borderRadius[0] }];
+                                if (boxStyle.borderRadius) {
+                                    if (boxStyle.borderRadius.length === 1) {
+                                        if (boxStyle.borderRadius[0] !== '0px') {
+                                            return [{ radius: boxStyle.borderRadius[0] }];
+                                        }
                                     }
-                                }
-                                else if (boxStyle.borderRadius.length > 1) {
-                                    const result = {};
-                                    boxStyle.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                                    return [result];
+                                    else if (boxStyle.borderRadius.length > 1) {
+                                        const result = {};
+                                        boxStyle.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                                        return [result];
+                                    }
                                 }
                                 return false;
 
@@ -912,7 +914,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
                             !node.documentRoot &&
-                            !node.imageOrSvgElement &&
+                            !node.imageElement &&
+                            !node.svgElement &&
                             node.renderParent.tagName !== 'TABLE' &&
                             !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
@@ -1476,7 +1479,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     break;
             }
             if (hasStop) {
-                shape.colorStop.sort();
                 for (let i = 0; i < shape.colorStop.length; i++) {
                     const item = shape.colorStop[i];
                     let offset = $util.convertInt(item.offset);

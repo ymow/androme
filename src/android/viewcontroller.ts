@@ -312,7 +312,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         else if (previous) {
                             const items = rows[rows.length - 1];
                             const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
-                            const viewGroup = !current.styleElement && current.length > 0 && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
+                            const viewGroup = current.groupElement && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
                             const previousSibling = current.previousSibling();
                             const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
                             let connected = false;
@@ -349,7 +349,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         rowPreviousBottom = items[j];
                                     }
                                 }
-                                if (viewGroup || (!previous.styleElement && previous.length > 0 && i === nodes.length - 1)) {
+                                if (viewGroup || (previous.groupElement && i === nodes.length - 1)) {
                                     current.constraint.marginVertical = rowPreviousBottom.stringId;
                                 }
                                 current.anchor(mapLayout['topBottom'], rowPreviousBottom.stringId);
@@ -1626,7 +1626,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     if (current.constraint.marginVertical) {
                         const previous = this.findByStringId(current.constraint.marginVertical);
                         if (previous) {
-                            const offset = current.linear.top - previous.linear.bottom;
+                            let bottom = previous.linear.bottom;
+                            if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
+                                const elements = $dom.getElementsBetweenSiblings(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
+                                if (elements.length > 0) {
+                                    bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
+                                }
+                            }
+                            const offset = current.linear.top - bottom;
                             if (offset >= 1) {
                                 current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset);
                             }

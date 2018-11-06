@@ -308,10 +308,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     private _currentId = 0;
 
     constructor(children?: T[]) {
-        super();
-        if (Array.isArray(children)) {
-            this.replace(children);
-        }
+        super(children);
     }
 
     public append(node: T, delegate = true) {

@@ -1,3 +1,4 @@
+import Container from './base/container';
 import Node from './base/node';
 import NodeList from './base/nodelist';
 import NodeGroup from './base/nodegroup';
@@ -198,6 +199,7 @@ export function toString() {
 
 const lib = {
     base: {
+        Container,
         Node,
         NodeList,
         NodeGroup,

@@ -1,4 +1,4 @@
-/* android.widget 2.2.0
+/* android.widget 2.2.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -17,10 +17,10 @@ this.android.widget.menu = (function () {
     };
 
     var $enum = androme.lib.enumeration;
-    var $const_android = android.lib.constant;
-    var $util_android = android.lib.util;
     var $dom = androme.lib.dom;
-    var $resource_android = android.lib.base.Resource;
+    var $android_Resource = android.lib.base.Resource;
+    var $android_const = android.lib.constant;
+    var $android_util = android.lib.util;
     const VIEW_NAVIGATION = {
         MENU: 'menu',
         ITEM: 'item',
@@ -80,7 +80,7 @@ this.android.widget.menu = (function () {
                 return { output: '', complete: true, next: true };
             }
             const element = node.element;
-            const options = $util_android.createViewAttribute();
+            const options = $android_util.createViewAttribute();
             let nodeName = VIEW_NAVIGATION.ITEM;
             let title = '';
             let next = false;
@@ -140,14 +140,14 @@ this.android.widget.menu = (function () {
                     this.parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') === '') {
                         const style = $dom.getStyle(element);
-                        let src = $resource_android.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $const_android.DRAWABLE_PREFIX.MENU);
+                        let src = $android_Resource.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $android_const.DRAWABLE_PREFIX.MENU);
                         if (src !== '') {
                             options['android'].icon = `@drawable/${src}`;
                         }
                         else {
                             const image = node.find(item => item.imageElement);
                             if (image) {
-                                src = $resource_android.addImageSrcSet(image.element, $const_android.DRAWABLE_PREFIX.MENU);
+                                src = $android_Resource.addImageSrcSet(image.element, $android_const.DRAWABLE_PREFIX.MENU);
                                 if (src !== '') {
                                     options['android'].icon = `@drawable/${src}`;
                                 }
@@ -161,7 +161,7 @@ this.android.widget.menu = (function () {
             }
             if (node.android('title') === '') {
                 if (title !== '') {
-                    const name = $resource_android.addString(title, '', this.application.settings);
+                    const name = $android_Resource.addString(title, '', this.application.settings);
                     if (name !== '') {
                         title = `@string/${name}`;
                     }

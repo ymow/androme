@@ -1,4 +1,4 @@
-/* android.widget 2.2.0
+/* android.widget 2.2.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -33,11 +33,11 @@ this.android.widget.drawer = (function () {
 
     var $enum = androme.lib.enumeration;
     var $const = androme.lib.constant;
-    var $const_android = android.lib.constant;
     var $util = androme.lib.util;
-    var $util_android = android.lib.util;
     var $dom = androme.lib.dom;
-    var $resource_android = android.lib.base.Resource;
+    var $android_Resource = android.lib.base.Resource;
+    var $android_const = android.lib.constant;
+    var $android_util = android.lib.util;
     class Drawer extends androme.lib.base.Extension {
         constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -60,20 +60,20 @@ this.android.widget.drawer = (function () {
         }
         processNode() {
             const node = this.node;
-            const options = $util_android.createViewAttribute(this.options.self);
+            const options = $android_util.createViewAttribute(this.options.self);
             if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
                 $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
                 this.setResourceTheme();
             }
             else {
-                const optionsNavigationView = $util_android.createViewAttribute(this.options.navigationView);
+                const optionsNavigationView = $android_util.createViewAttribute(this.options.navigationView);
                 $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
                 const navView = node.item();
                 navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
                 navView.android('layout_height', 'match_parent');
                 navView.auto = false;
             }
-            const output = this.application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.DRAWER, node.depth, $resource_android.formatOptions(options, this.application.settings), 'match_parent', 'match_parent', node, true);
+            const output = this.application.viewController.renderNodeStatic($android_const.VIEW_SUPPORT.DRAWER, node.depth, $android_Resource.formatOptions(options, this.application.settings), 'match_parent', 'match_parent', node, true);
             node.documentRoot = true;
             node.rendered = true;
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
@@ -84,13 +84,13 @@ this.android.widget.drawer = (function () {
             const application = this.application;
             const node = this.node;
             if (application.renderQueue[node.nodeId]) {
-                const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $const_android.VIEW_SUPPORT.COORDINATOR);
+                const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
                 if (target) {
                     application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                     delete application.renderQueue[node.nodeId];
                 }
             }
-            const options = $util_android.createViewAttribute(this.options.navigation);
+            const options = $android_util.createViewAttribute(this.options.navigation);
             const menu = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
             const headerLayout = $util.optional($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
             if (menu !== '') {
@@ -103,18 +103,15 @@ this.android.widget.drawer = (function () {
                 $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
                 $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
                 $util.overwriteDefault(options, 'android', 'layout_gravity', node.localizeString('left'));
-                const output = application.viewController.renderNodeStatic($const_android.VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, $resource_android.formatOptions(options, this.application.settings), 'wrap_content', 'match_parent');
+                const output = application.viewController.renderNodeStatic($android_const.VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, $android_Resource.formatOptions(options, this.application.settings), 'wrap_content', 'match_parent');
                 application.addRenderQueue(node.id.toString(), [output]);
             }
         }
         afterInsert() {
             const node = this.node;
-            const element = $dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL);
-            if (element) {
-                const header = $dom.getNodeFromElement(element);
-                if (header && !header.hasHeight) {
-                    header.android('layout_height', 'wrap_content');
-                }
+            const header = $dom.getNodeFromElement($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
+            if (header && !header.hasHeight) {
+                header.android('layout_height', 'wrap_content');
             }
         }
         setResourceTheme() {

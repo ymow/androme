@@ -169,9 +169,9 @@ interface BoxStyle {
     borderRight: BorderAttribute;
     borderBottom: BorderAttribute;
     borderLeft: BorderAttribute;
-    borderRadius: string[];
     backgroundColor: string;
     background?: string;
+    borderRadius?: string[];
     backgroundImage?: string[];
     backgroundGradient?: Gradient[];
     backgroundSize: string[];

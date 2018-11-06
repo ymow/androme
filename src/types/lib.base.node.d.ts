@@ -37,8 +37,11 @@ declare global {
             readonly blockHeight: boolean;
             readonly tagName: string;
             readonly htmlElement: boolean;
-            readonly domElement: boolean;
             readonly styleElement: boolean;
+            readonly domElement: boolean;
+            readonly imageElement: boolean;
+            readonly svgElement: boolean;
+            readonly groupElement: boolean;
             readonly documentBody: boolean;
             readonly dataset: DOMStringMap;
             readonly extension: string;
@@ -72,9 +75,6 @@ declare global {
             readonly inlineStatic: boolean;
             readonly inlineText: boolean;
             readonly plainText: boolean;
-            readonly imageElement: boolean;
-            readonly svgElement: boolean;
-            readonly imageOrSvgElement: boolean;
             readonly lineBreak: boolean;
             readonly textElement: boolean;
             readonly block: boolean;

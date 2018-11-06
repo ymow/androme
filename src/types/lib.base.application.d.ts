@@ -30,7 +30,7 @@ declare global {
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
             setConstraints(): void;
             setResources(): void;
-            createCache(rootElement: HTMLElement): boolean;
+            createCache(layoutRoot: HTMLElement): boolean;
             createDocument(): void;
             writeFrameLayout(node: T, parent: T, children?: boolean): string;
             writeLinearLayout(node: T, parent: T, horizontal: boolean): string;

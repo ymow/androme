@@ -1,11 +1,11 @@
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
+import { BOX_STANDARD, CSS_STANDARD, USER_AGENT } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
 import Node from '../base/node';
 import Extension from '../base/extension';
 
 import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
-import { cssInherit, getStyle } from '../lib/dom';
+import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(): ExtensionResult {
@@ -209,7 +209,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
             }
-            if (!caption.hasWidth) {
+            if (!caption.hasWidth && !isUserAgent(USER_AGENT.EDGE)) {
                 if (caption.textElement) {
                     if (!caption.has('maxWidth')) {
                         caption.css('maxWidth', formatPX(caption.bounds.width));

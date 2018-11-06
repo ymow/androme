@@ -206,3 +206,7 @@ export const DRAWABLE_PREFIX = {
     MENU: 'ic_menu_',
     DIALOG: 'ic_dialog_'
 };
+
+if (androme.lib.dom.isUserAgent(androme.lib.enumeration.USER_AGENT.EDGE)) {
+    FONTREPLACE_ANDROID['consolas'] = 'monospace';
+}

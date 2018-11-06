@@ -70,8 +70,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 this.isBorderVisible(object.borderRight) ||
                 this.isBorderVisible(object.borderBottom) ||
                 this.isBorderVisible(object.borderLeft) ||
-                object.borderRadius.length > 0 ||
-                (Array.isArray(object.backgroundImage) && object.backgroundImage.length > 0)
+                object.backgroundImage ||
+                object.borderRadius ||
+                object.backgroundGradient
             )
         );
     }
@@ -153,7 +154,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 node.css('borderBottomRightRadius')
                             ];
                             if (top === right && right === bottom && bottom === left) {
-                                boxStyle.borderRadius = convertInt(top) === 0 ? [] : [top];
+                                boxStyle.borderRadius = convertInt(top) === 0 ? undefined : [top];
                             }
                             else {
                                 boxStyle.borderRadius = [top, right, bottom, left];
@@ -161,10 +162,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             break;
                         }
                         case 'backgroundColor': {
-                            if (!node.has('backgroundColor') && (
-                                    value === node.cssParent('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')
-                               ))
-                            {
+                            if (!node.has('backgroundColor') && (value === node.cssParent('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
                                 boxStyle.backgroundColor = '';
                             }
                             else {
@@ -279,11 +277,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     for (let i = 0; i < stopMatch.length; i += 3) {
                                         const rgba = stopMatch[i + 1];
                                         if (isString(rgba)) {
-                                            const color = parseRGBA(stopMatch[i + 1], rgba.startsWith('rgba') ? undefined : opacity);
+                                            const color = parseRGBA(rgba, rgba.startsWith('rgba') ? undefined : opacity);
                                             if (color && color.visible) {
                                                 gradient.colorStop.push({
                                                     color: color.valueRGBA,
-                                                    offset: stopMatch[i + 2],
+                                                    offset: stopMatch[i + 2] || '0%',
                                                     opacity: color.alpha
                                                 });
                                             }
@@ -305,7 +303,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                             images.push(match[0]);
                                         }
                                     }
-                                    boxStyle.backgroundImage = images;
+                                    if (images.length > 0) {
+                                        boxStyle.backgroundImage = images;
+                                    }
                                 }
                             }
                             break;

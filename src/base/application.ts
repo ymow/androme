@@ -244,11 +244,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 this.viewElements.add(element);
             }
         }
-        const rootElement = this.viewElements.values().next().value;
+        const layoutRoot = this.viewElements.values().next().value;
         const parseResume = () => {
             this.loading = false;
             if (this.settings.preloadImages) {
-                Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
+                Array.from(layoutRoot.getElementsByClassName('androme.preload')).forEach(element => layoutRoot.removeChild(element));
             }
             for (const [uri, image] of this.cacheImage.entries()) {
                 this.resourceHandler.imageAssets.set(uri, image);
@@ -282,12 +282,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         };
         if (this.settings.preloadImages) {
-            Array.from(rootElement.querySelectorAll('image')).forEach((item: SVGImageElement) => {
-                const uri = resolvePath(item.href.baseVal);
-                this.cacheImage.set(uri, {
-                    width: item.width.baseVal.value,
-                    height: item.height.baseVal.value,
-                    uri
+            Array.from(this.viewElements).forEach(element => {
+                element.querySelectorAll('svg image').forEach((image: SVGImageElement) => {
+                    if (image.href) {
+                        const uri = resolvePath(image.href.baseVal);
+                        if (uri) {
+                            this.cacheImage.set(uri, {
+                                width: image.width.baseVal.value,
+                                height: image.height.baseVal.value,
+                                uri
+                            });
+                        }
+                    }
                 });
             });
             for (const image of this.cacheImage.values()) {
@@ -301,19 +307,21 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     else {
                         imageElement.className = 'androme.preload';
                         imageElement.style.display = 'none';
-                        rootElement.appendChild(imageElement);
+                        layoutRoot.appendChild(imageElement);
                     }
                 }
             }
         }
         const images = Array.from(this.viewElements).map(element => {
             const incomplete: HTMLImageElement[] = [];
-            Array.from(element.querySelectorAll('IMG')).forEach((item: HTMLImageElement) => {
-                if (item.complete) {
-                    this.setImageCache(item);
-                }
-                else {
-                    incomplete.push(item);
+            Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
+                if (!(image instanceof SVGImageElement)) {
+                    if (image.complete) {
+                        this.setImageCache(image);
+                    }
+                    else {
+                        incomplete.push(image);
+                    }
                 }
             });
             return incomplete;
@@ -361,24 +369,24 @@ export default class Application<T extends Node> implements androme.lib.base.App
         };
     }
 
-    public createCache(rootElement: HTMLElement) {
+    public createCache(layoutRoot: HTMLElement) {
         let nodeTotal = 0;
-        if (rootElement === document.body) {
+        if (layoutRoot === document.body) {
             Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
         }
-        const elements = rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
+        const elements = layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
         this.nodeProcessing = undefined;
         this.cacheProcessing.delegateAppend = undefined;
         this.cacheProcessing.clear();
         for (const ext of this.extensions) {
-            ext.setTarget(undefined, undefined, rootElement);
+            ext.setTarget(undefined, undefined, layoutRoot);
             ext.beforeInit();
         }
-        const rootNode = this.insertNode(rootElement);
-        if (rootNode) {
-            rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body, this.viewController.delegateNodeInit);
-            rootNode.documentRoot = true;
-            this.nodeProcessing = rootNode;
+        const nodeRoot = this.insertNode(layoutRoot);
+        if (nodeRoot) {
+            nodeRoot.parent = new this.nodeObject(0, (layoutRoot === document.body ? layoutRoot : layoutRoot.parentElement) || document.body, this.viewController.delegateNodeInit);
+            nodeRoot.documentRoot = true;
+            this.nodeProcessing = nodeRoot;
         }
         else {
             return false;
@@ -409,10 +417,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     let valid = true;
                     let current = element.parentElement;
                     while (current) {
-                        if (current === rootElement) {
+                        if (current === layoutRoot) {
                             break;
                         }
-                        else if (current !== rootElement && this.viewElements.has(current)) {
+                        else if (current !== layoutRoot && this.viewElements.has(current)) {
                             valid = false;
                             break;
                         }
@@ -564,7 +572,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             sortAsc(this.cacheProcessing.list, 'depth', 'id');
             for (const ext of this.extensions) {
-                ext.setTarget(rootNode);
+                ext.setTarget(nodeRoot);
                 ext.afterInit();
             }
             return true;

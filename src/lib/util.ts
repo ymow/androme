@@ -196,7 +196,7 @@ export function includes(source: string | undefined, value: string, delimiter = 
 export function optional(obj: UndefNull<{}>, value: string, type?: string) {
     let valid = false;
     let result;
-    if (typeof obj === 'object') {
+    if (obj && typeof obj === 'object') {
         result = obj;
         const attrs = value.split('.');
         let i = 0;
@@ -311,15 +311,15 @@ export function searchObject(obj: StringMap, value: string | StringMap) {
         }
     }
     else {
-        let filter = (a: string): boolean => (a === value);
+        let filter = (a: string): boolean => a === value;
         if (/^\*.+\*$/.test(value)) {
-            filter = (a: string): boolean => (a.indexOf(value.replace(/\*/g, '')) !== -1);
+            filter = (a: string) => a.indexOf(value.replace(/\*/g, '')) !== -1;
         }
         else if (/^\*/.test(value)) {
-            filter = (a: string): boolean => (a.endsWith(value.replace(/\*/, '')));
+            filter = (a: string) => a.endsWith(value.replace(/\*/, ''));
         }
         else if (/\*$/.test(value)) {
-            filter = (a: string): boolean => (a.startsWith(value.replace(/\*/, '')));
+            filter = (a: string) => a.startsWith(value.replace(/\*/, ''));
         }
         for (const i in obj) {
             if (filter(i)) {

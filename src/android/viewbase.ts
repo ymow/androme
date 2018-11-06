@@ -394,12 +394,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }
                 else {
                     if (this.android('layout_width') !== '0px') {
-                        if (this.toInt('width') > 0 && (
-                                !this.inlineStatic ||
-                                renderParent.is($enum.NODE_STANDARD.GRID) ||
-                                !this.has('width', 0, { map: 'initial' })
-                           ))
-                        {
+                        if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is($enum.NODE_STANDARD.GRID) || !this.has('width', 0, { map: 'initial' }))) {
                             if (this.has('width', $enum.CSS_STANDARD.PERCENT)) {
                                 if (styleMap.width === '100%') {
                                     this.android('layout_width', 'match_parent', false);
@@ -848,11 +843,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                      [$dom.getLastElementChild(elements), 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]]
                         .forEach((item: [HTMLElement, string, number, number], index: number) => {
                             const node = $dom.getNodeFromElement<View>(item[0]);
-                            if (node && !node.lineBreak && (
-                                    node === this ||
-                                    node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]
-                            ))
-                            {
+                            if (node && !node.lineBreak && (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
                                 const marginOffset = renderParent[`margin${item[1]}`];
                                 if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
                                     node.modifyBox(item[2], null);
@@ -1058,7 +1049,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     })();
                     const elements = $dom.getElementsBetweenSiblings(
                         previous === null ? null
-                                          : (previous.length > 0 && !previous.styleElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement),
+                                          : (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement),
                         node.baseElement
                     )
                     .filter(element => {
@@ -1075,7 +1066,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
                                     return getPreviousBottom(previous.renderParent.renderChildren.slice());
                                 }
-                                else if (previous.layoutHorizontal && previous.length > 0 && !previous.styleElement && previous.renderChildren.some(item => !item.floating)) {
+                                else if (previous.layoutHorizontal && previous.groupElement && previous.renderChildren.some(item => !item.floating)) {
                                     return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                 }
                                 return previous.linear.bottom;
@@ -1180,7 +1171,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private alignRelativePosition() {
             const renderParent = this.renderParent;
-            if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
+            if ((this.inline || (this.imageElement && this.display === 'inline-block')) && !this.floating) {
                 const offset = this.toInt('verticalAlign');
                 if (offset !== 0) {
                     this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);

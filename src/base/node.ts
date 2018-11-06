@@ -858,6 +858,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         );
     }
 
+    get tagName() {
+        return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
+    }
+
     set element(value) {
         this._element = value;
     }
@@ -872,20 +876,32 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._baseElement || this.element;
     }
 
-    get tagName() {
-        return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
-    }
-
     get htmlElement() {
         return this._element instanceof HTMLElement;
+    }
+
+    get styleElement() {
+        return this.htmlElement || this.svgElement;
     }
 
     get domElement() {
         return this.styleElement || this.plainText;
     }
 
-    get styleElement() {
-        return this._element instanceof HTMLElement || this.svgElement;
+    get imageElement() {
+        return this.tagName === 'IMG';
+    }
+
+    get svgElement() {
+        return this.tagName === 'SVG';
+    }
+
+    get textElement() {
+        return this.plainText || this.inlineText;
+    }
+
+    get groupElement() {
+        return !this.domElement && this.length > 0;
     }
 
     get documentBody() {
@@ -1102,24 +1118,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._nodeName === 'PLAINTEXT';
     }
 
-    get imageElement() {
-        return this.tagName === 'IMG';
-    }
-
-    get svgElement() {
-        return this.tagName === 'SVG';
-    }
-
-    get imageOrSvgElement() {
-        return this.imageElement || this.svgElement;
-    }
-
     get lineBreak() {
         return this.tagName === 'BR';
-    }
-
-    get textElement() {
-        return this.plainText || this.inlineText;
     }
 
     get block() {

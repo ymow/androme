@@ -1,4 +1,4 @@
-/* android.widget 2.2.0
+/* android.widget 2.2.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -17,12 +17,12 @@ this.android.widget.coordinator = (function () {
     };
 
     var $enum = androme.lib.enumeration;
-    var $const_android = android.lib.constant;
     var $dom = androme.lib.dom;
+    var $android_const = android.lib.constant;
     class Coordinator extends androme.lib.base.Extension {
         processNode() {
             const node = this.node;
-            const output = this.application.viewController.renderGroup(node, this.parent, $const_android.VIEW_SUPPORT.COORDINATOR);
+            const output = this.application.viewController.renderGroup(node, this.parent, $android_const.VIEW_SUPPORT.COORDINATOR);
             node.apply(this.options[node.element.id]);
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
             node.excludeResource |= $enum.NODE_RESOURCE.ASSET;

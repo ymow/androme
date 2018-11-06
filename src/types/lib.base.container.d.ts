@@ -20,6 +20,10 @@ declare global {
                 some(predicate: IteratorPredicate<T, boolean>): boolean;
                 sort(predicate: (a: T, b: T) => number): this;
             }
+
+            export class Container<T> implements Container<T> {
+                public constructor(children?: T[]);
+            }
         }
     }
 }

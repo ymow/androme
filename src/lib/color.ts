@@ -139,6 +139,13 @@ const X11_CSS3 = {
     'LightSlateGray':       { 'hex': '#778899' },
     'SlateGray':            { 'hex': '#708090' },
     'DarkSlateGray':        { 'hex': '#2F4F4F' },
+    'LightGrey':            { 'hex': '#D3D3D3' },
+    'DarkGrey':             { 'hex': '#A9A9A9' },
+    'Grey':                 { 'hex': '#808080' },
+    'DimGrey':              { 'hex': '#696969' },
+    'LightSlateGrey':       { 'hex': '#778899' },
+    'SlateGrey':            { 'hex': '#708090' },
+    'DarkSlateGrey':        { 'hex': '#2F4F4F' },
     'Black':                { 'hex': '#000000' }
 };
 
@@ -208,7 +215,7 @@ function sortHSL(a: Color, b: Color) {
 }
 
 function formatRGBA(rgba: RGBA) {
-    return `rgb${rgba.a < 1 ? 'a' : ''}(${rgba.r}, ${rgba.g}, ${rgba.b}${rgba.a < 1 ? `, ${rgba.a.toFixed(2)}` : ''})`;
+    return `rgb${rgba.a < 255 ? 'a' : ''}(${rgba.r}, ${rgba.g}, ${rgba.b}${rgba.a < 255 ? `, ${(rgba.a / 255).toFixed(2)}` : ''})`;
 }
 
 function convertAlpha(value: string) {
@@ -263,7 +270,7 @@ export function getColorByShade(value: string) {
 export function convertRGBA(value: string) {
     value = value.replace(/#/g, '').trim();
     if (/[A-Za-z\d]{3,}/.test(value)) {
-        let a = 1;
+        let a = 255;
         switch (value.length) {
             case 4:
                 a = parseInt(value.charAt(3).repeat(2), 16);
@@ -274,10 +281,10 @@ export function convertRGBA(value: string) {
                 value += value.charAt(4);
                 break;
             default:
-                value = value.substring(0, 6);
                 if (value.length >= 8) {
                     a = parseInt(value.substring(6, 8), 16);
                 }
+                value = value.substring(0, 6);
                 break;
         }
         if (value.length === 6) {
@@ -294,7 +301,7 @@ export function convertRGBA(value: string) {
 
 export function parseRGBA(value: string, opacity = '1') {
     if (value && value !== 'initial' && value !== 'transparent') {
-        if (opacity === '') {
+        if (opacity.trim() === '') {
             opacity = '1';
         }
         if (value.charAt(0) === '#') {
@@ -306,7 +313,7 @@ export function parseRGBA(value: string, opacity = '1') {
         else if (!value.startsWith('rgb')) {
             const color = getColorByName(value);
             if (color && color.rgba) {
-                color.rgba.a = parseFloat(opacity);
+                color.rgba.a = parseFloat(convertAlpha(opacity));
                 value = formatRGBA(color.rgba);
             }
         }
