@@ -15,6 +15,8 @@ import View from './view';
 
 import { getXmlNs, replaceTab, replaceUnit } from './lib/util';
 
+import $NodeList = androme.lib.base.NodeList;
+
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
@@ -61,12 +63,12 @@ function caseInsensitive(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileHandler<T extends View> extends androme.lib.base.File<T> {
+export default class FileHandler<T extends View> extends androme.lib.base.File<T> implements android.lib.base.File<T> {
     constructor(public settings: SettingsAndroid) {
         super();
     }
 
-    public saveAllToDisk(data: ViewData<androme.lib.base.NodeList<T>>) {
+    public saveAllToDisk(data: ViewData<$NodeList<T>>) {
         const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -84,7 +86,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ViewData<androme.lib.base.NodeList<T>>, saveToDisk = false) {
+    public layoutAllToXml(data: ViewData<$NodeList<T>>, saveToDisk = false) {
         const result = {};
         const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];

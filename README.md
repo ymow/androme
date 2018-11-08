@@ -339,7 +339,7 @@ The attributes "include" and "include-end" can only be applied to elements which
 
 ### Generated from HTML and CSS
 
-<img src="demos/android/form.png" alt="form" /> <img src="demos/android/form_rtl.png" alt="form: rtl" />
+<img src="demos/android/form.png" alt="form" />
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>

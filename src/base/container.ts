@@ -1,4 +1,4 @@
-export default class Container<T> implements androme.lib.base.Container<T>, Iterable<T> {
+export default abstract class Container<T> implements androme.lib.base.Container<T>, Iterable<T> {
     private _children: T[] = [];
 
     public constructor(children?: T[]) {
@@ -40,6 +40,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
 
     public append(item: T) {
         this._children.push(item);
+        return this;
     }
 
     public remove(item: T) {
@@ -57,6 +58,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
 
     public replace(item: T[]) {
         this._children = item;
+        return this;
     }
 
     public duplicate() {

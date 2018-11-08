@@ -7,7 +7,7 @@ import { hasValue } from '../lib/util';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {
-        for (const node of Array.from(this.application.cacheProcessing.elements)) {
+        for (const node of this.application.cacheProcessing.elements) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 if (element instanceof HTMLInputElement) {

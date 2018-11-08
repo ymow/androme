@@ -59,11 +59,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         return '';
     }
 
-    public static isBorderVisible(border?: BorderAttribute) {
+    public static isBorderVisible(border: BorderAttribute | undefined) {
         return border !== undefined && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
     }
 
-    public static hasDrawableBackground(object?: BoxStyle) {
+    public static hasDrawableBackground(object: BoxStyle | undefined) {
         return (
             object !== undefined && (
                 this.isBorderVisible(object.borderTop) ||
@@ -82,21 +82,17 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public application: Application<T>;
     public imageAssets = new Map<string, ImageAsset>();
 
-    protected constructor(public file: File<T>) {
-        this.file.stored = Resource.STORED;
+    protected constructor(public fileHandler: File<T>) {
+        this.fileHandler.stored = Resource.STORED;
     }
 
     public abstract finalize(viewData: ViewData<NodeList<T>>): FunctionVoid[];
-
-    public addFile(pathname: string, filename: string, content = '', uri = '') {
-        this.file.addFile(pathname, filename, content, uri);
-    }
 
     public reset() {
         for (const name in Resource.STORED) {
             Resource.STORED[name] = new Map();
         }
-        this.file.reset();
+        this.fileHandler.reset();
     }
 
     public setBoxStyle() {
@@ -319,10 +315,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                 }
                 const borderTop = JSON.stringify(boxStyle.borderTop);
-                if (borderTop === JSON.stringify(boxStyle.borderRight) &&
-                    borderTop === JSON.stringify(boxStyle.borderBottom) &&
-                    borderTop === JSON.stringify(boxStyle.borderLeft))
-                {
+                if (borderTop === JSON.stringify(boxStyle.borderRight) && borderTop === JSON.stringify(boxStyle.borderBottom) && borderTop === JSON.stringify(boxStyle.borderLeft)) {
                     boxStyle.border = boxStyle.borderTop;
                 }
                 setElementCache(node.element, 'boxStyle', boxStyle);
@@ -416,7 +409,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, NODE_RESOURCE.BOX_SPACING, 'boxSpacing')) {
                 const boxSpacing = getBoxSpacing(node.element);
-                const result = {};
+                const result: StringMap = {};
                 for (const attr in boxSpacing) {
                     if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
                         result[attr] = '0px';
@@ -526,11 +519,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         if (inlineTrim) {
                             const original = value;
                             value = value.trim();
-                            if (previousSibling &&
-                                !previousSibling.block &&
-                                !previousSibling.lineBreak &&
-                                !previousSpaceEnd && /^\s+/.test(original))
-                            {
+                            if (previousSibling && !previousSibling.block && !previousSibling.lineBreak && !previousSpaceEnd && /^\s+/.test(original)) {
                                 value = '&#160;' + value;
                             }
                             if (nextSibling && !nextSibling.lineBreak && /\s+$/.test(original)) {
@@ -539,13 +528,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                         else {
                             if (!/^\s+$/.test(value)) {
-                                value = value.replace(/^\s+/, (
+                                value = value.replace(/^\s+/,
                                     previousSibling && (
                                         previousSibling.block ||
                                         previousSibling.lineBreak ||
                                         (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
                                         (node.multiLine && hasLineBreak(element))
-                                    ) ? '' : '&#160;')
+                                    ) ? '' : '&#160;'
                                 );
                                 value = value.replace(/\s+$/, node.css('display') === 'table-cell' || (nextSibling && nextSibling.lineBreak) ? '' : '&#160;');
                             }

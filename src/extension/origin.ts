@@ -13,7 +13,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
             node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
             node.setBounds(true);
         }
-        for (const node of Array.from(this.application.cacheProcessing.elements)) {
+        for (const node of this.application.cacheProcessing.elements) {
             const outside = node.some(current => {
                 if (current.pageflow) {
                     return (

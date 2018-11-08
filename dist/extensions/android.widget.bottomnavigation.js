@@ -1,4 +1,4 @@
-/* android.widget 2.2.1
+/* android.widget 2.2.2
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -54,7 +54,7 @@ this.android.widget.bottomnavigation = (function () {
             node.render(parent);
             node.nodeType = $enum.NODE_STANDARD.BLOCK;
             node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-            this.setResourceTheme();
+            this.setStyleTheme();
             return { output, complete: true };
         }
         beforeInsert() {
@@ -76,7 +76,7 @@ this.android.widget.bottomnavigation = (function () {
                 renderParent.android('layout_height', 'match_parent');
             }
         }
-        setResourceTheme() {
+        setStyleTheme() {
             const options = Object.assign({}, this.options.resource);
             $util.overwriteDefault(options, 'appTheme', 'AppTheme');
             $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');

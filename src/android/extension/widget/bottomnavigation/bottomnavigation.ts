@@ -19,7 +19,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         name: string,
         framework: number,
         tagNames?: string[],
-        options?: {})
+        options?: ExternalData)
     {
         super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);
@@ -47,7 +47,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         node.render(parent);
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-        this.setResourceTheme();
+        this.setStyleTheme();
         return { output, complete: true };
     }
 
@@ -72,7 +72,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         }
     }
 
-    private setResourceTheme() {
+    private setStyleTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
         $util.overwriteDefault(options, 'appTheme', 'AppTheme');
         $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');

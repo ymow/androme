@@ -42,7 +42,7 @@ export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 
-export function createViewAttribute(options?: {}): ViewAttribute {
+export function createViewAttribute(options?: ExternalData): ViewAttribute {
     return Object.assign({ android: {}, app: {} }, typeof options === 'object' ? options : {});
 }
 
@@ -95,6 +95,6 @@ export function replaceRTL(value: string, { supportRTL = true, targetAPI = BUILD
     return value;
 }
 
-export function getXmlNs(...value: string[]) {
-    return value.map(name => XMLNS_ANDROID[name] ? `xmlns:${value}="${XMLNS_ANDROID[name]}"` : '').filter(result => result).join(' ');
+export function getXmlNs(...values: string[]) {
+    return values.map(name => XMLNS_ANDROID[name] ? `xmlns:${name}="${XMLNS_ANDROID[name]}"` : '').filter(result => result).join(' ');
 }

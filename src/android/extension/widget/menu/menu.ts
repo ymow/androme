@@ -50,6 +50,18 @@ function hasInputType(node: $View, value: string) {
     return node.some(item => (<HTMLInputElement> item.element).type === value);
 }
 
+function parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: ViewAttribute) {
+    for (const attr in element.dataset) {
+        const value = element.dataset[attr];
+        if (value && validator[attr]) {
+            const match = value.match(validator[attr]);
+            if (match) {
+                options['android'][attr] = Array.from(new Set(match)).join('|');
+            }
+        }
+    }
+}
+
 export default class Menu<T extends $View> extends androme.lib.base.extensions.Nav<T> {
     public condition() {
         return this.included();
@@ -140,7 +152,7 @@ export default class Menu<T extends $View> extends androme.lib.base.extensions.N
         }
         switch (nodeName) {
             case VIEW_NAVIGATION.ITEM:
-                this.parseDataSet(VALIDATE_ITEM, element, options);
+                parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
                     const style = $dom.getStyle(element);
                     let src = $android_Resource.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.DRAWABLE_PREFIX.MENU);
@@ -159,7 +171,7 @@ export default class Menu<T extends $View> extends androme.lib.base.extensions.N
                 }
                 break;
             case VIEW_NAVIGATION.GROUP:
-                this.parseDataSet(VALIDATE_GROUP, element, options);
+                parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }
         if (node.android('title') === '') {
@@ -197,18 +209,6 @@ export default class Menu<T extends $View> extends androme.lib.base.extensions.N
         super.afterRender();
         if (this.included(<HTMLElement> node.element)) {
             this.application.layoutProcessing.pathname = 'res/menu';
-        }
-    }
-
-    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: ViewAttribute) {
-        for (const attr in element.dataset) {
-            const value = element.dataset[attr];
-            if (value && validator[attr]) {
-                const match = value.match(validator[attr]);
-                if (match) {
-                    options['android'][attr] = Array.from(new Set(match)).join('|');
-                }
-            }
         }
     }
 }

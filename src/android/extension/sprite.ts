@@ -11,11 +11,11 @@ import $util = androme.lib.util;
 export default class <T extends View> extends androme.lib.base.extensions.Sprite<T> {
     public processNode(): ExtensionResult {
         const node = this.node as T;
-        const parent = this.parent as T;
         const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
         let output = '';
         let container: T | undefined;
         if (image && image.uri && image.position) {
+            const parent = this.parent as T;
             container = new View(this.application.cacheProcessing.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
             container.siblingIndex = node.siblingIndex;
             container.nodeName = node.nodeName;

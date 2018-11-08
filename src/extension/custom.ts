@@ -9,7 +9,7 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
         name: string,
         framework: number,
         tagNames?: string[],
-        options?: {})
+        options?: ExternalData)
     {
         super(name, framework, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);

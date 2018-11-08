@@ -1,4 +1,4 @@
-/* android.widget 2.2.1
+/* android.widget 2.2.2
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -63,7 +63,7 @@ this.android.widget.drawer = (function () {
             const options = $android_util.createViewAttribute(this.options.self);
             if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
                 $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-                this.setResourceTheme();
+                this.setStyleTheme();
             }
             else {
                 const optionsNavigationView = $android_util.createViewAttribute(this.options.navigationView);
@@ -114,7 +114,7 @@ this.android.widget.drawer = (function () {
                 header.android('layout_height', 'wrap_content');
             }
         }
-        setResourceTheme() {
+        setStyleTheme() {
             const options = Object.assign({}, this.options.resource);
             $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
             $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');

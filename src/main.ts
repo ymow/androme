@@ -90,14 +90,14 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
         return main.parseDocument(...elements);
     }
     return {
-        then: (callbackfn: () => void) => {
+        then: (callback: () => void) => {
             if (!main) {
                 alert('ERROR: Framework not installed.');
             }
             else if (main.closed) {
                 if (confirm('ERROR: Document is closed. Reset and rerun?')) {
                     main.reset();
-                    parseDocument.apply(null, arguments).then(callbackfn);
+                    parseDocument.apply(null, arguments).then(callback);
                 }
             }
         }
@@ -153,7 +153,7 @@ export function getExtension(name: string) {
     return main && main.getExtension(name);
 }
 
-export function ext(module: Extension<T> | string, options?: {}) {
+export function ext(module: Extension<T> | string, options?: ExternalData) {
     if (module instanceof Extension) {
         return registerExtension(module);
     }

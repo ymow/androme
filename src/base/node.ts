@@ -675,11 +675,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         if (!['static', 'initial'].includes(parent.position)) {
                             const top = convertInt(this.top);
                             const left = convertInt(this.left);
-                            if ((top >= 0 && left >= 0) ||
-                                !negative ||
-                                (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) ||
-                                this.imageElement)
-                            {
+                            if ((top >= 0 && left >= 0) || !negative || (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) || this.imageElement) {
                                 if (negative &&
                                     !parent.documentRoot &&
                                     top !== 0 &&
@@ -734,13 +730,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
         while (element) {
             const node = Node.getNodeFromElement(element);
-            if (node &&
-                !(node.lineBreak && !lineBreak) &&
-                !(node.excluded && !excluded) && (
-                    (pageflow && node.pageflow) ||
-                    (!pageflow && node.siblingflow)
-               ))
-            {
+            if (node && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded) && ((pageflow && node.pageflow) || (!pageflow && node.siblingflow))) {
                 return node;
             }
             element = <Element> element.previousSibling;
@@ -759,11 +749,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
         while (element) {
             const node = Node.getNodeFromElement(element);
-            if (node &&
-                !(node.lineBreak && !lineBreak) &&
-                !(node.excluded && !excluded) &&
-                (pageflow && node.pageflow || !pageflow && node.siblingflow))
-            {
+            if (node && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded) && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
                 return node;
             }
             element = <Element> element.nextSibling;
@@ -800,20 +786,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             this._overflow = 0;
             if (this.styleElement) {
                 const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-                if (this.toInt('width') > 0 && (
-                        overflow === 'scroll' ||
-                        overflowX === 'scroll' ||
-                        (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
-                   ))
-                {
+                if (this.toInt('width') > 0 && (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth))) {
                     this._overflow |= NODE_ALIGNMENT.HORIZONTAL;
                 }
-                if (this.toInt('height') > 0 && (
-                        overflow === 'scroll' ||
-                        overflowY === 'scroll' ||
-                        (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
-                   ))
-                {
+                if (this.toInt('height') > 0 && (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight))) {
                     this._overflow |= NODE_ALIGNMENT.VERTICAL;
                 }
             }

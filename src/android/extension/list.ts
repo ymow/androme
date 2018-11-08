@@ -6,7 +6,7 @@ import { NODE_ANDROID } from '../lib/constant';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 
-import { delimitUnit } from '../lib/util';
+import { createViewAttribute, delimitUnit } from '../lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -94,11 +94,11 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     }
                 })();
                 let layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
-                const options = {
+                const options = createViewAttribute({
                     android: {
                         layout_columnWeight: columnWeight
                     }
-                };
+                });
                 if (positionInside) {
                     if (layoutMarginLeft !== '') {
                         layoutMarginLeft = delimitUnit(node.nodeName, node.localizeString('margin_left'), layoutMarginLeft, settings);

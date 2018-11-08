@@ -1,6 +1,5 @@
 type ExternalData = ObjectMap<any>;
 type TemplateData = ObjectMap<any>;
-type TemplateItemData = ArrayObject<ObjectMap<any[]>>;
 
 interface Asset {
     uri?: string;
@@ -16,25 +15,6 @@ interface ImageAsset extends Asset {
     width: number;
     height: number;
     position?: Point;
-}
-
-interface SvgDefs<T, U> {
-    image: T[];
-    clipPath: Map<string, U[]>;
-    gradient: Map<string, Gradient>;
-}
-
-interface SvgTransformAttributes {
-    translateX: number;
-    translateY: number;
-    scaleX: number;
-    scaleY: number;
-    skewX: number;
-    skewY: number;
-    rotateAngle: number;
-    rotateX: number;
-    rotateY: number;
-    origin?: BoxPosition;
 }
 
 interface Gradient {

@@ -30,17 +30,8 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     public readonly queue: FileAsset[] = [];
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
-    public abstract layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
-    public abstract resourceAllToXml(saveToDisk?: boolean): StringMap;
-    public abstract resourceStringToXml(saveToDisk?: boolean): string;
-    public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;
-    public abstract resourceFontToXml(saveToDisk?: boolean): string;
-    public abstract resourceColorToXml(saveToDisk?: boolean): string;
-    public abstract resourceStyleToXml(saveToDisk?: boolean): string;
-    public abstract resourceDimenToXml(saveToDisk?: boolean): string;
-    public abstract resourceDrawableToXml(saveToDisk?: boolean): string;
 
-    public addFile(pathname: string, filename: string, content: string, uri: string) {
+    public addAsset(pathname: string, filename: string, content = '', uri: string = '') {
         if (content !== '' || uri !== '') {
             const index = this.queue.findIndex(item => item.pathname === pathname && item.filename === filename);
             if (index !== -1) {

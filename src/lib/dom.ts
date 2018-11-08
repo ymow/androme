@@ -187,13 +187,7 @@ export function cssFromParent(element: Element, attr: string) {
     if (isStyleElement(element) && element.parentElement) {
         const node = getNodeFromElement<T>(element);
         const style = getStyle(element);
-        return (
-            style &&
-            style[attr] === getStyle(element.parentElement)[attr] && (
-                !node ||
-                !node.styleMap[attr]
-            )
-        );
+        return style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]);
     }
     return false;
 }
@@ -359,11 +353,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
                     return true;
                 }
             }
-            else if (
-                item instanceof HTMLElement &&
-                item.childNodes.length > 0 &&
-                findFreeForm(Array.from(item.childNodes)))
-            {
+            else if (item instanceof HTMLElement && item.childNodes.length > 0 && findFreeForm(Array.from(item.childNodes))) {
                 return true;
             }
             return false;
@@ -423,13 +413,7 @@ export function hasLineBreak(element: Element) {
 export function isLineBreak(element: Element, excluded = true) {
     const node = getNodeFromElement<T>(element);
     if (node) {
-        return (
-            node.tagName === 'BR' ||
-            (excluded && node.block && (
-                node.excluded ||
-                node.textContent.trim() === '')
-            )
-        );
+        return node.tagName === 'BR' || (excluded && node.block && (node.excluded || node.textContent.trim() === ''));
     }
     return false;
 }
@@ -495,11 +479,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
                                 const style = getStyle(item);
                                 const float = style.cssFloat;
                                 const position = style.position;
-                                return (
-                                    (position !== 'static' && position !== 'initial') ||
-                                    float === 'left' ||
-                                    float === 'right'
-                                );
+                                return (position !== 'static' && position !== 'initial') || float === 'left' || float === 'right';
                             });
                         }
                     }

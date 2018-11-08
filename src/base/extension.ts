@@ -21,7 +21,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         public readonly name: string,
         public readonly framework: number,
         tagNames?: string[],
-        options?: {})
+        options?: ExternalData)
     {
         if (Array.isArray(tagNames)) {
             this.tagNames = tagNames.map(value => value.trim().toUpperCase());

@@ -21,7 +21,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         name: string,
         framework: number,
         tagNames?: string[],
-        options?: {})
+        options?: ExternalData)
     {
         super(name, framework, tagNames, options);
         this.documentRoot = true;
@@ -48,7 +48,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const options = $android_util.createViewAttribute(this.options.self);
         if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            this.setResourceTheme();
+            this.setStyleTheme();
         }
         else {
             const optionsNavigationView = $android_util.createViewAttribute(this.options.navigationView);
@@ -116,7 +116,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         }
     }
 
-    private setResourceTheme() {
+    private setStyleTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
         $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');

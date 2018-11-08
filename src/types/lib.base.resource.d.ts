@@ -5,15 +5,14 @@ declare global {
             cache: NodeList<T>;
             application: Application<T>;
             imageAssets: Map<string, ImageAsset>;
-            file: File<T>;
-            setImageSource(): void;
+            fileHandler: File<T>;
             finalize(viewData: ViewData<NodeList<T>>): FunctionVoid[];
-            addFile(pathname: string, filename: string, content?: string, uri?: string): void;
             reset(): void;
             setBoxSpacing(): void;
             setBoxStyle(): void;
             setFontStyle(): void;
             setValueString(): void;
+            setImageSource(): void;
             setOptionArray(): void;
         }
 
@@ -21,9 +20,9 @@ declare global {
             public static STORED: ResourceMap;
             public static getSvgTransform(element: SVGGraphicsElement): SvgTransformAttributes;
             public static insertStoredAsset(asset: string, name: string, value: any): string;
-            public static isBorderVisible(border?: BorderAttribute): boolean;
-            public static hasDrawableBackground(object?: BoxStyle): boolean;
-            constructor(file: File<T>);
+            public static isBorderVisible(border: BorderAttribute | undefined): boolean;
+            public static hasDrawableBackground(object: BoxStyle | undefined): boolean;
+            constructor(fileHandler: File<T>);
         }
     }
 }

@@ -39,6 +39,7 @@ let initialized = false;
 let application: androme.lib.base.Application<T>;
 let viewController: ViewController<T>;
 let resourceHandler: ResourceHandler<T>;
+let fileHandler: FileHandler<T>;
 
 let settings: SettingsAndroid;
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
@@ -72,7 +73,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
+                    return fileHandler.layoutAllToXml(main.viewData, saveToDisk);
                 }
             }
             return '';
@@ -81,7 +82,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceAllToXml(saveToDisk);
+                    return fileHandler.resourceAllToXml(saveToDisk);
                 }
             }
             return '';
@@ -90,7 +91,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceStringToXml(saveToDisk);
+                    return fileHandler.resourceStringToXml(saveToDisk);
                 }
             }
             return '';
@@ -99,7 +100,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+                    return fileHandler.resourceStringArrayToXml(saveToDisk);
                 }
             }
             return '';
@@ -108,7 +109,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceFontToXml(saveToDisk);
+                    return fileHandler.resourceFontToXml(saveToDisk);
                 }
             }
             return '';
@@ -117,7 +118,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceColorToXml(saveToDisk);
+                    return fileHandler.resourceColorToXml(saveToDisk);
                 }
             }
             return '';
@@ -126,7 +127,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceStyleToXml(saveToDisk);
+                    return fileHandler.resourceStyleToXml(saveToDisk);
                 }
             }
             return '';
@@ -135,7 +136,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceDimenToXml(saveToDisk);
+                    return fileHandler.resourceDimenToXml(saveToDisk);
                 }
             }
             return '';
@@ -144,7 +145,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return resourceHandler.file.resourceDrawableToXml(saveToDisk);
+                    return fileHandler.resourceDrawableToXml(saveToDisk);
                 }
             }
             return '';
@@ -153,7 +154,7 @@ const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
         settings = Object.assign({}, SETTINGS);
-        const fileHandler = new FileHandler<T>(settings);
+        fileHandler = new FileHandler<T>(settings);
         application = new androme.lib.base.Application(framework);
         viewController = new ViewController<T>();
         resourceHandler = new ResourceHandler<T>(fileHandler);

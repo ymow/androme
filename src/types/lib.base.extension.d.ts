@@ -31,7 +31,7 @@ declare global {
         }
 
         export class Extension<T extends Node> implements Extension<T> {
-            constructor(name: string, framework: number, tagNames?: string[], options?: {});
+            constructor(name: string, framework: number, tagNames?: string[], options?: ExternalData);
         }
 
         namespace extensions {

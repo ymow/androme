@@ -1,4 +1,4 @@
-/* android.widget 2.2.1
+/* android.widget 2.2.2
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -56,6 +56,17 @@ this.android.widget.menu = (function () {
     };
     function hasInputType(node, value) {
         return node.some(item => item.element.type === value);
+    }
+    function parseDataSet(validator, element, options) {
+        for (const attr in element.dataset) {
+            const value = element.dataset[attr];
+            if (value && validator[attr]) {
+                const match = value.match(validator[attr]);
+                if (match) {
+                    options['android'][attr] = Array.from(new Set(match)).join('|');
+                }
+            }
+        }
     }
     class Menu extends androme.lib.base.extensions.Nav {
         condition() {
@@ -137,7 +148,7 @@ this.android.widget.menu = (function () {
             }
             switch (nodeName) {
                 case VIEW_NAVIGATION.ITEM:
-                    this.parseDataSet(VALIDATE_ITEM, element, options);
+                    parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') === '') {
                         const style = $dom.getStyle(element);
                         let src = $android_Resource.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $android_const.DRAWABLE_PREFIX.MENU);
@@ -156,7 +167,7 @@ this.android.widget.menu = (function () {
                     }
                     break;
                 case VIEW_NAVIGATION.GROUP:
-                    this.parseDataSet(VALIDATE_GROUP, element, options);
+                    parseDataSet(VALIDATE_GROUP, element, options);
                     break;
             }
             if (node.android('title') === '') {
@@ -185,17 +196,6 @@ this.android.widget.menu = (function () {
             super.afterRender();
             if (this.included(node.element)) {
                 this.application.layoutProcessing.pathname = 'res/menu';
-            }
-        }
-        parseDataSet(validator, element, options) {
-            for (const attr in element.dataset) {
-                const value = element.dataset[attr];
-                if (value && validator[attr]) {
-                    const match = value.match(validator[attr]);
-                    if (match) {
-                        options['android'][attr] = Array.from(new Set(match)).join('|');
-                    }
-                }
             }
         }
     }

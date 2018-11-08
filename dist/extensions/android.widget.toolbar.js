@@ -1,4 +1,4 @@
-/* android.widget 2.2.1
+/* android.widget 2.2.2
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -59,9 +59,7 @@ this.android.widget.toolbar = (function () {
                 });
                 if (element.dataset.target) {
                     const target = document.getElementById(element.dataset.target);
-                    if (target &&
-                        element.parentElement !== target &&
-                        !$util.includes(target.dataset.ext, WIDGET_NAME.COORDINATOR)) {
+                    if (target && element.parentElement !== target && !$util.includes(target.dataset.ext, WIDGET_NAME.COORDINATOR)) {
                         this.application.viewElements.add(element);
                     }
                 }
@@ -200,7 +198,7 @@ this.android.widget.toolbar = (function () {
                         appBarOverlay = optionsAppBar['android'].theme;
                     }
                     optionsAppBar['android'].theme = '@style/AppTheme.AppBarOverlay';
-                    this.setResourceTheme(appBarOverlay, popupOverlay);
+                    this.setStyleTheme(appBarOverlay, popupOverlay);
                 }
                 else {
                     $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
@@ -273,10 +271,10 @@ this.android.widget.toolbar = (function () {
                 node.app('menu', optionsToolbar['app'].menu);
             }
         }
-        setResourceTheme(appBarOverlay, popupOverlay) {
+        setStyleTheme(appBarOverlay, popupOverlay) {
             const options = Object.assign({}, this.options.resource);
-            $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-            $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+            $util.overwriteDefault(options, 'appTheme', 'AppTheme');
+            $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
             const data = {
                 'appTheme': options.appTheme,
                 'parentTheme': options.parentTheme,

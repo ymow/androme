@@ -6,9 +6,9 @@ declare global {
                 readonly length: number;
                 [Symbol.iterator](): Iterator<T>;
                 item(index?: number, value?: T): T | undefined;
-                append(item: T): void;
+                append(item: T): this;
                 remove(item: T): T[];
-                replace(item: T[]): void;
+                replace(item: T[]): this;
                 contains(item: T): boolean;
                 duplicate(): T[];
                 clear(): this;
@@ -19,10 +19,6 @@ declare global {
                 every(predicate: IteratorPredicate<T, boolean>): boolean;
                 some(predicate: IteratorPredicate<T, boolean>): boolean;
                 sort(predicate: (a: T, b: T) => number): this;
-            }
-
-            export class Container<T> implements Container<T> {
-                public constructor(children?: T[]);
             }
         }
     }
