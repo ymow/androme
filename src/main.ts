@@ -15,6 +15,7 @@ import Extension from './base/extension';
 
 import Accessibility from './extension/accessibility';
 import Button from './extension/button';
+import CssGrid from './extension/cssgrid';
 import Custom from './extension/custom';
 import External from './extension/external';
 import Grid from './extension/grid';
@@ -216,6 +217,7 @@ const lib = {
         extensions: {
             Accessibility,
             Button,
+            CssGrid,
             Custom,
             External,
             Grid,

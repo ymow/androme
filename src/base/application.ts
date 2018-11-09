@@ -255,17 +255,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const element of this.viewElements as Set<HTMLElement>) {
                 if (this.appName === '') {
-                    if (element.id === '') {
-                        element.id = 'untitled';
-                    }
-                    this.appName = element.id;
+                    this.appName = element.id || 'untitled';
                 }
                 let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${this.viewController.localSettings.layout.fileExtension}$`), '');
                 if (filename === '') {
-                    if (element.id === '') {
-                        element.id = `document_${this.size}`;
-                    }
-                    filename = element.id;
+                    filename = element.id || `document_${this.size}`;
                 }
                 const iteration = convertInt(element.dataset.iteration) + 1;
                 element.dataset.iteration = iteration.toString();
@@ -1033,8 +1027,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             }
                                             return false;
                                         });
-                                        if ((this.settings.collapseUnattributedElements &&
-                                            !nodeY.documentRoot &&
+                                        if (nodeY.documentRoot && targeted.length === 1) {
+                                            nodeY.hide();
+                                            continue;
+                                        }
+                                        else if ((this.settings.collapseUnattributedElements &&
                                             !hasValue(nodeY.element.id) &&
                                             !hasValue(nodeY.dataset.ext) &&
                                             !hasValue(nodeY.dataset.target) &&
@@ -1043,22 +1040,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             !backgroundVisible &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
                                             nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
-                                            !this.viewController.hasAppendProcessing(nodeY.id)) ||
-                                            (nodeY.documentRoot && targeted.length === 1))
+                                            !this.viewController.hasAppendProcessing(nodeY.id)))
                                         {
                                             const child = nodeY.item(0) as T;
                                             child.documentRoot = nodeY.documentRoot;
                                             child.siblingIndex = nodeY.siblingIndex;
-                                            if (parentY.id !== 0) {
-                                                child.parent = parentY;
-                                            }
-                                            if (targeted.length === 0) {
-                                                nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
-                                                child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
-                                                child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
-                                                child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
-                                                child.modifyBox(BOX_STANDARD.MARGIN_LEFT, nodeY.paddingLeft);
-                                            }
+                                            child.parent = parentY;
+                                            nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_LEFT, nodeY.paddingLeft);
                                             nodeY.hide();
                                             axisY[k] = child;
                                             k--;

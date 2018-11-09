@@ -9,6 +9,7 @@ const settings: SettingsAndroid = {
         'androme.custom',
         'androme.accessibility',
         'androme.sprite',
+        'androme.css-grid',
         'androme.list',
         'androme.table',
         'androme.grid',

@@ -37,6 +37,7 @@ declare global {
         namespace extensions {
             export class Accessibility<T extends Node> extends Extension<T> {}
             export class Button<T extends Node> extends Extension<T> {}
+            export class CssGrid<T extends Node> extends Extension<T> {}
             export class Custom<T extends Node> extends Extension<T> {}
             export class External<T extends Node> extends Extension<T> {}
             export class Grid<T extends Node> extends Extension<T> {}

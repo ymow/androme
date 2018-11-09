@@ -103,6 +103,7 @@ export const INLINE_ELEMENT = [
 
 export const EXT_NAME = {
     ACCESSIBILITY: 'androme.accessibility',
+    CSS_GRID: 'androme.css-grid',
     CUSTOM: 'androme.custom',
     EXTERNAL: 'androme.external',
     GRID: 'androme.grid',

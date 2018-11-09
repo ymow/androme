@@ -31,13 +31,13 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         const node = this.node as T;
         const parent = this.parent as T;
         const columnBalance = !!this.options.columnBalance;
-        let output = '';
-        let columns: T[][] = [];
         const mainData: GridData = {
             padding: newBoxRect(),
             columnEnd: [],
             columnCount: 0
         };
+        let output = '';
+        let columns: T[][] = [];
         if (columnBalance) {
             const dimensions: number[][] = [];
             node.each((item, index: number) => {

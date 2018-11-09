@@ -96,14 +96,14 @@ export function convertPercent(value: number, precision = 0) {
     return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
 }
 
-export function convertPX(value: any, fontSize?: string | null) {
+export function convertPX(value: any, fontSize?: string | null): string {
     if (hasValue(value)) {
         if (isNumber(value)) {
             return `${Math.round(value)}px`;
         }
         let result = parseFloat(value);
         if (!isNaN(result)) {
-            const match = value.match(/(pt|em)/);
+            const match = value.match(/(px|em|pt)/);
             if (match) {
                 switch (match[0]) {
                     case 'pt':
@@ -113,8 +113,11 @@ export function convertPX(value: any, fontSize?: string | null) {
                         result *= parseInt(convertPX(fontSize)) || 16;
                         break;
                 }
+                return `${result}px`;
             }
-            return `${result}px`;
+            else {
+                return value.toString();
+            }
         }
     }
     return '0px';
