@@ -15,8 +15,19 @@ export default class <T extends View> extends androme.lib.base.extensions.CssGri
             let width = 0;
             let minWidth = 0;
             let columnWeight = 0;
-            for (let i = 0; i < cellData.columnSpan; i++) {
-                const value = mainData.columnUnit[cellData.columnStart + i];
+            for (let i = 0, j = 0; i < cellData.columnSpan; i++) {
+                let value = mainData.columnUnit[cellData.columnStart + i];
+                if (!$util.hasValue(value)) {
+                    if (mainData.columnAuto[j] !== undefined) {
+                        value = mainData.columnAuto[j];
+                        if (mainData.columnAuto[j + 1]) {
+                            j++;
+                        }
+                    }
+                    else {
+                        continue;
+                    }
+                }
                 if ($util.isPercent(value)) {
                     columnWeight += parseInt(value) / 100;
                     minWidth = width;

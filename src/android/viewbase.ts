@@ -987,7 +987,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
                 const relative = this.is($enum.NODE_STANDARD.RELATIVE);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
-                this.each((node: View, index: number) => {
+                this.each((node: View, index) => {
                     if (!(node.floating || (relative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {

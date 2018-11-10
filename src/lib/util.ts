@@ -185,7 +185,7 @@ export function isArray<T>(value: any): value is Array<T> {
 }
 
 export function isUnit(value: string) {
-    return isString(value) ? /^-?[\d.]+(px|pt|em)$/.test(value.trim()) : false;
+    return isString(value) ? /^-?[\d.]+[a-z]+$/.test(value.trim()) : false;
 }
 
 export function isPercent(value: string) {

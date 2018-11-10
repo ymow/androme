@@ -71,7 +71,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 }
                 const marginLeftType: number = Math.max.apply(null, marginLeft);
                 if (marginLeftType > 0) {
-                    node.each((current: T, index: number) => {
+                    node.each((current: T, index) => {
                         if (marginLeft[index] === 2) {
                             const left = current.toInt('left') + node.marginLeft;
                             current.css('left', formatPX(Math.max(left, 0)));

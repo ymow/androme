@@ -3,7 +3,7 @@ type UndefNull<T> = Undefined<T> | null;
 
 type Constructor<T> = new(...args: any[]) => T;
 
-type IteratorPredicate<T, U> = (value: T, index?: number) => U;
+type IteratorPredicate<T, U> = (value: T, index: number) => U;
 
 type SelfWrapped<T, U> = (self: T, ...args: any[]) => U;
 

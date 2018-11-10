@@ -40,7 +40,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         let columns: T[][] = [];
         if (columnBalance) {
             const dimensions: number[][] = [];
-            node.each((item, index: number) => {
+            node.each((item, index) => {
                 dimensions[index] = [];
                 item.each(subitem => dimensions[index].push(subitem.bounds.width));
                 columns.push(item.duplicate() as T[]);

@@ -7,9 +7,14 @@ export interface CssGridData<T> {
     rows: T[][];
     rowCount: number;
     rowGap: number;
+    rowUnit: string[];
+    rowAuto: string[];
+    rowName: ObjectMap<number[]>;
     columnCount: number;
     columnGap: number;
     columnUnit: string[];
+    columnAuto: string[];
+    columnName: ObjectMap<number[]>;
 }
 
 export interface CssGridCellData {
