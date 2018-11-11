@@ -88,8 +88,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             }
         }
         const options = $android_util.createViewAttribute(this.options.navigation);
-        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-        const headerLayout: string = $util.optional($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
+        const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const headerLayout = $util.optionalAsString($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         if (menu !== '') {
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
         }

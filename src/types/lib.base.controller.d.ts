@@ -16,7 +16,7 @@ declare global {
             baseRenderDepth(name: string): number;
             setConstraints(): void;
             afterProcedure(viewData: ViewData<NodeList<T>>): void;
-            finalize(data: ViewData<NodeList<T>>): void;
+            finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             replaceRenderQueue(output: string): string;
             prependBefore(id: number, output: string, index?: number): void;

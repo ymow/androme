@@ -1,7 +1,9 @@
 import { BUILD_ANDROID } from './enumeration';
 
 export const EXT_ANDROID = {
-    RESOURCE_DIMENS: 'android.resource.dimens'
+    RESOURCE_DIMENS: 'android.resource.dimens',
+    RESOURCE_STYLES: 'android.resource.styles',
+    RESOURCE_SVG: 'android.resource.svg',
 };
 
 export const NODE_ANDROID = {

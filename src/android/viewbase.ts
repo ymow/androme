@@ -27,7 +27,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string) {
             for (const build of [API_ANDROID[api], API_ANDROID[0]]) {
-                const value = $util.optional(build, `customizations.${tagName}.${obj}.${attr}`);
+                const value = $util.optionalAsString(build, `customizations.${tagName}.${obj}.${attr}`);
                 if ($util.isString(value)) {
                     return value;
                 }

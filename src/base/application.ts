@@ -173,11 +173,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         }
         for (const ext of this.extensions) {
+            ext.setTarget(undefined);
             ext.beforeFinalize();
         }
         this.resourceHandler.finalize(this.viewData);
         this.viewController.finalize(this.viewData);
         for (const ext of this.extensions) {
+            ext.setTarget(undefined);
             ext.afterFinalize();
         }
         this.closed = true;
@@ -188,7 +190,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public reset() {
-        this.cacheSession.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString'));
+        this.cacheSession.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport'));
         for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
@@ -214,6 +216,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public setConstraints() {
         this.viewController.setConstraints();
+        for (const ext of this.extensions) {
+            ext.setTarget(this.nodeProcessing);
+            ext.afterConstraints();
+        }
     }
 
     public setResources() {
@@ -223,6 +229,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler.setValueString();
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
+        for (const ext of this.extensions) {
+            ext.setTarget(this.nodeProcessing);
+            ext.afterResources();
+        }
     }
 
     public setImageCache(element: HTMLImageElement) {
@@ -404,7 +414,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.viewElements.has(element)) {
                 prioritizeExtensions(this.extensions, element).some(item => item.init(element));
-                if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.includes(element.tagName)) {
+                if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
                     if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
                         setElementCache(element, 'inlineSupport', true);
                     }
@@ -571,6 +581,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public createDocument() {
         const localSettings = this.viewController.localSettings;
+        const documentRoot = this.nodeProcessing as T;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         let baseTemplate = localSettings.baseTemplate;
@@ -594,7 +605,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        setMapY(-1, 0, (this.nodeProcessing as T).parent as T);
+        setMapY(-1, 0, documentRoot.parent as T);
         let maxDepth = 0;
         for (const node of this.cacheProcessing.visible) {
             const x = Math.floor(node.linear.left);
@@ -1176,63 +1187,58 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        const root = this.nodeProcessing;
-        if (root) {
-            if (root.dataset.layoutName && (!hasValue(root.dataset.target) || root.renderExtension.size === 0)) {
-                this.addLayoutFile(
-                    trimString(trimNull(root.dataset.pathname), '/'),
-                    root.dataset.layoutName,
-                    !empty ? baseTemplate : '',
-                    root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot)
-                );
+        if (documentRoot.dataset.layoutName && (!hasValue(documentRoot.dataset.target) || documentRoot.renderExtension.size === 0)) {
+            this.addLayoutFile(
+                trimString(trimNull(documentRoot.dataset.pathname), '/'),
+                documentRoot.dataset.layoutName,
+                !empty ? baseTemplate : '',
+                documentRoot.renderExtension.size > 0 && Array.from(documentRoot.renderExtension).some(item => item.documentRoot)
+            );
+        }
+        if (empty && documentRoot.renderExtension.size === 0) {
+            documentRoot.hide();
+        }
+        this.cacheProcessing.sort((a, b) => {
+            if (!a.visible) {
+                return 1;
             }
-            if (!empty) {
-                for (const ext of this.extensions) {
-                    ext.setTarget(root);
-                    ext.afterRender();
-                }
+            else if (!b.visible) {
+                return -1;
             }
-            else if (root.renderExtension.size === 0) {
-                root.hide();
+            else if (a.renderDepth !== b.renderDepth) {
+                return a.renderDepth < b.renderDepth ? -1 : 1;
             }
-            this.cacheProcessing.sort((a, b) => {
-                if (!a.visible) {
-                    return 1;
-                }
-                else if (!b.visible) {
-                    return -1;
-                }
-                else if (a.renderDepth !== b.renderDepth) {
-                    return a.renderDepth < b.renderDepth ? -1 : 1;
-                }
-                else {
-                    if (!a.domElement) {
-                        const nodeA = Node.getNodeFromElement(a.baseElement);
-                        if (nodeA) {
-                            a = nodeA as T;
-                        }
-                        else {
-                            return 1;
-                        }
-                    }
-                    if (!b.domElement) {
-                        const nodeB = Node.getNodeFromElement(a.baseElement);
-                        if (nodeB) {
-                            b = nodeB as T;
-                        }
-                        else {
-                            return -1;
-                        }
-                    }
-                    if (a.documentParent !== b.documentParent) {
-                        return a.documentParent.id < b.documentParent.id ? -1 : 1;
+            else {
+                if (!a.domElement) {
+                    const nodeA = Node.getNodeFromElement(a.baseElement);
+                    if (nodeA) {
+                        a = nodeA as T;
                     }
                     else {
-                        return a.renderIndex < b.renderIndex ? -1 : 1;
+                        return 1;
                     }
                 }
-            });
-            this.cacheSession.list.push(...this.cacheProcessing.list);
+                if (!b.domElement) {
+                    const nodeB = Node.getNodeFromElement(a.baseElement);
+                    if (nodeB) {
+                        b = nodeB as T;
+                    }
+                    else {
+                        return -1;
+                    }
+                }
+                if (a.documentParent !== b.documentParent) {
+                    return a.documentParent.id < b.documentParent.id ? -1 : 1;
+                }
+                else {
+                    return a.renderIndex < b.renderIndex ? -1 : 1;
+                }
+            }
+        });
+        this.cacheSession.list.push(...this.cacheProcessing.list);
+        for (const ext of this.extensions) {
+            ext.setTarget(documentRoot);
+            ext.afterRender();
         }
     }
 

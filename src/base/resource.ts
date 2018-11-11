@@ -9,7 +9,7 @@ import Application from './application';
 import File from './file';
 
 import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
-import { cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
+import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 
@@ -24,6 +24,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         drawables: new Map(),
         images: new Map()
     };
+    public static KEY_NAME = 'androme.resource';
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
@@ -86,8 +87,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.fileHandler.stored = Resource.STORED;
     }
 
-    public abstract afterProcedure(viewData: ViewData<NodeList<T>>): void;
-    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
+    public afterProcedure(viewData: ViewData<NodeList<T>>) {}
+    public finalize(viewData: ViewData<NodeList<T>>) {}
 
     public reset() {
         for (const name in Resource.STORED) {
@@ -98,7 +99,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setBoxStyle() {
         for (const node of this.cache.elements) {
-            if (this.checkPermissions(node, NODE_RESOURCE.BOX_STYLE, 'boxStyle')) {
+            if (this.checkPermissions(node, 'boxStyle')) {
                 const boxStyle: BoxStyle = {
                     background: null,
                     borderTop: null,
@@ -319,15 +320,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 if (borderTop === JSON.stringify(boxStyle.borderRight) && borderTop === JSON.stringify(boxStyle.borderBottom) && borderTop === JSON.stringify(boxStyle.borderLeft)) {
                     boxStyle.border = boxStyle.borderTop;
                 }
-                setElementCache(node.element, 'boxStyle', boxStyle);
+                node.data(Resource.KEY_NAME, 'boxStyle', boxStyle);
             }
         }
     }
 
     public setFontStyle() {
         for (const node of this.cache) {
-            if (this.checkPermissions(node, NODE_RESOURCE.FONT_STYLE, 'fontStyle')) {
-                const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
+            if (this.checkPermissions(node, 'fontStyle')) {
+                const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
                 if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity);
@@ -400,7 +401,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         color: color ? color.valueRGBA : '',
                         backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                     };
-                    setElementCache(node.element, 'fontStyle', result);
+                    node.data(Resource.KEY_NAME, 'fontStyle', result);
                 }
             }
         }
@@ -408,7 +409,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setBoxSpacing() {
         for (const node of this.cache.elements) {
-            if (this.checkPermissions(node, NODE_RESOURCE.BOX_SPACING, 'boxSpacing')) {
+            if (this.checkPermissions(node, 'boxSpacing')) {
                 const boxSpacing = getBoxSpacing(node.element);
                 const result: StringMap = {};
                 for (const attr in boxSpacing) {
@@ -419,7 +420,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         result[attr] = convertPX(boxSpacing[attr], node.css('fontSize'));
                     }
                 }
-                setElementCache(node.element, 'boxSpacing', result);
+                node.data(Resource.KEY_NAME, 'boxSpacing', result);
             }
         }
     }
@@ -458,7 +459,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         }
         for (const node of this.cache.visible) {
             const element = node.element;
-            if (this.checkPermissions(node, NODE_RESOURCE.VALUE_STRING, 'valueString')) {
+            if (this.checkPermissions(node, 'valueString')) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -495,7 +496,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
-                    else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
+                    else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'))) {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
                     }
@@ -551,7 +552,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + value;
                             }
                         }
-                        setElementCache(element, 'valueString', { name, value });
+                        node.data(Resource.KEY_NAME, 'valueString', { name, value });
                     }
                 }
             }
@@ -560,7 +561,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setOptionArray() {
         for (const node of this.cache) {
-            if (node.tagName === 'SELECT' && node.visible && this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')) {
+            if (node.tagName === 'SELECT' && this.checkPermissions(node, 'optionArray')) {
                 const element = <HTMLSelectElement> node.element;
                 const stringArray: string[] = [];
                 let numberArray: string[] | undefined = [];
@@ -584,7 +585,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                 }
-                setElementCache(element, 'optionArray', {
+                node.data(Resource.KEY_NAME, 'optionArray', {
                     stringArray: stringArray.length > 0 ? stringArray : undefined,
                     numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
                 });
@@ -594,7 +595,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setImageSource() {
         for (const node of this.cache.visible) {
-            if (this.checkPermissions(node, NODE_RESOURCE.IMAGE_SOURCE, 'imageSource')) {
+            if (node.svgElement && this.checkPermissions(node, 'imageSource')) {
                 if (node.svgElement) {
                     const element = <SVGSVGElement> node.element;
                     if (element.children.length > 0) {
@@ -611,7 +612,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                         });
                         if (result.length > 0 || result.defs.image.length > 0) {
-                            setElementCache(element, 'imageSource', result);
+                            node.data(Resource.KEY_NAME, 'svgSource', result);
                         }
                     }
                 }
@@ -619,7 +620,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         }
     }
 
-    private checkPermissions(node: Node, resourceFlag: number, storedName: string) {
-        return !node.hasBit('excludeResource', resourceFlag) && (!getElementCache(node.element, storedName) || this.settings.alwaysReevaluateResources);
+    private checkPermissions(node: T, storedName: string) {
+        return !node.data(Resource.KEY_NAME, storedName) || this.settings.alwaysReevaluateResources;
     }
 }

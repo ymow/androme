@@ -92,7 +92,9 @@ androme.settings = {
         'androme.table',
         'androme.grid',
         'androme.percent',
-        'android.resource.dimens'
+        'android.resource.dimens',
+        'android.resource.styles',
+        'android.resource.svg'
     ],
     targetAPI: 26,
     density: 160,

@@ -275,7 +275,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
 
     public afterProcedure() {
         const node = this.node as T;
-        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = $android_util.createViewAttribute(options.self);

@@ -1,4 +1,5 @@
 import { SettingsAndroid } from '../../../types/local';
+
 import WIDGET_NAME from '../namespace';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
@@ -59,7 +60,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         if (!renderParent.has('height')) {
             renderParent.android('layout_height', 'match_parent');
         }
-        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = $android_util.createViewAttribute(this.options[node.element.id]);
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

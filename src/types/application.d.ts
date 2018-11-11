@@ -40,12 +40,12 @@ interface ControllerSettings {
         fileExtension: string;
     };
     unsupported: {
-        tagName: string[]
+        tagName: Set<string>
     };
 }
 
 interface AppFramework<T extends androme.lib.base.Node> {
-    lib: {};
+    lib: object;
     system: FunctionMap<any>;
     create(): AppBase<T>;
     cached(): AppBase<T>;

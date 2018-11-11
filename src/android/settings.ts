@@ -14,7 +14,9 @@ const settings: SettingsAndroid = {
         'androme.table',
         'androme.grid',
         'androme.percent',
-        'android.resource.dimens'
+        'android.resource.dimens',
+        'android.resource.styles',
+        'android.resource.svg'
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,

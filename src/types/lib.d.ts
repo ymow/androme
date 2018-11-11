@@ -44,7 +44,11 @@ declare global {
             export function isUnit(value: string): boolean;
             export function isPercent(value: string): boolean;
             export function includes(source: string | undefined, value: string, delimiter?: string): boolean;
-            export function optional(obj: UndefNull<{}>, value: string, type?: string): any;
+            export function optional(obj: UndefNull<object>, value: string, type?: string): any;
+            export function optionalAsObject(obj: UndefNull<object>, value: string): object;
+            export function optionalAsString(obj: UndefNull<object>, value: string): string;
+            export function optionalAsNumber(obj: UndefNull<object>, value: string): number;
+            export function optionalAsBoolean(obj: UndefNull<object>, value: string): boolean;
             export function resolvePath(value: string): string;
             export function trimNull(value: string | undefined): string;
             export function trimString(value: string | undefined, char: string): string;
@@ -106,7 +110,7 @@ declare global {
             export function replaceCharacter(value: string): string;
             export function parseTemplate(value: string): StringMap;
             export function createTemplate(value: StringMap, data: TemplateData, index?: string): string;
-            export function getTemplateSection(data: TemplateData, ...levels: string[]): {};
+            export function getTemplateSection(data: TemplateData, ...levels: string[]): object;
         }
 
         namespace svg {

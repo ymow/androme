@@ -199,7 +199,7 @@ export function includes(source: string | undefined, value: string, delimiter = 
     return source ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false;
 }
 
-export function optional(obj: UndefNull<{}>, value: string, type?: string) {
+export function optional(obj: UndefNull<object>, value: string, type?: string) {
     let valid = false;
     let result;
     if (obj && typeof obj === 'object') {
@@ -229,6 +229,22 @@ export function optional(obj: UndefNull<{}>, value: string, type?: string) {
         default:
             return valid ? result.toString() : '';
     }
+}
+
+export function optionalAsObject(obj: UndefNull<object>, value: string) {
+    return optional(obj, value, 'object') as object;
+}
+
+export function optionalAsString(obj: UndefNull<object>, value: string) {
+    return optional(obj, value, 'string') as string;
+}
+
+export function optionalAsNumber(obj: UndefNull<object>, value: string) {
+    return optional(obj, value, 'number') as number;
+}
+
+export function optionalAsBoolean(obj: UndefNull<object>, value: string) {
+    return optional(obj, value, 'boolean') as boolean;
 }
 
 export function resolvePath(value: string) {

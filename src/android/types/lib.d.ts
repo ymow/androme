@@ -12,6 +12,7 @@ declare global {
             }
 
             namespace constant {
+                export import EXT_ANDROID = $const.EXT_ANDROID;
                 export import NODE_ANDROID = $const.NODE_ANDROID;
                 export import VIEW_SUPPORT = $const.VIEW_SUPPORT;
                 export import BOX_ANDROID = $const.BOX_ANDROID;

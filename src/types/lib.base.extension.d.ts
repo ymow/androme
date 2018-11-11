@@ -26,6 +26,8 @@ declare global {
             processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             afterRender(): void;
+            afterConstraints(): void;
+            afterResources(): void;
             afterProcedure(): void;
             beforeFinalize(): void;
             afterFinalize(): void;

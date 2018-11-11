@@ -1,9 +1,10 @@
-import { SettingsAndroid } from './local';
+import { BackgroundGradient, SettingsAndroid } from './local';
 
 declare global {
     namespace android.lib.base {
         export interface Resource<T extends View> extends androme.lib.base.Resource<T> {
             fileHandler: File<T>;
+            createBackgroundGradient(node: T, gradients: Gradient[]): BackgroundGradient[];
             addStyleTheme(template: string, data: TemplateData, options: ExternalData): void;
         }
 
@@ -14,7 +15,7 @@ declare global {
             public static addImage(images: StringMap, prefix?: string): string;
             public static addImageURL(value: string, prefix?: string): string;
             public static addColor(value: ColorHexAlpha | string | null): string;
-            public static getColor(value: string): string;
+            public static getStoredName(resource: string, value: any): string;
         }
     }
 }

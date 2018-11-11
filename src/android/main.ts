@@ -20,7 +20,9 @@ import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 
-import Dimens from './extension/resource/dimens';
+import ResourceDimens from './extension/resource/dimens';
+import ResourceStyles from './extension/resource/styles';
+import ResourceSvg from './extension/resource/svg';
 
 import * as enumeration from './lib/enumeration';
 import * as constant from './lib/constant';
@@ -65,7 +67,9 @@ const lib = {
         Sprite,
         Table,
         resource: {
-            Dimens
+            Dimens: ResourceDimens,
+            Styles: ResourceStyles,
+            Svg: ResourceSvg
         }
     },
     enumeration,
@@ -191,7 +195,9 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
-            [EXT_ANDROID.RESOURCE_DIMENS]: new Dimens(EXT_ANDROID.RESOURCE_DIMENS, framework)
+            [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
+            [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework),
+            [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework)
         };
         initialized = true;
         return {

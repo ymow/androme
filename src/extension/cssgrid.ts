@@ -49,6 +49,24 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         function convertUnit(value: string) {
             return isUnit(value) ? convertPX(value, fontSize) : value;
         }
+        function setDataRows(item: T, placement: number[]) {
+            if (placement.every(value => value > 0)) {
+                for (let i = placement[0] - 1; i < placement[2] - 1; i++) {
+                    if (mainData.rows[i] === undefined) {
+                        mainData.rows[i] = [];
+                    }
+                    for (let j = placement[1] - 1; j < placement[3] - 1; j++) {
+                        if (columnIndex[i] === undefined) {
+                            columnIndex[i] = 0;
+                        }
+                        mainData.rows[i][j] = item;
+                        columnIndex[i]++;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
         [node.styleMap.gridTemplateRows, node.styleMap.gridTemplateColumns, node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
             if (value && value !== 'none' && value !== 'auto') {
                 let i = 1;
@@ -96,16 +114,21 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const columnIndex: number[] = [];
         mainData.columnCount = mainData.columnUnit.length;
         node.each((item: T, index) => {
-            const placement: number[] = [];
             const positions = [item.css('gridRowStart'), item.css('gridColumnStart'), item.css('gridRowEnd'), item.css('gridColumnEnd')];
             if (mainData.templateAreas[positions[0]] && positions.every(value => value === positions[0])) {
                 const cellData = mainData.templateAreas[positions[0]];
-                placement[0] = cellData.rowStart + 1;
-                placement[1] = cellData.columnStart + 1;
-                placement[2] = cellData.rowStart + cellData.rowSpan + 1;
-                placement[3] = cellData.columnStart + cellData.columnSpan + 1;
+                const placement = [
+                    cellData.rowStart + 1,
+                    cellData.columnStart + 1,
+                    cellData.rowStart + cellData.rowSpan + 1,
+                    cellData.columnStart + cellData.columnSpan + 1
+                ];
+                if (setDataRows(item, placement)) {
+                    item.data(EXT_NAME.CSS_GRID, 'cellData', cellData);
+                }
             }
             else {
+                const placement: number[] = [];
                 for (let i = 0; i < positions.length; i++) {
                     const value = positions[i];
                     if (value === 'auto') {
@@ -253,26 +276,14 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 if (placement[3] === 0) {
                     placement[3] = placement[1] + 1;
                 }
-            }
-            if (placement.every(value => value > 0)) {
-                for (let i = placement[0] - 1; i < placement[2] - 1; i++) {
-                    if (mainData.rows[i] === undefined) {
-                        mainData.rows[i] = [];
-                    }
-                    for (let j = placement[1] - 1; j < placement[3] - 1; j++) {
-                        if (columnIndex[i] === undefined) {
-                            columnIndex[i] = 0;
-                        }
-                        mainData.rows[i][j] = item;
-                        columnIndex[i]++;
-                    }
+                if (setDataRows(item, placement)) {
+                    item.data(EXT_NAME.CSS_GRID, 'cellData', <CssGridCellData> {
+                        rowStart: placement[0] - 1,
+                        rowSpan: placement[2] - placement[0],
+                        columnStart: placement[1] - 1,
+                        columnSpan: placement[3] - placement[1]
+                    });
                 }
-                item.data(EXT_NAME.CSS_GRID, 'cellData', <CssGridCellData> {
-                    rowStart: placement[0] - 1,
-                    rowSpan: placement[2] - placement[0],
-                    columnStart: placement[1] - 1,
-                    columnSpan: placement[3] - placement[1]
-                });
             }
         });
         if (mainData.rows.length > 0) {

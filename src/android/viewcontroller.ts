@@ -90,13 +90,11 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             tagName: WEBVIEW_ANDROID,
         },
         unsupported: {
-            tagName: ['OPTION', 'MAP', 'AREA']
+            tagName: new Set(['OPTION', 'MAP', 'AREA', 'svg'])
         }
     };
 
     private _merge = {};
-
-    public afterProcedure(data: ViewData<$NodeList<T>>) {}
 
     public finalize(data: ViewData<$NodeList<T>>) {
         this.setAttributes(data);
@@ -2154,7 +2152,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 [beginPercent]: location.toString()
                             }
                         });
-                        const anchors: {} = $util.optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
+                        const anchors = $util.optionalAsObject(guideline, `${value}.${beginPercent}.${LT}`);
                         if (anchors) {
                             for (const stringId in anchors) {
                                 if (anchors[stringId] === location) {

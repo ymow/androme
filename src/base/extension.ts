@@ -106,6 +106,8 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public afterRender() {}
+    public afterConstraints() {}
+    public afterResources() {}
     public afterProcedure() {}
     public beforeFinalize() {}
     public afterFinalize() {}
