@@ -115,7 +115,6 @@ declare global {
             setNodeType(viewName: string): void;
             setLayout(): void;
             setAlignment(settings: Settings): void;
-            setBoxSpacing(settings: Settings): void;
             applyOptimizations(settings: Settings): void;
             applyCustomizations(settings: Settings): void;
             modifyBox(region: number | string, offset: number | null, negative?: boolean): void;

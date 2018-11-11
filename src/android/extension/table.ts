@@ -3,7 +3,7 @@ import View from '../view';
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
-export default class <T extends View> extends androme.lib.base.extensions.Table<T> {
+export default class <T extends View> extends androme.lib.extensions.Table<T> {
     public processNode(): ExtensionResult {
         const result = super.processNode();
         const node = this.node as T;

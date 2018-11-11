@@ -58,10 +58,6 @@ export function convertUnit(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function delimitUnit(nodeName: string, attr: string, size: string, { dimensResourceValue = true }) {
-    return dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
-}
-
 export function replaceUnit(value: string, { density = 160, convertPixels = 'dp' }, font = false) {
     switch (convertPixels) {
         case 'dp':

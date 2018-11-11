@@ -146,8 +146,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public finalize() {
-        const visible = this.cacheSession.visible.filter(node => node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
-        for (const node of visible) {
+        this.processRenderQueue();
+        const nodes = this.cacheSession.visible.filter(node => node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
+        for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
@@ -155,7 +156,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.setAlignment();
             }
         }
-        for (const node of visible) {
+        for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
                 node.applyOptimizations();
             }
@@ -163,17 +164,21 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.applyCustomizations();
             }
         }
-        this.viewController.setBoxSpacing(this.viewData);
-        this.processRenderQueue();
-        this.viewController.finalize(
-            this.viewData,
-            this.resourceHandler.finalize(this.viewData)
-        );
+        this.resourceHandler.afterProcedure(this.viewData);
+        this.viewController.afterProcedure(this.viewData);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
-                ext.finalize();
+                ext.afterProcedure();
             }
+        }
+        for (const ext of this.extensions) {
+            ext.beforeFinalize();
+        }
+        this.resourceHandler.finalize(this.viewData);
+        this.viewController.finalize(this.viewData);
+        for (const ext of this.extensions) {
+            ext.afterFinalize();
         }
         this.closed = true;
     }
@@ -1757,69 +1762,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return output;
     }
 
-    public processRenderQueue() {
-        for (const ext of this.extensions) {
-            for (const node of ext.subscribers) {
-                ext.setTarget(node);
-                ext.beforeInsert();
-            }
-        }
-        const template: StringMap = {};
-        for (const id in this.renderQueue) {
-            const [nodeId] = id.split(':');
-            let replaceId = nodeId;
-            if (!isNumber(replaceId)) {
-                const target = Node.getNodeFromElement(document.getElementById(replaceId));
-                if (target) {
-                    replaceId = target.id.toString();
-                }
-            }
-            let output = this.renderQueue[id].join('\n');
-            if (replaceId !== nodeId) {
-                const target = this.cacheSession.find('id', parseInt(replaceId));
-                if (target) {
-                    const depth = target.renderDepth + 1;
-                    output = replaceIndent(output, depth);
-                    const pattern = /{@(\d+)}/g;
-                    let match: RegExpExecArray | null;
-                    let i = 0;
-                    while ((match = pattern.exec(output)) !== null) {
-                        const node = this.cacheSession.find('id', parseInt(match[1]));
-                        if (node) {
-                            if (i++ === 0) {
-                                node.renderDepth = depth;
-                            }
-                            else {
-                                node.renderDepth = node.parent.renderDepth + 1;
-                            }
-                        }
-                    }
-                }
-            }
-            template[replaceId] = output;
-        }
-        for (const inner in template) {
-            for (const outer in template) {
-                if (inner !== outer) {
-                    template[inner] = template[inner].replace(formatPlaceholder(outer), template[outer]);
-                    template[outer] = template[outer].replace(formatPlaceholder(inner), template[inner]);
-                }
-            }
-        }
-        for (const value of this.layouts) {
-            for (const id in template) {
-                value.content = value.content.replace(formatPlaceholder(id), template[id]);
-            }
-            value.content = this.viewController.replaceRenderQueue(value.content);
-        }
-        for (const ext of this.extensions) {
-            for (const node of ext.subscribers) {
-                ext.setTarget(node);
-                ext.afterInsert();
-            }
-        }
-    }
-
     public addLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
         pathname = pathname || this.viewController.localSettings.layout.pathName;
         const layout: FileAsset = {
@@ -1904,6 +1846,57 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return this._views.length > 0 ? this._views[0].content : '';
     }
 
+    protected processRenderQueue() {
+        const template: StringMap = {};
+        for (const id in this.renderQueue) {
+            const [nodeId] = id.split(':');
+            let replaceId = nodeId;
+            if (!isNumber(replaceId)) {
+                const target = Node.getNodeFromElement(document.getElementById(replaceId));
+                if (target) {
+                    replaceId = target.id.toString();
+                }
+            }
+            let output = this.renderQueue[id].join('\n');
+            if (replaceId !== nodeId) {
+                const target = this.cacheSession.find('id', parseInt(replaceId));
+                if (target) {
+                    const depth = target.renderDepth + 1;
+                    output = replaceIndent(output, depth);
+                    const pattern = /{@(\d+)}/g;
+                    let match: RegExpExecArray | null;
+                    let i = 0;
+                    while ((match = pattern.exec(output)) !== null) {
+                        const node = this.cacheSession.find('id', parseInt(match[1]));
+                        if (node) {
+                            if (i++ === 0) {
+                                node.renderDepth = depth;
+                            }
+                            else {
+                                node.renderDepth = node.parent.renderDepth + 1;
+                            }
+                        }
+                    }
+                }
+            }
+            template[replaceId] = output;
+        }
+        for (const inner in template) {
+            for (const outer in template) {
+                if (inner !== outer) {
+                    template[inner] = template[inner].replace(formatPlaceholder(outer), template[outer]);
+                    template[outer] = template[outer].replace(formatPlaceholder(inner), template[inner]);
+                }
+            }
+        }
+        for (const value of this.layouts) {
+            for (const id in template) {
+                value.content = value.content.replace(formatPlaceholder(id), template[id]);
+            }
+            value.content = this.viewController.replaceRenderQueue(value.content);
+        }
+    }
+
     private setStyleMap() {
         let warning = false;
         const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
@@ -1912,87 +1905,101 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (styleSheet.cssRules) {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
                     try {
-                        const rule = <CSSStyleRule> styleSheet.cssRules[j];
-                        const attrs = new Set<string>();
-                        Array.from(rule.style).forEach(value => attrs.add(convertCamelCase(value)));
-                        Array.from(document.querySelectorAll(rule.selectorText)).forEach((element: HTMLElement) => {
-                            Array.from(element.style).forEach(value => attrs.add(convertCamelCase(value)));
-                            const style = getStyle(element);
-                            const styleMap: StringMap = {};
-                            for (const attr of attrs) {
-                                if (element.style[attr]) {
-                                    styleMap[attr] = element.style[attr];
-                                }
-                                else {
-                                    const value: string = rule.style[attr];
-                                    if (hasValue(value)) {
-                                        if (style[attr] === value) {
-                                            styleMap[attr] = style[attr];
-                                        }
-                                        else {
-                                            switch (attr) {
-                                                case 'fontSize':
-                                                    styleMap[attr] = style[attr] || value;
-                                                    break;
-                                                case 'width':
-                                                case 'height':
-                                                case 'lineHeight':
-                                                case 'verticalAlign':
-                                                case 'textIndent':
-                                                case 'columnGap':
-                                                case 'top':
-                                                case 'right':
-                                                case 'bottom':
-                                                case 'left':
-                                                case 'marginTop':
-                                                case 'marginRight':
-                                                case 'marginBottom':
-                                                case 'marginLeft':
-                                                case 'paddingTop':
-                                                case 'paddingRight':
-                                                case 'paddingBottom':
-                                                case 'paddingLeft':
-                                                    styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, style.fontSize);
-                                                    break;
-                                                default:
-                                                    if (styleMap[attr] === undefined) {
-                                                        styleMap[attr] = value;
-                                                    }
-                                                    break;
+                        if (styleSheet.cssRules[j] instanceof CSSStyleRule) {
+                            const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
+                            const attrRule = new Set<string>();
+                            Array.from(cssRule.style).forEach(value => attrRule.add(convertCamelCase(value)));
+                            Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
+                                const attrs = new Set(attrRule);
+                                Array.from(element.style).forEach(value => attrs.add(convertCamelCase(value)));
+                                const style = getStyle(element);
+                                const styleMap: StringMap = {};
+                                for (const attr of attrs) {
+                                    if (element.style[attr]) {
+                                        styleMap[attr] = element.style[attr];
+                                    }
+                                    else {
+                                        const value: string = cssRule.style[attr];
+                                        if (value !== 'initial') {
+                                            if (style[attr] === value) {
+                                                styleMap[attr] = style[attr];
+                                            }
+                                            else {
+                                                switch (attr) {
+                                                    case 'backgroundColor':
+                                                    case 'borderTopColor':
+                                                    case 'borderRightColor':
+                                                    case 'borderBottomColor':
+                                                    case 'borderLeftColor':
+                                                    case 'color':
+                                                    case 'fontSize':
+                                                    case 'fontWeight':
+                                                        styleMap[attr] = style[attr] || value;
+                                                        break;
+                                                    case 'width':
+                                                    case 'height':
+                                                    case 'minWidth':
+                                                    case 'maxWidth':
+                                                    case 'minHeight':
+                                                    case 'maxHeight':
+                                                    case 'lineHeight':
+                                                    case 'verticalAlign':
+                                                    case 'textIndent':
+                                                    case 'columnGap':
+                                                    case 'top':
+                                                    case 'right':
+                                                    case 'bottom':
+                                                    case 'left':
+                                                    case 'marginTop':
+                                                    case 'marginRight':
+                                                    case 'marginBottom':
+                                                    case 'marginLeft':
+                                                    case 'paddingTop':
+                                                    case 'paddingRight':
+                                                    case 'paddingBottom':
+                                                    case 'paddingLeft':
+                                                        styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, style.fontSize);
+                                                        break;
+                                                    default:
+                                                        if (styleMap[attr] === undefined) {
+                                                            styleMap[attr] = value;
+                                                        }
+                                                        break;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            if (this.settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
-                                styleMap.backgroundImage.split(',')
-                                    .map((value: string) => value.trim())
-                                    .forEach(value => {
-                                        const uri = cssResolveUrl(value);
-                                        if (uri !== '' && !this.cacheImage.has(uri)) {
-                                            this.cacheImage.set(uri, { width: 0, height: 0, uri });
-                                        }
-                                    });
-                            }
-                            if (clientFirefox && styleMap.display === undefined) {
-                                switch (element.tagName) {
-                                    case 'INPUT':
-                                    case 'TEXTAREA':
-                                    case 'SELECT':
-                                    case 'BUTTON':
-                                        styleMap.display = 'inline-block';
-                                        break;
+                                if (this.settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
+                                    styleMap.backgroundImage.split(',')
+                                        .map((value: string) => value.trim())
+                                        .forEach(value => {
+                                            const uri = cssResolveUrl(value);
+                                            if (uri !== '' && !this.cacheImage.has(uri)) {
+                                                this.cacheImage.set(uri, { width: 0, height: 0, uri });
+                                            }
+                                        });
                                 }
-                            }
-                            const data = getElementCache(element, 'styleMap');
-                            if (data) {
-                                Object.assign(data, styleMap);
-                            }
-                            else {
-                                setElementCache(element, 'style', style);
-                                setElementCache(element, 'styleMap', styleMap);
-                            }
-                        });
+                                if (clientFirefox && styleMap.display === undefined) {
+                                    switch (element.tagName) {
+                                        case 'INPUT':
+                                        case 'TEXTAREA':
+                                        case 'SELECT':
+                                        case 'BUTTON':
+                                            styleMap.display = 'inline-block';
+                                            break;
+                                    }
+                                }
+                                const data = getElementCache(element, 'styleMap');
+                                if (data) {
+                                    Object.assign(data, styleMap);
+                                }
+                                else {
+                                    setElementCache(element, 'style', style);
+                                    setElementCache(element, 'styleMap', styleMap);
+                                }
+                            });
+                        }
                     }
                     catch (error) {
                         if (!warning) {

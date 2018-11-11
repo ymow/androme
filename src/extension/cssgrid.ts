@@ -6,7 +6,7 @@ import { EXT_NAME } from '../lib/constant';
 import Node from '../base/node';
 import Extension from '../base/extension';
 
-import { convertInt, convertPX, isNumber, isUnit } from '../lib/util';
+import { convertInt, convertPX, isNumber, isUnit, trimString } from '../lib/util';
 
 const REGEX_PARTIAL = {
     UNIT: '[\\d.]+[a-z%]+|auto|max-content|min-content',
@@ -18,13 +18,13 @@ const REGEX_PARTIAL = {
 
 const PATTERN_GRID = {
     UNIT: new RegExp(`^${REGEX_PARTIAL.UNIT}$`),
-    NAMED: new RegExp(`\\s*(${REGEX_PARTIAL.UNIT}|${REGEX_PARTIAL.MINMAX}|${REGEX_PARTIAL.FIT_CONTENT}|${REGEX_PARTIAL.REPEAT}|${REGEX_PARTIAL.NAMED})\\s*`)
+    NAMED: new RegExp(`\\s*(${REGEX_PARTIAL.UNIT}|${REGEX_PARTIAL.MINMAX}|${REGEX_PARTIAL.FIT_CONTENT}|${REGEX_PARTIAL.REPEAT}|${REGEX_PARTIAL.NAMED})\\s*`, 'g')
 };
 
 export default class CssGrid<T extends Node> extends Extension<T> {
     public condition() {
         const node = this.node as T;
-        return this.included() || (node.length > 0 && node.display === 'grid');
+        return node.length > 0 && node.display === 'grid';
     }
 
     public processNode(): ExtensionResult {
@@ -43,7 +43,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             columnGap: convertInt(convertPX(node.css('columnGap'), fontSize)),
             columnUnit: [],
             columnAuto: [],
-            columnName: {}
+            columnName: {},
+            templateAreas: {}
         };
         function convertUnit(value: string) {
             return isUnit(value) ? convertPX(value, fontSize) : value;
@@ -70,9 +71,26 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     else {
                         mainData[index === 2 ? 'rowAuto' : 'columnAuto'].push(convertPX(match[1]));
                     }
-                    value = value.replace(match[0], '');
                 }
             }
+        });
+        node.css('gridTemplateAreas').split(/"[\s\n]+"/).map(value => trimString(value.trim(), '"')).forEach((value, row) => {
+            value.split(' ').forEach((area, column) => {
+                if (area !== '.') {
+                    if (mainData.templateAreas[area] === undefined) {
+                        mainData.templateAreas[area] = {
+                            rowStart: row,
+                            rowSpan: 1,
+                            columnStart: column,
+                            columnSpan: 1
+                        };
+                    }
+                    else {
+                        mainData.templateAreas[area].rowSpan = (row - mainData.templateAreas[area].rowStart) + 1;
+                        mainData.templateAreas[area].columnSpan++;
+                    }
+                }
+            });
         });
         let output = '';
         const columnIndex: number[] = [];
@@ -80,152 +98,161 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         node.each((item: T, index) => {
             const placement: number[] = [];
             const positions = [item.css('gridRowStart'), item.css('gridColumnStart'), item.css('gridRowEnd'), item.css('gridColumnEnd')];
-            for (let i = 0; i < positions.length; i++) {
-                const value = positions[i];
-                if (value === 'auto') {
-                    placement.push(placement[i - 2] ? placement[i - 2] + 1 : 0);
-                }
-                else {
-                    let [location, named] = value.split(' ');
-                    const direction = i % 2 === 0 ? 'rowName' : 'columnName';
-                    if (!named && isNumber(location)) {
-                        placement.push(parseInt(location));
+            if (mainData.templateAreas[positions[0]] && positions.every(value => value === positions[0])) {
+                const cellData = mainData.templateAreas[positions[0]];
+                placement[0] = cellData.rowStart + 1;
+                placement[1] = cellData.columnStart + 1;
+                placement[2] = cellData.rowStart + cellData.rowSpan + 1;
+                placement[3] = cellData.columnStart + cellData.columnSpan + 1;
+            }
+            else {
+                for (let i = 0; i < positions.length; i++) {
+                    const value = positions[i];
+                    if (value === 'auto') {
+                        placement.push(placement[i - 2] ? placement[i - 2] + 1 : 0);
                     }
                     else {
-                        if (location === 'span') {
-                            placement.push(placement[i - 2] + parseInt(named));
+                        let [location, named] = value.split(' ');
+                        const direction = i % 2 === 0 ? 'rowName' : 'columnName';
+                        if (!named && isNumber(location)) {
+                            placement.push(parseInt(location));
                         }
                         else {
-                            if (!named) {
-                                named = location;
-                                location = '1';
+                            if (location === 'span') {
+                                placement.push(placement[i - 2] + parseInt(named));
                             }
-                            if (mainData[direction][named] !== undefined && parseInt(location) <= mainData[direction][named].length) {
-                                placement.push(mainData[direction][named][parseInt(location) - 1] + (i >= 2 && named === positions[i - 2] ? 1 : 0));
+                            else {
+                                if (!named) {
+                                    named = location;
+                                    location = '1';
+                                }
+                                if (mainData[direction][named] !== undefined && parseInt(location) <= mainData[direction][named].length) {
+                                    placement.push(mainData[direction][named][parseInt(location) - 1] + (i >= 2 && named === positions[i - 2] ? 1 : 0));
+                                }
                             }
                         }
                     }
                 }
-            }
-            const gridArea = item.css('gridArea').split(/\s*\/\s*/);
-            gridArea.forEach((value, position) => {
-                if (placement[position] === 0) {
-                    switch (position) {
-                        case 0:
-                        case 1:
-                            if (value !== 'auto') {
-                                placement[position] = parseInt(value);
-                            }
-                            else {
-                                if (index === 0) {
-                                    placement[position] = 1;
-                                }
-                            }
-                            break;
-                        case 2:
-                        case 3:
-                            if (value !== 'auto') {
-                                if (isNumber(value)) {
+                const gridArea = item.css('gridArea').split(/\s*\/\s*/);
+                gridArea.forEach((value, position) => {
+                    if (placement[position] === 0) {
+                        switch (position) {
+                            case 0:
+                            case 1:
+                                if (value !== 'auto') {
                                     placement[position] = parseInt(value);
                                 }
-                                else if (value.startsWith('span')) {
-                                    placement[position] = placement[position - 2] + parseInt(value.split(' ')[1]);
+                                else {
+                                    if (index === 0) {
+                                        placement[position] = 1;
+                                    }
                                 }
-                            }
-                            else {
-                                if (index === 0) {
-                                    placement[position] = 2;
+                                break;
+                            case 2:
+                            case 3:
+                                if (value !== 'auto') {
+                                    if (isNumber(value)) {
+                                        placement[position] = parseInt(value);
+                                    }
+                                    else if (value.startsWith('span')) {
+                                        placement[position] = placement[position - 2] + parseInt(value.split(' ')[1]);
+                                    }
                                 }
-                            }
-                            break;
-                    }
-                }
-            });
-            if (placement[0] === 0) {
-                for (let i = 0; i < columnIndex.length; i++) {
-                    if (columnIndex[i] < mainData.columnCount) {
-                        let valid = true;
-                        if (placement[2] > 1) {
-                            for (let j = 1; j < placement[2]; j++) {
-                                if (columnIndex[i + j] >= mainData.columnCount) {
-                                    valid = false;
-                                    break;
+                                else {
+                                    if (index === 0) {
+                                        placement[position] = 2;
+                                    }
                                 }
-                            }
-                        }
-                        if (valid) {
-                            placement[0] = i + 1;
-                            break;
+                                break;
                         }
                     }
-                }
+                });
                 if (placement[0] === 0) {
-                    placement[0] = columnIndex.length + 1;
-                }
-            }
-            if (placement[2] === 0) {
-                placement[2] = placement[0] + 1;
-            }
-            if (placement[1] === 0) {
-                let startIndex: ArrayObject<Set<number>> = [];
-                const minSpan = placement[3] || 1;
-                for (let i = placement[0] - 1; i < placement[2] - 1; i++) {
-                    if (mainData.rows[i] === undefined) {
-                        startIndex.push(new Set());
-                    }
-                    else if (mainData.rows[i].map(column => column).length < mainData.columnCount) {
-                        const openGap: number[] = [];
-                        let cellGap = 0;
-                        for (let j = 0; j < mainData.columnCount; j++) {
-                            if (mainData.rows[i][j] === undefined) {
-                                cellGap++;
-                            }
-                            else {
-                                cellGap = 0;
-                            }
-                            if (cellGap === minSpan) {
-                                openGap.push(j - (minSpan - 1));
-                                cellGap = 0;
-                            }
-                        }
-                        if (openGap.length > 0) {
-                            startIndex.push(new Set(openGap));
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    else {
-                        break;
-                    }
-                }
-                if (startIndex.length === minSpan) {
-                    startIndex = startIndex.filter(openGap => openGap.size > 0).sort((a, b) => a.size <= b.size ? -1 : 1);
-                    if (startIndex.length > 1) {
-                        for (const value of startIndex[0].values()) {
+                    for (let i = 0; i < columnIndex.length; i++) {
+                        if (columnIndex[i] < mainData.columnCount) {
                             let valid = true;
-                            for (let i = 1; i < startIndex.length; i++) {
-                                if (!startIndex[i].has(value)) {
-                                    valid = false;
-                                    break;
+                            if (placement[2] > 1) {
+                                for (let j = 1; j < placement[2]; j++) {
+                                    if (columnIndex[i + j] >= mainData.columnCount) {
+                                        valid = false;
+                                        break;
+                                    }
                                 }
                             }
                             if (valid) {
-                                placement[1] = value + 1;
+                                placement[0] = i + 1;
                                 break;
                             }
                         }
                     }
-                    else if (startIndex.length === 1) {
-                        placement[1] = startIndex[0].values().next().value + 1;
-                    }
-                    else {
-                        placement[1] = 1;
+                    if (placement[0] === 0) {
+                        placement[0] = columnIndex.length + 1;
                     }
                 }
-            }
-            if (placement[3] === 0) {
-                placement[3] = placement[1] + 1;
+                if (placement[2] === 0) {
+                    placement[2] = placement[0] + 1;
+                }
+                if (placement[1] === 0) {
+                    let startIndex: ArrayObject<Set<number>> = [];
+                    const minSpan = placement[3] || 1;
+                    for (let i = placement[0] - 1; i < placement[2] - 1; i++) {
+                        if (mainData.rows[i] === undefined) {
+                            startIndex.push(new Set());
+                        }
+                        else if (mainData.rows[i].map(column => column).length < mainData.columnCount) {
+                            const openGap: number[] = [];
+                            let cellGap = 0;
+                            for (let j = 0; j < mainData.columnCount; j++) {
+                                if (mainData.rows[i][j] === undefined) {
+                                    cellGap++;
+                                }
+                                else {
+                                    cellGap = 0;
+                                }
+                                if (cellGap === minSpan) {
+                                    openGap.push(j - (minSpan - 1));
+                                    cellGap = 0;
+                                }
+                            }
+                            if (openGap.length > 0) {
+                                startIndex.push(new Set(openGap));
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    if (startIndex.length === minSpan) {
+                        startIndex = startIndex.filter(openGap => openGap.size > 0).sort((a, b) => a.size <= b.size ? -1 : 1);
+                        if (startIndex.length > 1) {
+                            for (const value of startIndex[0].values()) {
+                                let valid = true;
+                                for (let i = 1; i < startIndex.length; i++) {
+                                    if (!startIndex[i].has(value)) {
+                                        valid = false;
+                                        break;
+                                    }
+                                }
+                                if (valid) {
+                                    placement[1] = value + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        else if (startIndex.length === 1) {
+                            placement[1] = startIndex[0].values().next().value + 1;
+                        }
+                        else {
+                            placement[1] = 1;
+                        }
+                    }
+                }
+                if (placement[3] === 0) {
+                    placement[3] = placement[1] + 1;
+                }
             }
             if (placement.every(value => value > 0)) {
                 for (let i = placement[0] - 1; i < placement[2] - 1; i++) {

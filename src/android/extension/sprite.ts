@@ -8,7 +8,7 @@ import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
-export default class <T extends View> extends androme.lib.base.extensions.Sprite<T> {
+export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
     public processNode(): ExtensionResult {
         const node = this.node as T;
         const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');

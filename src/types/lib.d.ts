@@ -32,7 +32,7 @@ declare global {
             export function convertInt(value: any): number;
             export function convertFloat(value: any): number;
             export function convertPercent(value: number, precision?: number): string;
-            export function convertPX(value: any, fontSize?: string | null): string;
+            export function convertPX(value: any, fontSize?: string | null, dimensionSize?: number): string;
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
             export function convertEnum(value: number, base: {}, derived: {}): string;

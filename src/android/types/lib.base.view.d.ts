@@ -11,6 +11,7 @@ declare global {
             android(attr: string, value?: string, overwrite?: boolean);
             app(attr: string, value?: string, overwrite?: boolean);
             formatted(value: string, overwrite?: boolean): void;
+            mergeGravity(attr: string, ...alignment: string[]): string;
             anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean): void;
             alignParent(position: string): boolean;
             horizontalBias(): number;

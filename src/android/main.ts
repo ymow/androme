@@ -1,6 +1,6 @@
 import { SettingsAndroid } from './types/local';
 
-import { XMLNS_ANDROID } from './lib/constant';
+import { EXT_ANDROID, XMLNS_ANDROID } from './lib/constant';
 import SETTINGS from './settings';
 import { API_ANDROID } from './customizations';
 
@@ -19,6 +19,8 @@ import Origin from './extension/origin';
 import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
+
+import Dimens from './extension/resource/dimens';
 
 import * as enumeration from './lib/enumeration';
 import * as constant from './lib/constant';
@@ -48,7 +50,23 @@ const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 const lib = {
     base: {
         View,
-        Resource: ResourceHandler
+        File: FileHandler,
+        Resource: ResourceHandler,
+    },
+    extensions: {
+        Accessibility,
+        CssGrid,
+        Custom,
+        External,
+        Grid,
+        List,
+        Origin,
+        Percent,
+        Sprite,
+        Table,
+        resource: {
+            Dimens
+        }
     },
     enumeration,
     constant,
@@ -172,7 +190,8 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework)
+            [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
+            [EXT_ANDROID.RESOURCE_DIMENS]: new Dimens(EXT_ANDROID.RESOURCE_DIMENS, framework)
         };
         initialized = true;
         return {

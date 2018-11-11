@@ -91,7 +91,8 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.percent'
+        'androme.percent',
+        'android.resource.dimens'
     ],
     targetAPI: 26,
     density: 160,
@@ -99,7 +100,6 @@ androme.settings = {
     renderInlineText: true,
     ellipsisOnTextOverflow: true,
     preloadImages: true,
-    dimensResourceValue: true,
     numberResourceValue: false,
     fontAliasResourceValue: true,
     vectorColorResourceValue: true,

@@ -13,6 +13,7 @@ declare global {
             readonly node: T | undefined;
             readonly parent: T | undefined;
             readonly element: Element | undefined;
+            readonly loaded: boolean;
             setTarget(node?: T, parent?: T, element?: Element): void;
             getData(): StringMap;
             is(node: T): boolean;
@@ -25,28 +26,13 @@ declare global {
             processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             afterRender(): void;
-            beforeInsert(): void;
-            afterInsert(): void;
-            finalize(): void;
+            afterProcedure(): void;
+            beforeFinalize(): void;
+            afterFinalize(): void;
         }
 
         export class Extension<T extends Node> implements Extension<T> {
             constructor(name: string, framework: number, tagNames?: string[], options?: ExternalData);
-        }
-
-        namespace extensions {
-            export class Accessibility<T extends Node> extends Extension<T> {}
-            export class Button<T extends Node> extends Extension<T> {}
-            export class CssGrid<T extends Node> extends Extension<T> {}
-            export class Custom<T extends Node> extends Extension<T> {}
-            export class External<T extends Node> extends Extension<T> {}
-            export class Grid<T extends Node> extends Extension<T> {}
-            export class List<T extends Node> extends Extension<T> {}
-            export class Nav<T extends Node> extends Extension<T> {}
-            export class Origin<T extends Node> extends Extension<T> {}
-            export class Percent<T extends Node> extends Extension<T> {}
-            export class Sprite<T extends Node> extends Extension<T> {}
-            export class Table<T extends Node> extends Extension<T> {}
         }
     }
 }

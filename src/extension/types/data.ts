@@ -15,6 +15,7 @@ export interface CssGridData<T> {
     columnUnit: string[];
     columnAuto: string[];
     columnName: ObjectMap<number[]>;
+    templateAreas: ObjectMap<CssGridCellData>;
 }
 
 export interface CssGridCellData {

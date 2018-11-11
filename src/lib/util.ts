@@ -96,7 +96,7 @@ export function convertPercent(value: number, precision = 0) {
     return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
 }
 
-export function convertPX(value: any, fontSize?: string | null): string {
+export function convertPX(value: any, fontSize?: string | null, dimensionSize?: number): string {
     if (hasValue(value)) {
         if (isNumber(value)) {
             return `${Math.round(value)}px`;
@@ -116,6 +116,9 @@ export function convertPX(value: any, fontSize?: string | null): string {
                 return `${result}px`;
             }
             else {
+                if (dimensionSize && isPercent(value)) {
+                    return `${dimensionSize * (parseInt(value) / 100)}px`;
+                }
                 return value.toString();
             }
         }

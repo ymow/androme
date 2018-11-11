@@ -5,7 +5,7 @@ import View from '../view';
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
-export default class <T extends View> extends androme.lib.base.extensions.CssGrid<T> {
+export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
     public processChild(): ExtensionResult {
         const node = this.node as T;
         const parent = this.parent as T;
@@ -28,7 +28,20 @@ export default class <T extends View> extends androme.lib.base.extensions.CssGri
                         continue;
                     }
                 }
-                if ($util.isPercent(value)) {
+                if (value === 'auto' || value === 'min-content' || value === 'max-content') {
+                    if (parent.has('width') || value === 'min-content') {
+                        width = node.bounds.width;
+                        minWidth = 0;
+                        columnWeight = 0;
+                    }
+                    else {
+                        width = 0;
+                        minWidth = 0;
+                        columnWeight = 0.01;
+                    }
+                    break;
+                }
+                else if ($util.isPercent(value)) {
                     columnWeight += parseInt(value) / 100;
                     minWidth = width;
                     width = 0;
@@ -60,7 +73,6 @@ export default class <T extends View> extends androme.lib.base.extensions.CssGri
             node.android('layout_row', cellData.rowStart.toString());
             if (cellData.rowSpan > 1) {
                 node.android('layout_rowSpan', cellData.rowSpan.toString());
-                node.android('layout_gravity', 'fill_vertical');
             }
             node.android('layout_column', cellData.columnStart.toString());
             if (cellData.columnSpan > 1) {
@@ -73,6 +85,7 @@ export default class <T extends View> extends androme.lib.base.extensions.CssGri
                 node.css('minWidth', $util.formatPX(minWidth));
             }
             node.android('layout_columnWeight', columnWeight > 0 ? columnWeight.toString() : '0');
+            node.mergeGravity('layout_gravity', 'fill_vertical');
         }
         return { output: '', complete: true };
     }

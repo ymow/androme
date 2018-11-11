@@ -1,13 +1,13 @@
 import { SettingsAndroid } from './types/local';
 
-import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
+import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
 import BASE_TMPL from './template/base';
 
 import View from './view';
 import ViewGroup from './viewgroup';
 
-import { createViewAttribute, delimitUnit, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
+import { createViewAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
 
 import $NodeList = androme.lib.base.NodeList;
 
@@ -96,12 +96,11 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private _merge = {};
 
-    public finalize(data: ViewData<$NodeList<T>>, callbackArray: FunctionVoid[]) {
+    public afterProcedure(data: ViewData<$NodeList<T>>) {}
+
+    public finalize(data: ViewData<$NodeList<T>>) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
-            if (Array.isArray(callbackArray)) {
-                callbackArray.forEach(callbackfn => callbackfn(data));
-            }
             value.content = replaceUnit(value.content, this.settings);
             value.content = replaceTab(value.content, this.settings);
             value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
@@ -797,7 +796,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     const column = columns[i];
                                     const first = column[0];
                                     if (i > 0) {
-                                        first.android(first.localizeString('layout_marginLeft'), $util.formatPX(first.marginLeft + marginLeft));
+                                        first.android(first.localizeString(BOX_ANDROID.MARGIN_LEFT), $util.formatPX(first.marginLeft + marginLeft));
                                     }
                                     row.push(first);
                                     column.forEach(item => {
@@ -1352,7 +1351,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     }
                                     current.delete('app', 'layout_constraint*');
                                     current.app('layout_constraintCircle', opposite.stringId);
-                                    current.app('layout_constraintCircleRadius', delimitUnit(`${current.nodeName}`, 'constraintcircleradius', $util.formatPX(radius), this.settings));
+                                    current.app('layout_constraintCircleRadius', $util.formatPX(radius));
                                     current.app('layout_constraintCircleAngle', degrees.toString());
                                     current.constraint.horizontal = true;
                                     current.constraint.vertical = true;
@@ -1920,12 +1919,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 if (scrollbars.length > 0) {
                     node.android('scrollbars', scrollbars.join('|'));
                 }
-                if (node.has('maxWidth', $enum.CSS_STANDARD.UNIT)) {
-                    node.android('maxWidth', node.css('maxWidth'));
-                }
-                if (node.has('maxHeight', $enum.CSS_STANDARD.UNIT)) {
-                    node.android('maxHeight', node.css('maxHeight'));
-                }
                 if (node.css('whiteSpace') === 'nowrap') {
                     node.android('singleLine', 'true');
                 }
@@ -1967,17 +1960,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 node.setNodeType(viewName);
                 break;
         }
-        const displayName = node.styleElement ? node.nodeName : viewName;
         if ($util.hasValue(width)) {
-            if (!isNaN(parseInt(width))) {
-                width = delimitUnit(displayName, 'width', width, this.settings);
-            }
             node.android('layout_width', width, false);
         }
         if ($util.hasValue(height)) {
-            if (!isNaN(parseInt(height))) {
-                height = delimitUnit(displayName, 'height', height, this.settings);
-            }
             node.android('layout_height', height, false);
         }
         node.renderDepth = renderDepth;
@@ -2049,10 +2035,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     public baseRenderDepth(name: string) {
         return this._merge[name] ? 0 : -1;
-    }
-
-    public setBoxSpacing(data: ViewData<$NodeList<T>>) {
-        data.cache.visible.forEach(node => node.rendered && node.setBoxSpacing());
     }
 
     protected addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
@@ -2185,7 +2167,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                         if (!found) {
                             if (!percent) {
-                                options.app[beginPercent] = delimitUnit(node.nodeName, 'constraintguide_begin', $util.formatPX(location), this.settings);
+                                options.app[beginPercent] = $util.formatPX(location);
                             }
                             this.appendAfter(
                                 node.id,

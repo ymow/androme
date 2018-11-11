@@ -4,13 +4,12 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
 
-import $View = android.lib.base.View;
-
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
+import $View = android.lib.base.View;
 import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
@@ -74,9 +73,13 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         return { output, complete: true };
     }
 
-    public beforeInsert() {
+    public afterProcedure() {
         const application = this.application;
         const node = this.node as T;
+        const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
+        if (header && !header.hasHeight) {
+            header.android('layout_height', 'wrap_content');
+        }
         if (application.renderQueue[node.nodeId]) {
             const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
             if (target) {
@@ -108,18 +111,10 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         }
     }
 
-    public afterInsert() {
-        const node = this.node as T;
-        const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
-        if (header && !header.hasHeight) {
-            header.android('layout_height', 'wrap_content');
-        }
-    }
-
     private setStyleTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-        $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
+        $util.overwriteDefault(options, 'appTheme', 'AppTheme');
+        $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,

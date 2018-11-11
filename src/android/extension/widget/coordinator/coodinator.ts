@@ -1,9 +1,9 @@
 import WIDGET_NAME from '../namespace';
 
-import $View = android.lib.base.View;
-
 import $enum = androme.lib.enumeration;
 import $dom = androme.lib.dom;
+
+import $View = android.lib.base.View;
 
 import $android_const = android.lib.constant;
 
@@ -27,7 +27,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         return { output, complete: false };
     }
 
-    public afterInsert() {
+    public afterProcedure() {
         const node = this.node as T;
         if (node.documentRoot) {
             node.android('layout_width', 'match_parent');

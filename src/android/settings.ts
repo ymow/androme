@@ -13,7 +13,8 @@ const settings: SettingsAndroid = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.percent'
+        'androme.percent',
+        'android.resource.dimens'
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
@@ -21,7 +22,6 @@ const settings: SettingsAndroid = {
     renderInlineText: true,
     ellipsisOnTextOverflow: true,
     preloadImages: true,
-    dimensResourceValue: true,
     numberResourceValue: false,
     fontAliasResourceValue: true,
     vectorColorResourceValue: true,

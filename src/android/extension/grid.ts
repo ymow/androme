@@ -7,7 +7,7 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
-export default class <T extends View> extends androme.lib.base.extensions.Grid<T> {
+export default class <T extends View> extends androme.lib.extensions.Grid<T> {
     public processChild(): ExtensionResult {
         const node = this.node as T;
         const data: GridCellData = node.data($const.EXT_NAME.GRID, 'cellData');
@@ -19,7 +19,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Grid<T
                 node.android('layout_columnSpan', data.columnSpan.toString());
             }
             if (node.parent.display === 'table' && node.display === 'table-cell') {
-                node.android('layout_gravity', 'fill');
+                node.mergeGravity('layout_gravity', 'fill');
             }
         }
         return super.processChild();

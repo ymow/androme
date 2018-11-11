@@ -1,5 +1,9 @@
 import { BUILD_ANDROID } from './enumeration';
 
+export const EXT_ANDROID = {
+    RESOURCE_DIMENS: 'android.resource.dimens'
+};
+
 export const NODE_ANDROID = {
     CHECKBOX: 'CheckBox',
     RADIO: 'RadioButton',

@@ -105,21 +105,10 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return { output: '', complete: false };
     }
 
-    public afterRender() {
-        return;
-    }
-
-    public beforeInsert() {
-        return;
-    }
-
-    public afterInsert() {
-        return;
-    }
-
-    public finalize() {
-        return;
-    }
+    public afterRender() {}
+    public afterProcedure() {}
+    public beforeFinalize() {}
+    public afterFinalize() {}
 
     public getData(): StringMap {
         const result = {};
@@ -145,5 +134,9 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public get element() {
         return this._element;
+    }
+
+    public get loaded() {
+        return this.application ? this.application.getExtension(this.name) !== null : false;
     }
 }

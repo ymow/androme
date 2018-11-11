@@ -3,12 +3,11 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
-import $View = android.lib.base.View;
-
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
+import $View = android.lib.base.View;
 import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
@@ -51,17 +50,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         return { output, complete: true };
     }
 
-    public beforeInsert() {
-        const node = this.node as T;
-        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-        if (menu !== '') {
-            const options = $android_util.createViewAttribute(this.options[node.element.id]);
-            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
-            node.app('menu', options.app.menu);
-        }
-    }
-
-    public afterInsert() {
+    public afterProcedure() {
         const node = this.node as T;
         const renderParent = node.renderParent as T;
         if (!renderParent.has('width')) {
@@ -69,6 +58,12 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         }
         if (!renderParent.has('height')) {
             renderParent.android('layout_height', 'match_parent');
+        }
+        const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        if (menu !== '') {
+            const options = $android_util.createViewAttribute(this.options[node.element.id]);
+            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            node.app('menu', options.app.menu);
         }
     }
 

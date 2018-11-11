@@ -15,8 +15,8 @@ declare global {
             renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
             baseRenderDepth(name: string): number;
             setConstraints(): void;
-            setBoxSpacing(data: ViewData<NodeList<T>>): void;
-            finalize(data: ViewData<NodeList<T>>, callbackArray: FunctionVoid[]): void;
+            afterProcedure(viewData: ViewData<NodeList<T>>): void;
+            finalize(data: ViewData<NodeList<T>>): void;
             reset(): void;
             replaceRenderQueue(output: string): string;
             prependBefore(id: number, output: string, index?: number): void;

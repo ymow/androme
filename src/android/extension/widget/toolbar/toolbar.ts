@@ -4,14 +4,13 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_APPBAR_TMPL from '../__template/appbar';
 
-import $View = android.lib.base.View;
-
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
 
+import $View = android.lib.base.View;
 import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
@@ -186,7 +185,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let collapsingToolbarNode: T | undefined;
         if (hasAppBar) {
             $util.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $android_util.delimitUnit('appbar', 'height', $util.formatPX(node.viewHeight), <SettingsAndroid> this.application.settings) : 'wrap_content');
+            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
             $util.overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar['android'].theme) {
@@ -274,7 +273,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         return { output: '', complete: false };
     }
 
-    public beforeInsert() {
+    public afterProcedure() {
         const node = this.node as T;
         const menu: string = $util.optional($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {

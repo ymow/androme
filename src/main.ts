@@ -213,21 +213,21 @@ const lib = {
         Controller,
         Resource,
         File,
-        Extension,
-        extensions: {
-            Accessibility,
-            Button,
-            CssGrid,
-            Custom,
-            External,
-            Grid,
-            List,
-            Nav,
-            Origin,
-            Percent,
-            Sprite,
-            Table
-        }
+        Extension
+    },
+    extensions: {
+        Accessibility,
+        Button,
+        CssGrid,
+        Custom,
+        External,
+        Grid,
+        List,
+        Nav,
+        Origin,
+        Percent,
+        Sprite,
+        Table
     },
     enumeration,
     constant,

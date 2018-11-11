@@ -86,7 +86,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.fileHandler.stored = Resource.STORED;
     }
 
-    public abstract finalize(viewData: ViewData<NodeList<T>>): FunctionVoid[];
+    public abstract afterProcedure(viewData: ViewData<NodeList<T>>): void;
+    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
 
     public reset() {
         for (const name in Resource.STORED) {

@@ -62,7 +62,7 @@ function parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, option
     }
 }
 
-export default class Menu<T extends $View> extends androme.lib.base.extensions.Nav<T> {
+export default class Menu<T extends $View> extends androme.lib.extensions.Nav<T> {
     public condition() {
         return this.included();
     }
@@ -205,8 +205,8 @@ export default class Menu<T extends $View> extends androme.lib.base.extensions.N
     }
 
     public afterRender() {
-        const node = this.node as T;
         super.afterRender();
+        const node = this.node as T;
         if (this.included(<HTMLElement> node.element)) {
             this.application.layoutProcessing.pathname = 'res/menu';
         }

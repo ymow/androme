@@ -2,18 +2,17 @@ import { SettingsAndroid } from '../../../types/local';
 
 import WIDGET_NAME from '../namespace';
 
-import $View = android.lib.base.View;
-
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $color = androme.lib.color;
 
+import $View = android.lib.base.View;
 import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
 
-export default class FloatingActionButton<T extends $View> extends androme.lib.base.extensions.Button<T> {
+export default class FloatingActionButton<T extends $View> extends androme.lib.extensions.Button<T> {
     public processNode(): ExtensionResult {
         const node = this.node as T;
         const parent = this.parent as T;
@@ -83,7 +82,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             else {
                 gravity.push('center_vertical');
             }
-            node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
+            const layoutGravity = node.mergeGravity('layout_gravity', ...gravity);
             if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
                 if (horizontalBias < 0.5) {
                     node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - documentParent.box.left)));
@@ -109,8 +108,10 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
                     }
                 }
                 node.app('layout_anchor', anchor);
-                node.app('layout_anchorGravity', node.android('layout_gravity'));
-                node.delete('android', 'layout_gravity');
+                if (layoutGravity !== '') {
+                    node.app('layout_anchorGravity', layoutGravity);
+                    node.delete('android', 'layout_gravity');
+                }
                 node.excludeProcedure |= $enum.NODE_PROCEDURE.ALIGNMENT;
                 node.render(node);
             }
@@ -125,7 +126,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         return { output, complete: true };
     }
 
-    public afterInsert() {
+    public afterProcedure() {
         const node = this.node as T;
         node.android('layout_width', 'wrap_content');
         node.android('layout_height', 'wrap_content');

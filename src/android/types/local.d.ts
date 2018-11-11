@@ -2,7 +2,6 @@ export interface SettingsAndroid extends Settings {
     targetAPI: number;
     density: number;
     supportRTL: boolean;
-    dimensResourceValue: boolean;
     numberResourceValue: boolean;
     fontAliasResourceValue: boolean;
     vectorColorResourceValue: boolean;

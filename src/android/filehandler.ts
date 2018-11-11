@@ -22,7 +22,7 @@ import $xml = androme.lib.xml;
 
 function parseImageDetails(xml: string) {
     const result: FileAsset[] = [];
-    const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
+    const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(xml)) !== null) {
         result.push({
@@ -31,14 +31,13 @@ function parseImageDetails(xml: string) {
             filename: match[3],
             content: ''
         });
-        xml = xml.replace(match[0], '');
     }
     return result;
 }
 
 function parseFileDetails(xml: string) {
     const result: FileAsset[] = [];
-    const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
+    const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(xml)) !== null) {
         result.push({
@@ -46,7 +45,6 @@ function parseFileDetails(xml: string) {
             pathname: match[2],
             filename: match[3]
         });
-        xml = xml.replace(match[0], '');
     }
     return result;
 }

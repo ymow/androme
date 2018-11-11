@@ -1,3 +1,3 @@
 import View from '../view';
 
-export default class <T extends View> extends androme.lib.base.extensions.Percent<T> {}
+export default class <T extends View> extends androme.lib.extensions.Percent<T> {}
