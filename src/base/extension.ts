@@ -6,10 +6,10 @@ import { isStyleElement } from '../lib/dom';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public application: Application<T>;
-    public options: ExternalData = {};
     public tagNames: string[] = [];
     public documentRoot = false;
     public eventOnly = false;
+    public readonly options: ExternalData = {};
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
@@ -94,6 +94,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public postRenderDocument(node: T) {}
     public postProcedure(node: T) {}
 
+    public beforeRenderDocument() {}
     public afterRenderElement() {}
     public afterConstraints() {}
     public afterResources() {}

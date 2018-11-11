@@ -15,7 +15,6 @@ declare global {
             renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
             baseRenderDepth(name: string): number;
             setConstraints(): void;
-            afterProcedure(viewData: ViewData<NodeList<T>>): void;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             replaceRenderQueue(output: string): string;

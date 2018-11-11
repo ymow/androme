@@ -3,8 +3,6 @@ export interface SettingsAndroid extends Settings {
     density: number;
     supportRTL: boolean;
     numberResourceValue: boolean;
-    fontAliasResourceValue: boolean;
-    vectorColorResourceValue: boolean;
     ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
     constraintChainPackedHorizontalOffset: number;

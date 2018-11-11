@@ -6,7 +6,6 @@ declare global {
             application: Application<T>;
             imageAssets: Map<string, ImageAsset>;
             fileHandler: File<T>;
-            afterProcedure(viewData: ViewData<NodeList<T>>): void;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             setBoxSpacing(outResult?: T[]): void;

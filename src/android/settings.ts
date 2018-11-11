@@ -15,6 +15,7 @@ const settings: SettingsAndroid = {
         'androme.custom',
         'androme.accessibility',
         'android.resource.dimens',
+        'android.resource.fonts',
         'android.resource.styles',
         'android.resource.svg'
     ],
@@ -25,8 +26,6 @@ const settings: SettingsAndroid = {
     ellipsisOnTextOverflow: true,
     preloadImages: true,
     numberResourceValue: false,
-    fontAliasResourceValue: true,
-    vectorColorResourceValue: true,
     alwaysReevaluateResources: true,
     autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,

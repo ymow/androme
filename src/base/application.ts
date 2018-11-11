@@ -169,8 +169,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 ext.postProcedure(node);
             }
         }
-        this.resourceHandler.afterProcedure(this.viewData);
-        this.viewController.afterProcedure(this.viewData);
         for (const ext of this.extensions) {
             ext.afterProcedure();
         }
@@ -262,6 +260,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const [uri, image] of this.cacheImage.entries()) {
                 this.resourceHandler.imageAssets.set(uri, image);
+            }
+            for (const ext of this.extensions) {
+                ext.beforeRenderDocument();
             }
             for (const element of this.viewElements as Set<HTMLElement>) {
                 if (this.appName === '') {

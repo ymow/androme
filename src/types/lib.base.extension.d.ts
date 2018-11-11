@@ -3,11 +3,11 @@ declare global {
         export interface Extension<T extends Node> {
             application: Application<T>;
             tagNames: string[];
-            options: ExternalData;
             documentRoot: boolean;
             eventOnly: boolean;
             readonly framework: number;
             readonly name: string;
+            readonly options: ExternalData;
             readonly dependencies: ExtensionDependency[];
             readonly subscribers: Set<T>;
             readonly subscribersChild: Set<T>;
@@ -24,6 +24,7 @@ declare global {
             postRenderElement(node: T): void;
             postRenderDocument(node: T): void;
             postProcedure(node: T): void;
+            beforeRenderDocument(): void;
             afterRenderElement(): void;
             afterConstraints(): void;
             afterResources(): void;

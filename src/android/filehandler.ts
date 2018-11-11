@@ -1,7 +1,6 @@
 import { ResourceStyleData, SettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
-import { FONTWEIGHT_ANDROID } from './lib/constant';
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
@@ -188,7 +187,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                     data['1'].push({
                         style,
                         weight,
-                        font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
+                        font: `@font/${name + (style === 'normal' && weight === 'normal' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== 'normal' ? `_${weight}` : ''))}`
                     });
                 }
                 xml += '\n\n' + $xml.createTemplate($xml.parseTemplate(FONT_TMPL), data);

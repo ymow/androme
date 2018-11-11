@@ -1,5 +1,3 @@
-import { SettingsAndroid } from '../../types/module';
-
 import VECTOR_TMPL from '../../template/resource/vector';
 import LAYERLIST_TMPL from '../../template/resource/layer-list';
 
@@ -26,6 +24,9 @@ function setPivotXY(data: TemplateData, origin: BoxPosition | undefined) {
 }
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
+    public options = {
+        useNamedColors: true
+    };
     public readonly eventOnly = true;
 
     public beforeInit() {
@@ -33,7 +34,6 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     }
 
     public afterResources() {
-        const settings = <SettingsAndroid> this.application.settings;
         for (const node of this.application.cacheProcessing.visible) {
             if (node.svgElement) {
                 const stored: $Svg = node.data($Resource.KEY_NAME, 'svgSource');
@@ -89,7 +89,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                             if (item[value].charAt(0) === '@') {
                                                 const gradient = stored.defs.gradient.get(item[value]);
                                                 if (gradient) {
-                                                    const gradients = (<android.lib.base.Resource<T>> this.application.resourceHandler).createBackgroundGradient(node, [gradient]);
+                                                    const gradients = ResourceHandler.createBackgroundGradient(node, [gradient], this.options.useNamedColors);
                                                     item[value] = [{ gradients }];
                                                     namespace.add('aapt');
                                                     return;
@@ -98,7 +98,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                     item[value] = item.color;
                                                 }
                                             }
-                                            if (settings.vectorColorResourceValue) {
+                                            if (this.options.useNamedColors) {
                                                 const colorValue = ResourceHandler.addColor(item[value]);
                                                 if (colorValue !== '') {
                                                     item[value] = `@color/${colorValue}`;

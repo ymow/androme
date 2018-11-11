@@ -21,6 +21,7 @@ import Sprite from './extension/sprite';
 import Table from './extension/table';
 
 import ResourceDimens from './extension/resource/dimens';
+import ResourceFonts from './extension/resource/fonts';
 import ResourceStyles from './extension/resource/styles';
 import ResourceSvg from './extension/resource/svg';
 
@@ -68,6 +69,7 @@ const lib = {
         Table,
         resource: {
             Dimens: ResourceDimens,
+            Fonts: ResourceFonts,
             Styles: ResourceStyles,
             Svg: ResourceSvg
         }
@@ -196,6 +198,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
+            [EXT_ANDROID.RESOURCE_FONTS]: new ResourceFonts(EXT_ANDROID.RESOURCE_FONTS, framework),
             [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework)
         };

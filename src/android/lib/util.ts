@@ -59,12 +59,10 @@ export function convertUnit(value: any, dpi = 160, font = false) {
 }
 
 export function replaceUnit(value: string, { density = 160, convertPixels = 'dp' }, font = false) {
-    switch (convertPixels) {
-        case 'dp':
-            return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
-        default:
-            return value;
+    if (convertPixels === 'dp' || font) {
+        return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
     }
+    return value;
 }
 
 export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
