@@ -9,6 +9,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public options: ExternalData = {};
     public tagNames: string[] = [];
     public documentRoot = false;
+    public eventOnly = false;
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
@@ -105,11 +106,13 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return { output: '', complete: false };
     }
 
+    public postRender(node: T) {}
+    public postProcedure(node: T) {}
+
     public afterRender() {}
     public afterConstraints() {}
     public afterResources() {}
     public afterProcedure() {}
-    public beforeFinalize() {}
     public afterFinalize() {}
 
     public getData(): StringMap {

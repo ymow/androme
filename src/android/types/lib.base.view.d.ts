@@ -1,4 +1,4 @@
-import { Constraint, LocalSettings } from './local';
+import { Constraint, LocalSettings } from './module';
 
 declare global {
     namespace android.lib.base {

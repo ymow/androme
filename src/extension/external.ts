@@ -42,12 +42,4 @@ export default abstract class External<T extends Node> extends Extension<T> {
             }
         }
     }
-
-    public is() {
-        return false;
-    }
-
-    public condition() {
-        return false;
-    }
 }

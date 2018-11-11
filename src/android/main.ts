@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/local';
+import { SettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, XMLNS_ANDROID } from './lib/constant';
 import SETTINGS from './settings';

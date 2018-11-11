@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../../types/local';
+import { SettingsAndroid } from '../../../types/module';
 
 import WIDGET_NAME from '../namespace';
 
@@ -273,8 +273,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         return { output: '', complete: false };
     }
 
-    public afterProcedure() {
-        const node = this.node as T;
+    public postProcedure(node: T) {
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);

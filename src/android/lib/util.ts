@@ -1,4 +1,4 @@
-import { ViewAttribute } from '../types/local';
+import { ViewAttribute } from '../types/module';
 
 import { BUILD_ANDROID } from './enumeration';
 import { XMLNS_ANDROID } from './constant';

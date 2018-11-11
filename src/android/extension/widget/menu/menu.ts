@@ -1,8 +1,9 @@
-import { SettingsAndroid, ViewAttribute } from '../../../types/local';
+import { SettingsAndroid, ViewAttribute } from '../../../types/module';
 
 import $View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
+import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 
 import $android_Resource = android.lib.base.Resource;
@@ -62,7 +63,45 @@ function parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, option
     }
 }
 
-export default class Menu<T extends $View> extends androme.lib.extensions.Nav<T> {
+export default class Menu<T extends $View> extends androme.lib.base.Extension<T> {
+    constructor(
+        name: string,
+        framework: number,
+        tagNames?: string[],
+        options?: ExternalData)
+    {
+        super(name, framework, tagNames, options);
+        this.require($const.EXT_NAME.EXTERNAL, true);
+    }
+
+    public init(element: HTMLElement) {
+        if (this.included(element)) {
+            let valid = false;
+            if (element.children.length > 0) {
+                const tagName = element.children[0].tagName;
+                valid = Array.from(element.children).every(item => item.tagName === tagName);
+                let current = element.parentElement;
+                while (current) {
+                    if (current.tagName === 'NAV' && this.application.viewElements.has(current)) {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+            }
+            if (valid) {
+                Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
+                    if ($dom.getStyle(element).display === 'none') {
+                        $dom.setElementCache(item, 'andromeExternalDisplay', 'none');
+                        item.style.display = 'block';
+                    }
+                });
+                this.application.viewElements.add(<HTMLElement> element);
+            }
+        }
+        return false;
+    }
+
     public condition() {
         return this.included();
     }
@@ -204,10 +243,15 @@ export default class Menu<T extends $View> extends androme.lib.extensions.Nav<T>
         return { output, complete: true, next };
     }
 
-    public afterRender() {
-        super.afterRender();
-        const node = this.node as T;
-        if (this.included(<HTMLElement> node.element)) {
+    public postRender(node: T) {
+        if (this.included(node.element)) {
+            Array.from(node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
+                const display = $dom.getElementCache(item, 'andromeExternalDisplay');
+                if (display) {
+                    item.style.display = display;
+                    $dom.deleteElementCache(item, 'andromeExternalDisplay');
+                }
+            });
             this.application.layoutProcessing.pathname = 'res/menu';
         }
     }

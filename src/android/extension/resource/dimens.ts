@@ -18,7 +18,9 @@ function getDisplayName(value: string) {
 }
 
 export default class ResourceDimens<T extends View> extends androme.lib.base.Extension<T> {
-    public beforeFinalize() {
+    public readonly eventOnly = true;
+
+    public afterProcedure() {
         const groups: ObjectMapNested<T[]> = {};
         for (const node of this.application.cacheSession.visible) {
             const nodeName = node.nodeName.toLowerCase();

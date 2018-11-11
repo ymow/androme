@@ -4,7 +4,9 @@ import $Resource = androme.lib.base.Resource;
 import $util = androme.lib.util;
 
 export default class ResourceStyles<T extends View> extends androme.lib.base.Extension<T> {
-    public beforeFinalize() {
+    public readonly eventOnly = true;
+
+    public afterProcedure() {
         const styles: ObjectMap<string[]> = {};
         for (const node of this.application.cacheSession.visible) {
             const children = node.renderChildren.filter(item => item.visible && item.auto);

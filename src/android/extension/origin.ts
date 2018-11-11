@@ -1,3 +1,5 @@
 import View from '../view';
 
-export default class <T extends View> extends androme.lib.extensions.Origin<T> {}
+export default class <T extends View> extends androme.lib.extensions.Origin<T> {
+    public readonly eventOnly = true;
+}

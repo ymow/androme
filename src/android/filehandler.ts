@@ -1,4 +1,4 @@
-import { ResourceStyleData, SettingsAndroid } from './types/local';
+import { ResourceStyleData, SettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { FONTWEIGHT_ANDROID } from './lib/constant';

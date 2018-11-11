@@ -164,17 +164,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.applyCustomizations();
             }
         }
+        for (const ext of this.extensions) {
+            for (const node of ext.subscribers) {
+                ext.setTarget(undefined, this.nodeProcessing);
+                ext.postProcedure(node);
+            }
+        }
         this.resourceHandler.afterProcedure(this.viewData);
         this.viewController.afterProcedure(this.viewData);
         for (const ext of this.extensions) {
-            for (const node of ext.subscribers) {
-                ext.setTarget(node);
-                ext.afterProcedure();
-            }
-        }
-        for (const ext of this.extensions) {
             ext.setTarget(undefined);
-            ext.beforeFinalize();
+            ext.afterProcedure();
         }
         this.resourceHandler.finalize(this.viewData);
         this.viewController.finalize(this.viewData);
@@ -217,7 +217,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public setConstraints() {
         this.viewController.setConstraints();
         for (const ext of this.extensions) {
-            ext.setTarget(this.nodeProcessing);
+            ext.setTarget(undefined);
             ext.afterConstraints();
         }
     }
@@ -230,7 +230,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
         for (const ext of this.extensions) {
-            ext.setTarget(this.nodeProcessing);
+            ext.setTarget(undefined);
             ext.afterResources();
         }
     }
@@ -584,6 +584,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const documentRoot = this.nodeProcessing as T;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
+        const extensions = this.extensions.filter(item => !item.eventOnly);
         let baseTemplate = localSettings.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
@@ -944,7 +945,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                         let next = false;
-                        for (const ext of [...parentY.renderExtension, ...this.extensions.filter(item => item.subscribersChild.has(nodeY))]) {
+                        for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
                             ext.setTarget(nodeY, parentY);
                             const result = ext.processChild();
                             if (result.output !== '') {
@@ -966,7 +967,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         if (nodeY.styleElement) {
                             const processed: Extension<T>[] = [];
-                            prioritizeExtensions(this.extensions, nodeY.element).some(item => {
+                            prioritizeExtensions(extensions, nodeY.element).some(item => {
                                 if (item.is(nodeY)) {
                                     item.setTarget(nodeY, parentY);
                                     if (item.condition()) {
@@ -1237,7 +1238,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
         });
         this.cacheSession.list.push(...this.cacheProcessing.list);
         for (const ext of this.extensions) {
-            ext.setTarget(documentRoot);
+            for (const node of ext.subscribers) {
+                ext.setTarget(undefined, documentRoot);
+                ext.postRender(node);
+            }
+        }
+        for (const ext of this.extensions) {
+            ext.setTarget(undefined);
             ext.afterRender();
         }
     }

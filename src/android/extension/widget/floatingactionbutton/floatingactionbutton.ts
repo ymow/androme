@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../../types/local';
+import { SettingsAndroid } from '../../../types/module';
 
 import WIDGET_NAME from '../namespace';
 
@@ -12,7 +12,15 @@ import $android_Resource = android.lib.base.Resource;
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
 
-export default class FloatingActionButton<T extends $View> extends androme.lib.extensions.Button<T> {
+export default class FloatingActionButton<T extends $View> extends androme.lib.base.Extension<T> {
+    public is(node: T) {
+        return super.is(node) && (node.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type));
+    }
+
+    public condition() {
+        return this.included();
+    }
+
     public processNode(): ExtensionResult {
         const node = this.node as T;
         const parent = this.parent as T;
@@ -126,8 +134,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.e
         return { output, complete: true };
     }
 
-    public afterProcedure() {
-        const node = this.node as T;
+    public postProcedure(node: T) {
         node.android('layout_width', 'wrap_content');
         node.android('layout_height', 'wrap_content');
     }

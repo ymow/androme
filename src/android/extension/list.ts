@@ -177,8 +177,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
         return { output: '', complete: true };
     }
 
-    public afterRender() {
-        const node = this.node as T;
+    public postRender(node: T) {
         if (node.is($enum.NODE_STANDARD.GRID)) {
             const columnCount = node.android('columnCount');
             for (let i = 0; i < node.renderChildren.length; i++) {
@@ -220,8 +219,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
         }
     }
 
-    public afterProcedure() {
-        const node = this.node as T;
+    public postProcedure(node: T) {
         if (node.is($enum.NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
             node.android('layout_width', 'match_parent');
         }

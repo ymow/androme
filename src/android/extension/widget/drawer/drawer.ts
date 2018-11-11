@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../../types/local';
+import { SettingsAndroid } from '../../../types/module';
 
 import WIDGET_NAME from '../namespace';
 
@@ -73,9 +73,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         return { output, complete: true };
     }
 
-    public afterProcedure() {
+    public postProcedure(node: T) {
         const application = this.application;
-        const node = this.node as T;
         const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
         if (header && !header.hasHeight) {
             header.android('layout_height', 'wrap_content');

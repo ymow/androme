@@ -1,4 +1,4 @@
-import { Constraint, LocalSettings } from './types/local';
+import { Constraint, LocalSettings } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';

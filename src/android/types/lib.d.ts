@@ -1,4 +1,4 @@
-import { EnvironmentSettings, SettingsAndroid, ViewAttribute } from './local';
+import { EnvironmentSettings, SettingsAndroid, ViewAttribute } from './module';
 
 import * as $enum from '../lib/enumeration';
 import * as $const from '../lib/constant';

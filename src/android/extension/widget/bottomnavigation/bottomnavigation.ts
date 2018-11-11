@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../../types/local';
+import { SettingsAndroid } from '../../../types/module';
 
 import WIDGET_NAME from '../namespace';
 
@@ -51,8 +51,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         return { output, complete: true };
     }
 
-    public afterProcedure() {
-        const node = this.node as T;
+    public postProcedure(node: T) {
         const renderParent = node.renderParent as T;
         if (!renderParent.has('width')) {
             renderParent.android('layout_width', 'match_parent');

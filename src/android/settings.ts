@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/local';
+import { SettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/enumeration';
 

@@ -5,6 +5,7 @@ declare global {
             tagNames: string[];
             options: ExternalData;
             documentRoot: boolean;
+            eventOnly: boolean;
             readonly framework: number;
             readonly name: string;
             readonly dependencies: ExtensionDependency[];
@@ -25,11 +26,12 @@ declare global {
             condition(): boolean;
             processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
+            postRender(node: T): void;
+            postProcedure(node: T): void;
             afterRender(): void;
             afterConstraints(): void;
             afterResources(): void;
             afterProcedure(): void;
-            beforeFinalize(): void;
             afterFinalize(): void;
         }
 

@@ -1,4 +1,4 @@
-import { BackgroundGradient, SettingsAndroid } from './local';
+import { BackgroundGradient, SettingsAndroid } from './module';
 
 declare global {
     namespace android.lib.base {

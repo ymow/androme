@@ -14,13 +14,11 @@ import File from './base/file';
 import Extension from './base/extension';
 
 import Accessibility from './extension/accessibility';
-import Button from './extension/button';
 import CssGrid from './extension/cssgrid';
 import Custom from './extension/custom';
 import External from './extension/external';
 import Grid from './extension/grid';
 import List from './extension/list';
-import Nav from './extension/nav';
 import Origin from './extension/origin';
 import Percent from './extension/percent';
 import Sprite from './extension/sprite';
@@ -217,13 +215,11 @@ const lib = {
     },
     extensions: {
         Accessibility,
-        Button,
         CssGrid,
         Custom,
         External,
         Grid,
         List,
-        Nav,
         Origin,
         Percent,
         Sprite,

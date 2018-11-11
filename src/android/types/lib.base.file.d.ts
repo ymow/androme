@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './local';
+import { SettingsAndroid } from './module';
 
 declare global {
     namespace android.lib.base {

@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../types/local';
+import { SettingsAndroid } from '../../types/module';
 
 import VECTOR_TMPL from '../../template/resource/vector';
 import LAYERLIST_TMPL from '../../template/resource/layer-list';
@@ -26,6 +26,8 @@ function setPivotXY(data: TemplateData, origin: BoxPosition | undefined) {
 }
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
+    public readonly eventOnly = true;
+
     public beforeInit() {
         this.application.viewController.localSettings.unsupported.tagName.delete('svg');
     }

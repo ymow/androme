@@ -27,8 +27,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         return { output, complete: false };
     }
 
-    public afterProcedure() {
-        const node = this.node as T;
+    public postProcedure(node: T) {
         if (node.documentRoot) {
             node.android('layout_width', 'match_parent');
             node.android('layout_height', 'match_parent');

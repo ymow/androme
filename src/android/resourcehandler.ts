@@ -1,4 +1,4 @@
-import { BackgroundImage, BackgroundGradient, SettingsAndroid, ResourceStyleData } from './types/local';
+import { BackgroundImage, BackgroundGradient, SettingsAndroid, ResourceStyleData } from './types/module';
 
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 

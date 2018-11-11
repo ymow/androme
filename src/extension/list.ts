@@ -16,17 +16,14 @@ function hasSingleImage<T extends Node>(node: T) {
 export default abstract class List<T extends Node> extends Extension<T> {
     public condition() {
         const node = this.node as T;
-        return (
-            super.condition() &&
-            node.length > 0 && (
-                node.every(item => item.blockStatic) ||
-                node.every(item => item.inlineElement) ||
-                (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
-                node.every((item, index: number) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
-            ) && (
-                node.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
-                node.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
-            )
+        return super.condition() && node.length > 0 && (
+            node.every(item => item.blockStatic) ||
+            node.every(item => item.inlineElement) ||
+            (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
+            node.every((item, index: number) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
+        ) && (
+            node.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
+            node.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
         );
     }
 
@@ -106,10 +103,8 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return { output, complete: true };
     }
 
-    public afterRender() {
-        for (const node of this.subscribers) {
-            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-            node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
-        }
+    public postRender(node: T) {
+        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+        node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
     }
 }
