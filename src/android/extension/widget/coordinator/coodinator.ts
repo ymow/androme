@@ -8,9 +8,8 @@ import $View = android.lib.base.View;
 import $android_const = android.lib.constant;
 
 export default class Coordinator<T extends $View> extends androme.lib.base.Extension<T> {
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const output = this.application.viewController.renderGroup(node, this.parent as T, $android_const.VIEW_SUPPORT.COORDINATOR);
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        const output = this.application.viewController.renderGroup(node, parent, $android_const.VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
@@ -24,7 +23,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
                 }
             }
         }
-        return { output, complete: false };
+        return { output };
     }
 
     public postProcedure(node: T) {

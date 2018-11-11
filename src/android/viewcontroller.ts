@@ -6,6 +6,7 @@ import BASE_TMPL from './template/base';
 
 import View from './view';
 import ViewGroup from './viewgroup';
+import ResourceHandler from './resourcehandler';
 
 import { createViewAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
 
@@ -15,6 +16,7 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
+import $color = androme.lib.color;
 
 const MAP_LAYOUT = {
     relativeParent: {
@@ -1721,88 +1723,94 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         node.setNodeType(nodeType);
         switch (node.tagName) {
             case 'IMG': {
-                if (!recursive) {
-                    const element = <HTMLImageElement> node.element;
-                    const percentWidth = node.has('width', $enum.CSS_STANDARD.PERCENT);
-                    const percentHeight = node.has('height', $enum.CSS_STANDARD.PERCENT);
-                    let width = node.toInt('width');
-                    let height = node.toInt('height');
-                    let scaleType = '';
-                    if (percentWidth || percentHeight) {
-                        scaleType = percentWidth && percentHeight ? 'fitXY' : 'fitCenter';
-                    }
-                    else {
-                        if (width === 0) {
-                            const match = /width="(\d+)"/.exec(element.outerHTML);
-                            if (match) {
-                                width = parseInt(match[1]);
-                                node.css('width', $util.formatPX(match[1]));
+                if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+                    if (!recursive) {
+                        const element = <HTMLImageElement> node.element;
+                        const percentWidth = node.has('width', $enum.CSS_STANDARD.PERCENT);
+                        const percentHeight = node.has('height', $enum.CSS_STANDARD.PERCENT);
+                        let width = node.toInt('width');
+                        let height = node.toInt('height');
+                        let scaleType = '';
+                        if (percentWidth || percentHeight) {
+                            scaleType = percentWidth && percentHeight ? 'fitXY' : 'fitCenter';
+                        }
+                        else {
+                            if (width === 0) {
+                                const match = /width="(\d+)"/.exec(element.outerHTML);
+                                if (match) {
+                                    width = parseInt(match[1]);
+                                    node.css('width', $util.formatPX(match[1]));
+                                }
+                            }
+                            if (height === 0) {
+                                const match = /height="(\d+)"/.exec(element.outerHTML);
+                                if (match) {
+                                    height = parseInt(match[1]);
+                                    node.css('height', $util.formatPX(match[1]));
+                                }
+                            }
+                            switch (node.css('objectFit')) {
+                                case 'contain':
+                                    scaleType = 'centerInside';
+                                    break;
+                                case 'cover':
+                                    scaleType = 'centerCrop';
+                                    break;
+                                case 'scale-down':
+                                    scaleType = 'fitCenter';
+                                    break;
+                                case 'none':
+                                    scaleType = 'matrix';
+                                    break;
+                                default:
+                                    scaleType = 'fitXY';
+                                    break;
                             }
                         }
-                        if (height === 0) {
-                            const match = /height="(\d+)"/.exec(element.outerHTML);
-                            if (match) {
-                                height = parseInt(match[1]);
-                                node.css('height', $util.formatPX(match[1]));
+                        if (scaleType !== '') {
+                            node.android('scaleType', scaleType);
+                        }
+                        if ((width > 0 && height === 0) || (width === 0 && height > 0)) {
+                            node.android('adjustViewBounds', 'true');
+                        }
+                        if (!node.pageflow) {
+                            const left = node.toInt('left');
+                            const top = node.toInt('top');
+                            if (left < 0 || top < 0) {
+                                const container = new View(this.cache.nextId, node.element, this.delegateNodeInit) as T;
+                                container.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
+                                container.excludeResource |= $enum.NODE_RESOURCE.ALL;
+                                container.android('layout_width', width > 0 ? $util.formatPX(width) : 'wrap_content');
+                                container.android('layout_height', height > 0 ? $util.formatPX(height) : 'wrap_content');
+                                container.setBounds();
+                                container.setNodeType(NODE_ANDROID.FRAME);
+                                container.render(parent);
+                                if (left < 0) {
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
+                                    container.css('left', '0px');
+                                }
+                                if (top < 0) {
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
+                                    container.css('top', '0px');
+                                }
+                                node.parent = container;
+                                this.cache.append(container);
+                                return ViewController.getEnclosingTag(
+                                    container.renderDepth,
+                                    NODE_ANDROID.FRAME,
+                                    container.id,
+                                    this.renderNode(node, container, nodeType, true)
+                                );
                             }
                         }
-                        switch (node.css('objectFit')) {
-                            case 'contain':
-                                scaleType = 'centerInside';
-                                break;
-                            case 'cover':
-                                scaleType = 'centerCrop';
-                                break;
-                            case 'scale-down':
-                                scaleType = 'fitCenter';
-                                break;
-                            case 'none':
-                                scaleType = 'matrix';
-                                break;
-                            default:
-                                scaleType = 'fitXY';
-                                break;
-                        }
-                    }
-                    if (scaleType !== '') {
-                        node.android('scaleType', scaleType);
-                    }
-                    if ((width > 0 && height === 0) || (width === 0 && height > 0)) {
-                        node.android('adjustViewBounds', 'true');
-                    }
-                    if (!node.pageflow) {
-                        const left = node.toInt('left');
-                        const top = node.toInt('top');
-                        if (left < 0 || top < 0) {
-                            const container = new View(this.cache.nextId, node.element, this.delegateNodeInit) as T;
-                            container.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-                            container.excludeResource |= $enum.NODE_RESOURCE.ALL;
-                            container.android('layout_width', width > 0 ? $util.formatPX(width) : 'wrap_content');
-                            container.android('layout_height', height > 0 ? $util.formatPX(height) : 'wrap_content');
-                            container.setBounds();
-                            container.setNodeType(NODE_ANDROID.FRAME);
-                            container.render(parent);
-                            if (left < 0) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
-                                container.css('left', '0px');
+                        else {
+                            if (parent.layoutHorizontal && node.baseline) {
+                                node.android('baselineAlignBottom', 'true');
                             }
-                            if (top < 0) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
-                                container.css('top', '0px');
-                            }
-                            node.parent = container;
-                            this.cache.append(container);
-                            return ViewController.getEnclosingTag(
-                                container.renderDepth,
-                                NODE_ANDROID.FRAME,
-                                container.id,
-                                this.renderNode(node, container, nodeType, true)
-                            );
                         }
-                    }
-                    else {
-                        if (parent.layoutHorizontal && node.baseline) {
-                            node.android('baselineAlignBottom', 'true');
+                        const result = ResourceHandler.addImageSrcSet(element);
+                        if (result !== '') {
+                            node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                         }
                     }
                 }
@@ -1886,6 +1894,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             node.android('progress', element.value);
                         }
                         break;
+                    case 'image':
+                        if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+                            const result = ResourceHandler.addImage({ mdpi: element.src });
+                            if (result !== '') {
+                                node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
+                            }
+                        }
+                        break;
                 }
                 switch (element.type) {
                     case 'text':
@@ -1919,6 +1935,26 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
                 if (node.css('whiteSpace') === 'nowrap') {
                     node.android('singleLine', 'true');
+                }
+                const textShadow = node.css('textShadow');
+                if (textShadow !== 'none') {
+                    [/^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/, /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/].some((value, index) => {
+                        const match = textShadow.match(value);
+                        if (match) {
+                            const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
+                            if (color) {
+                                const colorValue = ResourceHandler.addColor(color);
+                                if (colorValue !== '') {
+                                    node.android('shadowColor', `@color/${colorValue}`);
+                                }
+                            }
+                            node.android('shadowDx', $util.convertInt(match[index === 0 ? 2 : 1]).toString());
+                            node.android('shadowDy', $util.convertInt(match[index === 0 ? 3 : 2]).toString());
+                            node.android('shadowRadius', $util.convertInt(match[index === 0 ? 4 : 3]).toString());
+                            return true;
+                        }
+                        return false;
+                    });
                 }
                 break;
             case NODE_ANDROID.LINE:

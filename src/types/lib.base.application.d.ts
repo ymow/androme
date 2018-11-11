@@ -31,7 +31,7 @@ declare global {
             setConstraints(): void;
             setResources(): void;
             createCache(layoutRoot: HTMLElement): boolean;
-            createDocument(): void;
+            renderElement(): void;
             writeFrameLayout(node: T, parent: T, children?: boolean): string;
             writeLinearLayout(node: T, parent: T, horizontal: boolean): string;
             writeGridLayout(node: T, parent: T, columnCount: number, rowCount?: number): string;

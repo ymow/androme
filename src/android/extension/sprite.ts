@@ -9,13 +9,11 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         let container: T | undefined;
+        const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
         if (image && image.uri && image.position) {
-            const parent = this.parent as T;
             container = new View(this.application.cacheProcessing.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
             container.siblingIndex = node.siblingIndex;
             container.nodeName = node.nodeName;
@@ -54,7 +52,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
                 backgroundPositionY: '0px',
                 backgroundColor: 'transparent'
             });
-            node.excludeProcedure |= $enum.NODE_PROCEDURE.OPTIMIZATION;
+            node.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT;
             node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE;
             node.android('src', `@drawable/${ResourceHandler.addImage({ mdpi: image.uri })}`);
             output = ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);

@@ -68,9 +68,9 @@ interface ExtensionDependency {
     preload: boolean;
 }
 
-interface ExtensionResult {
+interface ExtensionResult<T> {
     output: string;
-    complete: boolean;
+    complete?: boolean;
     next?: boolean;
     parent?: androme.lib.base.Node;
     renderAs?: androme.lib.base.Node;

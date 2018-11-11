@@ -7,8 +7,7 @@ import { hasValue } from '../lib/util';
 import { convertClientUnit, cssResolveUrl, getBackgroundPosition } from '../lib/dom';
 
 export default abstract class Sprite<T extends Node> extends Extension<T> {
-    public condition() {
-        const node = this.node as T;
+    public condition(node: T) {
         let valid = false;
         if (node.hasWidth && node.hasHeight && node.length === 0 && !node.inlineText) {
             let url = node.css('backgroundImage');

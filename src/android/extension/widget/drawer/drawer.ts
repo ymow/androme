@@ -42,8 +42,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         return false;
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
+    public processNode(node: T): ExtensionResult<T> {
         const options = $android_util.createViewAttribute(this.options.self);
         if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
@@ -73,19 +72,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         return { output, complete: true };
     }
 
-    public postProcedure(node: T) {
+    public postRenderDocument(node: T) {
         const application = this.application;
-        const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
-        if (header && !header.hasHeight) {
-            header.android('layout_height', 'wrap_content');
-        }
-        if (application.renderQueue[node.nodeId]) {
-            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
-            if (target) {
-                application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
-                delete application.renderQueue[node.nodeId];
-            }
-        }
         const options = $android_util.createViewAttribute(this.options.navigation);
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         const headerLayout = $util.optionalAsString($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
@@ -107,6 +95,21 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
                 'match_parent'
             );
             application.addRenderQueue(node.id.toString(), [output]);
+        }
+    }
+
+    public postProcedure(node: T) {
+        const application = this.application;
+        const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
+        if (header && !header.hasHeight) {
+            header.android('layout_height', 'wrap_content');
+        }
+        if (application.renderQueue[node.nodeId]) {
+            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
+            if (target) {
+                application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
+                delete application.renderQueue[node.nodeId];
+            }
         }
     }
 

@@ -6,14 +6,14 @@ const settings: SettingsAndroid = {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
-        'androme.custom',
-        'androme.accessibility',
         'androme.sprite',
         'androme.css-grid',
-        'androme.list',
         'androme.table',
+        'androme.list',
         'androme.grid',
         'androme.percent',
+        'androme.custom',
+        'androme.accessibility',
         'android.resource.dimens',
         'android.resource.styles',
         'android.resource.svg'

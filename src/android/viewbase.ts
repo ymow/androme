@@ -7,6 +7,7 @@ import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customization
 import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
 
 import $NodeList = androme.lib.base.NodeList;
+import $Resource = androme.lib.base.Resource;
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -1177,6 +1178,19 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private setBoxSpacing() {
             if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
+                if (stored) {
+                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right') && !(this.position === 'relative' && this.alignNegative)) {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
+                    }
+                    if (this.css('marginLeft') === 'auto') {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                    }
+                    if (this.css('marginRight') === 'auto') {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
+                    }
+                }
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                         const dimension = region + direction;

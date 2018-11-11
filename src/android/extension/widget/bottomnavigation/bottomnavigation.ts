@@ -25,9 +25,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         this.require(WIDGET_NAME.MENU);
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         const options = $android_util.createViewAttribute(this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(

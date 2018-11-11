@@ -85,13 +85,14 @@ androme.settings = {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
-        'androme.custom',
-        'androme.accessibility',
         'androme.sprite',
-        'androme.list',
+        'androme.css-grid',
         'androme.table',
+        'androme.list',
         'androme.grid',
         'androme.percent',
+        'androme.custom',
+        'androme.accessibility',
         'android.resource.dimens',
         'android.resource.styles',
         'android.resource.svg'

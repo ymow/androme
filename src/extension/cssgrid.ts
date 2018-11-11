@@ -22,14 +22,11 @@ const PATTERN_GRID = {
 };
 
 export default class CssGrid<T extends Node> extends Extension<T> {
-    public condition() {
-        const node = this.node as T;
+    public condition(node: T) {
         return node.length > 0 && node.display === 'grid';
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         const fontSize = node.css('fontSize');
         const mainData = <CssGridData<T>> {
             children: new Set(),

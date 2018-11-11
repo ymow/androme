@@ -4,9 +4,8 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Table<T> {
-    public processNode(): ExtensionResult {
-        const result = super.processNode();
-        const node = this.node as T;
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        const result = super.processNode(node, parent);
         const columnCount = $util.convertInt(node.android('columnCount'));
         if (columnCount > 1) {
             let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
@@ -67,8 +66,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
         return result;
     }
 
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         const rowSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'rowSpan'));
         const columnSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'colSpan'));
         const spaceSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'spaceSpan'));
@@ -79,12 +77,11 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
             node.android('layout_columnSpan', columnSpan.toString());
         }
         if (spaceSpan > 0) {
-            const parent = this.parent as T;
             this.application.viewController.appendAfter(
                 node.id,
                 this.application.viewController.renderColumnSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
             );
         }
-        return { output: '', complete: true };
+        return { output: '' };
     }
 }

@@ -319,10 +319,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setBoxStyle() {
-        super.setBoxStyle();
-        this.cache.filter(item => item.styleElement).sort(a => !a.visible ? -1 : 0).forEach(node => {
-            const stored: BoxStyle = node.data($Resource.KEY_NAME, 'boxStyle');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
+        const outResult: T[] = [];
+        super.setBoxStyle(outResult);
+        outResult.sort(a => !a.visible ? -1 : 0).forEach(node => {
+            if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
+                const stored: BoxStyle = node.data($Resource.KEY_NAME, 'boxStyle');
                 function checkPartialBackgroundPosition(current: string, adjacent: string, defaultPosition: string) {
                     if (current.indexOf(' ') === -1 && adjacent.indexOf(' ') !== -1) {
                         if (/^[a-z]+$/.test(current)) {
@@ -873,36 +874,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setFontStyle() {
-        super.setFontStyle();
+        const outResult: T[] = [];
+        super.setFontStyle(outResult);
         const nodeName: ObjectMap<T[]> = {};
-        for (const node of this.cache.visible) {
-            if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
-                if (node.data($Resource.KEY_NAME, 'fontStyle')) {
-                    if (nodeName[node.nodeName] === undefined) {
-                        nodeName[node.nodeName] = [];
-                    }
-                    nodeName[node.nodeName].push(node);
+        for (const node of outResult) {
+            if (node.visible && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
+                if (nodeName[node.nodeName] === undefined) {
+                    nodeName[node.nodeName] = [];
                 }
-                const textShadow = node.css('textShadow');
-                if (textShadow !== 'none') {
-                    [/^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/, /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/].some((value, index) => {
-                        const match = textShadow.match(value);
-                        if (match) {
-                            const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
-                            if (color) {
-                                const colorValue = ResourceHandler.addColor(color);
-                                if (colorValue !== '') {
-                                    node.android('shadowColor', `@color/${colorValue}`);
-                                }
-                            }
-                            node.android('shadowDx', $util.convertInt(match[index === 0 ? 2 : 1]).toString());
-                            node.android('shadowDy', $util.convertInt(match[index === 0 ? 3 : 2]).toString());
-                            node.android('shadowRadius', $util.convertInt(match[index === 0 ? 4 : 3]).toString());
-                            return true;
-                        }
-                        return false;
-                    });
-                }
+                nodeName[node.nodeName].push(node);
             }
         }
         for (const tag in nodeName) {
@@ -991,30 +971,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
     }
 
-    public setBoxSpacing() {
-        super.setBoxSpacing();
-        for (const node of this.cache.elements) {
-            const stored: StringMap = node.data($Resource.KEY_NAME, 'boxSpacing');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                if (stored.marginLeft === stored.marginRight && !node.blockWidth && node.alignParent('left') && node.alignParent('right') && !(node.position === 'relative' && node.alignNegative)) {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-                if (node.css('marginLeft') === 'auto') {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                }
-                if (node.css('marginRight') === 'auto') {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-            }
-        }
-    }
-
     public setValueString() {
-        super.setValueString();
-        for (const node of this.cache.visible) {
-            const stored: NameValue = node.data($Resource.KEY_NAME, 'valueString');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.VALUE_STRING)) {
+        const outResult: T[] = [];
+        super.setValueString(outResult);
+        for (const node of outResult) {
+            if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.VALUE_STRING)) {
+                const stored: NameValue = node.data($Resource.KEY_NAME, 'valueString');
                 if (node.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
                     if (node.alignParent('left') && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                         const value = node.textContent;
@@ -1065,10 +1027,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setOptionArray() {
-        super.setOptionArray();
-        for (const node of this.cache.visible) {
-            const stored: ObjectMap<string[]> = node.data($Resource.KEY_NAME, 'optionArray');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)) {
+        const outResult: T[] = [];
+        super.setOptionArray(outResult);
+        for (const node of outResult) {
+            if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)) {
+                const stored: ObjectMap<string[]> = node.data($Resource.KEY_NAME, 'optionArray');
                 const result: string[] = [];
                 if (stored.numberArray) {
                     if (!this.settings.numberResourceValue) {
@@ -1101,19 +1064,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         $Resource.STORED.arrays.set(arrayName, result);
                     }
                     node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
-                }
-            }
-        }
-    }
-
-    public setImageSource() {
-        super.setImageSource();
-        for (const node of this.cache.visible) {
-            if ((node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
-                const element = <HTMLImageElement> node.element;
-                const result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ mdpi: element.src });
-                if (result !== '') {
-                    node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                 }
             }
         }

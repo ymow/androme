@@ -17,13 +17,11 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         return super.is(node) && (node.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type));
     }
 
-    public condition() {
-        return this.included();
+    public condition(node: T) {
+        return this.included(<HTMLElement> node.element);
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         const target = $util.hasValue(node.dataset.target);
         const element = node.element;
         const options = $android_util.createViewAttribute(this.options[element.id]);

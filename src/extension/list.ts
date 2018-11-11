@@ -14,9 +14,8 @@ function hasSingleImage<T extends Node>(node: T) {
 }
 
 export default abstract class List<T extends Node> extends Extension<T> {
-    public condition() {
-        const node = this.node as T;
-        return super.condition() && node.length > 0 && (
+    public condition(node: T) {
+        return super.condition(node) && node.length > 0 && (
             node.every(item => item.blockStatic) ||
             node.every(item => item.inlineElement) ||
             (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
@@ -27,9 +26,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         );
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         if (NodeList.linearY(node.list)) {
             output = this.application.writeGridLayout(node, parent, node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
@@ -100,10 +97,10 @@ export default abstract class List<T extends Node> extends Extension<T> {
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
         }
-        return { output, complete: true };
+        return { output };
     }
 
-    public postRender(node: T) {
+    public postRenderElement(node: T) {
         node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
         node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
     }

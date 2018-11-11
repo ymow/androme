@@ -7,7 +7,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
 
-import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
@@ -147,7 +147,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public finalize() {
         this.processRenderQueue();
-        const nodes = this.cacheSession.visible.filter(node => node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
+        const nodes = this.cacheSession.filter(node => node.visible && node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
         for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
@@ -166,20 +166,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
-                ext.setTarget(undefined, this.nodeProcessing);
                 ext.postProcedure(node);
             }
         }
         this.resourceHandler.afterProcedure(this.viewData);
         this.viewController.afterProcedure(this.viewData);
         for (const ext of this.extensions) {
-            ext.setTarget(undefined);
             ext.afterProcedure();
         }
         this.resourceHandler.finalize(this.viewData);
         this.viewController.finalize(this.viewData);
         for (const ext of this.extensions) {
-            ext.setTarget(undefined);
             ext.afterFinalize();
         }
         this.closed = true;
@@ -217,7 +214,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public setConstraints() {
         this.viewController.setConstraints();
         for (const ext of this.extensions) {
-            ext.setTarget(undefined);
             ext.afterConstraints();
         }
     }
@@ -230,7 +226,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
         for (const ext of this.extensions) {
-            ext.setTarget(undefined);
             ext.afterResources();
         }
     }
@@ -280,11 +275,19 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 element.dataset.iteration = iteration.toString();
                 element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
                 if (this.createCache(element)) {
-                    this.createDocument();
+                    this.renderElement();
                     this.setConstraints();
                     this.setResources();
                     this._cacheRoot.add(element);
                 }
+            }
+            for (const ext of this.extensions) {
+                for (const node of ext.subscribers) {
+                    ext.postRenderDocument(node);
+                }
+            }
+            for (const ext of this.extensions) {
+                ext.afterRenderDocument();
             }
             if (typeof __THEN === 'function') {
                 __THEN.call(this);
@@ -388,8 +391,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.cacheProcessing.delegateAppend = undefined;
         this.cacheProcessing.clear();
         for (const ext of this.extensions) {
-            ext.setTarget(undefined, undefined, layoutRoot);
-            ext.beforeInit();
+            ext.beforeInit(layoutRoot);
         }
         const nodeRoot = this.insertNode(layoutRoot);
         if (nodeRoot) {
@@ -571,15 +573,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             sortAsc(this.cacheProcessing.list, 'depth', 'id');
             for (const ext of this.extensions) {
-                ext.setTarget(nodeRoot);
-                ext.afterInit();
+                ext.afterInit(layoutRoot);
             }
             return true;
         }
         return false;
     }
 
-    public createDocument() {
+    public renderElement() {
         const localSettings = this.viewController.localSettings;
         const documentRoot = this.nodeProcessing as T;
         const mapX: LayoutMapX<T> = [];
@@ -946,8 +947,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                         let next = false;
                         for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
-                            ext.setTarget(nodeY, parentY);
-                            const result = ext.processChild();
+                            const result = ext.processChild(nodeY, parentY);
                             if (result.output !== '') {
                                 renderNode(nodeY, parentY, result.output, currentY);
                             }
@@ -957,7 +957,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (result.parent) {
                                 parentY = result.parent as T;
                             }
-                            next = !!result.next;
+                            next = result.next === true;
                             if (result.complete || result.next) {
                                 break;
                             }
@@ -968,26 +968,23 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (nodeY.styleElement) {
                             const processed: Extension<T>[] = [];
                             prioritizeExtensions(extensions, nodeY.element).some(item => {
-                                if (item.is(nodeY)) {
-                                    item.setTarget(nodeY, parentY);
-                                    if (item.condition()) {
-                                        const result =  item.processNode(mapX, mapY);
-                                        if (result.output !== '') {
-                                            renderNode(nodeY, parentY, result.output, currentY);
-                                        }
-                                        if (result.renderAs && result.renderOutput) {
-                                            renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
-                                        }
-                                        if (result.parent) {
-                                            parentY = result.parent as T;
-                                        }
-                                        if (result.output !== '' || result.include) {
-                                            processed.push(item);
-                                        }
-                                        next = !!result.next;
-                                        if (result.complete || result.next) {
-                                            return true;
-                                        }
+                                if (item.is(nodeY) && item.condition(nodeY, parentY)) {
+                                    const result =  item.processNode(nodeY, parentY, mapX, mapY);
+                                    if (result.output !== '') {
+                                        renderNode(nodeY, parentY, result.output, currentY);
+                                    }
+                                    if (result.renderAs && result.renderOutput) {
+                                        renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
+                                    }
+                                    if (result.parent) {
+                                        parentY = result.parent as T;
+                                    }
+                                    if (isString(result.output) || result.include === true) {
+                                        processed.push(item);
+                                    }
+                                    next = result.next === true;
+                                    if (result.complete || result.next) {
+                                        return true;
                                     }
                                 }
                                 return false;
@@ -1239,13 +1236,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.cacheSession.list.push(...this.cacheProcessing.list);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
-                ext.setTarget(undefined, documentRoot);
-                ext.postRender(node);
+                ext.postRenderElement(node);
             }
         }
         for (const ext of this.extensions) {
-            ext.setTarget(undefined);
-            ext.afterRender();
+            ext.afterRenderElement();
         }
     }
 

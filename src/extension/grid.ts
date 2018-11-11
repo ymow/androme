@@ -12,24 +12,18 @@ import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { isStyleElement, newBoxRect } from '../lib/dom';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
-    public condition() {
-        const node = this.node as T;
-        return (
-            this.included() ||
-            (node.length > 1 && (
-                (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
-                (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
-                    node.css('listStyle') === 'none' ||
-                    node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
-                ))
+    public condition(node: T) {
+        return this.included(<HTMLElement> node.element) || (node.length > 1 && (
+            (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
+            (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+                node.css('listStyle') === 'none' ||
+                node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
+                (!hasValue(node.dataset.ext) && !node.flex.enabled && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
             ))
-        );
+        ));
     }
 
-    public processNode(mapX: LayoutMapX<T>): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
         const columnBalance = !!this.options.columnBalance;
         const mainData: GridData = {
             padding: newBoxRect(),
@@ -128,7 +122,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 for (let l = 0; l < nextCoordsX.length; l++) {
                     const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.documentParent.documentParent.id === node.id), 'linear.top');
                     if (l === 0 && nextAxisX.length === 0) {
-                        return { output: '', complete: false };
+                        return { output: '' };
                     }
                     columnRight[l] = l === 0 ? 0 : columnRight[l - 1];
                     for (let m = 0; m < nextAxisX.length; m++) {
@@ -292,15 +286,12 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
         }
-        return { output, complete: true };
+        return { output };
     }
 
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: GridData = parent.data(EXT_NAME.GRID, 'mainData');
         const cellData: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
-        let output = '';
         if (mainData && cellData) {
             let siblings: T[];
             if (this.options.columnBalance) {
@@ -322,6 +313,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 .filter(item => item) as T[];
             }
             if (siblings && siblings.length > 0) {
+                let output = '';
                 siblings.unshift(node);
                 const group = this.application.viewController.createGroup(parent, node, siblings);
                 const linearX = NodeList.linearX(siblings);
@@ -342,6 +334,6 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 return { output, parent: group, complete: true };
             }
         }
-        return { output, complete: true };
+        return { output: '' };
     }
 }

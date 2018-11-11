@@ -1,7 +1,7 @@
 import { USER_AGENT } from './enumeration';
 import { DOM_REGEX } from './constant';
 
-import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -17,6 +17,19 @@ export function isUserAgent(value: number) {
         client = USER_AGENT.SAFARI;
     }
     return hasBit(value, client);
+}
+
+export function getDataSet(element: Element, prefix: string) {
+    const result: StringMap = {};
+    if (isStyleElement(element)) {
+        prefix = convertCamelCase(prefix, '\\.');
+        for (const attr in element.dataset) {
+            if (attr.length > prefix.length && attr.startsWith(prefix)) {
+                result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr] as string;
+            }
+        }
+    }
+    return result;
 }
 
 export function newBoxRect(): BoxRect {

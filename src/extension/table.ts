@@ -8,7 +8,7 @@ import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '.
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
-    public processNode(): ExtensionResult {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         function setAutoWidth(td: T) {
             td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
             td.data(EXT_NAME.TABLE, 'expand', true);
@@ -16,8 +16,6 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         function setBoundsWidth(td: T) {
             td.css('width', formatPX(td.bounds.width));
         }
-        const node = this.node as T;
-        const parent = this.parent as T;
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');
         const tbody = node.filter(item => item.tagName === 'TBODY');

@@ -47,6 +47,8 @@ const VALIDATE_GROUP = {
     orderInCategory: /^[0-9]+$/
 };
 
+const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
+
 function hasInputType(node: $View, value: string) {
     return node.some(item => (<HTMLInputElement> item.element).type === value);
 }
@@ -57,7 +59,7 @@ function parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, option
         if (value && validator[attr]) {
             const match = value.match(validator[attr]);
             if (match) {
-                options['android'][attr] = Array.from(new Set(match)).join('|');
+                options[NAMESPACE_APP.includes(attr) ? 'app' : 'android'][attr] = Array.from(new Set(match)).join('|');
             }
         }
     }
@@ -102,12 +104,11 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         return false;
     }
 
-    public condition() {
-        return this.included();
+    public condition(node: T) {
+        return this.included(<HTMLElement> node.element);
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
+    public processNode(node: T): ExtensionResult<T> {
         const output = this.application.viewController.renderNodeStatic(
             VIEW_NAVIGATION.MENU,
             0,
@@ -126,12 +127,10 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         return { output, complete: true };
     }
 
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         if (node.plainText) {
             node.hide();
-            return { output: '', complete: true, next: true };
+            return { output: '', next: true };
         }
         const element = <HTMLElement> node.element;
         const options = $android_util.createViewAttribute();
@@ -243,8 +242,8 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         return { output, complete: true, next };
     }
 
-    public postRender(node: T) {
-        if (this.included(node.element)) {
+    public postRenderElement(node: T) {
+        if (this.included(<HTMLElement> node.element)) {
             Array.from(node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = $dom.getElementCache(item, 'andromeExternalDisplay');
                 if (display) {
@@ -252,7 +251,9 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                     $dom.deleteElementCache(item, 'andromeExternalDisplay');
                 }
             });
-            this.application.layoutProcessing.pathname = 'res/menu';
+            if (node === this.application.nodeProcessing) {
+                this.application.layoutProcessing.pathname = 'res/menu';
+            }
         }
     }
 }

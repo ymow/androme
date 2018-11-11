@@ -46,10 +46,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         return false;
     }
 
-    public processNode(): ExtensionResult {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = this.application.viewController;
-        const node = this.node as T;
-        const parent = this.parent as T;
         const target = $util.hasValue(node.dataset.target);
         const options: ExternalData = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = $android_util.createViewAttribute(options.self);
@@ -261,16 +259,16 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
-        return { output, complete: false };
+        return { output };
     }
 
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
+    public processChild(node: T): ExtensionResult<T> {
+        let next = false;
         if (node.imageElement && ($util.hasValue(node.dataset.navigationIcon) || $util.hasValue(node.dataset.collapseIcon))) {
             node.hide();
-            return { output: '', complete: true, next: true };
+            next = true;
         }
-        return { output: '', complete: false };
+        return { output: '', next };
     }
 
     public postProcedure(node: T) {

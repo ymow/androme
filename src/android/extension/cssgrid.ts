@@ -6,9 +6,7 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: CssGridData<T> = parent.data($const.EXT_NAME.CSS_GRID, 'mainData');
         const cellData: CssGridCellData = node.data($const.EXT_NAME.CSS_GRID, 'cellData');
         if (mainData && cellData) {
@@ -87,6 +85,12 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             node.android('layout_columnWeight', columnWeight > 0 ? columnWeight.toString() : '0');
             node.mergeGravity('layout_gravity', 'fill_vertical');
         }
-        return { output: '', complete: true };
+        return { output: '' };
+    }
+
+    public postProcedure(node: T) {
+        if (node.has('maxWidth') && node.inlineWidth) {
+            node.android('layout_width', $util.formatPX(node.bounds.width));
+        }
     }
 }

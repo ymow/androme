@@ -9,12 +9,12 @@ declare global {
             afterProcedure(viewData: ViewData<NodeList<T>>): void;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
-            setBoxSpacing(): void;
-            setBoxStyle(): void;
-            setFontStyle(): void;
-            setValueString(): void;
-            setImageSource(): void;
-            setOptionArray(): void;
+            setBoxSpacing(outResult?: T[]): void;
+            setBoxStyle(outResult?: T[]): void;
+            setFontStyle(outResult?: T[]): void;
+            setValueString(outResult?: T[]): void;
+            setImageSource(outResult?: T[]): void;
+            setOptionArray(outResult?: T[]): void;
         }
 
         export class Resource<T extends Node> implements Resource<T> {

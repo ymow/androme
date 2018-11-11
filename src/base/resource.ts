@@ -61,19 +61,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border: BorderAttribute | undefined) {
-        return border !== undefined && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
+        return !!border && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
     }
 
     public static hasDrawableBackground(object: BoxStyle | undefined) {
         return (
-            object !== undefined && (
+            !!object && (
                 this.isBorderVisible(object.borderTop) ||
                 this.isBorderVisible(object.borderRight) ||
                 this.isBorderVisible(object.borderBottom) ||
                 this.isBorderVisible(object.borderLeft) ||
-                object.backgroundImage ||
-                object.borderRadius ||
-                object.backgroundGradient
+                !!object.backgroundImage ||
+                !!object.borderRadius ||
+                !!object.backgroundGradient
             )
         );
     }
@@ -97,7 +97,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.fileHandler.reset();
     }
 
-    public setBoxStyle() {
+    public setBoxStyle(outResult?: T[]) {
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, 'boxStyle')) {
                 const boxStyle: BoxStyle = {
@@ -321,15 +321,18 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     boxStyle.border = boxStyle.borderTop;
                 }
                 node.data(Resource.KEY_NAME, 'boxStyle', boxStyle);
+                if (outResult) {
+                    outResult.push(node);
+                }
             }
         }
     }
 
-    public setFontStyle() {
+    public setFontStyle(outResult?: T[]) {
         for (const node of this.cache) {
             if (this.checkPermissions(node, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
-                if (!(node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
+                if (!(node.renderChildren.length > 0 || !node.domElement || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity);
                     let backgroundColor: ColorHexAlpha | null = null;
@@ -402,12 +405,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                     };
                     node.data(Resource.KEY_NAME, 'fontStyle', result);
+                    if (outResult) {
+                        outResult.push(node);
+                    }
                 }
             }
         }
     }
 
-    public setBoxSpacing() {
+    public setBoxSpacing(outResult?: T[]) {
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, 'boxSpacing')) {
                 const boxSpacing = getBoxSpacing(node.element);
@@ -421,11 +427,14 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                 }
                 node.data(Resource.KEY_NAME, 'boxSpacing', result);
+                if (outResult) {
+                    outResult.push(node);
+                }
             }
         }
     }
 
-    public setValueString() {
+    public setValueString(outResult?: T[]) {
         function replaceWhiteSpace(node: T, value: string): [string, boolean] {
             if (node.multiLine && !node.renderParent.linearVertical) {
                 value = value.replace(/^\s*\n/, '');
@@ -553,14 +562,17 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                         }
                         node.data(Resource.KEY_NAME, 'valueString', { name, value });
+                        if (outResult) {
+                            outResult.push(node);
+                        }
                     }
                 }
             }
         }
     }
 
-    public setOptionArray() {
-        for (const node of this.cache) {
+    public setOptionArray(outResult?: T[]) {
+        for (const node of this.cache.visible) {
             if (node.tagName === 'SELECT' && this.checkPermissions(node, 'optionArray')) {
                 const element = <HTMLSelectElement> node.element;
                 const stringArray: string[] = [];
@@ -589,11 +601,14 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     stringArray: stringArray.length > 0 ? stringArray : undefined,
                     numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
                 });
+                if (outResult) {
+                    outResult.push(node);
+                }
             }
         }
     }
 
-    public setImageSource() {
+    public setImageSource(outResult?: T[]) {
         for (const node of this.cache.visible) {
             if (node.svgElement && this.checkPermissions(node, 'imageSource')) {
                 if (node.svgElement) {
@@ -613,6 +628,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         });
                         if (result.length > 0 || result.defs.image.length > 0) {
                             node.data(Resource.KEY_NAME, 'svgSource', result);
+                            if (outResult) {
+                                outResult.push(node);
+                            }
                         }
                     }
                 }

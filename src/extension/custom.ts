@@ -4,6 +4,8 @@ import { EXT_NAME } from '../lib/constant';
 import Node from '../base/node';
 import Extension from '../base/extension';
 
+import { getDataSet } from '../lib/dom';
+
 export default abstract class Custom<T extends Node> extends Extension<T> {
     protected constructor(
         name: string,
@@ -15,11 +17,9 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
         this.require(EXT_NAME.EXTERNAL, true);
     }
 
-    public processNode(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
-        const data = this.getData();
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         let output = '';
+        const data = getDataSet(node.element, this.name);
         if (data.tag) {
             if (node.length > 0) {
                 output = this.application.viewController.renderGroup(node, parent, data.tag);
@@ -37,6 +37,6 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
                 }
             }
         }
-        return { output, complete: false };
+        return { output };
     }
 }

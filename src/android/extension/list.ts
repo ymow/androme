@@ -13,11 +13,9 @@ import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.extensions.List<T> {
-    public processChild(): ExtensionResult {
-        const node = this.node as T;
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');
         if (mainData) {
-            const parent = this.parent as T;
             const controller = this.application.viewController;
             const parentLeft = $util.convertInt(parent.css('paddingLeft')) + $util.convertInt(parent.cssInitial('marginLeft', true));
             let columnCount = 0;
@@ -174,53 +172,52 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 node.android('layout_columnWeight', '1');
             }
         }
-        return { output: '', complete: true };
+        return { output: '' };
     }
 
-    public postRender(node: T) {
-        if (node.is($enum.NODE_STANDARD.GRID)) {
-            const columnCount = node.android('columnCount');
-            for (let i = 0; i < node.renderChildren.length; i++) {
-                const current = node.renderChildren[i];
-                const previous = node.renderChildren[i - 1];
-                let spaceHeight = 0;
-                if (previous) {
-                    const marginBottom = $util.convertInt(previous.android(BOX_ANDROID.MARGIN_BOTTOM));
-                    if (marginBottom > 0) {
-                        spaceHeight += marginBottom;
-                        previous.delete('android', BOX_ANDROID.MARGIN_BOTTOM);
-                        previous.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, null);
-                    }
+    public postRenderElement(node: T) {
+        super.postRenderElement(node);
+        const columnCount = node.android('columnCount');
+        for (let i = 0; i < node.renderChildren.length; i++) {
+            const current = node.renderChildren[i];
+            const previous = node.renderChildren[i - 1];
+            let spaceHeight = 0;
+            if (previous) {
+                const marginBottom = $util.convertInt(previous.android(BOX_ANDROID.MARGIN_BOTTOM));
+                if (marginBottom > 0) {
+                    spaceHeight += marginBottom;
+                    previous.delete('android', BOX_ANDROID.MARGIN_BOTTOM);
+                    previous.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, null);
                 }
-                const marginTop = $util.convertInt(current.android(BOX_ANDROID.MARGIN_TOP));
-                if (marginTop > 0) {
-                    spaceHeight += marginTop;
-                    current.delete('android', BOX_ANDROID.MARGIN_TOP);
-                    current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
-                }
-                if (spaceHeight > 0) {
-                    this.application.viewController.prependBefore(
-                        current.id,
-                        this.application.viewController.renderNodeStatic(
-                            $enum.NODE_STANDARD.SPACE,
-                            current.renderDepth,
-                            {
-                                android: {
-                                    layout_columnSpan: columnCount.toString()
-                                }
-                            },
-                            'match_parent',
-                            $util.formatPX(spaceHeight)
-                        ),
-                        0
-                    );
-                }
+            }
+            const marginTop = $util.convertInt(current.android(BOX_ANDROID.MARGIN_TOP));
+            if (marginTop > 0) {
+                spaceHeight += marginTop;
+                current.delete('android', BOX_ANDROID.MARGIN_TOP);
+                current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
+            }
+            if (spaceHeight > 0) {
+                this.application.viewController.prependBefore(
+                    current.id,
+                    this.application.viewController.renderNodeStatic(
+                        $enum.NODE_STANDARD.SPACE,
+                        current.renderDepth,
+                        {
+                            android: {
+                                layout_columnSpan: columnCount.toString()
+                            }
+                        },
+                        'match_parent',
+                        $util.formatPX(spaceHeight)
+                    ),
+                    0
+                );
             }
         }
     }
 
     public postProcedure(node: T) {
-        if (node.is($enum.NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
+        if (node.blockStatic && !node.has('width')) {
             node.android('layout_width', 'match_parent');
         }
     }
