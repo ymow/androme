@@ -2,7 +2,7 @@ const template = [
 '<?xml version="1.0" encoding="utf-8"?>',
 '<resources>',
 '!1',
-'	<style name="{&parentName}" parent="{~parent}">',
+'	<style name="{&name}" parent="{~parent}">',
     '!items',
 '		<item name="{&name}">{&value}</item>',
     '!items',

@@ -1,8 +1,10 @@
 export const EXT_ANDROID = {
-    RESOURCE_DIMENS: 'android.resource.dimens',
-    RESOURCE_FONTS: 'android.resource.fonts',
-    RESOURCE_STYLES: 'android.resource.styles',
+    RESOURCE_BACKGROUND: 'android.resource.background',
     RESOURCE_SVG: 'android.resource.svg',
+    RESOURCE_STRINGS: 'android.resource.strings',
+    RESOURCE_FONTS: 'android.resource.fonts',
+    RESOURCE_DIMENS: 'android.resource.dimens',
+    RESOURCE_STYLES: 'android.resource.styles'
 };
 
 export const NODE_ANDROID = {

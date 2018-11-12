@@ -1,4 +1,4 @@
-import { SettingsAndroid, ViewAttribute } from '../../../types/module';
+import { ViewAttribute } from '../../../types/module';
 
 import $View = android.lib.base.View;
 
@@ -214,7 +214,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         }
         if (node.android('title') === '') {
             if (title !== '') {
-                const name = $android_Resource.addString(title, '', <SettingsAndroid> this.application.settings);
+                const name = $android_Resource.addString(title, '', this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
                 if (name !== '') {
                     title = `@string/${name}`;
                 }

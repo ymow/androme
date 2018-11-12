@@ -9,6 +9,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public tagNames: string[] = [];
     public documentRoot = false;
     public eventOnly = false;
+    public preloaded = false;
     public readonly options: ExternalData = {};
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
@@ -32,9 +33,9 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return this.tagNames.length === 0 || this.tagNames.includes(node.tagName);
     }
 
-    public require(value: string, preload = false) {
+    public require(name: string, preload = false) {
         this.dependencies.push({
-            name: value,
+            name,
             preload
         });
     }
@@ -47,8 +48,9 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         if (!internal && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
-                if (ext) {
+                if (ext && !ext.preloaded) {
                     ext.beforeInit(element, true);
+                    ext.preloaded = true;
                 }
             });
         }
@@ -62,8 +64,9 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         if (!internal && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
-                if (ext) {
+                if (ext && ext.preloaded) {
                     ext.afterInit(element, true);
+                    ext.preloaded = false;
                 }
             });
         }
@@ -102,7 +105,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public afterProcedure() {}
     public afterFinalize() {}
 
-    public get loaded() {
-        return this.application ? this.application.getExtension(this.name) !== null : false;
+    public get installed() {
+        return this.application ? this.application.extensions.has(this) : false;
     }
 }

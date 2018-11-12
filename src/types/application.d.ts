@@ -9,7 +9,6 @@ interface Settings {
     builtInExtensions: string[];
     renderInlineText: boolean;
     preloadImages: boolean;
-    autoSizeBackgroundImage: boolean;
     autoSizePaddingAndBorderWidth: boolean;
     alwaysReevaluateResources: boolean;
     whitespaceHorizontalOffset: number;
@@ -58,9 +57,9 @@ interface AppBase<T extends androme.lib.base.Node> {
 }
 
 interface AppCurrent<T extends androme.lib.base.Node> {
-    cache: androme.lib.base.NodeList<T>;
     application: androme.lib.base.Application<T>;
     settings: Settings;
+    cache: androme.lib.base.NodeList<T>;
 }
 
 interface ExtensionDependency {

@@ -1,4 +1,4 @@
-import { ResourceStyleData, SettingsAndroid } from './types/module';
+import { SettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 
@@ -227,7 +227,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         let xml = '';
         if (this.stored.styles.size > 0) {
             const data: TemplateData = { '1': [] };
-            const styles = Array.from(this.stored.styles.values()).sort((a: ResourceStyleData, b: ResourceStyleData) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1) as ResourceStyleData[];
+            const styles = (Array.from(this.stored.styles.values()) as ArrayObject<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
                 const items: StringMap[] = [];
                 style.attrs.split(';').sort().forEach((attr: string) => {
@@ -238,7 +238,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                     });
                 });
                 data['1'].push({
-                    parentName: style.name,
+                    name: style.name,
                     parent: style.parent || '',
                     items
                 });

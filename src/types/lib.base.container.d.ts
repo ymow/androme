@@ -13,7 +13,7 @@ declare global {
                 duplicate(): T[];
                 clear(): this;
                 each(predicate: IteratorPredicate<T, void>): this;
-                find(predicate: string | IteratorPredicate<T, boolean>, value?: any): T | undefined;
+                find(predicate: IteratorPredicate<T, boolean> | string, value?: any): T | undefined;
                 filter(predicate: IteratorPredicate<T, void>): T[];
                 map<U>(predicate: IteratorPredicate<T, U>): U[];
                 every(predicate: IteratorPredicate<T, boolean>): boolean;

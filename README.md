@@ -93,21 +93,21 @@ androme.settings = {
         'androme.percent',
         'androme.custom',
         'androme.accessibility',
-        'android.resource.dimens',
+        'android.resource.background',
+        'android.resource.svg',
+        'android.resource.strings',
         'android.resource.fonts',
-        'android.resource.styles',
-        'android.resource.svg'
+        'android.resource.dimens',
+        'android.resource.styles'
     ],
     targetAPI: 26,
     density: 160,
     supportRTL: true,
     renderInlineText: true,
-    ellipsisOnTextOverflow: true,
     preloadImages: true,
-    numberResourceValue: false,
     alwaysReevaluateResources: true,
-    autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,
+    ellipsisOnTextOverflow: true,
     whitespaceHorizontalOffset: 3.5, // Chrome/Safari/Edge: 3.5 | Firefox: 3
     whitespaceVerticalOffset: 16,  // 1em
     constraintChainDisabled: false,
@@ -186,9 +186,9 @@ Most of the Android support library extensions can be configured using the same 
 <script src="/dist/extensions/android.widget.toolbar.min.js"></script>
 <script>
     // required when handleExtensionsAsync = false
-    androme.registerExtension(android.widget.coordinator);
-    androme.registerExtension(android.widget.menu);
-    androme.registerExtension(android.widget.toolbar);
+    androme.installExtension(android.widget.coordinator);
+    androme.installExtension(android.widget.menu);
+    androme.installExtension(android.widget.toolbar);
 
     // configure an extension
     androme.configureExtension('android.widget.toolbar', { // optional: default configuration is usually provided
@@ -209,9 +209,9 @@ Most of the Android support library extensions can be configured using the same 
         }
     }
 
-    // third-party: register an extension
+    // third-party: install an extension
     var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
-    androme.registerExtension(sample);
+    androme.installExtension(sample);
 </script>
 ```
 ### API: Public properties and methods
@@ -234,7 +234,7 @@ saveAllToDisk() // download entire project as zip archive - requires Node.js and
 toString() // main layout file contents
 
 configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
-registerExtension(extension: androme.lib.base.Extension) // see extension configuration section | same: ext(extension: {})
+installExtension(extension: androme.lib.base.Extension) // see extension configuration section | same: ext(extension: {})
 getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
 
 // android internal methods

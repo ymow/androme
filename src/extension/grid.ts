@@ -12,6 +12,10 @@ import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { isStyleElement, newBoxRect } from '../lib/dom';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
+    public options = {
+        columnBalance: false
+    };
+
     public condition(node: T) {
         return this.included(<HTMLElement> node.element) || (node.length > 1 && (
             (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
@@ -24,7 +28,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
-        const columnBalance = !!this.options.columnBalance;
+        const columnBalance = this.options.columnBalance;
         const mainData: GridData = {
             padding: newBoxRect(),
             columnEnd: [],

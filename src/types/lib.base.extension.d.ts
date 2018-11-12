@@ -5,15 +5,16 @@ declare global {
             tagNames: string[];
             documentRoot: boolean;
             eventOnly: boolean;
+            preloaded: boolean;
             readonly framework: number;
             readonly name: string;
             readonly options: ExternalData;
             readonly dependencies: ExtensionDependency[];
             readonly subscribers: Set<T>;
             readonly subscribersChild: Set<T>;
-            readonly loaded: boolean;
+            readonly installed: boolean;
             is(node: T): boolean;
-            require(value: string, init?: boolean): void;
+            require(name: string, preload?: boolean): void;
             included(element: HTMLElement): boolean;
             beforeInit(element: HTMLElement, internal?: boolean): void;
             init(element: HTMLElement): boolean;

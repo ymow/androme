@@ -75,7 +75,7 @@ export default abstract class Container<T> implements androme.lib.base.Container
         return this;
     }
 
-    public find(predicate: string | IteratorPredicate<T, boolean>, value?: any) {
+    public find(predicate: IteratorPredicate<T, boolean> | string, value?: any) {
         if (typeof predicate === 'string') {
             return this._children.find(item => item[predicate] === value);
         }

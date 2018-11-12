@@ -8,14 +8,13 @@ declare global {
         }
 
         export class Resource<T extends View> implements Resource<T> {
-            public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], useNamedColors?: boolean): BackgroundGradient[];
-            public static formatOptions(options: ExternalData, settings?: SettingsAndroid): ExternalData;
-            public static addString(value: string, name?: string, settings?: SettingsAndroid): string;
+            public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], useColorAlias?: boolean): BackgroundGradient[];
+            public static formatOptions(options: ExternalData, useNumberAlias?: boolean): ExternalData;
+            public static addString(value: string, name?: string, useNumberAlias?: boolean): string;
             public static addImageSrcSet(element: HTMLImageElement, prefix?: string): string;
             public static addImage(images: StringMap, prefix?: string): string;
             public static addImageURL(value: string, prefix?: string): string;
             public static addColor(value: ColorHexAlpha | string | null): string;
-            public static getStoredName(resource: string, value: any): string;
         }
     }
 }

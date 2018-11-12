@@ -1,5 +1,3 @@
-import { SettingsAndroid } from '../../../types/module';
-
 import WIDGET_NAME from '../namespace';
 
 import $enum = androme.lib.enumeration;
@@ -57,7 +55,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
-            $android_Resource.formatOptions(options, <SettingsAndroid> this.application.settings),
+            $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'wrap_content',
             'wrap_content',
             node

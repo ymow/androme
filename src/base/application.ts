@@ -11,9 +11,9 @@ import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue,
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
-function prioritizeExtensions<T extends Node>(extensions: Extension<T>[], element: Element) {
+function prioritizeExtensions<T extends Node>(element: HTMLElement, extensions: Extension<T>[]) {
     let result: string[] = [];
-    let current: HTMLElement | null = <HTMLElement> element;
+    let current: HTMLElement | null = element;
     while (current) {
         result = [
             ...result,
@@ -100,8 +100,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public readonly cacheImage = new Map<string, ImageAsset>();
     public readonly cacheSession = new NodeList<T>();
     public readonly cacheProcessing = new NodeList<T>();
+    public readonly extensions = new Set<Extension<T>>();
     public readonly viewElements = new Set<HTMLElement>();
-    public readonly extensions: Extension<T>[] = [];
     public nodeProcessing: T | undefined;
 
     private _cacheRoot = new Set<Element>();
@@ -126,7 +126,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler = resource;
     }
 
-    public registerExtension(ext: Extension<T>) {
+    public installExtension(ext: Extension<T>) {
         const found = this.getExtension(ext.name);
         if (found) {
             if (Array.isArray(ext.tagNames)) {
@@ -138,11 +138,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
         else {
             if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => !!this.getExtension(item.name))) {
                 ext.application = this;
-                this.extensions.push(ext);
+                this.extensions.add(ext);
                 return true;
             }
         }
         return false;
+    }
+
+    public removeExtension(ext: Extension<T>) {
+        return this.extensions.delete(ext);
     }
 
     public finalize() {
@@ -416,7 +420,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.viewElements.has(element)) {
-                prioritizeExtensions(this.extensions, element).some(item => item.init(element));
+                prioritizeExtensions(element, Array.from(this.extensions)).some(item => item.init(element));
                 if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
                     if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
                         setElementCache(element, 'inlineSupport', true);
@@ -586,7 +590,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const documentRoot = this.nodeProcessing as T;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        const extensions = this.extensions.filter(item => !item.eventOnly);
+        const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
         let baseTemplate = localSettings.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
@@ -968,7 +972,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         if (nodeY.styleElement) {
                             const processed: Extension<T>[] = [];
-                            prioritizeExtensions(extensions, nodeY.element).some(item => {
+                            prioritizeExtensions(<HTMLElement> nodeY.element, extensions).some(item => {
                                 if (item.is(nodeY) && item.condition(nodeY, parentY)) {
                                     const result =  item.processNode(nodeY, parentY, mapX, mapY);
                                     if (result.output !== '') {
@@ -1848,7 +1852,47 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public getExtension(name: string) {
-        return this.extensions.find(item => item.name === name) || null;
+        return Array.from(this.extensions).find(item => item.name === name) || null;
+    }
+
+    public getExtensionOptionsValue(name: string, attr: string) {
+        const ext = this.getExtension(name);
+        if (ext && typeof ext.options === 'object') {
+            return ext.options[attr];
+        }
+        return undefined;
+    }
+
+    public getExtensionOptionsValueAsObject(name: string, attr: string) {
+        const value = this.getExtensionOptionsValue(name, attr);
+        if (typeof value === 'object') {
+            return value as object;
+        }
+        return null;
+    }
+
+    public getExtensionOptionsValueAsString(name: string, attr: string) {
+        const value = this.getExtensionOptionsValue(name, attr);
+        if (typeof value === 'string') {
+            return value;
+        }
+        return '';
+    }
+
+    public getExtensionOptionsValueAsNumber(name: string, attr: string) {
+        const value = this.getExtensionOptionsValue(name, attr);
+        if (typeof value === 'number') {
+            return value;
+        }
+        return 0;
+    }
+
+    public getExtensionOptionsValueAsBoolean(name: string, attr: string) {
+        const value = this.getExtensionOptionsValue(name, attr);
+        if (typeof value === 'boolean') {
+            return value;
+        }
+        return false;
     }
 
     public toString() {

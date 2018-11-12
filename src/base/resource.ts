@@ -26,36 +26,39 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     };
     public static KEY_NAME = 'androme.resource';
 
+    public static getStoredName(asset: string, value: any) {
+        for (const [name, stored] of Resource.STORED[asset].entries()) {
+            if (JSON.stringify(value) === JSON.stringify(stored)) {
+                return name as string;
+            }
+        }
+        return '';
+    }
+
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
         if (stored) {
-            let storedName = '';
-            for (const [storedKey, storedValue] of stored.entries()) {
-                if (JSON.stringify(value) === JSON.stringify(storedValue)) {
-                    storedName = storedKey;
-                    break;
-                }
-            }
-            if (storedName === '') {
-                if (isNumber(name)) {
+            let result = this.getStoredName(asset, value);
+            if (result === '') {
+                if (isNumber(name) || /^\d/.test(name)) {
                     name = `__${name}`;
                 }
                 if (hasValue(value)) {
                     let i = 0;
                     do {
-                        storedName = name;
+                        result = name;
                         if (i > 0) {
-                            storedName += `_${i}`;
+                            result += `_${i}`;
                         }
-                        if (!stored.has(storedName)) {
-                            stored.set(storedName, value);
+                        if (!stored.has(result)) {
+                            stored.set(result, value);
                         }
                         i++;
                     }
-                    while (stored.has(storedName) && stored.get(storedName) !== value);
+                    while (stored.has(result) && stored.get(result) !== value);
                 }
             }
-            return storedName;
+            return result;
         }
         return '';
     }
@@ -96,7 +99,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.fileHandler.reset();
     }
 
-    public setBoxStyle(outResult?: T[]) {
+    public setBoxStyle() {
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, 'boxStyle')) {
                 const boxStyle: BoxStyle = {
@@ -320,14 +323,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     boxStyle.border = boxStyle.borderTop;
                 }
                 node.data(Resource.KEY_NAME, 'boxStyle', boxStyle);
-                if (outResult) {
-                    outResult.push(node);
-                }
             }
         }
     }
 
-    public setFontStyle(outResult?: T[]) {
+    public setFontStyle() {
         for (const node of this.cache) {
             if (this.checkPermissions(node, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
@@ -404,36 +404,32 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                     };
                     node.data(Resource.KEY_NAME, 'fontStyle', result);
-                    if (outResult) {
-                        outResult.push(node);
-                    }
                 }
             }
         }
     }
 
-    public setBoxSpacing(outResult?: T[]) {
+    public setBoxSpacing() {
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, 'boxSpacing')) {
                 const boxSpacing = getBoxSpacing(node.element);
-                const result: StringMap = {};
-                for (const attr in boxSpacing) {
-                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
-                        result[attr] = '0px';
+                if (Object.keys(boxSpacing).length > 0) {
+                    const result: StringMap = {};
+                    for (const attr in boxSpacing) {
+                        if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                            result[attr] = '0px';
+                        }
+                        else {
+                            result[attr] = convertPX(boxSpacing[attr], node.css('fontSize'));
+                        }
                     }
-                    else {
-                        result[attr] = convertPX(boxSpacing[attr], node.css('fontSize'));
-                    }
-                }
-                node.data(Resource.KEY_NAME, 'boxSpacing', result);
-                if (outResult) {
-                    outResult.push(node);
+                    node.data(Resource.KEY_NAME, 'boxSpacing', result);
                 }
             }
         }
     }
 
-    public setValueString(outResult?: T[]) {
+    public setValueString() {
         function replaceWhiteSpace(node: T, value: string): [string, boolean] {
             if (node.multiLine && !node.renderParent.linearVertical) {
                 value = value.replace(/^\s*\n/, '');
@@ -466,8 +462,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             return [value, true];
         }
         for (const node of this.cache.visible) {
-            const element = node.element;
             if (this.checkPermissions(node, 'valueString')) {
+                const element = node.element;
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -561,16 +557,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                         }
                         node.data(Resource.KEY_NAME, 'valueString', { name, value });
-                        if (outResult) {
-                            outResult.push(node);
-                        }
                     }
                 }
             }
         }
     }
 
-    public setOptionArray(outResult?: T[]) {
+    public setOptionArray() {
         for (const node of this.cache.visible) {
             if (node.tagName === 'SELECT' && this.checkPermissions(node, 'optionArray')) {
                 const element = <HTMLSelectElement> node.element;
@@ -600,37 +593,29 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     stringArray: stringArray.length > 0 ? stringArray : undefined,
                     numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
                 });
-                if (outResult) {
-                    outResult.push(node);
-                }
             }
         }
     }
 
-    public setImageSource(outResult?: T[]) {
+    public setImageSource() {
         for (const node of this.cache.visible) {
             if (node.svgElement && this.checkPermissions(node, 'imageSource')) {
-                if (node.svgElement) {
-                    const element = <SVGSVGElement> node.element;
-                    if (element.children.length > 0) {
-                        const result = new Svg(element);
-                        result.defs.image.forEach(item => {
-                            const dimensions = this.imageAssets.get(item.uri);
-                            if (dimensions) {
-                                if (item.width === 0) {
-                                    item.width = dimensions.width;
-                                }
-                                if (item.height === 0) {
-                                    item.height = dimensions.height;
-                                }
+                const element = <SVGSVGElement> node.element;
+                if (element.children.length > 0) {
+                    const result = new Svg(element);
+                    result.defs.image.forEach(item => {
+                        const dimensions = this.imageAssets.get(item.uri);
+                        if (dimensions) {
+                            if (item.width === 0) {
+                                item.width = dimensions.width;
                             }
-                        });
-                        if (result.length > 0 || result.defs.image.length > 0) {
-                            node.data(Resource.KEY_NAME, 'svgSource', result);
-                            if (outResult) {
-                                outResult.push(node);
+                            if (item.height === 0) {
+                                item.height = dimensions.height;
                             }
                         }
+                    });
+                    if (result.length > 0 || result.defs.image.length > 0) {
+                        node.data(Resource.KEY_NAME, 'imageSource', result);
                     }
                 }
             }

@@ -1,7 +1,5 @@
 import { SettingsAndroid } from './types/module';
 
-import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/enumeration';
-
 const settings: SettingsAndroid = {
     builtInExtensions: [
         'androme.external',
@@ -14,21 +12,21 @@ const settings: SettingsAndroid = {
         'androme.percent',
         'androme.custom',
         'androme.accessibility',
-        'android.resource.dimens',
+        'android.resource.background',
+        'android.resource.svg',
+        'android.resource.strings',
         'android.resource.fonts',
-        'android.resource.styles',
-        'android.resource.svg'
+        'android.resource.dimens',
+        'android.resource.styles'
     ],
-    targetAPI: BUILD_ANDROID.OREO,
-    density: DENSITY_ANDROID.MDPI,
+    targetAPI: 26,
+    density: 160,
     supportRTL: true,
     renderInlineText: true,
-    ellipsisOnTextOverflow: true,
     preloadImages: true,
-    numberResourceValue: false,
     alwaysReevaluateResources: true,
-    autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,
+    ellipsisOnTextOverflow: true,
     whitespaceHorizontalOffset: 3.5,
     whitespaceVerticalOffset: 16,
     constraintChainDisabled: false,

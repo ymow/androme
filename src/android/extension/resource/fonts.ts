@@ -1,4 +1,4 @@
-import { ResourceStyleData, SettingsAndroid } from '../../types/module';
+import { SettingsAndroid } from '../../types/module';
 
 import { BUILD_ANDROID } from '../../lib/enumeration';
 
@@ -7,16 +7,20 @@ import ResourceHandler from '../../resourcehandler';
 
 import { replaceUnit } from '../../lib/util';
 
-import $Resource = androme.lib.base.Resource;
-
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
+type StyleData = {
+    name: string;
+    parent?: string;
+    attrs: string;
+    ids: number[];
+};
 type StyleList = ObjectMap<number[]>;
 type SharedAttributes = ObjectMapNested<number[]>;
 type AttributeMap = ObjectMap<number[]>;
-type TagNameMap = ObjectMap<ResourceStyleData[]>;
+type TagNameMap = ObjectMap<StyleData[]>;
 type NodeStyleMap = ObjectMapNested<string[]>;
 
 const FONT_ANDROID = {
@@ -60,6 +64,10 @@ const FONTREPLACE_ANDROID = {
     'system-ui': 'sans-serif',
     '-apple-system': 'sans-serif'
 };
+
+if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
+    FONTREPLACE_ANDROID['consolas'] = 'monospace';
+}
 
 const FONTWEIGHT_ANDROID = {
     '100': 'thin',
@@ -114,32 +122,27 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
     };
     public readonly eventOnly = true;
 
-    public beforeRenderDocument() {
-        if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
-            FONTREPLACE_ANDROID['consolas'] = 'monospace';
-        }
-    }
-
     public afterRenderDocument() {
-        const nodeName: ObjectMap<T[]> = {};
-        const tagStyle: ObjectMap<StyleList[]> = {};
+        const settings = <SettingsAndroid> this.application.settings;
+        const nameMap: ObjectMap<T[]> = {};
+        const groupMap: ObjectMap<StyleList[]> = {};
         for (const node of this.application.cacheSession) {
-            if (node.visible && node.data($Resource.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
-                if (nodeName[node.nodeName] === undefined) {
-                    nodeName[node.nodeName] = [];
+            if (node.visible && node.data(ResourceHandler.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
+                if (nameMap[node.nodeName] === undefined) {
+                    nameMap[node.nodeName] = [];
                 }
-                nodeName[node.nodeName].push(node);
+                nameMap[node.nodeName].push(node);
             }
         }
-        for (const tag in nodeName) {
+        for (const tag in nameMap) {
             const sorted: StyleList[] = [];
-            for (let node of nodeName[tag]) {
+            for (let node of nameMap[tag]) {
                 const nodeId = node.id;
                 const companion = node.companion;
                 if (companion && !companion.visible && companion.tagName === 'LABEL') {
                     node = companion as T;
                 }
-                const stored = Object.assign({}, <FontAttribute> node.data($Resource.KEY_NAME, 'fontStyle'));
+                const stored = Object.assign({}, <FontAttribute> node.data(ResourceHandler.KEY_NAME, 'fontStyle'));
                 let system = false;
                 stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 if (stored.fontFamily) {
@@ -169,9 +172,9 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        const fonts = $Resource.STORED.fonts.get(fontFamily) || {};
+                        const fonts = ResourceHandler.STORED.fonts.get(fontFamily) || {};
                         fonts[`${fontStyle}-${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}`] = true;
-                        $Resource.STORED.fonts.set(fontFamily, fonts);
+                        ResourceHandler.STORED.fonts.set(fontFamily, fonts);
                     }
                 }
                 const keys = Object.keys(FONT_STYLE);
@@ -189,15 +192,15 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     }
                 }
             }
-            tagStyle[tag] = sorted;
+            groupMap[tag] = sorted;
         }
         const style: SharedAttributes = {};
         const layout: SharedAttributes = {};
-        for (const tag in tagStyle) {
+        for (const tag in groupMap) {
             style[tag] = {};
             layout[tag] = {};
-            const count = nodeName[tag].length;
-            let sorted = tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+            const count = nameMap[tag].length;
+            let sorted = groupMap[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -346,13 +349,12 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
             }
             while (sorted.length > 0);
         }
-        const settings = <SettingsAndroid> this.application.settings;
         const resource: TagNameMap = {};
-        const mapNode: NodeStyleMap = {};
+        const nodeMap: NodeStyleMap = {};
         const parentStyle = new Set<string>();
-        for (const tagName in style) {
-            const tagData = style[tagName];
-            const styleData: ResourceStyleData[] = [];
+        for (const tag in style) {
+            const tagData = style[tag];
+            const styleData: StyleData[] = [];
             for (const attrs in tagData) {
                 styleData.push({
                     name: '',
@@ -367,49 +369,49 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                 }
                 return c >= d ? -1 : 1;
             });
-            styleData.forEach((item, index) => item.name = $util.capitalize(tagName) + (index > 0 ? `_${index}` : ''));
-            resource[tagName] = styleData;
+            styleData.forEach((item, index) => item.name = $util.capitalize(tag) + (index > 0 ? `_${index}` : ''));
+            resource[tag] = styleData;
         }
-        for (const tagName in resource) {
-            for (const group of resource[tagName]) {
+        for (const tag in resource) {
+            for (const group of resource[tag]) {
                 for (const id of group.ids) {
-                    if (mapNode[id] === undefined) {
-                        mapNode[id] = { styles: [], attrs: [] };
+                    if (nodeMap[id] === undefined) {
+                        nodeMap[id] = { styles: [], attrs: [] };
                     }
-                    mapNode[id].styles.push(group.name);
+                    nodeMap[id].styles.push(group.name);
                 }
             }
-            const tagData = <AttributeMap> layout[tagName];
+            const tagData = <AttributeMap> layout[tag];
             if (tagData) {
                 for (const attr in tagData) {
                     for (const id of tagData[attr]) {
-                        if (mapNode[id] === undefined) {
-                            mapNode[id] = { styles: [], attrs: [] };
+                        if (nodeMap[id] === undefined) {
+                            nodeMap[id] = { styles: [], attrs: [] };
                         }
-                        mapNode[id].attrs.push(attr);
+                        nodeMap[id].attrs.push(attr);
                     }
                 }
             }
         }
-        for (const id in mapNode) {
+        for (const id in nodeMap) {
             const node = this.application.cacheSession.find('id', parseInt(id));
             if (node) {
-                const styles = mapNode[id].styles;
+                const styles = nodeMap[id].styles;
                 if (styles.length > 0) {
                     parentStyle.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);
                 }
-                mapNode[id].attrs.sort().forEach(value => node.formatted(replaceUnit(value, settings, true), false));
+                nodeMap[id].attrs.sort().forEach(value => node.formatted(replaceUnit(value, settings, true), false));
             }
         }
-        for (const name of parentStyle) {
+        for (const value of parentStyle) {
             let parent = '';
-            name.split('.').forEach(value => {
-                const match = value.match(/^(\w*?)(?:_(\d+))?$/);
+            value.split('.').forEach(name => {
+                const match = name.match(/^(\w*?)(?:_(\d+))?$/);
                 if (match) {
-                    const tagData = Object.assign({ name: value, parent }, resource[match[1].toUpperCase()][match[2] === undefined ? 0 : parseInt(match[2])]);
-                    $Resource.STORED.styles.set(value, tagData);
-                    parent = value;
+                    const tagData = Object.assign({ name, parent }, resource[match[1].toUpperCase()][match[2] === undefined ? 0 : parseInt(match[2])]);
+                    ResourceHandler.STORED.styles.set(name, tagData);
+                    parent = name;
                 }
             });
         }

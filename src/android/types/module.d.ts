@@ -2,7 +2,6 @@ export interface SettingsAndroid extends Settings {
     targetAPI: number;
     density: number;
     supportRTL: boolean;
-    numberResourceValue: boolean;
     ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
     constraintChainPackedHorizontalOffset: number;
@@ -25,12 +24,12 @@ export interface LocalSettings extends EnvironmentSettings {
     ellipsisOnTextOverflow?: boolean;
 }
 
-export type Constraint = {
+export interface Constraint {
     horizontal: boolean;
     vertical: boolean;
     current: {
-        adjacent: string,
-        orientation: string,
+        adjacent: string;
+        orientation: string;
         overwrite: boolean;
     };
     layoutWidth: boolean;
@@ -39,15 +38,15 @@ export type Constraint = {
     layoutVertical: boolean;
     marginHorizontal: string;
     marginVertical: string;
-    guideline: ObjectMapNested<ObjectMapNested<number>>
-};
+    guideline: ObjectMapNested<ObjectMapNested<number>>;
+}
 
-export type ViewAttribute = {
+export interface ViewAttribute {
     android: StringMap;
     app: StringMap;
-};
+}
 
-export type BackgroundImage = {
+export interface BackgroundImage {
     src: string;
     top: string;
     right: string;
@@ -59,9 +58,9 @@ export type BackgroundImage = {
     tileModeY: string;
     width: string;
     height: string;
-};
+}
 
-export type BackgroundGradient = {
+export interface BackgroundGradient {
     type: string;
     startColor: string;
     endColor: string;
@@ -76,11 +75,4 @@ export type BackgroundGradient = {
     centerY?: string;
     gradientRadius?: string;
     tileMode?: string;
-};
-
-export type ResourceStyleData = {
-    name: string;
-    parent?: string;
-    attrs: string;
-    ids: number[];
-};
+}

@@ -1,6 +1,6 @@
 import View from '../../view';
+import ResourceHandler from '../../resourcehandler';
 
-import $Resource = androme.lib.base.Resource;
 import $util = androme.lib.util;
 
 export default class ResourceStyles<T extends View> extends androme.lib.base.Extension<T> {
@@ -11,7 +11,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
         for (const node of this.application.cacheSession.visible) {
             const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
-                const map = new Map<string, number>();
+                const attrMap = new Map<string, number>();
                 let style = '';
                 let valid = true;
                 for (let i = 0; i < children.length; i++) {
@@ -30,10 +30,10 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
                             found = true;
                         }
                         else {
-                            if (!map.has(value)) {
-                                map.set(value, 0);
+                            if (!attrMap.has(value)) {
+                                attrMap.set(value, 0);
                             }
-                            map.set(value, (map.get(value) as number) + 1);
+                            attrMap.set(value, (attrMap.get(value) as number) + 1);
                         }
                         return false;
                     });
@@ -43,17 +43,17 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
                     }
                 }
                 if (valid) {
-                    for (const [attr, value] of map.entries()) {
+                    for (const [attr, value] of attrMap.entries()) {
                         if (value !== children.length) {
-                            map.delete(attr);
+                            attrMap.delete(attr);
                         }
                     }
-                    if (map.size > 1) {
+                    if (attrMap.size > 1) {
                         if (style !== '') {
                             style = $util.trimString(style.substring(style.indexOf('/') + 1), '"');
                         }
                         const common: string[] = [];
-                        for (const attr of map.keys()) {
+                        for (const attr of attrMap.keys()) {
                             const match = attr.match(/(\w+):(\w+)="(.*?)"/);
                             if (match) {
                                 children.forEach(item => item.delete(match[1], match[2]));
@@ -78,7 +78,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
             }
         }
         for (const name in styles) {
-            $Resource.STORED.styles.set(name, {
+            ResourceHandler.STORED.styles.set(name, {
                 name,
                 attrs: styles[name].join(';'),
                 ids: []

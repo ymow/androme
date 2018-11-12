@@ -1,8 +1,8 @@
 import { generateId } from '../../lib/util';
 
 import View from '../../view';
+import ResourceHandler from '../../resourcehandler';
 
-import $Resource = androme.lib.base.Resource;
 import $util = androme.lib.util;
 
 function getResourceKey(dimens: Map<string, string>, key: string, value: string) {
@@ -41,7 +41,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
                 }
             });
         }
-        const dimens = $Resource.STORED.dimens;
+        const dimens = ResourceHandler.STORED.dimens;
         for (const nodeName in groups) {
             const group = groups[nodeName];
             for (const name in group) {
@@ -54,7 +54,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
     }
 
     public afterFinalize() {
-        const dimens = $Resource.STORED.dimens;
+        const dimens = ResourceHandler.STORED.dimens;
         const layouts = this.application.layouts;
         for (const value of layouts) {
             let content = value.content;

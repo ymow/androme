@@ -20,8 +20,10 @@ import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 
+import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
 import ResourceFonts from './extension/resource/fonts';
+import ResourceStrings from './extension/resource/strings';
 import ResourceStyles from './extension/resource/styles';
 import ResourceSvg from './extension/resource/svg';
 
@@ -68,8 +70,10 @@ const lib = {
         Sprite,
         Table,
         resource: {
+            Background: ResourceBackground,
             Dimens: ResourceDimens,
             Fonts: ResourceFonts,
+            Strings: ResourceStrings,
             Styles: ResourceStyles,
             Svg: ResourceSvg
         }
@@ -189,18 +193,20 @@ const appBase: AppFramework<T> = {
         application.builtInExtensions = {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
-            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
             [EXT_NAME.CSS_GRID]: new CssGrid(EXT_NAME.CSS_GRID, framework),
-            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
+            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
-            [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
+            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
+            [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),
+            [EXT_ANDROID.RESOURCE_STRINGS]: new ResourceStrings(EXT_ANDROID.RESOURCE_STRINGS, framework),
             [EXT_ANDROID.RESOURCE_FONTS]: new ResourceFonts(EXT_ANDROID.RESOURCE_FONTS, framework),
-            [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework),
-            [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework)
+            [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
+            [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework)
         };
         initialized = true;
         return {

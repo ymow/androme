@@ -1,9 +1,9 @@
 declare global {
     namespace androme.lib.base {
         export interface Controller<T extends Node> extends AppCurrent<T> {
-            cache: NodeList<T>;
             application: Application<T>;
             settings: Settings;
+            cache: NodeList<T>;
             readonly localSettings: ControllerSettings;
             readonly delegateNodeInit: SelfWrapped<T, void>;
             createGroup(parent: T, node: T, children: T[]): T;

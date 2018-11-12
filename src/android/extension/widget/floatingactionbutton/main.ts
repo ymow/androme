@@ -5,7 +5,7 @@ import FloatingActionButton from './floatingactionbutton';
 const fab = new FloatingActionButton(WIDGET_NAME.FAB, WIDGET_NAME.__FRAMEWORK, ['BUTTON', 'INPUT', 'IMG']);
 
 if (androme) {
-    androme.registerExtensionAsync(fab);
+    androme.installExtensionAsync(fab);
 }
 
 export default fab;

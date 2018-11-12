@@ -17,13 +17,14 @@ declare global {
             readonly cacheSession: NodeList<T>;
             readonly cacheProcessing: NodeList<T>;
             readonly viewElements: Set<Element>;
-            readonly extensions: Extension<T>[];
+            readonly extensions: Set<Extension<T>>;
             readonly layouts: FileAsset[];
             readonly viewData: ViewData<NodeList<T>>;
             readonly size: number;
             registerController(controller: Controller<T>): void;
             registerResource(resource: Resource<T>): void;
-            registerExtension(ext: Extension<T>): boolean;
+            installExtension(ext: Extension<T>): boolean;
+            removeExtension(ext: Extension<T>): boolean;
             finalize(): void;
             saveAllToDisk(): void;
             reset(): void;
@@ -45,6 +46,11 @@ declare global {
             addRenderQueue(id: string, views: string[]): void;
             preserveRenderPosition(node: T): void;
             getExtension(name: string): Extension<T> | null;
+            getExtensionOptionsValue(name: string, attr: string): any;
+            getExtensionOptionsValueAsObject(name: string, attr: string): object | null;
+            getExtensionOptionsValueAsString(name: string, attr: string): string;
+            getExtensionOptionsValueAsNumber(name: string, attr: string): number;
+            getExtensionOptionsValueAsBoolean(name: string, attr: string): boolean;
             insertNode(element: Element, parent?: T): T | null;
             toString(): string;
         }

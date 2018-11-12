@@ -68,7 +68,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
                     }
                 }
             }
-            register.forEach(item => main.registerExtension(item));
+            register.forEach(item => main.installExtension(item));
         }
         framework = module;
         system = module.system;
@@ -79,7 +79,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
 export function parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
         if (settings.handleExtensionsAsync) {
-            extensionsAsync.forEach(item => main.registerExtension(item));
+            extensionsAsync.forEach(item => main.installExtension(item));
             for (const [name, options] of optionsAsync.entries()) {
                 configureExtension(name, options);
             }
@@ -103,21 +103,43 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
     };
 }
 
-export function registerExtension(ext: Extension<T>) {
+export function installExtension(ext: Extension<T>) {
     if (main && ext instanceof Extension) {
-        return main.registerExtension(ext);
+        return main.installExtension(ext);
     }
     return false;
 }
 
-export function registerExtensionAsync(ext: Extension<T>) {
-    if (registerExtension(ext)) {
+export function installExtensionAsync(ext: Extension<T>) {
+    if (installExtension(ext)) {
         return true;
     }
     else if (ext instanceof Extension) {
         extensionsAsync.add(ext);
         if (settings.handleExtensionsAsync) {
             return true;
+        }
+    }
+    return false;
+}
+
+export function removeExtension(module: Extension<T> | string) {
+    if (main) {
+        if (module instanceof Extension) {
+            if (extensionsAsync.has(module)) {
+                extensionsAsync.delete(module);
+                main.removeExtension(module);
+                return true;
+            }
+            else {
+                return main.removeExtension(module);
+            }
+        }
+        else if (util.isString(module)) {
+            const ext = main.getExtension(module);
+            if (ext) {
+                return main.removeExtension(ext);
+            }
         }
     }
     return false;
@@ -154,7 +176,7 @@ export function getExtension(name: string) {
 
 export function ext(module: Extension<T> | string, options?: ExternalData) {
     if (module instanceof Extension) {
-        return registerExtension(module);
+        return installExtension(module);
     }
     else if (util.isString(module)) {
         if (typeof options === 'object') {

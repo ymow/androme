@@ -5,7 +5,7 @@ import Menu from './menu';
 const menu = new Menu(WIDGET_NAME.MENU, WIDGET_NAME.__FRAMEWORK, ['NAV']);
 
 if (androme) {
-    androme.registerExtensionAsync(menu);
+    androme.installExtensionAsync(menu);
 }
 
 export default menu;

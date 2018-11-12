@@ -1,5 +1,3 @@
-import { SettingsAndroid } from '../../../types/module';
-
 import WIDGET_NAME from '../namespace';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
@@ -59,7 +57,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.DRAWER,
             node.depth,
-            $android_Resource.formatOptions(options, <SettingsAndroid> this.application.settings),
+            $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'match_parent',
             'match_parent',
             node,
@@ -90,7 +88,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             const output = application.viewController.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,
-                $android_Resource.formatOptions(options, <SettingsAndroid> this.application.settings),
+                $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
                 'wrap_content',
                 'match_parent'
             );
