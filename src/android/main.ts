@@ -1,13 +1,13 @@
 import { SettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, XMLNS_ANDROID } from './lib/constant';
-import SETTINGS from './settings';
 import { API_ANDROID } from './customizations';
+import SETTINGS from './settings';
 
+import Controller from './controller';
+import File from './file';
+import Resource from './resource';
 import View from './view';
-import ViewController from './viewcontroller';
-import ResourceHandler from './resourcehandler';
-import FileHandler from './filehandler';
 
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
@@ -27,8 +27,8 @@ import ResourceStrings from './extension/resource/strings';
 import ResourceStyles from './extension/resource/styles';
 import ResourceSvg from './extension/resource/svg';
 
-import * as enumeration from './lib/enumeration';
 import * as constant from './lib/constant';
+import * as enumeration from './lib/enumeration';
 import * as util from './lib/util';
 
 type T = View;
@@ -45,18 +45,19 @@ function autoClose() {
 let initialized = false;
 
 let application: androme.lib.base.Application<T>;
-let viewController: ViewController<T>;
-let resourceHandler: ResourceHandler<T>;
-let fileHandler: FileHandler<T>;
+let viewController: Controller<T>;
+let resourceHandler: Resource<T>;
+let fileHandler: File<T>;
 
 let settings: SettingsAndroid;
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const lib = {
     base: {
-        View,
-        File: FileHandler,
-        Resource: ResourceHandler,
+        Controller,
+        File,
+        Resource,
+        View
     },
     extensions: {
         Accessibility,
@@ -78,8 +79,8 @@ const lib = {
             Svg: ResourceSvg
         }
     },
-    enumeration,
     constant,
+    enumeration,
     util
 };
 
@@ -183,10 +184,10 @@ const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
         settings = Object.assign({}, SETTINGS);
-        fileHandler = new FileHandler<T>(settings);
+        fileHandler = new File<T>(settings);
         application = new androme.lib.base.Application(framework);
-        viewController = new ViewController<T>();
-        resourceHandler = new ResourceHandler<T>(fileHandler);
+        viewController = new Controller<T>();
+        resourceHandler = new Resource<T>(fileHandler);
         application.registerController(viewController);
         application.registerResource(resourceHandler);
         application.nodeObject = View;

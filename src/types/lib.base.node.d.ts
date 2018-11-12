@@ -1,5 +1,14 @@
 declare global {
     namespace androme.lib.base {
+        export interface InitialData<T> {
+            readonly styleMap: StringMap;
+            readonly children: T[];
+            readonly bounds: BoxDimensions;
+            linear?: BoxDimensions;
+            box?: BoxDimensions;
+            depth: number;
+        }
+
         export interface Node extends Container<Node>, BoxModel {
             id: number;
             style: CSSStyleDeclaration;
@@ -19,7 +28,7 @@ declare global {
             excludeProcedure: number;
             excludeResource: number;
             documentRoot: boolean;
-            auto: boolean;
+            positioned: boolean;
             visible: boolean;
             excluded: boolean;
             rendered: boolean;

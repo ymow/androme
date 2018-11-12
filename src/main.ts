@@ -1,17 +1,17 @@
+import Application from './base/application';
 import Container from './base/container';
+import Controller from './base/controller';
+import Extension from './base/extension';
+import File from './base/file';
 import Node from './base/node';
-import NodeList from './base/nodelist';
 import NodeGroup from './base/nodegroup';
+import NodeList from './base/nodelist';
+import Resource from './base/resource';
 import Svg from './base/svg';
 import SvgElement from './base/svgelement';
 import SvgGroup from './base/svggroup';
 import SvgImage from './base/svgimage';
 import SvgPath from './base/svgpath';
-import Application from './base/application';
-import Controller from './base/controller';
-import Resource from './base/resource';
-import File from './base/file';
-import Extension from './base/extension';
 
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
@@ -24,13 +24,13 @@ import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 
-import * as enumeration from './lib/enumeration';
-import * as constant from './lib/constant';
-import * as util from './lib/util';
-import * as dom from './lib/dom';
-import * as xml from './lib/xml';
-import * as svg from './lib/svg';
 import * as color from './lib/color';
+import * as constant from './lib/constant';
+import * as dom from './lib/dom';
+import * as enumeration from './lib/enumeration';
+import * as svg from './lib/svg';
+import * as util from './lib/util';
+import * as xml from './lib/xml';
 
 type T = Node;
 
@@ -40,7 +40,7 @@ let settings: Settings = {} as any;
 let system: FunctionMap<any> = {} as any;
 
 const extensionsAsync = new Set<Extension<T>>();
-const optionsAsync = new Map<string, {}>();
+const optionsAsync = new Map<string, ExternalData>();
 
 export function setFramework(module: AppFramework<T>, cached = false) {
     if (framework !== module) {
@@ -220,20 +220,20 @@ export function toString() {
 
 const lib = {
     base: {
+        Application,
         Container,
+        Controller,
+        Extension,
+        File,
         Node,
-        NodeList,
         NodeGroup,
+        NodeList,
+        Resource,
         Svg,
         SvgElement,
         SvgGroup,
         SvgImage,
-        SvgPath,
-        Application,
-        Controller,
-        Resource,
-        File,
-        Extension
+        SvgPath
     },
     extensions: {
         Accessibility,
@@ -247,13 +247,13 @@ const lib = {
         Sprite,
         Table
     },
-    enumeration,
+    color,
     constant,
-    util,
     dom,
-    xml,
+    enumeration,
     svg,
-    color
+    util,
+    xml,
 };
 
 export { lib, system, settings };

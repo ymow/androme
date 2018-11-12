@@ -1,4 +1,4 @@
-import { DOM_REGEX } from './constant';
+import { REGEX_PATTERN } from './constant';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NUMERALS = [
@@ -248,7 +248,7 @@ export function optionalAsBoolean(obj: UndefNull<object>, value: string) {
 }
 
 export function resolvePath(value: string) {
-    if (!DOM_REGEX.URI.test(value)) {
+    if (!REGEX_PATTERN.URI.test(value)) {
         let pathname = location.pathname.split('/');
         pathname.pop();
         if (value.charAt(0) === '/') {

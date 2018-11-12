@@ -1,18 +1,18 @@
 import { GridCellData, GridData } from './types/data';
 
-import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 
-import Node from '../base/node';
-import NodeList from '../base/nodelist';
 import Application from '../base/application';
 import Extension from '../base/extension';
+import Node from '../base/node';
+import NodeList from '../base/nodelist';
 
-import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { isStyleElement, newBoxRect } from '../lib/dom';
+import { hasValue, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
-    public options = {
+    public readonly options = {
         columnBalance: false
     };
 

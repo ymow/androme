@@ -1,5 +1,3 @@
-import { SettingsAndroid } from './module';
-
 declare global {
     namespace android.lib.base {
         export interface File<T extends View> extends androme.lib.base.File<T> {

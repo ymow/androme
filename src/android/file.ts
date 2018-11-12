@@ -2,13 +2,13 @@ import { SettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 
-import STRING_TMPL from './template/resource/string';
-import STRINGARRAY_TMPL from './template/resource/string-array';
-import FONT_TMPL from './template/resource/font';
 import COLOR_TMPL from './template/resource/color';
-import STYLE_TMPL from './template/resource/style';
 import DIMEN_TMPL from './template/resource/dimen';
 import DRAWABLE_TMPL from './template/resource/drawable';
+import FONT_TMPL from './template/resource/font';
+import STRING_TMPL from './template/resource/string';
+import STRINGARRAY_TMPL from './template/resource/string-array';
+import STYLE_TMPL from './template/resource/style';
 
 import View from './view';
 
@@ -48,7 +48,7 @@ function parseFileDetails(xml: string) {
     return result;
 }
 
-function createPlainFile(pathname: string, filename: string, content: string): FileAsset {
+function createFileAsset(pathname: string, filename: string, content: string): FileAsset {
     return {
         pathname,
         filename,
@@ -60,7 +60,7 @@ function caseInsensitive(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileHandler<T extends View> extends androme.lib.base.File<T> implements android.lib.base.File<T> {
+export default class File<T extends View> extends androme.lib.base.File<T> implements android.lib.base.File<T> {
     constructor(public settings: SettingsAndroid) {
         super();
     }
@@ -70,7 +70,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+            files.push(createFileAsset(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...parseFileDetails(this.resourceStringToXml()));
@@ -91,7 +91,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                files.push(createFileAsset(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -227,7 +227,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         let xml = '';
         if (this.stored.styles.size > 0) {
             const data: TemplateData = { '1': [] };
-            const styles = (Array.from(this.stored.styles.values()) as ArrayObject<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
+            const styles = (Array.from(this.stored.styles.values()) as Array<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
                 const items: StringMap[] = [];
                 style.attrs.split(';').sort().forEach((attr: string) => {

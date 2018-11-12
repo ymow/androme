@@ -2,14 +2,14 @@ import { SettingsAndroid } from '../../types/module';
 
 import { BUILD_ANDROID } from '../../lib/enumeration';
 
+import Resource from '../../resource';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 
 import { replaceUnit } from '../../lib/util';
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 
 type StyleData = {
     name: string;
@@ -127,7 +127,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
         const nameMap: ObjectMap<T[]> = {};
         const groupMap: ObjectMap<StyleList[]> = {};
         for (const node of this.application.cacheSession) {
-            if (node.visible && node.data(ResourceHandler.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
+            if (node.visible && node.data(Resource.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
                 if (nameMap[node.nodeName] === undefined) {
                     nameMap[node.nodeName] = [];
                 }
@@ -142,14 +142,14 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                 if (companion && !companion.visible && companion.tagName === 'LABEL') {
                     node = companion as T;
                 }
-                const stored = Object.assign({}, <FontAttribute> node.data(ResourceHandler.KEY_NAME, 'fontStyle'));
+                const stored = Object.assign({}, <FontAttribute> node.data(Resource.KEY_NAME, 'fontStyle'));
                 let system = false;
-                stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
+                stored.backgroundColor = Resource.addColor(stored.backgroundColor);
                 if (stored.fontFamily) {
                     let fontFamily = stored.fontFamily.split(',')[0].replace(/"/g, '').toLowerCase().trim();
                     let fontStyle = '';
                     let fontWeight = '';
-                    stored.color = ResourceHandler.addColor(stored.color);
+                    stored.color = Resource.addColor(stored.color);
                     if (this.options.useFontAlias && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
@@ -172,9 +172,9 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        const fonts = ResourceHandler.STORED.fonts.get(fontFamily) || {};
+                        const fonts = Resource.STORED.fonts.get(fontFamily) || {};
                         fonts[`${fontStyle}-${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}`] = true;
-                        ResourceHandler.STORED.fonts.set(fontFamily, fonts);
+                        Resource.STORED.fonts.set(fontFamily, fonts);
                     }
                 }
                 const keys = Object.keys(FONT_STYLE);
@@ -410,7 +410,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                 const match = name.match(/^(\w*?)(?:_(\d+))?$/);
                 if (match) {
                     const tagData = Object.assign({ name, parent }, resource[match[1].toUpperCase()][match[2] === undefined ? 0 : parseInt(match[2])]);
-                    ResourceHandler.STORED.styles.set(name, tagData);
+                    Resource.STORED.styles.set(name, tagData);
                     parent = name;
                 }
             });

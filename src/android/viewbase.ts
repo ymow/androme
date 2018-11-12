@@ -1,18 +1,18 @@
 import { Constraint, LocalSettings } from './types/module';
 
-import { BUILD_ANDROID } from './lib/enumeration';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
+import { BUILD_ANDROID } from './lib/enumeration';
 
 import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
 
 import $NodeList = androme.lib.base.NodeList;
 import $Resource = androme.lib.base.Resource;
 
-import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
-import $util = androme.lib.util;
 import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
 
 export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base implements androme.lib.base.Node {
@@ -1039,6 +1039,27 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (this.linearHorizontal) {
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
+                const lineHeight: number = Math.max.apply(null, renderChildren.map(item => item.toInt('lineHeight')));
+                if (lineHeight > 0) {
+                    let offsetTop = 0;
+                    let minHeight = Number.MAX_VALUE;
+                    const valid = renderChildren.every(item => {
+                        const offset = lineHeight - item.bounds.height;
+                        if (offset > 0) {
+                            minHeight = Math.min(offset, minHeight);
+                            if (lineHeight === item.toInt('lineHeight')) {
+                                const top = item.toInt('top');
+                                offsetTop = Math.max(top < 0 ? Math.abs(top) : 0, offsetTop);
+                            }
+                            return true;
+                        }
+                        return false;
+                    });
+                    if (valid) {
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
+                    }
+                }
                 const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
                 if (pageflow.length > 0 &&
                     pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
@@ -1244,7 +1265,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 return this._controlName;
             }
             else {
-                const value: number = $const.MAP_ELEMENT[this.nodeName];
+                const value: number = $const.ELEMENT_MAP[this.nodeName];
                 if (value !== undefined) {
                     this.nodeType = value;
                     return View.getControlName(value);

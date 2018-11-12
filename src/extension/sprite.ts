@@ -1,10 +1,10 @@
-import { DOM_REGEX, EXT_NAME } from '../lib/constant';
+import { REGEX_PATTERN, EXT_NAME } from '../lib/constant';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
-import { hasValue } from '../lib/util';
 import { convertClientUnit, cssResolveUrl, getBackgroundPosition } from '../lib/dom';
+import { hasValue } from '../lib/util';
 
 export default abstract class Sprite<T extends Node> extends Extension<T> {
     public condition(node: T) {
@@ -13,7 +13,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
             let url = node.css('backgroundImage');
             if (!url || url === 'none') {
                 url = '';
-                const match = DOM_REGEX.CSS_URL.exec(node.css('background'));
+                const match = REGEX_PATTERN.CSS_URL.exec(node.css('background'));
                 if (match) {
                     url = match[0];
                 }

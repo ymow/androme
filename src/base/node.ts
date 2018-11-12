@@ -1,11 +1,11 @@
+import { ELEMENT_BLOCK, ELEMENT_INLINE } from '../lib/constant';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
-import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
 
 import Container from './container';
 import Extension from './extension';
 
-import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newClientRect, setElementCache } from '../lib/dom';
+import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 
 type T = Node;
 
@@ -32,12 +32,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public excludeProcedure = 0;
     public excludeResource = 0;
     public documentRoot = false;
-    public auto = true;
+    public positioned = false;
     public visible = true;
     public excluded = false;
     public rendered = false;
     public renderExtension = new Set<Extension<T>>();
-    public readonly initial: InitialData<T>;
+    public readonly initial: androme.lib.base.InitialData<T>;
 
     protected abstract _namespaces: Set<string>;
     protected abstract _controlName: string;
@@ -1050,7 +1050,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get inline() {
         const value = this.display;
-        return value === 'inline' || (value === 'initial' && INLINE_ELEMENT.includes(this.tagName));
+        return value === 'inline' || (value === 'initial' && ELEMENT_INLINE.includes(this.tagName));
     }
 
     get inlineElement() {
@@ -1099,7 +1099,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get block() {
         const value = this.display;
-        return value === 'block' || value === 'list-item' || (value === 'initial' && BLOCK_ELEMENT.includes(this.tagName));
+        return value === 'block' || value === 'list-item' || (value === 'initial' && ELEMENT_BLOCK.includes(this.tagName));
     }
 
     get blockStatic() {

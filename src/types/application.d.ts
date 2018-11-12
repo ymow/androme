@@ -82,16 +82,3 @@ interface ViewData<T> {
     views: FileAsset[];
     includes: FileAsset[];
 }
-
-interface InitialData<T> {
-    readonly styleMap: StringMap;
-    readonly children: T[];
-    readonly bounds: BoxDimensions;
-    linear?: BoxDimensions;
-    box?: BoxDimensions;
-    depth: number;
-}
-
-interface NodeConstructor<T> {
-    new (id: number, element?: Element, afterInit?: SelfWrapped<T, void>): T;
-}

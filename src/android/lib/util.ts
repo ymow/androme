@@ -1,20 +1,20 @@
 import { ViewAttribute } from '../types/module';
 
-import { BUILD_ANDROID } from './enumeration';
 import { XMLNS_ANDROID } from './constant';
+import { BUILD_ANDROID } from './enumeration';
 
 const $xml = androme.lib.xml;
 
-let MAP_ID: ObjectMap<string[]>;
+let ID_MAP: ObjectMap<string[]>;
 
 export function resetId() {
-    MAP_ID = {
+    ID_MAP = {
         android: ['parent']
     };
 }
 
 export function generateId(section: string, name: string, start: number) {
-    if (MAP_ID === undefined) {
+    if (ID_MAP === undefined) {
         resetId();
     }
     const prefix = name;
@@ -22,12 +22,12 @@ export function generateId(section: string, name: string, start: number) {
     if (start === 1) {
         name += `_${i.toString()}`;
     }
-    if (MAP_ID[section] === undefined) {
-        MAP_ID[section] = [];
+    if (ID_MAP[section] === undefined) {
+        ID_MAP[section] = [];
     }
     do {
-        if (!MAP_ID[section].includes(name)) {
-            MAP_ID[section].push(name);
+        if (!ID_MAP[section].includes(name)) {
+            ID_MAP[section].push(name);
             break;
         }
         else {
@@ -42,7 +42,7 @@ export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 
-export function createViewAttribute(options?: ExternalData): ViewAttribute {
+export function createAttribute(options?: ExternalData): ViewAttribute {
     return Object.assign({ android: {}, app: {} }, typeof options === 'object' ? options : {});
 }
 

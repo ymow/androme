@@ -1,8 +1,8 @@
 import { NODE_ANDROID } from '../lib/constant';
 
+import Controller from '../controller';
+import Resource from '../resource';
 import View from '../view';
-import ViewController from '../viewcontroller';
-import ResourceHandler from '../resourcehandler';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -54,8 +54,8 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             });
             node.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT;
             node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE;
-            node.android('src', `@drawable/${ResourceHandler.addImage({ mdpi: image.uri })}`);
-            output = ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
+            node.android('src', `@drawable/${Resource.addImage({ mdpi: image.uri })}`);
+            output = Controller.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
         }
         return { output, parent: container, complete: true };
     }

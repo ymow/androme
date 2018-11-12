@@ -2,15 +2,16 @@ import { BackgroundGradient, SettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
+import File from './file';
 import View from './view';
 
 import { generateId } from './lib/util';
 
-import $const = androme.lib.constant;
-import $util = androme.lib.util;
-import $dom = androme.lib.dom;
-import $xml = androme.lib.xml;
 import $color = androme.lib.color;
+import $const = androme.lib.constant;
+import $dom = androme.lib.dom;
+import $util = androme.lib.util;
+import $xml = androme.lib.xml;
 
 type ThemeTemplate = {
     output: {
@@ -24,27 +25,28 @@ function getHexARGB(value: ColorHexAlpha | null) {
     return value ? (value.opaque ? value.valueARGB : value.valueRGB) : '';
 }
 
-export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
+export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
     public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], useColorAlias = true) {
         const result: BackgroundGradient[] = [];
         for (const shape of gradients) {
             const hasStop = node.svgElement || shape.colorStop.filter(item => $util.convertInt(item.offset) > 0).length > 0;
             const gradient: BackgroundGradient = {
                 type: shape.type,
-                startColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[0].color) : '',
-                centerColor: !hasStop && shape.colorStop.length > 2 ? ResourceHandler.addColor(shape.colorStop[1].color) : '',
-                endColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
+                startColor: !hasStop ? Resource.addColor(shape.colorStop[0].color) : '',
+                centerColor: !hasStop && shape.colorStop.length > 2 ? Resource.addColor(shape.colorStop[1].color) : '',
+                endColor: !hasStop ? Resource.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
                 colorStop: []
             };
             switch (shape.type) {
                 case 'radial':
-                    const radial = <RadialGradient> shape;
                     if (node.svgElement) {
+                        const radial = <SvgRadialGradient> shape;
                         gradient.gradientRadius = radial.r.toString();
                         gradient.centerX = radial.cx.toString();
                         gradient.centerY = radial.cy.toString();
                     }
                     else {
+                        const radial = <RadialGradient> shape;
                         let boxPosition: BoxPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
                             boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), true, !hasStop);
@@ -66,14 +68,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     break;
                 case 'linear':
-                    const linear = <LinearGradient> shape;
-                    if (hasStop) {
+                    if (node.svgElement) {
+                        const linear = <SvgLinearGradient> shape;
                         gradient.startX = linear.x1.toString();
                         gradient.startY = linear.y1.toString();
                         gradient.endX = linear.x2.toString();
                         gradient.endY = linear.y2.toString();
                     }
                     else {
+                        const linear = <LinearGradient> shape;
                         if (linear.angle) {
                             gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
                         }
@@ -83,7 +86,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             if (hasStop) {
                 for (let i = 0; i < shape.colorStop.length; i++) {
                     const item = shape.colorStop[i];
-                    const color = useColorAlias ? `@color/${ResourceHandler.addColor(item.color)}` : getHexARGB($color.parseRGBA(item.color));
+                    const color = useColorAlias ? `@color/${Resource.addColor(item.color)}` : getHexARGB($color.parseRGBA(item.color));
                     let offset = $util.convertInt(item.offset);
                     if (i === 0) {
                         if (!node.svgElement && offset !== 0) {
@@ -134,7 +137,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     break;
                                 case 'src':
                                 case 'srcCompat':
-                                    if ($const.DOM_REGEX.URI.test(value)) {
+                                    if ($const.REGEX_PATTERN.URI.test(value)) {
                                         value = this.addImage({ mdpi: value });
                                         if (value !== '') {
                                             obj[attr] = `@drawable/${value}`;
@@ -165,7 +168,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
             const numeric = $util.isNumber(value);
             if (!numeric || useNumberAlias) {
-                for (const [resourceName, resourceValue] of ResourceHandler.STORED.strings.entries()) {
+                for (const [resourceName, resourceValue] of Resource.STORED.strings.entries()) {
                     if (resourceValue === value) {
                         return resourceName;
                     }
@@ -183,10 +186,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 else if (name === '') {
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
-                if (ResourceHandler.STORED.strings.has(name)) {
+                if (Resource.STORED.strings.has(name)) {
                     name = generateId('strings', name, 1);
                 }
-                ResourceHandler.STORED.strings.set(name, value);
+                Resource.STORED.strings.set(name, value);
             }
             return name;
         }
@@ -247,7 +250,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 case 'ico':
                 case 'jpg':
                 case 'png':
-                    src = ResourceHandler.insertStoredAsset('images', prefix + src, images);
+                    src = Resource.insertStoredAsset('images', prefix + src, images);
                     break;
                 default:
                     src = '';
@@ -257,7 +260,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return src;
     }
 
-    public static addImageURL(value: string, prefix = '') {
+    public static addImageUrl(value: string, prefix = '') {
         const url = $dom.cssResolveUrl(value);
         if (url !== '') {
             return this.addImage({ mdpi: url }, prefix);
@@ -271,7 +274,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         if (value && value.valueRGBA !== '#00000000') {
             const valueARGB = getHexARGB(value);
-            let name = ResourceHandler.STORED.colors.get(valueARGB) || '';
+            let name = Resource.STORED.colors.get(valueARGB) || '';
             if (name === '') {
                 const shade = $color.getColorByShade(value.valueRGB);
                 if (shade) {
@@ -282,7 +285,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     else {
                         name = generateId('color', shade.name, 1);
                     }
-                    ResourceHandler.STORED.colors.set(valueARGB, name);
+                    Resource.STORED.colors.set(valueARGB, name);
                 }
             }
             return name;
@@ -291,6 +294,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public settings: SettingsAndroid;
+    public fileHandler: File<T>;
 
     public finalize() {}
 
@@ -301,7 +305,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public addStyleTheme(template: string, data: TemplateData, options: ThemeTemplate) {
         if (options.item) {
-            const items = ResourceHandler.formatOptions({ item: options.item }, this.application.getExtensionOptionsValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+            const items = Resource.formatOptions({ item: options.item }, this.application.getExtensionOptionsValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             for (const name in items) {
                 data['1'].push({
                     name,

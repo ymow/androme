@@ -4,7 +4,7 @@ declare global {
             settings: Settings;
             viewController: Controller<T>;
             resourceHandler: Resource<T>;
-            nodeObject: NodeConstructor<T>;
+            nodeObject: Constructor<T>;
             builtInExtensions: ObjectMap<Extension<T>>;
             renderQueue: ObjectMap<string[]>;
             loading: boolean;

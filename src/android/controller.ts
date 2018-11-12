@@ -4,21 +4,21 @@ import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID
 
 import BASE_TMPL from './template/base';
 
+import Resource from './resource';
 import View from './view';
 import ViewGroup from './viewgroup';
-import ResourceHandler from './resourcehandler';
 
-import { createViewAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
+import { createAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
 
 import $NodeList = androme.lib.base.NodeList;
 
+import $color = androme.lib.color;
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
-import $color = androme.lib.color;
 
-const MAP_LAYOUT = {
+const LAYOUT_MAP = {
     relativeParent: {
         top: 'layout_alignParentTop',
         bottom: 'layout_alignParentBottom'
@@ -39,7 +39,7 @@ const MAP_LAYOUT = {
     }
 };
 
-const MAP_CHAIN = {
+const CHAIN_MAP = {
     leftTop: ['left', 'top'],
     rightBottom: ['right', 'bottom'],
     rightLeftBottomTop: ['rightLeft', 'bottomTop'],
@@ -51,8 +51,8 @@ const MAP_CHAIN = {
 function setAlignParent(node: View, orientation = '', bias = false) {
     [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
         if (!node.constraint[value] && (orientation === '' || value === orientation)) {
-            node.app(MAP_LAYOUT.constraint[index === 0 ? 'left' : 'top'], 'parent');
-            node.app(MAP_LAYOUT.constraint[index === 0 ? 'right' : 'bottom'], 'parent');
+            node.app(LAYOUT_MAP.constraint[index === 0 ? 'left' : 'top'], 'parent');
+            node.app(LAYOUT_MAP.constraint[index === 0 ? 'right' : 'bottom'], 'parent');
             node.constraint[value] = true;
             if (bias) {
                 node.app(`layout_constraint${value.charAt(0).toUpperCase() + value.substring(1)}_bias`, node[`${value}Bias`]);
@@ -61,7 +61,7 @@ function setAlignParent(node: View, orientation = '', bias = false) {
     });
 }
 
-export default class ViewController<T extends View> extends androme.lib.base.Controller<T> {
+export default class Controller<T extends View> extends androme.lib.base.Controller<T> {
     public static getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {
         const indent = $util.repeat(Math.max(0, depth));
         let output = preXml +
@@ -114,20 +114,20 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public setConstraints() {
-        const relativeParent = MAP_LAYOUT.relativeParent;
+        const relativeParent = LAYOUT_MAP.relativeParent;
         let layoutMap: StringMap;
         let constraint = false;
         Object.assign(relativeParent, {
             left: replaceRTL('layout_alignParentLeft', this.settings),
             right: replaceRTL('layout_alignParentRight', this.settings)
         });
-        Object.assign(MAP_LAYOUT.relative, {
+        Object.assign(LAYOUT_MAP.relative, {
             left: replaceRTL('layout_alignLeft', this.settings),
             right: replaceRTL('layout_alignRight', this.settings),
             leftRight: replaceRTL('layout_toRightOf', this.settings),
             rightLeft: replaceRTL('layout_toLeftOf', this.settings)
         });
-        Object.assign(MAP_LAYOUT.constraint, {
+        Object.assign(LAYOUT_MAP.constraint, {
             left: replaceRTL('layout_constraintLeft_toLeftOf', this.settings),
             right: replaceRTL('layout_constraintRight_toRightOf', this.settings),
             leftRight: replaceRTL('layout_constraintLeft_toRightOf', this.settings),
@@ -144,10 +144,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         function mapSibling(node: T, direction: string) {
             return node[constraint ? 'app' : 'android'](layoutMap[direction]);
         }
-        function mapDelete(node: T, ...direction: string[]) {
-            node.delete(constraint ? 'app' : 'android', ...direction.map(value => layoutMap[value]));
-        }
-        function anchoredSibling(node: T, nodes: T[], orientation: string) {
+        function mapAnchored(node: T, nodes: T[], orientation: string) {
             if (!node.constraint[orientation]) {
                 const connected: string[] = [];
                 let parent: T | undefined = node;
@@ -168,264 +165,265 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             }
             return true;
         }
+        function mapDelete(node: T, ...direction: string[]) {
+            node.delete(constraint ? 'app' : 'android', ...direction.map(value => layoutMap[value]));
+        }
         for (const node of this.cache.visible) {
-            const relative = node.is($enum.NODE_STANDARD.RELATIVE);
-            constraint = node.is($enum.NODE_STANDARD.CONSTRAINT);
-            const flex = node.flex;
-            if (relative || constraint || flex.enabled) {
-                const nodes = node.renderChildren.filter(item => item.auto) as T[];
-                if (nodes.length === 0) {
-                    continue;
-                }
-                const cleared = $NodeList.cleared(node.initial.children);
-                if (relative) {
-                    function checkSingleLine(item: T, nowrap = false, flexParent = false) {
-                        if (item && item.textElement && (nowrap || flexParent || (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
-                            item.android('singleLine', 'true');
-                        }
+            const nodes = node.renderChildren.filter(item => !item.positioned) as T[];
+            if (nodes.length === 0) {
+                continue;
+            }
+            if (node.is($enum.NODE_STANDARD.RELATIVE)) {
+                function checkSingleLine(item: T, nowrap = false, flexParent = false) {
+                    if (item && item.textElement && (nowrap || flexParent || (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
+                        item.android('singleLine', 'true');
                     }
-                    function adjustBaseline(siblings: T[]) {
-                        if (nodes.length > 1) {
-                            const textBaseline = $NodeList.textBaseline(siblings.filter(item => item.baseline && item.toInt('top') === 0 && item.toInt('bottom') === 0));
-                            if (textBaseline.length > 0) {
-                                const alignWith = textBaseline[0];
-                                const images: T[] = [];
-                                let baseExcluded: T | undefined;
-                                for (const current of siblings) {
-                                    if (current !== alignWith) {
-                                        if (current.baseline && (current.nodeType <= $enum.NODE_STANDARD.INLINE || (current.linearHorizontal && current.renderChildren.some(item => item.baseline && item.nodeType <= $enum.NODE_STANDARD.INLINE)))) {
-                                            if (!alignWith.imageElement && current.imageElement) {
-                                                images.push(current);
-                                            }
-                                            else if (current.alignOrigin) {
-                                                current.android(MAP_LAYOUT.relative[current.imageElement || current.is($enum.NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline'], alignWith.stringId);
-                                            }
-                                            else if (alignWith.position === 'relative' && current.bounds.height < alignWith.bounds.height && current.lineHeight === 0) {
-                                                current.android(MAP_LAYOUT.relative[$util.convertInt(alignWith.top) > 0 ? 'top' : 'bottom'], alignWith.stringId);
-                                            }
+                }
+                function adjustBaseline(siblings: T[]) {
+                    if (nodes.length > 1) {
+                        const textBaseline = $NodeList.textBaseline(siblings.filter(item => item.baseline && item.toInt('top') === 0 && item.toInt('bottom') === 0));
+                        if (textBaseline.length > 0) {
+                            const alignWith = textBaseline[0];
+                            const images: T[] = [];
+                            let baseExcluded: T | undefined;
+                            for (const current of siblings) {
+                                if (current !== alignWith) {
+                                    if (current.baseline && (current.nodeType <= $enum.NODE_STANDARD.INLINE || (current.linearHorizontal && current.renderChildren.some(item => item.baseline && item.nodeType <= $enum.NODE_STANDARD.INLINE)))) {
+                                        if (!alignWith.imageElement && current.imageElement) {
+                                            images.push(current);
                                         }
-                                        if (alignWith.imageElement && (!baseExcluded || current.bounds.height > baseExcluded.bounds.height)) {
-                                            baseExcluded = current;
+                                        else if (current.alignOrigin) {
+                                            current.android(LAYOUT_MAP.relative[current.imageElement || current.is($enum.NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline'], alignWith.stringId);
                                         }
+                                        else if (alignWith.position === 'relative' && current.bounds.height < alignWith.bounds.height && current.lineHeight === 0) {
+                                            current.android(LAYOUT_MAP.relative[$util.convertInt(alignWith.top) > 0 ? 'top' : 'bottom'], alignWith.stringId);
+                                        }
+                                    }
+                                    if (alignWith.imageElement && (!baseExcluded || current.bounds.height > baseExcluded.bounds.height)) {
+                                        baseExcluded = current;
                                     }
                                 }
-                                if (images.length > 0) {
-                                    images.sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
-                                    for (let i = 0; i < images.length; i++) {
-                                        if (i === 0) {
-                                            alignWith.android(layoutMap['bottom'], images[i].stringId);
-                                        }
-                                        else {
-                                            images[i].android(layoutMap['bottom'], images[0].stringId);
-                                        }
+                            }
+                            if (images.length > 0) {
+                                images.sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
+                                for (let i = 0; i < images.length; i++) {
+                                    if (i === 0) {
+                                        alignWith.android(layoutMap['bottom'], images[i].stringId);
                                     }
+                                    else {
+                                        images[i].android(layoutMap['bottom'], images[0].stringId);
+                                    }
+                                }
+                                baseExcluded = undefined;
+                            }
+                            if (baseExcluded) {
+                                if (!baseExcluded.imageElement) {
+                                    baseExcluded.delete('android', layoutMap['baseline']);
+                                }
+                                else if (baseExcluded.bounds.height > alignWith.bounds.height) {
+                                    baseExcluded.delete('android', layoutMap['bottom']);
+                                }
+                                else {
                                     baseExcluded = undefined;
                                 }
                                 if (baseExcluded) {
-                                    if (!baseExcluded.imageElement) {
-                                        baseExcluded.delete('android', layoutMap['baseline']);
-                                    }
-                                    else if (baseExcluded.bounds.height > alignWith.bounds.height) {
-                                        baseExcluded.delete('android', layoutMap['bottom']);
-                                    }
-                                    else {
-                                        baseExcluded = undefined;
-                                    }
-                                    if (baseExcluded) {
-                                        alignWith.android(layoutMap['bottom'], baseExcluded.stringId);
-                                    }
+                                    alignWith.android(layoutMap['bottom'], baseExcluded.stringId);
                                 }
                             }
                         }
                     }
-                    layoutMap = MAP_LAYOUT.relative;
-                    const rows: T[][] = [];
-                    const baseline: T[] = [];
-                    const textIndent = node.toInt('textIndent');
-                    const noWrap = node.css('whiteSpace') === 'nowrap';
-                    let boxWidth = node.box.width;
-                    if (node.renderParent.overflowX) {
-                        boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, { map: 'initial' });
+                }
+                layoutMap = LAYOUT_MAP.relative;
+                let boxWidth = node.box.width;
+                if (node.renderParent.overflowX) {
+                    boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, { map: 'initial' });
+                }
+                else if (node.renderParent.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
+                    const minLeft: number = Math.min.apply(null, nodes.map(item => item.linear.left));
+                    const maxRight: number = Math.max.apply(null, nodes.map(item => item.linear.right));
+                    boxWidth = maxRight - minLeft;
+                }
+                else {
+                    const floatEnd = Math.max.apply(null, node.documentParent.initial.children.filter(item => item.float === 'left' && item.siblingIndex < node.siblingIndex).map(item => item.linear.right));
+                    if (nodes.some(item => item.linear.left === floatEnd)) {
+                        boxWidth = node.box.right - floatEnd;
                     }
-                    else if (node.renderParent.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
-                        const minLeft: number = Math.min.apply(null, nodes.map(item => item.linear.left));
-                        const maxRight: number = Math.max.apply(null, nodes.map(item => item.linear.right));
-                        boxWidth = maxRight - minLeft;
-                    }
-                    else {
-                        const floatEnd = Math.max.apply(null, node.documentParent.initial.children.filter(item => item.float === 'left' && item.siblingIndex < node.siblingIndex).map(item => item.linear.right));
-                        if (nodes.some(item => item.linear.left === floatEnd)) {
-                            boxWidth = node.box.right - floatEnd;
-                        }
-                    }
-                    boxWidth = Math.ceil(boxWidth);
-                    let rowWidth = 0;
-                    let rowPaddingLeft = 0;
-                    let rowPreviousLeft: T | undefined;
-                    let rowPreviousBottom: T | undefined;
-                    if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
-                        rowPaddingLeft = Math.abs(textIndent);
-                        node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
-                        node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
-                    }
-                    const rangeMultiLine: T[] = [];
-                    const edgeOrFirefox = $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
-                    for (let i = 0; i < nodes.length; i++) {
-                        const current = nodes[i];
-                        const previous = nodes[i - 1];
-                        let dimension = current.bounds;
-                        if (current.inlineText && !current.hasWidth) {
-                            const [bounds, multiLine] = $dom.getRangeClientRect(current.element);
-                            if (bounds && (multiLine || bounds.width < current.box.width)) {
-                                dimension = bounds;
-                                if (edgeOrFirefox && multiLine && !/^\s*\n+/.test(current.textContent)) {
-                                    rangeMultiLine.push(current);
-                                }
+                }
+                boxWidth = Math.ceil(boxWidth);
+                let rowWidth = 0;
+                let rowPaddingLeft = 0;
+                let rowPreviousLeft: T | undefined;
+                let rowPreviousBottom: T | undefined;
+                const textIndent = node.toInt('textIndent');
+                if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
+                    rowPaddingLeft = Math.abs(textIndent);
+                    node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
+                    node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
+                }
+                const rows: T[][] = [];
+                const baseline: T[] = [];
+                const rangeMultiLine = new Set<T>();
+                const cleared = $NodeList.cleared(node.initial.children);
+                const noWrap = node.css('whiteSpace') === 'nowrap';
+                const edgeOrFirefox = $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
+                for (let i = 0; i < nodes.length; i++) {
+                    const current = nodes[i];
+                    const previous = nodes[i - 1];
+                    let dimension = current.bounds;
+                    if (current.inlineText && !current.hasWidth) {
+                        const [bounds, multiLine] = $dom.getRangeClientRect(current.element);
+                        if (bounds && (multiLine || bounds.width < current.box.width)) {
+                            dimension = bounds;
+                            if (edgeOrFirefox && multiLine && !/^\s*\n+/.test(current.textContent)) {
+                                rangeMultiLine.add(current);
                             }
                         }
-                        const sideParent = relativeParent[current.float === 'right' ? 'right' : 'left'];
-                        const sideSibling = layoutMap[current.float === 'right' ? 'rightLeft' : 'leftRight'];
-                        if (i === 0) {
-                            current.android(sideParent, 'true');
-                            if (!node.inline && textIndent > 0) {
-                                current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, textIndent);
-                            }
-                            if (!current.siblingflow || (current.floating && current.position === 'relative') || (current.multiLine && textIndent < 0)) {
-                                rowPreviousLeft = current;
-                            }
-                            rows[rows.length] = [current];
+                    }
+                    const sideParent = relativeParent[current.float === 'right' ? 'right' : 'left'];
+                    const sideSibling = layoutMap[current.float === 'right' ? 'rightLeft' : 'leftRight'];
+                    if (i === 0) {
+                        current.android(sideParent, 'true');
+                        if (!node.inline && textIndent > 0) {
+                            current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, textIndent);
                         }
-                        else if (previous) {
-                            const items = rows[rows.length - 1];
-                            const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
-                            const viewGroup = current.groupElement && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
-                            const previousSibling = current.previousSibling();
-                            const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
-                            let connected = false;
-                            if (i === 1 && previous.textElement && current.textElement) {
-                                connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
+                        if (!current.siblingflow || (current.floating && current.position === 'relative') || (current.multiLine && textIndent < 0)) {
+                            rowPreviousLeft = current;
+                        }
+                        rows[rows.length] = [current];
+                    }
+                    else if (previous) {
+                        const items = rows[rows.length - 1];
+                        const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
+                        const viewGroup = current.groupElement && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
+                        const previousSibling = current.previousSibling();
+                        const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
+                        let connected = false;
+                        if (i === 1 && previous.textElement && current.textElement) {
+                            connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
+                        }
+                        if (!noWrap &&
+                            !connected &&
+                            !['SUP', 'SUB'].includes(current.tagName) &&
+                            (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
+                                (current.float !== 'right' && Math.floor(baseWidth) - (current.styleElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                (current.multiLine && $dom.hasLineBreak(current.element)) ||
+                                (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom.hasLineBreak(previous.element)) ||
+                                (previousSibling && previousSibling.lineBreak) ||
+                                (current.preserveWhiteSpace && /^\n+/.test(current.textContent)) ||
+                                current.blockStatic ||
+                                viewGroup ||
+                                cleared.has(current) ||
+                                rangeMultiLine.has(previous) ||
+                                (siblings.length > 0 && siblings.some(element => $dom.isLineBreak(element))) ||
+                                (current.floating && (
+                                    (current.float === 'left' && $util.withinFraction(current.linear.left, node.box.left)) ||
+                                    (current.float === 'right' && $util.withinFraction(current.linear.right, node.box.right)) ||
+                                    current.linear.top >= previous.linear.bottom
+                                ))
+                            ))
+                        {
+                            rowPreviousBottom = items.filter(item => !item.floating)[0] || items[0];
+                            for (let j = 0; j < items.length; j++) {
+                                if (items[j] !== rowPreviousBottom && items[j].linear.bottom > rowPreviousBottom.linear.bottom && (!items[j].floating || (items[j].floating && rowPreviousBottom.floating))) {
+                                    rowPreviousBottom = items[j];
+                                }
                             }
-                            if (!noWrap &&
-                                !connected &&
-                                !['SUP', 'SUB'].includes(current.tagName) &&
-                                (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
-                                    (current.float !== 'right' && Math.floor(baseWidth) - (current.styleElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
-                                    (current.multiLine && $dom.hasLineBreak(current.element)) ||
-                                    (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom.hasLineBreak(previous.element)) ||
-                                    (previousSibling && previousSibling.lineBreak) ||
-                                    (current.preserveWhiteSpace && /^\n+/.test(current.textContent)) ||
-                                    current.blockStatic ||
-                                    viewGroup ||
-                                    cleared.has(current) ||
-                                    rangeMultiLine.includes(previous) ||
-                                    (siblings.length > 0 && siblings.some(element => $dom.isLineBreak(element))) ||
-                                    (current.floating && (
-                                        (current.float === 'left' && $util.withinFraction(current.linear.left, node.box.left)) ||
-                                        (current.float === 'right' && $util.withinFraction(current.linear.right, node.box.right)) ||
-                                        current.linear.top >= previous.linear.bottom
-                                    ))
-                               ))
-                            {
-                                rowPreviousBottom = items.filter(item => !item.floating)[0] || items[0];
-                                for (let j = 0; j < items.length; j++) {
-                                    if (items[j] !== rowPreviousBottom && items[j].linear.bottom > rowPreviousBottom.linear.bottom && (!items[j].floating || (items[j].floating && rowPreviousBottom.floating))) {
-                                        rowPreviousBottom = items[j];
-                                    }
-                                }
-                                if (viewGroup || (previous.groupElement && i === nodes.length - 1)) {
-                                    current.constraint.marginVertical = rowPreviousBottom.stringId;
-                                }
-                                current.anchor(layoutMap['topBottom'], rowPreviousBottom.stringId);
-                                if (rowPreviousLeft && current.linear.top < rowPreviousLeft.bounds.bottom && !$util.withinRange(current.bounds.top, rowPreviousLeft.bounds.top, 1) && !$util.withinRange(current.bounds.bottom, rowPreviousLeft.bounds.bottom, 1)) {
-                                    current.anchor(sideSibling, rowPreviousLeft.stringId);
-                                }
-                                else {
-                                    current.anchor(sideParent, 'true');
-                                    rowPreviousLeft = undefined;
-                                }
-                                if (this.settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
-                                    checkSingleLine(previous.item() as T, true);
-                                }
-                                if (rowPaddingLeft > 0) {
-                                    if (this.settings.ellipsisOnTextOverflow && rows.length === 1 && rows[0].length === 1 && rows[0][0].textElement) {
-                                        checkSingleLine(rows[0][0], true);
-                                    }
-                                    current.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
-                                }
-                                adjustBaseline(baseline);
-                                node.alignmentType ^= $enum.NODE_ALIGNMENT.HORIZONTAL;
-                                node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
-                                rowWidth = 0;
-                                baseline.length = 0;
-                                rows.push([current]);
+                            if (viewGroup || (previous.groupElement && i === nodes.length - 1)) {
+                                current.constraint.marginVertical = rowPreviousBottom.stringId;
+                            }
+                            current.anchor(layoutMap['topBottom'], rowPreviousBottom.stringId);
+                            if (rowPreviousLeft && current.linear.top < rowPreviousLeft.bounds.bottom && !$util.withinRange(current.bounds.top, rowPreviousLeft.bounds.top, 1) && !$util.withinRange(current.bounds.bottom, rowPreviousLeft.bounds.bottom, 1)) {
+                                current.anchor(sideSibling, rowPreviousLeft.stringId);
                             }
                             else {
-                                if (i === 1 && rowPaddingLeft > 0 && !previous.plainText) {
-                                    current.anchor(sideParent, 'true');
-                                    current.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
+                                current.anchor(sideParent, 'true');
+                                rowPreviousLeft = undefined;
+                            }
+                            if (this.settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
+                                checkSingleLine(previous.item() as T, true);
+                            }
+                            if (rowPaddingLeft > 0) {
+                                if (this.settings.ellipsisOnTextOverflow && rows.length === 1 && rows[0].length === 1 && rows[0][0].textElement) {
+                                    checkSingleLine(rows[0][0], true);
                                 }
-                                else {
-                                    current.anchor(sideSibling, previous.stringId);
-                                }
-                                if (connected || baseWidth > boxWidth) {
-                                    checkSingleLine(current);
-                                }
-                                if (rowPreviousBottom) {
-                                    current.anchor(layoutMap['topBottom'], rowPreviousBottom.stringId);
-                                }
-                                items.push(current);
+                                current.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
+                            }
+                            adjustBaseline(baseline);
+                            node.alignmentType ^= $enum.NODE_ALIGNMENT.HORIZONTAL;
+                            node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
+                            rowWidth = 0;
+                            baseline.length = 0;
+                            rows.push([current]);
+                        }
+                        else {
+                            if (i === 1 && rowPaddingLeft > 0 && !previous.plainText) {
+                                current.anchor(sideParent, 'true');
+                                current.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
+                            }
+                            else {
+                                current.anchor(sideSibling, previous.stringId);
+                            }
+                            if (connected || baseWidth > boxWidth) {
+                                checkSingleLine(current);
+                            }
+                            if (rowPreviousBottom) {
+                                current.anchor(layoutMap['topBottom'], rowPreviousBottom.stringId);
+                            }
+                            items.push(current);
+                        }
+                    }
+                    rowWidth += dimension.width + current.marginLeft + current.marginRight + (
+                                    previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace &&
+                                    previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
+                                    !current.floating && !current.plainText && !current.preserveWhiteSpace &&
+                                    current.textContent.trim() !== '' && !/^\s+/.test(current.textContent) ? this.settings.whitespaceHorizontalOffset : 0
+                                );
+                    if (!current.floating) {
+                        baseline.push(current);
+                    }
+                }
+                adjustBaseline(baseline);
+                if (node.marginTop < 0 && nodes[0].position === 'relative') {
+                    rows[0].forEach((item, index) => item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.marginTop * (index === 0 ? 1 : -1), true));
+                }
+                if (node.baseline && rows.length === 1) {
+                    rows[0].forEach(item => {
+                        switch (item.css('verticalAlign')) {
+                            case 'top':
+                                item.anchor(relativeParent['top'], 'true');
+                                break;
+                            case 'middle':
+                                rows[0].forEach(sibling => sibling.bounds.height <= item.bounds.height && sibling.anchor('layout_centerVertical', 'true'));
+                                break;
+                        }
+                    });
+                }
+                if (this.settings.ellipsisOnTextOverflow) {
+                    const widthParent = !node.ascend().some(parent => parent.hasWidth);
+                    if (!node.ascend(true).some(item => item.is($enum.NODE_STANDARD.GRID)) && (rows.length === 1 || node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL))) {
+                        for (let i = 1; i < nodes.length; i++) {
+                            const item = nodes[i];
+                            if (!item.multiLine && !item.floating && !item.alignParent('left')) {
+                                checkSingleLine(item, false, widthParent);
                             }
                         }
-                        rowWidth += dimension.width + current.marginLeft + current.marginRight + (
-                                        previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace &&
-                                        previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
-                                        !current.floating && !current.plainText && !current.preserveWhiteSpace &&
-                                        current.textContent.trim() !== '' && !/^\s+/.test(current.textContent) ? this.settings.whitespaceHorizontalOffset : 0
-                                    );
-                        if (!current.floating) {
-                            baseline.push(current);
-                        }
                     }
-                    adjustBaseline(baseline);
-                    if (node.marginTop < 0 && nodes[0].position === 'relative') {
-                        rows[0].forEach((item, index) => item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.marginTop * (index === 0 ? 1 : -1), true));
-                    }
-                    if (node.baseline && rows.length === 1) {
-                        rows[0].forEach(item => {
-                            switch (item.css('verticalAlign')) {
-                                case 'top':
-                                    item.anchor(relativeParent['top'], 'true');
-                                    break;
-                                case 'middle':
-                                    rows[0].forEach(sibling => sibling.bounds.height <= item.bounds.height && sibling.anchor('layout_centerVertical', 'true'));
-                                    break;
-                            }
-                        });
-                    }
-                    if (this.settings.ellipsisOnTextOverflow) {
-                        const widthParent = !node.ascend().some(parent => parent.hasWidth);
-                        if (!node.ascend(true).some(item => item.is($enum.NODE_STANDARD.GRID)) && (rows.length === 1 || node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL))) {
-                            for (let i = 1; i < nodes.length; i++) {
-                                const item = nodes[i];
-                                if (!item.multiLine && !item.floating && !item.alignParent('left')) {
+                    else {
+                        for (const row of rows) {
+                            if (row.length > 1) {
+                                const item = row[row.length - 1];
+                                if (item.inlineText) {
                                     checkSingleLine(item, false, widthParent);
                                 }
                             }
                         }
-                        else {
-                            for (const row of rows) {
-                                if (row.length > 1) {
-                                    const item = row[row.length - 1];
-                                    if (item.inlineText) {
-                                        checkSingleLine(item, false, widthParent);
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
-                else {
-                    layoutMap = MAP_LAYOUT.constraint;
+            }
+            else {
+                constraint = node.is($enum.NODE_STANDARD.CONSTRAINT);
+                if (constraint) {
+                    layoutMap = LAYOUT_MAP.constraint;
                     if (node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL)) {
                         function boundsHeight(a: T, b: T) {
                             return a.bounds.height >= b.bounds.height ? -1 : 1;
@@ -509,6 +507,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                     }
                     else {
+                        const flex = node.flex;
                         const [absolute, pageflow] = $util.partition(nodes, item => !item.pageflow || (item.position === 'relative' && item.alignNegative));
                         const percentage = node.hasAlign($enum.NODE_ALIGNMENT.PERCENT);
                         const columnCount = node.toInt('columnCount');
@@ -538,8 +537,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 for (const adjacent of pageflow) {
                                     if (current !== adjacent) {
                                         const stringId = adjacent.stringId;
-                                        const horizontal = anchoredSibling(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '';
-                                        const vertical = anchoredSibling(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '';
+                                        const horizontal = mapAnchored(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '';
+                                        const vertical = mapAnchored(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '';
                                         const intersectY = current.intersectY(adjacent.linear);
                                         const alignOrigin = current.alignOrigin && adjacent.alignOrigin;
                                         if (!current.hasWidth && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
@@ -586,14 +585,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 const leftRight = mapSibling(current, 'leftRight');
                                 if (leftRight) {
                                     if (!current.constraint.horizontal) {
-                                        current.constraint.horizontal = flex.enabled || anchoredSibling(current, pageflow, AXIS_ANDROID.HORIZONTAL);
+                                        current.constraint.horizontal = flex.enabled || mapAnchored(current, pageflow, AXIS_ANDROID.HORIZONTAL);
                                     }
                                     current.constraint.marginHorizontal = leftRight;
                                 }
                                 const topBottom = mapSibling(current, 'topBottom');
                                 if (topBottom) {
                                     if (!current.constraint.vertical) {
-                                        current.constraint.vertical = flex.enabled || anchoredSibling(current, pageflow, AXIS_ANDROID.VERTICAL);
+                                        current.constraint.vertical = flex.enabled || mapAnchored(current, pageflow, AXIS_ANDROID.VERTICAL);
                                     }
                                     current.constraint.marginVertical = topBottom;
                                     mapDelete(current, 'top');
@@ -888,10 +887,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     const connectedRows: T[][] = [];
                                     connected.forEach((chainable, level) => {
                                         if (chainable.length > 0) {
-                                            const [HV, VH] = [MAP_CHAIN['horizontalVertical'][index], MAP_CHAIN['horizontalVertical'][inverse]];
-                                            const [LT, TL] = [MAP_CHAIN['leftTop'][index], MAP_CHAIN['leftTop'][inverse]];
-                                            const [RB, BR] = [MAP_CHAIN['rightBottom'][index], MAP_CHAIN['rightBottom'][inverse]];
-                                            const [WH, HW] = [MAP_CHAIN['widthHeight'][index], MAP_CHAIN['widthHeight'][inverse]];
+                                            const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
+                                            const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
+                                            const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
+                                            const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][inverse]];
                                             const orientation = HV.toLowerCase();
                                             const orientationInverse = VH.toLowerCase();
                                             const dimension = WH.toLowerCase();
@@ -906,7 +905,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                 }
                                             }
                                             else if (!percentage && columnCount === 0) {
-                                                if (chainable.every(item => anchoredSibling(item, nodes, orientation))) {
+                                                if (chainable.every(item => mapAnchored(item, nodes, orientation))) {
                                                     return;
                                                 }
                                             }
@@ -916,7 +915,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             let marginDelete = false;
                                             let maxOffset = -1;
                                             const attrs = index === 0 ? ['left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'hasWidth', 'right', 'marginHorizontal']
-                                                                      : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
+                                                                        : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
                                             for (let i = 0; i < chainable.length; i++) {
                                                 const item = chainable[i];
                                                 if (i === 0) {
@@ -1018,11 +1017,11 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                     chain.constraint.vertical = true;
                                                 }
                                                 if (next) {
-                                                    chain.anchor(layoutMap[MAP_CHAIN['rightLeftBottomTop'][index]], next.stringId);
+                                                    chain.anchor(layoutMap[CHAIN_MAP['rightLeftBottomTop'][index]], next.stringId);
                                                     maxOffset = Math.max(next.linear[LT] - chain.linear[RB], maxOffset);
                                                 }
                                                 if (previous) {
-                                                    chain.anchor(layoutMap[MAP_CHAIN['leftRightTopBottom'][index]], previous.stringId);
+                                                    chain.anchor(layoutMap[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
                                                     chain.constraint[`margin${HV}`] = previous.stringId;
                                                 }
                                                 chain.constraint[`chain${HV}`] = true;
@@ -1169,10 +1168,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                     }
                                                     else if (maxOffset > this.settings[`constraintChainPacked${HV}Offset`]) {
                                                         if (mapParent(first, LT)) {
-                                                            mapDelete(first, MAP_CHAIN['rightLeftBottomTop'][index]);
+                                                            mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
                                                         }
                                                         if (mapParent(last, RB)) {
-                                                            mapDelete(last, MAP_CHAIN['leftRightTopBottom'][index]);
+                                                            mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
                                                         }
                                                     }
                                                 }
@@ -1224,8 +1223,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             });
                         }
                         for (const current of pageflow) {
-                            current.constraint.horizontal = anchoredSibling(current, nodes, AXIS_ANDROID.HORIZONTAL);
-                            current.constraint.vertical = anchoredSibling(current, nodes, AXIS_ANDROID.VERTICAL);
+                            current.constraint.horizontal = mapAnchored(current, nodes, AXIS_ANDROID.HORIZONTAL);
+                            current.constraint.vertical = mapAnchored(current, nodes, AXIS_ANDROID.VERTICAL);
                         }
                         if (flex.enabled) {
                             if (flex.wrap !== 'nowrap') {
@@ -1426,7 +1425,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     if (right) {
                                         if (!rightParent) {
                                             rightParent = false;
-                                            rightParent = anchoredSibling(current, nodes, AXIS_ANDROID.HORIZONTAL);
+                                            rightParent = mapAnchored(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                         }
                                     }
                                     else if (left) {
@@ -1446,7 +1445,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     if (bottom) {
                                         if (!bottomParent) {
                                             bottomParent = false;
-                                            bottomParent = anchoredSibling(current, nodes, AXIS_ANDROID.VERTICAL);
+                                            bottomParent = mapAnchored(current, nodes, AXIS_ANDROID.VERTICAL);
                                         }
                                     }
                                 }
@@ -1543,54 +1542,30 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                     }
                 }
-                for (const current of nodes) {
-                    if (current.constraint.marginHorizontal) {
-                        const previous = this.findByStringId(current.constraint.marginHorizontal);
-                        if (previous) {
-                            const offset = current.linear.left - previous.actualRight();
-                            if (offset >= 1) {
-                                current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, offset);
-                            }
-                        }
-                    }
-                    if (current.constraint.marginVertical) {
-                        const previous = this.findByStringId(current.constraint.marginVertical);
-                        if (previous) {
-                            let bottom = previous.linear.bottom;
-                            if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
-                                const elements = $dom.getElementsBetweenSiblings(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
-                                if (elements.length > 0) {
-                                    bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
-                                }
-                            }
-                            const offset = current.linear.top - bottom;
-                            if (offset >= 1) {
-                                current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset);
-                            }
+            }
+            for (const current of nodes) {
+                if (current.constraint.marginHorizontal) {
+                    const previous = this.findByStringId(current.constraint.marginHorizontal);
+                    if (previous) {
+                        const offset = current.linear.left - previous.actualRight();
+                        if (offset >= 1) {
+                            current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, offset);
                         }
                     }
                 }
-            }
-            else {
-                if (node.linearHorizontal) {
-                    const lineHeight: number = Math.max.apply(null, node.renderChildren.map(item => item.toInt('lineHeight')));
-                    if (lineHeight > 0) {
-                        let minHeight = Number.MAX_VALUE;
-                        let offsetTop = 0;
-                        const valid = node.renderChildren.every(item => {
-                            const offset = lineHeight - item.bounds.height;
-                            if (offset > 0) {
-                                minHeight = Math.min(offset, minHeight);
-                                if (lineHeight === item.toInt('lineHeight')) {
-                                    offsetTop = Math.max(item.toInt('top') < 0 ? Math.abs(item.toInt('top')) : 0, offsetTop);
-                                }
-                                return true;
+                if (current.constraint.marginVertical) {
+                    const previous = this.findByStringId(current.constraint.marginVertical);
+                    if (previous) {
+                        let bottom = previous.linear.bottom;
+                        if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
+                            const elements = $dom.getElementsBetweenSiblings(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
+                            if (elements.length > 0) {
+                                bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
                             }
-                            return false;
-                        });
-                        if (valid) {
-                            node.modifyBox($enum.BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
-                            node.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
+                        }
+                        const offset = current.linear.top - bottom;
+                        if (offset >= 1) {
+                            current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset);
                         }
                     }
                 }
@@ -1703,7 +1678,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             node.render(target ? node : parent);
         }
         node.apply(options);
-        return ViewController.getEnclosingTag(
+        return Controller.getEnclosingTag(
             target || $util.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth,
             nodeType,
             node.id,
@@ -1794,7 +1769,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 }
                                 node.parent = container;
                                 this.cache.append(container);
-                                return ViewController.getEnclosingTag(
+                                return Controller.getEnclosingTag(
                                     container.renderDepth,
                                     NODE_ANDROID.FRAME,
                                     container.id,
@@ -1807,7 +1782,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 node.android('baselineAlignBottom', 'true');
                             }
                         }
-                        const result = ResourceHandler.addImageSrcSet(element);
+                        const result = Resource.addImageSrcSet(element);
                         if (result !== '') {
                             node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                         }
@@ -1872,7 +1847,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 if (checked !== '') {
                                     group.android('checkedButton', checked);
                                 }
-                                return ViewController.getEnclosingTag(group.renderDepth, NODE_ANDROID.RADIO_GROUP, group.id, xml);
+                                return Controller.getEnclosingTag(group.renderDepth, NODE_ANDROID.RADIO_GROUP, group.id, xml);
                             }
                         }
                         break;
@@ -1895,7 +1870,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         break;
                     case 'image':
                         if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
-                            const result = ResourceHandler.addImage({ mdpi: element.src });
+                            const result = Resource.addImage({ mdpi: element.src });
                             if (result !== '') {
                                 node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                             }
@@ -1942,7 +1917,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         if (match) {
                             const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
                             if (color) {
-                                const colorValue = ResourceHandler.addColor(color);
+                                const colorValue = Resource.addColor(color);
                                 if (colorValue !== '') {
                                     node.android('shadowColor', `@color/${colorValue}`);
                                 }
@@ -1963,7 +1938,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 break;
         }
         node.render(target ? node : parent);
-        return ViewController.getEnclosingTag(
+        return Controller.getEnclosingTag(
             target || $util.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth,
             node.controlName,
             node.id
@@ -2000,7 +1975,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             node.android('layout_height', height, false);
         }
         node.renderDepth = renderDepth;
-        let output = ViewController.getEnclosingTag(
+        let output = Controller.getEnclosingTag(
             !node.documentRoot && depth === 0 ? -1 : depth,
             viewName,
             node.id,
@@ -2071,7 +2046,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     protected addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
-        const layoutMap = MAP_LAYOUT.constraint;
+        const layoutMap = LAYOUT_MAP.constraint;
         if (node.pageflow) {
             if (opposite === undefined) {
                 opposite = (
@@ -2179,7 +2154,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         node.anchor(layoutMap[LT], 'parent', value, true);
                     }
                     else {
-                        const options = createViewAttribute({
+                        const options = createAttribute({
                             android: {
                                 orientation: index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL
                             },

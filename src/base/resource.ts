@@ -1,17 +1,16 @@
+import { REGEX_PATTERN } from '../lib/constant';
 import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
-import { DOM_REGEX } from '../lib/constant';
-
+import Application from './application';
+import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 import Svg from './svg';
-import Application from './application';
-import File from './file';
 
-import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
-import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
-import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
+import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
+import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
+import { replaceEntity } from '../lib/xml';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
@@ -87,7 +86,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public imageAssets = new Map<string, ImageAsset>();
 
     protected constructor(public fileHandler: File<T>) {
-        this.fileHandler.stored = Resource.STORED;
+        fileHandler.stored = Resource.STORED;
     }
 
     public abstract finalize(viewData: ViewData<NodeList<T>>): void;
@@ -211,10 +210,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     if (match[1] === 'linear') {
                                         gradient = <LinearGradient> {
                                             type: 'linear',
-                                            x1: 0,
-                                            y1: 0,
-                                            x2: 0,
-                                            y2: 0,
                                             angle: (() => {
                                                 switch (match[2]) {
                                                     case 'to top':
@@ -243,9 +238,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     else {
                                         gradient = <RadialGradient> {
                                             type: 'radial',
-                                            cx: 0,
-                                            cy: 0,
-                                            r: 0,
                                             shapePosition: (() => {
                                                 const result = ['ellipse', 'center'];
                                                 if (match[2]) {
@@ -296,7 +288,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 }
                                 else {
                                     const images: string[] = [];
-                                    pattern = new RegExp(DOM_REGEX.CSS_URL, 'g');
+                                    pattern = new RegExp(REGEX_PATTERN.CSS_URL, 'g');
                                     match = null;
                                     while ((match = pattern.exec(value)) !== null) {
                                         if (match) {

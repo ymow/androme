@@ -1,17 +1,17 @@
-import VECTOR_TMPL from '../../template/resource/vector';
 import LAYERLIST_TMPL from '../../template/resource/layer-list';
+import VECTOR_TMPL from '../../template/resource/vector';
 
+import Resource from '../../resource';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 
 import { getXmlNs } from '../../lib/util';
 
 import $Svg = androme.lib.base.Svg;
 
 import $enum = androme.lib.enumeration;
+import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
-import $svg = androme.lib.svg;
 
 function setPivotXY(data: TemplateData, origin: BoxPosition | undefined) {
     if (origin) {
@@ -36,7 +36,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
 
     public afterResources() {
         for (const node of this.application.cacheProcessing) {
-            const stored: $Svg = node.data(ResourceHandler.KEY_NAME, 'imageSource');
+            const stored: $Svg = node.data(Resource.KEY_NAME, 'imageSource');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
                 let result = '';
                 let vectorName = '';
@@ -89,7 +89,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         if (item[value].charAt(0) === '@') {
                                             const gradient = stored.defs.gradient.get(item[value]);
                                             if (gradient) {
-                                                const gradients = ResourceHandler.createBackgroundGradient(node, [gradient], this.options.useColorAlias);
+                                                const gradients = Resource.createBackgroundGradient(node, [gradient], this.options.useColorAlias);
                                                 item[value] = [{ gradients }];
                                                 namespace.add('aapt');
                                                 return;
@@ -99,7 +99,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                             }
                                         }
                                         if (this.options.useColorAlias) {
-                                            const colorValue = ResourceHandler.addColor(item[value]);
+                                            const colorValue = Resource.addColor(item[value]);
                                             if (colorValue !== '') {
                                                 item[value] = `@color/${colorValue}`;
                                             }
@@ -132,10 +132,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         alpha: stored.opacity < 1 ? stored.opacity : false,
                         '1': groups
                     });
-                    vectorName = ResourceHandler.getStoredName('drawables', xml);
+                    vectorName = Resource.getStoredName('drawables', xml);
                     if (vectorName === '') {
                         vectorName = `${node.nodeName.toLowerCase()}_${node.nodeId + (stored.defs.image.length > 0 ? '_vector' : '')}`;
-                        ResourceHandler.STORED.drawables.set(vectorName, xml);
+                        Resource.STORED.drawables.set(vectorName, xml);
                     }
                 }
                 if (stored.defs.image.length > 0) {
@@ -168,7 +168,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 height: item.height ? $util.formatPX(item.height) : '',
                                 left: x !== 0 ? $util.formatPX(x) : '',
                                 top: y !== 0 ? $util.formatPX(y) : '',
-                                src: ResourceHandler.addImage({ mdpi: item.uri })
+                                src: Resource.addImage({ mdpi: item.uri })
                             };
                             if (transform && transform.rotateAngle !== 0) {
                                 data.fromDegrees = transform.rotateAngle.toString();
@@ -190,10 +190,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         '6': false,
                         '7': false
                     });
-                    result = ResourceHandler.getStoredName('drawables', xml);
+                    result = Resource.getStoredName('drawables', xml);
                     if (result === '') {
                         result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                        ResourceHandler.STORED.drawables.set(result, xml);
+                        Resource.STORED.drawables.set(result, xml);
                     }
                 }
                 else {

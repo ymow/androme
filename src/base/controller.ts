@@ -1,6 +1,6 @@
+import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
-import Application from './application';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
     public cache: NodeList<T>;

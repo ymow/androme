@@ -1,10 +1,10 @@
 import { CssGridData, CssGridCellData } from './types/data';
 
-import { BOX_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+import { BOX_STANDARD } from '../lib/enumeration';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 import { convertInt, convertPX, isNumber, isUnit, trimString } from '../lib/util';
 
@@ -213,7 +213,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     placement[2] = placement[0] + 1;
                 }
                 if (placement[1] === 0) {
-                    let startIndex: ArrayObject<Set<number>> = [];
+                    let startIndex: Array<Set<number>> = [];
                     const minSpan = placement[3] || 1;
                     for (let i = placement[0] - 1; i < placement[2] - 1; i++) {
                         if (mainData.rows[i] === undefined) {

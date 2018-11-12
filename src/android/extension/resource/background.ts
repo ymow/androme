@@ -2,20 +2,20 @@ import { BackgroundImage, BackgroundGradient, SettingsAndroid } from '../../type
 
 import { EXT_ANDROID } from '../../lib/constant';
 
+import LAYERLIST_TMPL from '../../template/resource/layer-list';
 import SHAPE_TMPL from '../../template/resource/shape';
 import VECTOR_TMPL from '../../template/resource/vector';
-import LAYERLIST_TMPL from '../../template/resource/layer-list';
 
+import Resource from '../../resource';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 
 import { getXmlNs } from '../../lib/util';
 
+import $color = androme.lib.color;
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
-import $color = androme.lib.color;
 
 function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
     const result = {
@@ -39,7 +39,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
         if (color) {
             const reduced = $color.reduceRGBA(color.valueRGBA, groove || color.valueRGB === '#000000' ? 0.5 : -0.5);
             if (reduced) {
-                const colorValue = ResourceHandler.addColor(reduced);
+                const colorValue = Resource.addColor(reduced);
                 if (colorValue !== '') {
                     const colorName = `android:color="@color/${colorValue}"`;
                     if (direction === 0 || direction === 2) {
@@ -90,7 +90,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
 function getShapeAttribute(boxStyle: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
     switch (name) {
         case 'stroke':
-            if (boxStyle.border && ResourceHandler.isBorderVisible(boxStyle.border)) {
+            if (boxStyle.border && Resource.isBorderVisible(boxStyle.border)) {
                 if (!hasInset || isInset) {
                     return [{
                         width: boxStyle.border.width,
@@ -172,7 +172,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
         const settings = <SettingsAndroid> application.settings;
         const useColorAlias = application.getExtensionOptionsValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
         application.cacheProcessing.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
-            const stored: BoxStyle = node.data(ResourceHandler.KEY_NAME, 'boxStyle');
+            const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
                 function checkPartialBackgroundPosition(current: string, adjacent: string, defaultPosition: string) {
                     if (current.indexOf(' ') === -1 && adjacent.indexOf(' ') !== -1) {
@@ -185,7 +185,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                     return current;
                 }
-                stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
+                stored.backgroundColor = Resource.addColor(stored.backgroundColor);
                 const backgroundImage: string[] = [];
                 const backgroundVector: StringMap[] = [];
                 const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
@@ -200,7 +200,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         for (let i = 0; i < backgroundImage.length; i++) {
                             if (backgroundImage[i] && backgroundImage[i] !== 'none') {
                                 backgroundDimensions.push(application.resourceHandler.imageAssets.get($dom.cssResolveUrl(backgroundImage[i])));
-                                backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                                backgroundImage[i] = Resource.addImageUrl(backgroundImage[i]);
                                 const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
                                 const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
                                 const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
@@ -216,21 +216,21 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    backgroundGradient.push(...ResourceHandler.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true));
+                    backgroundGradient.push(...Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true));
                 }
                 const companion = node.companion;
                 if (companion && !companion.visible && companion.htmlElement && !$dom.cssFromParent(companion.element, 'backgroundColor')) {
-                    const boxStyle: BoxStyle = companion.data(ResourceHandler.KEY_NAME, 'boxStyle');
-                    const backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor);
+                    const boxStyle: BoxStyle = companion.data(Resource.KEY_NAME, 'boxStyle');
+                    const backgroundColor = Resource.addColor(boxStyle.backgroundColor);
                     if (backgroundColor !== '') {
                         stored.backgroundColor = backgroundColor;
                     }
                 }
                 const hasBorder = (
-                    ResourceHandler.isBorderVisible(stored.borderTop) ||
-                    ResourceHandler.isBorderVisible(stored.borderRight) ||
-                    ResourceHandler.isBorderVisible(stored.borderBottom) ||
-                    ResourceHandler.isBorderVisible(stored.borderLeft) ||
+                    Resource.isBorderVisible(stored.borderTop) ||
+                    Resource.isBorderVisible(stored.borderRight) ||
+                    Resource.isBorderVisible(stored.borderBottom) ||
+                    Resource.isBorderVisible(stored.borderLeft) ||
                     stored.borderRadius
                 );
                 const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
@@ -243,8 +243,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     ];
                     const borderVisible: BorderAttribute[] = [];
                     borders.forEach(item => {
-                        if (ResourceHandler.isBorderVisible(item)) {
-                            item.color = ResourceHandler.addColor(item.color);
+                        if (Resource.isBorderVisible(item)) {
+                            item.color = Resource.addColor(item.color);
                             borderVisible.push(item);
                         }
                     });
@@ -471,10 +471,10 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }]
                             }]
                         });
-                        let vector = ResourceHandler.getStoredName('drawables', xml);
+                        let vector = Resource.getStoredName('drawables', xml);
                         if (vector === '') {
                             vector = `${node.nodeName.toLowerCase()}_${node.nodeId}_gradient`;
-                            ResourceHandler.STORED.drawables.set(vector, xml);
+                            Resource.STORED.drawables.set(vector, xml);
                         }
                         backgroundVector.push({ vector });
                     }
@@ -501,7 +501,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 '4': false,
                                 '5': images5.length > 0 ? images5 : false,
                                 '6': images6.length > 0 ? images6 : false,
-                                '7': ResourceHandler.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
+                                '7': Resource.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
                             };
                         }
                     }
@@ -524,22 +524,22 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             if (width > 2 && borderData.style === 'double') {
                                 insertDoubleBorder.apply(null, [
                                     borderData,
-                                    ResourceHandler.isBorderVisible(stored.borderTop),
-                                    ResourceHandler.isBorderVisible(stored.borderRight),
-                                    ResourceHandler.isBorderVisible(stored.borderBottom),
-                                    ResourceHandler.isBorderVisible(stored.borderLeft),
+                                    Resource.isBorderVisible(stored.borderTop),
+                                    Resource.isBorderVisible(stored.borderRight),
+                                    Resource.isBorderVisible(stored.borderBottom),
+                                    Resource.isBorderVisible(stored.borderLeft),
                                     data,
                                     borderRadius
                                 ]);
                             }
                             else {
                                 const hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
-                                const topVisible = ResourceHandler.isBorderVisible(stored.borderTop);
+                                const topVisible = Resource.isBorderVisible(stored.borderTop);
                                 data['7'].push({
                                     top: topVisible ? '' : hideWidth,
-                                    right: ResourceHandler.isBorderVisible(stored.borderRight) ? '' : hideWidth,
-                                    bottom: ResourceHandler.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
-                                    left: ResourceHandler.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
+                                    right: Resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
+                                    bottom: Resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
+                                    left: Resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
                                     'stroke': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
                                     'corners': borderRadius
                                 });
@@ -549,7 +549,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             let topVisible = false;
                             for (let i = 0; i < borders.length; i++) {
                                 const border = borders[i];
-                                if (ResourceHandler.isBorderVisible(border)) {
+                                if (Resource.isBorderVisible(border)) {
                                     if (i === 0) {
                                         topVisible = true;
                                     }
@@ -595,10 +595,10 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                     if (template) {
                         const xml = $xml.createTemplate(template, data);
-                        resourceName = ResourceHandler.getStoredName('drawables', xml);
+                        resourceName = Resource.getStoredName('drawables', xml);
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                            ResourceHandler.STORED.drawables.set(resourceName, xml);
+                            Resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
                     node.android('background', `@drawable/${resourceName}`, node.renderExtension.size === 0);
@@ -654,7 +654,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         }
                     }
                 }
-                else if (!node.data(ResourceHandler.KEY_NAME, 'fontStyle') && $util.isString(stored.backgroundColor)) {
+                else if (!node.data(Resource.KEY_NAME, 'fontStyle') && $util.isString(stored.backgroundColor)) {
                     node.android('background', `@color/${stored.backgroundColor}`, node.renderExtension.size === 0);
                 }
             }

@@ -1,8 +1,8 @@
-import { NODE_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+import { NODE_STANDARD } from '../lib/enumeration';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 import { getDataSet } from '../lib/dom';
 

@@ -1,11 +1,11 @@
 import Container from './container';
 import SvgGroup from './svggroup';
-import SvgPath from './svgpath';
 import SvgImage from './svgimage';
+import SvgPath from './svgpath';
 
-import { resolvePath } from '../lib/util';
 import { cssAttribute } from '../lib/dom';
 import { createColorStop } from '../lib/svg';
+import { resolvePath } from '../lib/util';
 
 export default class Svg extends Container<SvgGroup> implements androme.lib.base.Svg {
     public static createClipPath(element: SVGClipPathElement) {

@@ -2,12 +2,12 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 
+import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
-import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
@@ -24,12 +24,12 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const options = $android_util.createViewAttribute(this.options[node.element.id]);
+        const options = $android_util.createAttribute(this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.BOTTOM_NAVIGATION,
             node.depth,
-            $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
             'wrap_content',
             node
@@ -57,7 +57,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         }
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
-            const options = $android_util.createViewAttribute(this.options[node.element.id]);
+            const options = $android_util.createAttribute(this.options[node.element.id]);
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', options.app.menu);
         }

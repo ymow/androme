@@ -1,4 +1,4 @@
-import { BackgroundGradient, SettingsAndroid } from './module';
+import { BackgroundGradient } from './module';
 
 declare global {
     namespace android.lib.base {
@@ -13,7 +13,7 @@ declare global {
             public static addString(value: string, name?: string, useNumberAlias?: boolean): string;
             public static addImageSrcSet(element: HTMLImageElement, prefix?: string): string;
             public static addImage(images: StringMap, prefix?: string): string;
-            public static addImageURL(value: string, prefix?: string): string;
+            public static addImageUrl(value: string, prefix?: string): string;
             public static addColor(value: ColorHexAlpha | string | null): string;
         }
     }

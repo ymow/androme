@@ -2,13 +2,13 @@ import WIDGET_NAME from '../namespace';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 
+import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
-import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
@@ -41,23 +41,23 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const options = $android_util.createViewAttribute(this.options.self);
+        const options = $android_util.createAttribute(this.options.self);
         if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.setStyleTheme();
         }
         else {
-            const optionsNavigationView = $android_util.createViewAttribute(this.options.navigationView);
+            const optionsNavigationView = $android_util.createAttribute(this.options.navigationView);
             $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
             const navView = node.item() as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
-            navView.auto = false;
+            navView.positioned = true;
         }
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.DRAWER,
             node.depth,
-            $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'match_parent',
             'match_parent',
             node,
@@ -72,7 +72,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
 
     public postRenderDocument(node: T) {
         const application = this.application;
-        const options = $android_util.createViewAttribute(this.options.navigation);
+        const options = $android_util.createAttribute(this.options.navigation);
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         const headerLayout = $util.optionalAsString($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         if (menu !== '') {
@@ -88,7 +88,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             const output = application.viewController.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,
-                $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+                $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
                 'wrap_content',
                 'match_parent'
             );

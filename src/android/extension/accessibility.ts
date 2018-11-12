@@ -2,9 +2,9 @@ import { NODE_ANDROID } from '../lib/constant';
 
 import View from '../view';
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.extensions.Accessibility<T> {
     public readonly eventOnly = true;

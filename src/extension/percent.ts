@@ -1,7 +1,7 @@
 import { CSS_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 export default abstract class Percent<T extends Node> extends Extension<T> {
     public condition(node: T, parent: T) {

@@ -1,14 +1,14 @@
+import { REGEX_PATTERN } from '../lib/constant';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
-import { DOM_REGEX } from '../lib/constant';
 
+import Controller from './controller';
+import Extension from './extension';
 import Node from './node';
 import NodeList from './nodelist';
-import Controller from './controller';
 import Resource from './resource';
-import Extension from './extension';
 
-import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(element: HTMLElement, extensions: Extension<T>[]) {
@@ -92,7 +92,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public viewController: Controller<T>;
     public resourceHandler: Resource<T>;
-    public nodeObject: NodeConstructor<T>;
+    public nodeObject: Constructor<T>;
     public builtInExtensions: ObjectMap<Extension<T>>;
     public renderQueue: ObjectMap<string[]> = {};
     public loading = false;
@@ -681,7 +681,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 const target = document.getElementById(node.dataset.target);
                                 if (target && target !== parent.element) {
                                     this.addRenderQueue(node.dataset.target, [output]);
-                                    node.auto = false;
+                                    node.positioned = true;
                                     return;
                                 }
                             }
@@ -1004,7 +1004,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         let output = '';
                         if (nodeY.controlName === '') {
                             const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                            const backgroundImage = DOM_REGEX.CSS_URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.CSS_URL.test(nodeY.css('background'));
+                            const backgroundImage = REGEX_PATTERN.CSS_URL.test(nodeY.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(nodeY.css('background'));
                             const backgroundColor = nodeY.has('backgroundColor');
                             const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
                             if (nodeY.length === 0) {
@@ -1279,7 +1279,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
-        type LayerIndex = ArrayObject<T[] | T[][]>;
+        type LayerIndex = Array<T[] | T[][]>;
         let output = '';
         let layers: LayerIndex = [];
         if (cleared.size === 0 && nodes.every(node => !node.autoMargin)) {

@@ -1,11 +1,11 @@
 import WIDGET_NAME from '../namespace';
 
+import $color = androme.lib.color;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $color = androme.lib.color;
 
+import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
-import $android_Resource = android.lib.base.Resource;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
@@ -22,11 +22,11 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const target = $util.hasValue(node.dataset.target);
         const element = node.element;
-        const options = $android_util.createViewAttribute(this.options[element.id]);
+        const options = $android_util.createAttribute(this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
         let colorValue = '';
         if (backgroundColor) {
-            colorValue = $android_Resource.addColor(backgroundColor);
+            colorValue = $Resource.addColor(backgroundColor);
         }
         $util.overwriteDefault(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -35,18 +35,18 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = $android_Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.DIALOG);
+                src = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = $android_Resource.addImage({ mdpi: (<HTMLInputElement> element).src }, $android_const.DRAWABLE_PREFIX.DIALOG);
+                    src = $Resource.addImage({ mdpi: (<HTMLInputElement> element).src }, $android_const.DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = $android_Resource.addImageURL(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
+                    src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = $android_Resource.addImageURL(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
+                src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {
@@ -55,7 +55,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
-            $android_Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'wrap_content',
             'wrap_content',
             node
@@ -122,7 +122,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             else {
                 node.render(parent);
             }
-            node.auto = false;
+            node.positioned = true;
         }
         else {
             node.render(parent);

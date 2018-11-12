@@ -17,37 +17,6 @@ interface ImageAsset extends Asset {
     position?: Point;
 }
 
-interface Gradient {
-    type: string;
-    colorStop: ColorStop[];
-}
-
-interface LinearGradient extends Gradient {
-    angle?: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    x1AsString?: string;
-    y1AsString?: string;
-    x2AsString?: string;
-    y2AsString?: string;
-}
-
-interface RadialGradient extends Gradient {
-    shapePosition?: string[];
-    cx: number;
-    cy: number;
-    r: number;
-    cxAsString?: string;
-    cyAsString?: string;
-    rAsString?: string;
-    fx?: number;
-    fy?: number;
-    fxAsString?: string;
-    fyAsString?: string;
-}
-
 interface BoxRect {
     top: number;
     right: number;
@@ -169,4 +138,17 @@ interface ResourceMap {
     dimens: Map<string, string>;
     drawables: Map<string, string>;
     images: Map<string, StringMap>;
+}
+
+interface Gradient {
+    type: string;
+    colorStop: ColorStop[];
+}
+
+interface LinearGradient extends Gradient {
+    angle?: number;
+}
+
+interface RadialGradient extends Gradient {
+    shapePosition?: string[];
 }

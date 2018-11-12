@@ -1,5 +1,5 @@
+import { REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
-import { DOM_REGEX } from './constant';
 
 import { capitalize, convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
@@ -161,7 +161,7 @@ export function getBoxSpacing(element: Element, complete = false, merge = false)
 }
 
 export function cssResolveUrl(value: string) {
-    const match = value.match(DOM_REGEX.CSS_URL);
+    const match = value.match(REGEX_PATTERN.CSS_URL);
     if (match) {
         return resolvePath(match[1]);
     }

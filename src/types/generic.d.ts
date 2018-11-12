@@ -11,25 +11,16 @@ type FunctionType<T> = (...args: any[]) => T;
 type FunctionVoid = FunctionType<void>;
 type FunctionMap<T> = ObjectMap<FunctionType<T>>;
 
-interface StringMap {
-    [key: string]: string;
-}
-
 interface ObjectMap<T> {
     [key: string]: T;
-}
-
-interface ObjectMapNested<T> {
-    [key: string]: ObjectMap<T>;
 }
 
 interface ObjectIndex<T> {
     [key: number]: T;
 }
 
-interface ArrayObject<T> extends Array<T> {
-    [key: number]: T;
-}
+type StringMap = ObjectMap<string>;
+type ObjectMapNested<T> = ObjectMap<ObjectMap<T>>;
 
 interface NameValue {
     name: string;

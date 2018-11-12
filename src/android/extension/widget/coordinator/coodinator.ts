@@ -1,7 +1,7 @@
 import WIDGET_NAME from '../namespace';
 
-import $enum = androme.lib.enumeration;
 import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
 
 import $View = android.lib.base.View;
 

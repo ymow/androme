@@ -1,7 +1,7 @@
 import { EnvironmentSettings, SettingsAndroid, ViewAttribute } from './module';
 
-import * as $enum from '../lib/enumeration';
 import * as $const from '../lib/constant';
+import * as $enum from '../lib/enumeration';
 
 declare global {
     namespace android {
@@ -27,7 +27,7 @@ declare global {
                 export function resetId(): void;
                 export function generateId(section: string, name: string, start: number): string;
                 export function stripId(value: string): string;
-                export function createViewAttribute(options?: ExternalData): ViewAttribute;
+                export function createAttribute(options?: ExternalData): ViewAttribute;
                 export function convertUnit(value: any, dpi?: number, font?: boolean): string;
                 export function replaceUnit(value: string, settings?: SettingsAndroid, font?: boolean): string;
                 export function replaceTab(value: string, settings: Settings, preserve?: boolean): string;

@@ -2,10 +2,10 @@ import { GridCellData, GridData } from '../../extension/types/data';
 
 import View from '../view';
 
-import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
-import $util = androme.lib.util;
 import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Grid<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {

@@ -1,26 +1,74 @@
-import * as $enum from '../lib/enumeration';
 import * as $const from '../lib/constant';
+import * as $enum from '../lib/enumeration';
 
 declare global {
     namespace androme.lib {
-        namespace enumeration {
-            export import USER_AGENT = $enum.USER_AGENT;
-            export import APP_FRAMEWORK = $enum.APP_FRAMEWORK;
-            export import APP_SECTION = $enum.APP_SECTION;
-            export import NODE_ALIGNMENT = $enum.NODE_ALIGNMENT;
-            export import NODE_RESOURCE = $enum.NODE_RESOURCE;
-            export import NODE_PROCEDURE = $enum.NODE_PROCEDURE;
-            export import NODE_STANDARD = $enum.NODE_STANDARD;
-            export import BOX_STANDARD = $enum.BOX_STANDARD;
-            export import CSS_STANDARD = $enum.CSS_STANDARD;
+        namespace constant {
+            export import ELEMENT_MAP = $const.ELEMENT_MAP;
+            export import ELEMENT_BLOCK = $const.ELEMENT_BLOCK;
+            export import ELEMENT_INLINE = $const.ELEMENT_INLINE;
+            export import EXT_NAME = $const.EXT_NAME;
+            export import REGEX_PATTERN = $const.REGEX_PATTERN;
         }
 
-        namespace constant {
-            export import MAP_ELEMENT = $const.MAP_ELEMENT;
-            export import BLOCK_ELEMENT = $const.BLOCK_ELEMENT;
-            export import INLINE_ELEMENT = $const.INLINE_ELEMENT;
-            export import EXT_NAME = $const.EXT_NAME;
-            export import DOM_REGEX = $const.DOM_REGEX;
+        namespace enumeration {
+            export import APP_FRAMEWORK = $enum.APP_FRAMEWORK;
+            export import APP_SECTION = $enum.APP_SECTION;
+            export import BOX_STANDARD = $enum.BOX_STANDARD;
+            export import CSS_STANDARD = $enum.CSS_STANDARD;
+            export import NODE_ALIGNMENT = $enum.NODE_ALIGNMENT;
+            export import NODE_PROCEDURE = $enum.NODE_PROCEDURE;
+            export import NODE_RESOURCE = $enum.NODE_RESOURCE;
+            export import NODE_STANDARD = $enum.NODE_STANDARD;
+            export import USER_AGENT = $enum.USER_AGENT;
+        }
+
+        namespace color {
+            export function convertHex(value: string, opacity?: number): string;
+            export function getColorByName(value: string): Color | null;
+            export function getColorByShade(value: string): Color | null;
+            export function convertRGBA(value: string): RGBA | null;
+            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
+            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | null;
+        }
+
+        namespace dom {
+            export function isUserAgent(value: number): boolean;
+            export function getDataSet(element: HTMLElement, prefix: string): StringMap;
+            export function newBoxRect(): BoxRect;
+            export function newClientRect(): BoxDimensions;
+            export function newBoxModel(): BoxModel;
+            export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
+            export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
+            export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
+            export function getStyle(element: Element | null, cache?: boolean): CSSStyleDeclaration;
+            export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
+            export function cssResolveUrl(value: string): string;
+            export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
+            export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
+            export function cssFromParent(element: Element, attr: string): boolean;
+            export function cssAttribute(element: Element, attr: string): string;
+            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective?: boolean, percent?: boolean): BoxPosition;
+            export function getFirstElementChild(elements: Element[]): Element | null;
+            export function getLastElementChild(elements: Element[]): Element | null;
+            export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
+            export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
+            export function hasLineBreak(element: Element): boolean;
+            export function isLineBreak(element: Element, excluded?: boolean): boolean;
+            export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
+            export function isStyleElement(element: Element): element is HTMLElement;
+            export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
+            export function getNestedExtension(element: Element, name: string): HTMLElement | null;
+            export function setElementCache(element: Element, attr: string, data: any): void;
+            export function getElementCache(element: Element, attr: string): any;
+            export function deleteElementCache(element: Element, ...attrs: string[]): void;
+            export function getNodeFromElement<T>(element: UndefNull<Element>): T | null;
+        }
+
+        namespace svg {
+            export function createColorStop(element: SVGGradientElement): ColorStop[];
+            export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
+            export function isSvgVisible(element: SVGGraphicsElement): boolean;
         }
 
         namespace util {
@@ -68,39 +116,6 @@ declare global {
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];
         }
 
-        namespace dom {
-            export function isUserAgent(value: number): boolean;
-            export function getDataSet(element: HTMLElement, prefix: string): StringMap;
-            export function newBoxRect(): BoxRect;
-            export function newClientRect(): BoxDimensions;
-            export function newBoxModel(): BoxModel;
-            export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
-            export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
-            export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
-            export function getStyle(element: Element | null, cache?: boolean): CSSStyleDeclaration;
-            export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
-            export function cssResolveUrl(value: string): string;
-            export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
-            export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
-            export function cssFromParent(element: Element, attr: string): boolean;
-            export function cssAttribute(element: Element, attr: string): string;
-            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective?: boolean, percent?: boolean): BoxPosition;
-            export function getFirstElementChild(elements: Element[]): Element | null;
-            export function getLastElementChild(elements: Element[]): Element | null;
-            export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
-            export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
-            export function hasLineBreak(element: Element): boolean;
-            export function isLineBreak(element: Element, excluded?: boolean): boolean;
-            export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
-            export function isStyleElement(element: Element): element is HTMLElement;
-            export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
-            export function getNestedExtension(element: Element, name: string): HTMLElement | null;
-            export function setElementCache(element: Element, attr: string, data: any): void;
-            export function getElementCache(element: Element, attr: string): any;
-            export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: UndefNull<Element>): T | null;
-        }
-
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;
             export function replacePlaceholder(value: string, id: string | number, content: string, before?: boolean): string;
@@ -112,21 +127,6 @@ declare global {
             export function parseTemplate(value: string): StringMap;
             export function createTemplate(value: StringMap, data: TemplateData, index?: string): string;
             export function getTemplateSection(data: TemplateData, ...levels: string[]): object;
-        }
-
-        namespace svg {
-            export function createColorStop(element: SVGGradientElement): ColorStop[];
-            export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
-            export function isSvgVisible(element: SVGGraphicsElement): boolean;
-        }
-
-        namespace color {
-            export function convertHex(value: string, opacity?: number): string;
-            export function getColorByName(value: string): Color | null;
-            export function getColorByShade(value: string): Color | null;
-            export function convertRGBA(value: string): RGBA | null;
-            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
-            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | null;
         }
     }
 }

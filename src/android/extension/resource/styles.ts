@@ -1,5 +1,5 @@
+import Resource from '../../resource';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 
 import $util = androme.lib.util;
 
@@ -9,7 +9,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
     public afterProcedure() {
         const styles: ObjectMap<string[]> = {};
         for (const node of this.application.cacheSession.visible) {
-            const children = node.renderChildren.filter(item => item.visible && item.auto);
+            const children = node.renderChildren.filter(item => item.visible && !item.positioned);
             if (children.length > 1) {
                 const attrMap = new Map<string, number>();
                 let style = '';
@@ -78,7 +78,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
             }
         }
         for (const name in styles) {
-            ResourceHandler.STORED.styles.set(name, {
+            Resource.STORED.styles.set(name, {
                 name,
                 attrs: styles[name].join(';'),
                 ids: []

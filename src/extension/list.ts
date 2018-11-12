@@ -1,11 +1,11 @@
 import { ListData } from './types/data';
 
-import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 
+import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import Extension from '../base/extension';
 
 import { convertAlpha, convertRoman } from '../lib/util';
 

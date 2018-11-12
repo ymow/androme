@@ -1,12 +1,11 @@
 import { ViewAttribute } from '../../../types/module';
 
-import $View = android.lib.base.View;
-
-import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
 
-import $android_Resource = android.lib.base.Resource;
+import $Resource = android.lib.base.Resource;
+import $View = android.lib.base.View;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
@@ -133,7 +132,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
             return { output: '', next: true };
         }
         const element = <HTMLElement> node.element;
-        const options = $android_util.createViewAttribute();
+        const options = $android_util.createAttribute();
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let next = false;
@@ -193,14 +192,14 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
                     const style = $dom.getStyle(element);
-                    let src = $android_Resource.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.DRAWABLE_PREFIX.MENU);
+                    let src = $Resource.addImageUrl((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options['android'].icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.find(item => item.imageElement);
                         if (image) {
-                            src = $android_Resource.addImageSrcSet(<HTMLImageElement> image.element, $android_const.DRAWABLE_PREFIX.MENU);
+                            src = $Resource.addImageSrcSet(<HTMLImageElement> image.element, $android_const.DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options['android'].icon = `@drawable/${src}`;
                             }
@@ -214,7 +213,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         }
         if (node.android('title') === '') {
             if (title !== '') {
-                const name = $android_Resource.addString(title, '', this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+                const name = $Resource.addString(title, '', this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
                 if (name !== '') {
                     title = `@string/${name}`;
                 }

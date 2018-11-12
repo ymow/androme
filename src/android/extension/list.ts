@@ -2,15 +2,15 @@ import { ListData } from '../../extension/types/data';
 
 import { BOX_ANDROID, NODE_ANDROID } from '../lib/constant';
 
+import Resource from '../resource';
 import View from '../view';
-import ResourceHandler from '../resourcehandler';
 
-import { createViewAttribute } from '../lib/util';
+import { createAttribute } from '../lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
-import $util = androme.lib.util;
 import $dom = androme.lib.dom;
+import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.List<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {
@@ -66,7 +66,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
                     left = boxPosition.left;
                     top = boxPosition.top;
-                    image = ResourceHandler.addImageURL(mainData.imageSrc);
+                    image = Resource.addImageUrl(mainData.imageSrc);
                 }
                 const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
                 if (gravity === '') {
@@ -90,7 +90,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     }
                 })();
                 const layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
-                const options = createViewAttribute({
+                const options = createAttribute({
                     android: {
                         layout_columnWeight: columnWeight
                     }

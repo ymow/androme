@@ -1,5 +1,5 @@
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 

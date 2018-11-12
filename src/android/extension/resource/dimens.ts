@@ -1,7 +1,7 @@
 import { generateId } from '../../lib/util';
 
+import Resource from '../../resource';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 
 import $util = androme.lib.util;
 
@@ -41,7 +41,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
                 }
             });
         }
-        const dimens = ResourceHandler.STORED.dimens;
+        const dimens = Resource.STORED.dimens;
         for (const nodeName in groups) {
             const group = groups[nodeName];
             for (const name in group) {
@@ -54,7 +54,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
     }
 
     public afterFinalize() {
-        const dimens = ResourceHandler.STORED.dimens;
+        const dimens = Resource.STORED.dimens;
         const layouts = this.application.layouts;
         for (const value of layouts) {
             let content = value.content;

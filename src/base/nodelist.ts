@@ -1,10 +1,10 @@
 import { NODE_ALIGNMENT, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
-import Node from './node';
 import Container from './container';
+import Node from './node';
 
-import { convertInt, hasBit, partition } from '../lib/util';
 import { isUserAgent } from '../lib/dom';
+import { convertInt, hasBit, partition } from '../lib/util';
 
 function getDocumentParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {

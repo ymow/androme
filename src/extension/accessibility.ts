@@ -1,7 +1,7 @@
 import { NODE_PROCEDURE } from '../lib/enumeration';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 import { hasValue } from '../lib/util';
 

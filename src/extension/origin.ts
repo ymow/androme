@@ -1,7 +1,7 @@
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
-import Node from '../base/node';
 import Extension from '../base/extension';
+import Node from '../base/node';
 
 import { convertInt, formatPX, partition } from '../lib/util';
 

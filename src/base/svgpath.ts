@@ -1,7 +1,7 @@
-import { convertInt, isString } from '../lib/util';
+import { parseRGBA } from '../lib/color';
 import { cssAttribute, cssInherit } from '../lib/dom';
 import { isSvgVisible } from '../lib/svg';
-import { parseRGBA } from '../lib/color';
+import { convertInt, isString } from '../lib/util';
 
 export default class SvgPath implements androme.lib.base.SvgPath {
     public name: string;
@@ -22,7 +22,10 @@ export default class SvgPath implements androme.lib.base.SvgPath {
 
     private _element: SVGGraphicsElement | undefined;
 
-    constructor(element: SVGGraphicsElement, d?: string) {
+    constructor(
+        element: SVGGraphicsElement,
+        d?: string)
+    {
         if (element) {
             this.setElement(element);
             this.build();
