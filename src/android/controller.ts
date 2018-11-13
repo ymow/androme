@@ -173,7 +173,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             if (nodes.length === 0) {
                 continue;
             }
-            if (node.is($enum.NODE_STANDARD.RELATIVE)) {
+            if (node.layoutRelative) {
                 function checkSingleLine(item: T, nowrap = false, flexParent = false) {
                     if (item && item.textElement && (nowrap || flexParent || (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
                         item.android('singleLine', 'true');
@@ -205,7 +205,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 }
                             }
                             if (images.length > 0) {
-                                images.sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
+                                images.sort((a, b) => a.bounds.height <= b.bounds.height ? 1 : -1);
                                 for (let i = 0; i < images.length; i++) {
                                     if (i === 0) {
                                         alignWith.android(layoutMap['bottom'], images[i].stringId);
@@ -421,12 +421,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
             }
             else {
-                constraint = node.is($enum.NODE_STANDARD.CONSTRAINT);
+                constraint = node.layoutConstraint;
                 if (constraint) {
                     layoutMap = LAYOUT_MAP.constraint;
                     if (node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL)) {
                         function boundsHeight(a: T, b: T) {
-                            return a.bounds.height >= b.bounds.height ? -1 : 1;
+                            return a.bounds.height <= b.bounds.height ? 1 : -1;
                         }
                         const optimal = $NodeList.textBaseline(nodes)[0];
                         const baseline = nodes.filter(item => item.textElement && item.baseline).sort(boundsHeight);
@@ -469,7 +469,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     return false;
                                 });
                                 if (!alignWith) {
-                                    nodes.slice().sort((a, b) => a.nodeType <= b.nodeType ? -1 : 1).some(item => {
+                                    nodes.slice().sort((a, b) => a.nodeType >= b.nodeType ? 1 : -1).some(item => {
                                         if (item !== current) {
                                             alignWith = item;
                                             return true;
@@ -676,10 +676,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     }
                                 }
                             }
+                            let adjustPadding = false;
                             for (const current of absolute) {
                                 let alignMarginLeft = false;
                                 if (current.right !== null && current.toInt('right') >= 0) {
                                     current.anchor(layoutMap['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                    adjustPadding = true;
                                     if (current.toInt('left') > 0) {
                                         current.anchor(layoutMap['left'], 'parent');
                                         current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, current.toInt('left'));
@@ -688,6 +690,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 }
                                 if (!alignMarginLeft && current.left !== null && current.toInt('left') === 0) {
                                     current.anchor(layoutMap['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                    adjustPadding = true;
                                     if (current.toInt('right') > 0) {
                                         current.anchor(layoutMap['right'], 'parent');
                                         current.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
@@ -695,9 +698,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 }
                                 if (current.top !== null && current.toInt('top') === 0) {
                                     current.anchor(layoutMap['top'], 'parent', AXIS_ANDROID.VERTICAL);
+                                    adjustPadding = true;
                                 }
                                 if (current.bottom !== null && current.toInt('bottom') >= 0) {
                                     current.anchor(layoutMap['bottom'], 'parent', AXIS_ANDROID.VERTICAL);
+                                    adjustPadding = true;
                                 }
                                 if (current.left === 0 && current.right === 0 && !current.floating && !current.has('width', $enum.CSS_STANDARD.PERCENT)) {
                                     current.android('layout_width', 'match_parent');
@@ -705,6 +710,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 if (current.top === 0 && current.bottom === 0) {
                                     current.android('layout_height', 'match_parent');
                                 }
+                            }
+                            if (adjustPadding && pageflow.length <= 1) {
+                                node.resetBox($enum.BOX_STANDARD.PADDING, pageflow[0]);
                             }
                         }
                         if (flex.enabled || columnCount > 0 || (!this.settings.constraintChainDisabled && pageflow.length > 1)) {
@@ -857,29 +865,32 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 const horizontalChain = pageflow.filter(current => !current.constraint.horizontal);
                                 const verticalChain = pageflow.filter(current => !current.constraint.vertical);
                                 const available = new Set<string>();
-                                function availableChain(list: T[]) {
+                                function chainAvailable(list: T[]) {
                                     const id = list.map(item => item.id).sort().join('-');
                                     return !available.has(id) && !!available.add(id);
+                                }
+                                function chainLength(a, b) {
+                                    return a.length <= b.length ? 1 : -1;
                                 }
                                 pageflow.some(current => {
                                     const horizontalOutput: T[] = [];
                                     const verticalOutput: T[] = [];
                                     if (horizontalChain.includes(current)) {
                                         horizontalOutput.push(...partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
-                                        if (horizontalOutput.length > 1 && availableChain(horizontalOutput)) {
+                                        if (horizontalOutput.length > 1 && chainAvailable(horizontalOutput)) {
                                             horizontal.push($util.sortAsc(horizontalOutput, 'linear.left'));
                                         }
                                     }
                                     if (verticalChain.includes(current) && !percentage) {
                                         verticalOutput.push(...partitionChain(current, pageflow, AXIS_ANDROID.VERTICAL, true));
-                                        if (verticalOutput.length > 1 && availableChain(verticalOutput)) {
+                                        if (verticalOutput.length > 1 && chainAvailable(verticalOutput)) {
                                             vertical.push($util.sortAsc(verticalOutput, 'linear.top'));
                                         }
                                     }
                                     return horizontalOutput.length === pageflow.length || verticalOutput.length === pageflow.length;
                                 });
-                                horizontal.sort((a, b) => a.length >= b.length ? -1 : 1);
-                                vertical.sort((a, b) => a.length >= b.length ? -1 : 1);
+                                horizontal.sort(chainLength);
+                                vertical.sort(chainLength);
                             }
                             [horizontal, vertical].forEach((connected, index) => {
                                 if (connected.length > 0) {

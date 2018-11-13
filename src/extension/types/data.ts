@@ -2,19 +2,21 @@ interface Inheritable {
     inherit: boolean;
 }
 
+export interface CssGridDataAttribute {
+    count: number;
+    gap: number;
+    unit: string[];
+    auto: string[];
+    autoFit: boolean;
+    autoFill: boolean;
+    name: ObjectMap<number[]>;
+}
+
 export interface CssGridData<T> {
     children: Set<T>;
-    rows: T[][];
-    rowCount: number;
-    rowGap: number;
-    rowUnit: string[];
-    rowAuto: string[];
-    rowName: ObjectMap<number[]>;
-    columnCount: number;
-    columnGap: number;
-    columnUnit: string[];
-    columnAuto: string[];
-    columnName: ObjectMap<number[]>;
+    row: CssGridDataAttribute;
+    column: CssGridDataAttribute;
+    rowData: T[][][];
     templateAreas: ObjectMap<CssGridCellData>;
 }
 

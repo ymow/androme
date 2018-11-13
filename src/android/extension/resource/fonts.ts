@@ -218,9 +218,10 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                 if (maxA !== maxB) {
                     return maxA > maxB ? -1 : 1;
                 }
-                else {
-                    return countA >= countB ? -1 : 1;
+                else if (countA !== countB) {
+                    return countA > countB ? -1 : 1;
                 }
+                return 0;
             });
             do {
                 if (sorted.length === 1) {
@@ -367,7 +368,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                 if (c === d) {
                     [c, d] = [a.attrs.split(';').length, b.attrs.split(';').length];
                 }
-                return c >= d ? -1 : 1;
+                return c <= d ? 1 : -1;
             });
             styleData.forEach((item, index) => item.name = $util.capitalize(tag) + (index > 0 ? `_${index}` : ''));
             resource[tag] = styleData;

@@ -531,7 +531,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     if (this.svgElement) {
                         this.android('layout_height', 'wrap_content');
                     }
-                    else if (height >= heightParent && parent.hasHeight && !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) && !(renderParent.is($enum.NODE_STANDARD.RELATIVE) && renderParent.inlineHeight)) {
+                    else if (height >= heightParent && parent.hasHeight && !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) && !(renderParent.layoutRelative && renderParent.inlineHeight)) {
                         this.android('layout_height', 'match_parent');
                     }
                     else {
@@ -972,10 +972,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const textAlign = this.css('textAlign');
                 const textIndent = this.toInt('textIndent');
                 const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
-                const relative = this.is($enum.NODE_STANDARD.RELATIVE);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: View, index) => {
-                    if (!(node.floating || (relative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                    if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
@@ -986,7 +985,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             else if (this.linearVertical) {
                 function getPreviousBottom(list: View[]) {
-                    return list.sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                    return list.sort((a, b) => a.linear.bottom <= b.linear.bottom ? 1 : -1)[0].linear.bottom;
                 }
                 const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
                 children.forEach((node: View) => {

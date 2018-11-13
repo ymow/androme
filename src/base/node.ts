@@ -1186,6 +1186,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return value === 'pre' || value === 'pre-wrap';
     }
 
+    get layoutRelative() {
+        return this.is(NODE_STANDARD.RELATIVE);
+    }
+    get layoutConstraint() {
+        return this.is(NODE_STANDARD.CONSTRAINT);
+    }
+
     get actualHeight() {
         return this.plainText ? this.bounds.bottom - this.bounds.top : this.bounds.height;
     }

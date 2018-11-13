@@ -127,7 +127,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     const fontSizeB = convertInt(b.css('fontSize'));
                     if (a.multiLine || b.multiLine) {
                         if (a.lineHeight > 0 && b.lineHeight > 0) {
-                            return a.lineHeight >= b.lineHeight ? -1 : 1;
+                            return a.lineHeight <= b.lineHeight ? 1 : -1;
                         }
                         else if (fontSizeA === fontSizeB) {
                             return a.htmlElement || !b.htmlElement ? -1 : 1;
@@ -157,7 +157,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                                 return 1;
                             }
                             else {
-                                return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                                return a.siblingIndex >= b.siblingIndex ? 1 : -1;
                             }
                         }
                         else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
@@ -165,7 +165,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         }
                     }
                 }
-                return heightA >= heightB ? -1 : 1;
+                return heightA <= heightB ? 1 : -1;
             });
         }
         let fontFamily: string;
@@ -254,7 +254,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             if (parent.linearHorizontal) {
                 alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
             }
-            else if (parent.is(NODE_STANDARD.CONSTRAINT) && list.some(node => !node.pageflow)) {
+            else if (parent.layoutConstraint && list.some(node => !node.pageflow)) {
                 alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
             }
         }
@@ -272,7 +272,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return a.float === 'left' ? -1 : 1;
                         }
                     }
-                    return a.linear.left <= b.linear.left ? -1 : 1;
+                    return a.linear.left >= b.linear.left ? 1 : -1;
                 });
                 sorted = true;
             }
@@ -280,14 +280,12 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
             if (list.some(node => node.toInt('zIndex') !== 0)) {
                 list.sort((a, b) => {
-                    const indexA = convertInt(a.css('zIndex'));
-                    const indexB = convertInt(b.css('zIndex'));
+                    const indexA = a.toInt('zIndex');
+                    const indexB = b.toInt('zIndex');
                     if (indexA === 0 && indexB === 0) {
-                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                        return a.siblingIndex >= b.siblingIndex ? 1 : -1;
                     }
-                    else {
-                        return indexA <= indexB ? -1 : 1;
-                    }
+                    return indexA >= indexB ? 1 : -1;
                 });
                 sorted = true;
             }
@@ -296,7 +294,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {
-        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+        return a.siblingIndex >= b.siblingIndex ? 1 : -1;
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {

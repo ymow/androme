@@ -572,8 +572,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             item.siblingIndex = i++;
                         }
                     });
-                    node.sort(NodeList.siblingIndex);
-                    node.initial.children.push(...node.duplicate());
+                    if (node.length > 0) {
+                        node.sort(NodeList.siblingIndex);
+                        node.initial.children.push(...node.duplicate());
+                    }
                 }
             }
             sortAsc(this.cacheProcessing.list, 'depth', 'id');
@@ -790,7 +792,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 l++;
                                 m++;
                             }
-                            mainloop: {
+                            domNested: {
                                 for ( ; l < axisY.length; l++, m++) {
                                     const adjacent = axisY[l];
                                     if (adjacent.pageflow) {
@@ -836,7 +838,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                                     horizontal.push(adjacent);
                                                                     continue;
                                                                 }
-                                                                break mainloop;
+                                                                break domNested;
                                                             }
                                                             else if (!verticalAlign) {
                                                                 horizontal.push(adjacent);
@@ -848,7 +850,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                             }
                                                         }
                                                     }
-                                                    break mainloop;
+                                                    break domNested;
                                                 }
                                                 if (linearVertical && vertical.length > 0) {
                                                     const previousAbove = vertical[vertical.length - 1];
@@ -861,13 +863,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             }
                                             else {
                                                 if (vertical.length > 0 || verticalExtended) {
-                                                    break mainloop;
+                                                    break domNested;
                                                 }
                                                 horizontal.push(adjacent);
                                             }
                                         }
                                         else {
-                                            break mainloop;
+                                            break domNested;
                                         }
                                     }
                                 }

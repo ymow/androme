@@ -103,6 +103,8 @@ declare global {
             readonly baseline: boolean;
             readonly baselineInside: boolean;
             readonly preserveWhiteSpace: boolean;
+            readonly layoutRelative: boolean;
+            readonly layoutConstraint: boolean;
             readonly actualHeight: number;
             readonly singleChild: boolean;
             readonly dir: string;
