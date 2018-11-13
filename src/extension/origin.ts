@@ -57,7 +57,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     marginLeft.push(leftType);
                 }
                 if (marginRight.length > 0) {
-                    const [sectionLeft, sectionRight] = partition(node.list, (item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = partition(node.children, (item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
                         if (node.style.marginLeft && node.autoMarginLeft) {
                             node.css('marginLeft', node.style.marginLeft);

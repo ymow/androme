@@ -200,7 +200,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             const sorted = new Set<SvgGroup>();
             for (const item of Array.from(element.children)) {
                 const nested = new Set(Array.from(item.querySelectorAll('*')));
-                for (const group of this.list) {
+                for (const group of this.children) {
                     if (group.element && (group.element === item || nested.has(group.element))) {
                         sorted.delete(group);
                         sorted.add(group);

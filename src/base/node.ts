@@ -178,7 +178,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public each(predicate: IteratorPredicate<T, void>, rendered = false) {
-        (rendered ? this.renderChildren : this.list).forEach(predicate);
+        (rendered ? this.renderChildren : this.children).forEach(predicate);
         return this;
     }
 
@@ -224,7 +224,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public cascade() {
         function cascade(node: T) {
-            const current = [...node.list];
+            const current = [...node.children];
             for (const item of node) {
                 current.push(...cascade(item));
             }
@@ -1223,7 +1223,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get nodes() {
-        return this.rendered ? this.renderChildren : this.list;
+        return this.rendered ? this.renderChildren : this.children;
     }
 
     get previousElementSibling() {

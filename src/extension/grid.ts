@@ -278,7 +278,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
             }
-            sortAsc(node.list, 'documentParent.siblingIndex', 'siblingIndex');
+            sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
             if (node.display === 'table') {
                 if (node.css('borderCollapse') === 'collapse') {
                     node.modifyBox(BOX_STANDARD.PADDING_TOP, null);

@@ -44,9 +44,9 @@ export default abstract class Container<T> implements androme.lib.base.Container
     }
 
     public remove(item: T) {
-        for (let i = 0; i < this.list.length; i++) {
-            if (item === this.list[i]) {
-                return this.list.splice(i, 1);
+        for (let i = 0; i < this._children.length; i++) {
+            if (item === this._children[i]) {
+                return this._children.splice(i, 1);
             }
         }
         return [];
@@ -103,7 +103,7 @@ export default abstract class Container<T> implements androme.lib.base.Container
         return this.length > 0 && this._children.some(predicate);
     }
 
-    get list() {
+    get children() {
         return this._children;
     }
 

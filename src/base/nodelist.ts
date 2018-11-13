@@ -324,16 +324,16 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public partition(predicate: (value: T) => boolean) {
-        const [valid, invalid]: T[][] = partition(this.list, predicate);
+        const [valid, invalid]: T[][] = partition(this.children, predicate);
         return [new NodeList(valid), new NodeList(invalid)];
     }
 
     get visible() {
-        return this.list.filter(node => node.visible);
+        return this.children.filter(node => node.visible);
     }
 
     get elements() {
-        return this.list.filter(node => node.visible && node.styleElement);
+        return this.children.filter(node => node.visible && node.styleElement);
     }
 
     get nextId() {
@@ -341,9 +341,9 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     get linearX() {
-        return NodeList.linearX(this.list);
+        return NodeList.linearX(this.children);
     }
     get linearY() {
-        return NodeList.linearY(this.list);
+        return NodeList.linearY(this.children);
     }
 }

@@ -26,12 +26,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             thead[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(thead[0], 'styleMap'));
-            table.push(...thead[0].list as T[]);
+            table.push(...thead[0].children as T[]);
             thead.forEach(item => item.hide());
         }
         if (tbody.length > 0) {
             tbody.forEach(item => {
-                table.push(...item.list as T[]);
+                table.push(...item.children as T[]);
                 item.hide();
             });
         }
@@ -39,7 +39,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             tfoot[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(tfoot[0], 'styleMap'));
-            table.push(...tfoot[0].list as T[]);
+            table.push(...tfoot[0].children as T[]);
             tfoot.forEach(item => item.hide());
         }
         const layoutFixed = node.css('tableLayout') === 'fixed';

@@ -2,7 +2,7 @@ declare global {
     namespace androme.lib {
         namespace base {
             export interface Container<T> extends Iterable<T> {
-                readonly list: T[];
+                readonly children: T[];
                 readonly length: number;
                 [Symbol.iterator](): Iterator<T>;
                 item(index?: number, value?: T): T | undefined;

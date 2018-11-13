@@ -9,7 +9,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
     public init() {
         super.init();
         if (this.length > 0) {
-            for (const item of this) {
+            for (const item of this.children) {
                 this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
                 item.parent = this;
             }
@@ -23,7 +23,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
     public setBounds(calibrate = false) {
         if (!calibrate) {
             if (this.length > 0) {
-                const nodes = NodeList.outerRegion(this.list);
+                const nodes = NodeList.outerRegion(this.children);
                 this.bounds = {
                     top: nodes.top[0].linear.top,
                     right: nodes.right[0].linear.right,

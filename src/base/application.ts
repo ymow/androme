@@ -578,7 +578,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            sortAsc(this.cacheProcessing.list, 'depth', 'id');
+            sortAsc(this.cacheProcessing.children, 'depth', 'id');
             for (const ext of this.extensions) {
                 ext.afterInit(layoutRoot);
             }
@@ -1082,7 +1082,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                     }
                                     else {
-                                        const children = nodeY.list as T[];
+                                        const children = nodeY.children as T[];
                                         const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
                                         const clearedInside = NodeList.cleared(children);
                                         const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
@@ -1240,7 +1240,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         });
-        this.cacheSession.list.push(...this.cacheProcessing.list);
+        this.cacheSession.children.push(...this.cacheProcessing.duplicate());
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.postRenderElement(node);

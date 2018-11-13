@@ -18,7 +18,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return super.condition(node) && node.length > 0 && (
             node.every(item => item.blockStatic) ||
             node.every(item => item.inlineElement) ||
-            (node.every(item => item.floating) && NodeList.floated(node.list).size === 1) ||
+            (node.every(item => item.floating) && NodeList.floated(node.children).size === 1) ||
             node.every((item, index: number) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
         ) && (
             node.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
@@ -28,7 +28,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         let output = '';
-        if (NodeList.linearY(node.list)) {
+        if (NodeList.linearY(node.children)) {
             output = this.application.writeGridLayout(node, parent, node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
         }
         else {
