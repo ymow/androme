@@ -48,17 +48,16 @@ const CHAIN_MAP = {
     horizontalVertical: ['Horizontal', 'Vertical']
 };
 
-function setAlignParent(node: View, orientation = '', bias = false) {
-    [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
-        if (!node.constraint[value] && (orientation === '' || value === orientation)) {
-            node.app(LAYOUT_MAP.constraint[index === 0 ? 'left' : 'top'], 'parent');
-            node.app(LAYOUT_MAP.constraint[index === 0 ? 'right' : 'bottom'], 'parent');
-            node.constraint[value] = true;
-            if (bias) {
-                node.app(`layout_constraint${value.charAt(0).toUpperCase() + value.substring(1)}_bias`, node[`${value}Bias`]);
-            }
+function setAlignParent(node: View, orientation: string, bias = false) {
+    if (!node.constraint[orientation]) {
+        const horizontal = orientation === AXIS_ANDROID.HORIZONTAL;
+        node.app(LAYOUT_MAP.constraint[horizontal ? 'left' : 'top'], 'parent');
+        node.app(LAYOUT_MAP.constraint[horizontal ? 'right' : 'bottom'], 'parent');
+        node.constraint[orientation] = true;
+        if (bias) {
+            node.app(`layout_constraint${$util.capitalize(orientation)}_bias`, node[`${orientation}Bias`]);
         }
-    });
+    }
 }
 
 export default class Controller<T extends View> extends androme.lib.base.Controller<T> {
@@ -1280,25 +1279,28 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             }
                         }
                         else if (columnCount === 0) {
-                            for (const current of pageflow) {
-                                [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
-                                    if (mapParent(current, direction[1]) && !mapSibling(current, direction[2])) {
-                                        ['leftRight', 'rightLeft'].forEach(value => {
-                                            const stringId = mapSibling(current, value);
-                                            if (stringId) {
-                                                const aligned = pageflow.find(item => item.stringId === stringId);
-                                                if (aligned && mapSibling(aligned, direction[2])) {
-                                                    if ($util.withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
-                                                        current.anchor(layoutMap[direction[0]], aligned.stringId);
-                                                    }
-                                                    if ($util.withinFraction(current.linear[direction[1]], aligned.linear[direction[1]])) {
-                                                        current.anchor(layoutMap[direction[1]], aligned.stringId);
-                                                    }
+                            function applyChainDirection(item: T, chainStart: string, chainEnd: string) {
+                                const chainDirection = chainStart + $util.capitalize(chainEnd);
+                                if (mapParent(item, chainEnd) && !mapSibling(item, chainDirection)) {
+                                    ['leftRight', 'rightLeft'].forEach(value => {
+                                        const stringId = mapSibling(item, value);
+                                        if (stringId) {
+                                            const aligned = pageflow.find(sibling => sibling.stringId === stringId);
+                                            if (aligned && mapSibling(aligned, chainDirection)) {
+                                                if ($util.withinFraction(item.linear[chainStart], aligned.linear[chainStart])) {
+                                                    item.anchor(layoutMap[chainStart], aligned.stringId);
+                                                }
+                                                if ($util.withinFraction(item.linear[chainEnd], aligned.linear[chainEnd])) {
+                                                    item.anchor(layoutMap[chainEnd], aligned.stringId);
                                                 }
                                             }
-                                        });
-                                    }
-                                });
+                                        }
+                                    });
+                                }
+                            }
+                            for (const current of pageflow) {
+                                applyChainDirection(current, 'top', 'bottom');
+                                applyChainDirection(current, 'bottom', 'top');
                             }
                             const unbound = pageflow.filter(current =>
                                 !current.anchored && (
@@ -1393,46 +1395,52 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     bottom = false;
                                 }
                                 if (current.pageflow) {
-                                    [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']].forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
-                                        if (value[0] || value[1]) {
-                                            let valid = value[0] && value[1];
-                                            let next: T | undefined = current;
+                                    const applyLayoutDimension = (orientation: string, directionStart: string, directionEnd: string) => {
+                                        const parentStart = mapParent(current, directionStart);
+                                        const parentEnd = mapParent(current, directionEnd);
+                                        if (parentStart || parentEnd) {
+                                            const chainReverse = directionEnd + $util.capitalize(directionStart);
+                                            let valid = parentStart && parentEnd;
+                                            let next: T | null = current;
                                             if (!valid) {
+                                                const chainForward = directionStart + $util.capitalize(directionEnd);
                                                 do {
-                                                    const stringId = mapSibling(next, value[0] ? value[2] : value[3]);
+                                                    const stringId = mapSibling(next, parentStart ? chainReverse : chainForward);
                                                     if (stringId) {
-                                                        next = this.findByStringId(stringId);
-                                                        if (next && ((value[0] && mapParent(next, value[4])) || (value[1] && mapParent(next, value[5])))) {
+                                                        next = this.getNodeByStringId(stringId);
+                                                        if (next && ((parentStart && mapParent(next, directionEnd)) || (parentEnd && mapParent(next, directionStart)))) {
                                                             valid = true;
                                                             break;
                                                         }
                                                     }
                                                     else {
-                                                        next = undefined;
+                                                        next = null;
                                                     }
                                                 }
                                                 while (next);
                                             }
                                             if (valid) {
-                                                node.constraint[`layout${value[6]}`] = true;
+                                                node.constraint[`layout${orientation}`] = true;
                                             }
-                                            if (!current.constraint[`chain${value[6]}`]) {
-                                                if (value[0] && value[1]) {
+                                            if (!current.constraint[`chain${orientation}`]) {
+                                                if (parentStart && parentEnd) {
                                                     if (!current.autoMargin && !current.linearVertical) {
-                                                        current.android(`layout_${index === 0 ? 'width' : 'height'}`, 'match_parent', false);
+                                                        current.android(`layout_${orientation === 'Horizontal' ? 'width' : 'height'}`, 'match_parent', false);
                                                     }
                                                 }
-                                                else if (value[1]) {
+                                                else if (parentEnd) {
                                                     if (valid) {
-                                                        const below = this.findByStringId(mapSibling(current, value[3]));
+                                                        const below = this.getNodeByStringId(mapSibling(current, chainReverse));
                                                         if (below && below.marginBottom === 0) {
-                                                            mapDelete(current, value[4]);
+                                                            mapDelete(current, directionStart);
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-                                    });
+                                    };
+                                    applyLayoutDimension('Horizontal', 'left', 'right');
+                                    applyLayoutDimension('Vertical', 'top', 'bottom');
                                     if (right) {
                                         if (!rightParent) {
                                             rightParent = false;
@@ -1556,7 +1564,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             for (const current of nodes) {
                 if (current.constraint.marginHorizontal) {
-                    const previous = this.findByStringId(current.constraint.marginHorizontal);
+                    const previous = this.getNodeByStringId(current.constraint.marginHorizontal);
                     if (previous) {
                         const offset = current.linear.left - previous.actualRight();
                         if (offset >= 1) {
@@ -1565,7 +1573,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     }
                 }
                 if (current.constraint.marginVertical) {
-                    const previous = this.findByStringId(current.constraint.marginVertical);
+                    const previous = this.getNodeByStringId(current.constraint.marginVertical);
                     if (previous) {
                         let bottom = previous.linear.bottom;
                         if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
@@ -2262,8 +2270,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     }
 
-    private findByStringId(id: string) {
-        return this.cache.find('stringId', id);
+    private getNodeByStringId(id: string) {
+        return this.cache.find('stringId', id) || null;
     }
 
     public get delegateNodeInit(): SelfWrapped<T, void> {

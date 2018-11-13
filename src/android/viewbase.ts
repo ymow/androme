@@ -798,15 +798,17 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const renderParent = this.renderParent;
                 if (this.documentParent === renderParent && !renderParent.documentBody && renderParent.blockStatic) {
                     const elements = renderParent.map(item => item.baseElement);
-                    [[$dom.getFirstElementChild(elements), 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], [$dom.getLastElementChild(elements), 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [HTMLElement, string, number, number], index: number) => {
-                        const node = $dom.getNodeFromElement<View>(item[0]);
-                        if (node && !node.lineBreak && (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
-                            const marginOffset = renderParent[`margin${item[1]}`];
-                            if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
-                                node.modifyBox(item[2], null);
+                    const applyMarginCollapse = (direction: string, element: Element | null) => {
+                        const node = $dom.getNodeFromElement<View>(element);
+                        if (node && !node.lineBreak && (node === this || node === this.renderChildren[direction === 'Top' ? 0 : this.renderChildren.length - 1])) {
+                            const marginOffset = renderParent[`margin${direction}`];
+                            if (marginOffset > 0 && renderParent[`padding${direction}`] === 0 && renderParent[`border${direction}Width`] === 0) {
+                                node.modifyBox($enum.BOX_STANDARD[`MARGIN_${direction.toUpperCase()}`], null);
                             }
                         }
-                    });
+                    };
+                    applyMarginCollapse('Top', $dom.getFirstElementChild(elements));
+                    applyMarginCollapse('Bottom', $dom.getLastElementChild(elements));
                 }
                 if (this.htmlElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {

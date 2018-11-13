@@ -10,7 +10,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         const mainData: CssGridData<T> = parent.data($const.EXT_NAME.CSS_GRID, 'mainData');
         const cellData: CssGridCellData = node.data($const.EXT_NAME.CSS_GRID, 'cellData');
         if (mainData && cellData) {
-            function setLayout(direction: string, dimension: string) {
+            function applyLayout(direction: string, dimension: string) {
                 const cellSpan = `${direction}Span`;
                 const cellStart = `${direction}Start`;
                 const minDimension = `min${$util.capitalize(dimension)}`;
@@ -85,8 +85,8 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 }
                 node.android(`layout_${direction}Weight`, sizeWeight > 0 ? sizeWeight.toString() : '0');
             }
-            setLayout('column', 'width');
-            setLayout('row', 'height');
+            applyLayout('column', 'width');
+            applyLayout('row', 'height');
             node.mergeGravity('layout_gravity', 'fill_vertical');
         }
         return { output: '' };

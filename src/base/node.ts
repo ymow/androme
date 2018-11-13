@@ -499,17 +499,20 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public setExclusions() {
         if (this.styleElement) {
-            [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
-                let exclude = this.dataset[item[0]] || '';
+            const applyExclusions = (attr: string, enumeration: {}) => {
+                let exclude = this.dataset[attr] || '';
                 if (this._element.parentElement) {
-                    exclude += '|' + trimNull(this._element.parentElement.dataset[`${item[0]}Child`]);
+                    exclude += '|' + trimNull(this._element.parentElement.dataset[`${attr}Child`]);
                 }
                 exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                    if (item[1][value] !== undefined) {
-                        this[item[0]] |= item[1][value];
+                    if (enumeration[value] !== undefined) {
+                        this[attr] |= enumeration[value];
                     }
                 });
-            });
+            };
+            applyExclusions('excludeSection', APP_SECTION);
+            applyExclusions('excludeProcedure', NODE_PROCEDURE);
+            applyExclusions('excludeResource', NODE_RESOURCE);
         }
     }
 
