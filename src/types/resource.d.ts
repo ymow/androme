@@ -123,7 +123,7 @@ interface BoxStyle {
     borderRadius?: string[];
     backgroundImage?: string[];
     backgroundGradient?: Gradient[];
-    backgroundSize: string[];
+    backgroundSize: string;
     backgroundRepeat: string;
     backgroundPositionX: string;
     backgroundPositionY: string;

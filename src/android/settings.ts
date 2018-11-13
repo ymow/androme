@@ -19,8 +19,8 @@ const settings: SettingsAndroid = {
         'android.resource.dimens',
         'android.resource.styles'
     ],
+    resolutionDPI: 160,
     targetAPI: 26,
-    density: 160,
     supportRTL: true,
     renderInlineText: true,
     preloadImages: true,

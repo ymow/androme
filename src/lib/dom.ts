@@ -1,7 +1,7 @@
 import { REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
-import { capitalize, convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -58,12 +58,12 @@ export function newBoxModel(): BoxModel {
     };
 }
 
-export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent = false) {
+export function convertClientUnit(value: string, dimension: number, dpi: number, fontSize: number, percent = false) {
     if (percent) {
-        return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
+        return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, dpi, fontSize)) / dimension);
     }
     else {
-        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, fontSize));
+        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, dpi, fontSize));
     }
 }
 
@@ -209,7 +209,7 @@ export function cssAttribute(element: Element, attr: string): string {
     return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
 }
 
-export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective = false, percent = false) {
+export function getBackgroundPosition(value: string, dimension: BoxDimensions, dpi: number, fontSize: number, leftPerspective = false, percent = false) {
     const result: BoxPosition = {
         top: 0,
         left: 0,
@@ -232,15 +232,15 @@ export function getBackgroundPosition(value: string, dimension: BoxDimensions, f
                     break;
                 case 1:
                 case 3:
-                    const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                    const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, dpi, fontSize, percent);
                     if (index === 1) {
                         if (leftPerspective) {
                             if (result.horizontal === 'right') {
                                 if (isPercent(position)) {
-                                    result.originalX = `${100 - parseInt(position)}%`;
+                                    result.originalX = formatPercent(100 - parseInt(position));
                                 }
                                 else {
-                                    result.originalX = formatPX(dimension.width - parseInt(convertPX(position, fontSize)));
+                                    result.originalX = formatPX(dimension.width - parseInt(convertPX(position, dpi, fontSize)));
                                 }
                                 result.right = clientXY;
                                 result.left = percent ? 1 - clientXY : dimension.width - clientXY;
@@ -260,10 +260,10 @@ export function getBackgroundPosition(value: string, dimension: BoxDimensions, f
                         if (leftPerspective) {
                             if (result.vertical === 'bottom') {
                                 if (isPercent(position)) {
-                                    result.originalY = `${100 - parseInt(position)}%`;
+                                    result.originalY = formatPercent(100 - parseInt(position));
                                 }
                                 else {
-                                    result.originalY = formatPX(dimension.height - parseInt(convertPX(position, fontSize)));
+                                    result.originalY = formatPX(dimension.height - parseInt(convertPX(position, dpi, fontSize)));
                                 }
                                 result.bottom = clientXY;
                                 result.top = percent ? 1 - clientXY : dimension.height - clientXY;
@@ -288,7 +288,7 @@ export function getBackgroundPosition(value: string, dimension: BoxDimensions, f
             const offsetParent = index === 0 ? dimension.width : dimension.height;
             const direction = index === 0 ? 'left' : 'top';
             const original = index === 0 ? 'originalX' : 'originalY';
-            const clientXY = convertClientUnit(position, offsetParent, fontSize, percent);
+            const clientXY = convertClientUnit(position, offsetParent, dpi, fontSize, percent);
             if (isPercent(position)) {
                 result[direction] = clientXY;
                 result[original] = position;
@@ -431,7 +431,7 @@ export function isLineBreak(element: Element, excluded = true) {
     return false;
 }
 
-export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode = false, whiteSpace = false) {
+export function getBetweenElements(firstElement: Element | null, secondElement: Element, cacheNode = false, whiteSpace = false) {
     if (!firstElement || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
         if (parentElement) {

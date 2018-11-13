@@ -5,6 +5,7 @@ interface SvgDefs<T, U> {
 }
 
 interface SvgTransformAttributes {
+    length: number;
     translateX: number;
     translateY: number;
     scaleX: number;

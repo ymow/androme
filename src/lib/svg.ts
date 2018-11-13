@@ -18,6 +18,7 @@ export function createColorStop(element: SVGGradientElement) {
 
 export function createTransform(element: SVGGraphicsElement) {
     const data: SvgTransformAttributes = {
+        length: element.transform.baseVal.numberOfItems,
         translateX: 0,
         translateY: 0,
         scaleX: 1,
@@ -54,6 +55,10 @@ export function createTransform(element: SVGGraphicsElement) {
                 break;
         }
     }
+    return data;
+}
+
+export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number) {
     const style = getStyle(element);
     if (style.transformOrigin) {
         switch (style.transformOrigin) {
@@ -62,11 +67,10 @@ export function createTransform(element: SVGGraphicsElement) {
             case 'left top':
                 break;
             default:
-                data.origin = getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), style.fontSize, true);
-                break;
+                return getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), dpi, fontSize, true);
         }
     }
-    return data;
+    return undefined;
 }
 
 export function isSvgVisible(element: SVGGraphicsElement) {

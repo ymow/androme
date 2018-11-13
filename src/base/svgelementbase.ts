@@ -1,7 +1,7 @@
 import Container from './container';
 import SvgPath from './svgpath';
 
-import { createTransform, isSvgVisible } from '../lib/svg';
+import { createTransform, createTransformOrigin, isSvgVisible } from '../lib/svg';
 
 export default (Base: Constructor<Container<SvgPath>>) => {
     return class SvgElement extends Base implements androme.lib.base.SvgElement {
@@ -29,6 +29,13 @@ export default (Base: Constructor<Container<SvgPath>>) => {
         public setElement(element: SVGGraphicsElement) {
             if (element instanceof SVGGraphicsElement) {
                 this._element = element;
+            }
+        }
+
+        public setTransformOrigin(dpi: number, fontSize: number) {
+            const element = this._element;
+            if (element && this.transform && this.transform.length > 0) {
+                this.transform.origin = createTransformOrigin(element, dpi, fontSize);
             }
         }
 

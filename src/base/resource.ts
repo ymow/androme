@@ -9,7 +9,7 @@ import Svg from './svg';
 
 import { parseRGBA } from '../lib/color';
 import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
-import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
+import { convertInt, hasValue, isNumber, isString } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -63,7 +63,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border: BorderAttribute | undefined) {
-        return !!border && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
+        return !!border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
     }
 
     public static hasDrawableBackground(object: BoxStyle | undefined) {
@@ -168,32 +168,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 const color = parseRGBA(value, node.css('opacity'));
                                 boxStyle.backgroundColor = color ? color.valueRGBA : '';
                             }
-                            break;
-                        }
-                        case 'backgroundSize': {
-                            let result: string[] = [];
-                            if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
-                                const match = value.match(/^(?:([\d.]+(?:px|pt|em|%)|auto)\s*)+$/);
-                                const fontSize = node.css('fontSize');
-                                if (match) {
-                                    if (match[1] === 'auto' || match[2] === 'auto') {
-                                        result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
-                                    }
-                                    else if (isPercent(match[1]) && match[3] === undefined) {
-                                        result = [match[1], match[2]];
-                                    }
-                                    else if (match[2] === undefined || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                                        result = [convertPX(match[1], fontSize)];
-                                    }
-                                    else if (match[3] === undefined || (match[1] === match[3] && match[2] === match[4])) {
-                                        result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
-                                    }
-                                    else {
-                                        result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
-                                    }
-                                }
-                            }
-                            boxStyle.backgroundSize = result;
                             break;
                         }
                         case 'background':
@@ -302,6 +276,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                             break;
                         }
+                        case 'backgroundSize':
                         case 'backgroundRepeat':
                         case 'backgroundPositionX':
                         case 'backgroundPositionY': {
@@ -412,7 +387,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             result[attr] = '0px';
                         }
                         else {
-                            result[attr] = convertPX(boxSpacing[attr], node.css('fontSize'));
+                            result[attr] = node.convertPX(boxSpacing[attr]);
                         }
                     }
                     node.data(Resource.KEY_NAME, 'boxSpacing', result);
@@ -595,6 +570,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 const element = <SVGSVGElement> node.element;
                 if (element.children.length > 0) {
                     const result = new Svg(element);
+                    result.dpi = node.dpi;
+                    result.fontSize = node.fontSize;
                     result.defs.image.forEach(item => {
                         const dimensions = this.imageAssets.get(item.uri);
                         if (dimensions) {

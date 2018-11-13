@@ -1,7 +1,7 @@
-export default abstract class Container<T> implements androme.lib.base.Container<T>, Iterable<T> {
+export default class Container<T> implements androme.lib.base.Container<T>, Iterable<T> {
     private _children: T[] = [];
 
-    public constructor(children?: T[]) {
+    constructor(children?: T[]) {
         if (Array.isArray(children)) {
             this.replace(children);
         }

@@ -1,4 +1,4 @@
-import { CssGridData, CssGridCellData } from './types/data';
+import { CssGridCellData, CssGridDataAttribute, CssGridData } from './types/data';
 
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD } from '../lib/enumeration';
@@ -6,7 +6,7 @@ import { BOX_STANDARD } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { convertInt, convertPX, isNumber, isUnit, trimString } from '../lib/util';
+import { convertInt, isNumber, isUnit, trimString } from '../lib/util';
 
 type GridPosition = {
     placement: number[],
@@ -28,34 +28,29 @@ const PATTERN_GRID = {
 };
 
 export default class CssGrid<T extends Node> extends Extension<T> {
+    public static createDataAttribute() {
+        return <CssGridDataAttribute> {
+            count: 0,
+            gap: 0,
+            unit: [],
+            auto: [],
+            autoFill: false,
+            autoFit: false,
+            name: {}
+        };
+    }
+
     public condition(node: T) {
         return node.length > 0 && node.display === 'grid';
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const fontSize = node.css('fontSize');
         const mainData = <CssGridData<T>> {
             children: new Set(),
             rowData: [],
             templateAreas: {},
-            row: {
-                count: 0,
-                gap: convertInt(convertPX(node.css('rowGap'), fontSize)),
-                unit: [],
-                auto: [],
-                autoFill: false,
-                autoFit: false,
-                name: {},
-            },
-            column: {
-                count: 0,
-                gap: convertInt(convertPX(node.css('columnGap'), fontSize)),
-                unit: [],
-                auto: [],
-                autoFill: false,
-                autoFit: false,
-                name: {}
-            }
+            row: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('rowGap'))) }),
+            column: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('columnGap'))) })
         };
         const gridAutoFlow = node.css('gridAutoFlow');
         const horizontal = gridAutoFlow.indexOf('row') !== -1;
@@ -85,7 +80,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             return false;
         }
         function convertUnit(value: string) {
-            return isUnit(value) ? convertPX(value, fontSize) : value;
+            return isUnit(value) ? node.convertPX(value) : value;
         }
         [node.styleMap.gridTemplateRows, node.styleMap.gridTemplateColumns, node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
             if (value && value !== 'none' && value !== 'auto') {
@@ -126,7 +121,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        mainData[index === 2 ? 'row' : 'column'].auto.push(convertPX(match[1]));
+                        mainData[index === 2 ? 'row' : 'column'].auto.push(node.convertPX(match[1]));
                     }
                 }
             }
@@ -295,7 +290,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                         if (!rowInvalid[i] && cellsPerRow[i] < COLUMN_COUNT) {
                             let valid = true;
                             for (let j = 1; j < ROW_SPAN; j++) {
-                                if (convertInt(cellsPerRow[i + j]) >= COLUMN_COUNT) {
+                                const value = cellsPerRow[i + j] || 0;
+                                if (value >= COLUMN_COUNT) {
                                     valid = false;
                                     break;
                                 }

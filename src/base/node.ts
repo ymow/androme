@@ -10,6 +10,14 @@ import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, sear
 type T = Node;
 
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
+    public static getContentBoxWidth<T extends Node>(node: T) {
+        return node.borderLeftWidth + node.paddingLeft + node.paddingRight + node.borderRightWidth;
+    }
+
+    public static getContentBoxHeight<T extends Node>(node: T) {
+        return node.borderTopWidth + node.paddingTop + node.paddingBottom + node.borderBottomWidth;
+    }
+
     public static getNodeFromElement<T extends Node>(element: UndefNull<Element>) {
         return getNodeFromElement<T>(element);
     }
@@ -43,6 +51,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     protected abstract _controlName: string;
     protected abstract _renderParent: T;
     protected abstract _documentParent: T;
+    protected abstract _fontSize: number;
     protected abstract readonly _boxAdjustment: BoxModel;
     protected abstract readonly _boxReset: BoxModel;
 
@@ -85,6 +94,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyCustomizations(): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
+    public abstract convertPX(value: string): string;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
     public abstract set controlName(value: string);
@@ -101,6 +111,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract get inlineHeight(): boolean;
     public abstract get blockWidth(): boolean;
     public abstract get blockHeight(): boolean;
+    public abstract get dpi(): number;
+    public abstract get fontSize(): number;
 
     public init() {
         if (!this._initialized) {
@@ -422,6 +434,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return result;
     }
 
+    public convertPercent(value: string, horizontal: boolean, parentBounds = false) {
+        if (isPercent(value)) {
+            const percent = parseFloat(value) >= 1 ? parseInt(value) / 100 : parseFloat(value);
+            const bounds = parentBounds ? this.documentParent.bounds : this.bounds;
+            return `${Math.round(percent * bounds[horizontal ? 'width' : 'height'])}px`;
+        }
+        return '0px';
+    }
+
     public has(attr: string, checkType: number = 0, options?: ObjectMap<string | string[]>) {
         const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         if (hasValue(value)) {
@@ -488,8 +509,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return false;
     }
 
-    public toInt(attr: string, defaultValue = 0, options?: StringMap) {
-        const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
+    public toInt(attr: string, defaultValue = 0, initial = false) {
+        const value = (initial ? this.initial.styleMap : this.styleMap)[attr];
         return parseInt(value) || defaultValue;
     }
 
@@ -564,7 +585,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         bounds.width += (this.marginLeft > 0 ? this.marginLeft : 0) + this.marginRight;
                         break;
                     case 'box':
-                        bounds.width -= this.paddingLeft + this.borderLeftWidth + this.paddingRight + this.borderRightWidth;
+                        bounds.width -= Node.getContentBoxWidth(this);
                         break;
                 }
             }
@@ -675,8 +696,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 while (parent && parent.id !== 0) {
                     if (!relativeParent && this.position === 'absolute') {
                         if (!['static', 'initial'].includes(parent.position)) {
-                            const top = convertInt(this.top);
-                            const left = convertInt(this.left);
+                            const top = this.top || 0;
+                            const left = this.left || 0;
                             if ((top >= 0 && left >= 0) || !negative || (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) || this.imageElement) {
                                 if (negative &&
                                     !parent.documentRoot &&

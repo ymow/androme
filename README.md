@@ -37,7 +37,7 @@ GitHub
 <script>
     // optional
     androme.settings.targetAPI = 26;
-    androme.settings.density = 160;
+    androme.settings.resolutionDPI = 160;
 
     // without Express: use either console.log() or element.innerHTML to display using "system.write" commands
 
@@ -101,7 +101,7 @@ androme.settings = {
         'android.resource.styles'
     ],
     targetAPI: 26,
-    density: 160,
+    resolutionDPI: 160,
     supportRTL: true,
     renderInlineText: true,
     preloadImages: true,

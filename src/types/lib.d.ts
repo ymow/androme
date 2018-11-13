@@ -48,14 +48,14 @@ declare global {
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
             export function cssAttribute(element: Element, attr: string): string;
-            export function getBackgroundPosition(value: string, dimension: BoxDimensions, fontSize?: string | null, leftPerspective?: boolean, percent?: boolean): BoxPosition;
+            export function getBackgroundPosition(value: string, dimension: BoxDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): BoxPosition;
             export function getFirstElementChild(elements: Element[]): Element | null;
             export function getLastElementChild(elements: Element[]): Element | null;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Element): boolean;
             export function isLineBreak(element: Element, excluded?: boolean): boolean;
-            export function getElementsBetweenSiblings(firstElement: Element | null, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
+            export function getBetweenElements(firstElement: Element | null, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
             export function isStyleElement(element: Element): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
             export function getNestedExtension(element: Element, name: string): HTMLElement | null;
@@ -68,6 +68,7 @@ declare global {
         namespace svg {
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
+            export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): BoxPosition | undefined;
             export function isSvgVisible(element: SVGGraphicsElement): boolean;
         }
 
@@ -77,14 +78,15 @@ declare global {
             export function convertCamelCase(value: string, char?: string): string;
             export function convertWord(value: string): string;
             export function capitalize(value: string, upper?: boolean): string;
-            export function convertInt(value: any): number;
-            export function convertFloat(value: any): number;
+            export function convertInt(value: string | null): number;
+            export function convertFloat(value: string | null): number;
+            export function convertPX(value: string, dpi: number, fontSize: number): string;
             export function convertPercent(value: number, precision?: number): string;
-            export function convertPX(value: any, fontSize?: string | null, dimensionSize?: number): string;
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
             export function convertEnum(value: number, base: {}, derived: {}): string;
             export function formatPX(value: any): string;
+            export function formatPercent(value: any): string;
             export function hasBit(value: number, type: number): boolean;
             export function isNumber(value: string | number): value is number;
             export function isString(value: any): value is string;

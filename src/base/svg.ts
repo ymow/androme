@@ -22,6 +22,8 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     }
 
     public name: string;
+    public dpi: number;
+    public fontSize: number;
     public readonly defs: SvgDefs<SvgImage, SvgPath> = {
         image: [],
         clipPath: new Map<string, SvgPath[]>(),
@@ -123,6 +125,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                         svgImage.height = image.height.baseVal.value;
                         svgImage.x = image.x.baseVal.value;
                         svgImage.y = image.y.baseVal.value;
+                        svgImage.setTransformOrigin(this.dpi, this.fontSize);
                         this.defs.image.push(svgImage);
                         break;
                     }
@@ -137,6 +140,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     group.y = svg.y.baseVal.value;
                     group.width = svg.width.baseVal.value;
                     group.height = svg.height.baseVal.value;
+                    group.setTransformOrigin(this.dpi, this.fontSize);
                 }
                 for (let i = 0; i < item.children.length; i++) {
                     const subitem = item.children[i];
@@ -190,6 +194,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                                 group.y = item.y.baseVal.value;
                                 group.width = item.width.baseVal.value;
                                 group.height = item.height.baseVal.value;
+                                group.setTransformOrigin(this.dpi, this.fontSize);
                                 group.append(use);
                                 this.append(group);
                             }

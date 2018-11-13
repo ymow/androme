@@ -10,6 +10,8 @@ declare global {
         }
 
         export interface Svg extends Container<SvgGroup>, SvgBase {
+            dpi: number;
+            fontSize: number;
             readonly defs: SvgDefs<SvgImage, SvgPath>;
             readonly width: number;
             readonly height: number;

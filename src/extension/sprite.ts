@@ -22,10 +22,11 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
                 url = cssResolveUrl(url);
                 const image = <ImageAsset> this.application.cacheImage.get(url);
                 if (image) {
-                    const fontSize = node.css('fontSize');
-                    const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize);
-                    const height = convertClientUnit(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, fontSize);
-                    const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
+                    const dpi = node.dpi;
+                    const fontSize = node.fontSize;
+                    const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, dpi, fontSize);
+                    const height = convertClientUnit(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, dpi, fontSize);
+                    const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, dpi, fontSize);
                     if (width > 0 && position.left <= 0 && image.width > width && height > 0 && position.top <= 0 && image.height > height) {
                         image.position = { x: position.left, y: position.top };
                         node.data(EXT_NAME.SPRITE, 'image', image);

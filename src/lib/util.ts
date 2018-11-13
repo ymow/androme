@@ -10,7 +10,7 @@ const NUMERALS = [
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a, b) => {
         for (const attr of attrs) {
-            const result = compareObject(a, b, attr);
+            const result = compareObject(a, b, attr, true);
             if (result && result[0] !== result[1]) {
                 if (asc === 0) {
                     return result[0] > result[1] ? 1 : -1;
@@ -24,7 +24,7 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     });
 }
 
-function compareObject(obj1: {}, obj2: {}, attr: string) {
+function compareObject(obj1: {}, obj2: {}, attr: string, numeric: boolean) {
     const namespaces = attr.split('.');
     let current1: any = obj1;
     let current2: any = obj2;
@@ -43,8 +43,8 @@ function compareObject(obj1: {}, obj2: {}, attr: string) {
             return [0, 1];
         }
     }
-    if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
-        return [convertInt(current1), convertInt(current2)];
+    if (numeric && !isNaN(parseInt(current1)) && !isNaN(parseInt(current2))) {
+        return [parseInt(current1), parseInt(current2)];
     }
     else {
         return [current1, current2];
@@ -84,46 +84,64 @@ export function capitalize(value: string, upper = true) {
     return value ? value.charAt(0)[upper ? 'toUpperCase' : 'toLowerCase']() + value.substring(1)[upper ? 'toLowerCase' : 'toString']() : '';
 }
 
-export function convertInt(value: any) {
+export function convertInt(value: string | null) {
     return (value && parseInt(value)) || 0;
 }
 
-export function convertFloat(value: any) {
+export function convertFloat(value: string | null) {
     return (value && parseFloat(value)) || 0;
 }
 
-export function convertPercent(value: number, precision = 0) {
-    return value <= 1 ? `${Math.min(precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)), 100)}%` : `${value}%`;
-}
-
-export function convertPX(value: any, fontSize?: string | null, dimensionSize?: number): string {
-    if (hasValue(value)) {
-        if (isNumber(value)) {
-            return `${Math.round(value)}px`;
-        }
-        let result = parseFloat(value);
-        if (!isNaN(result)) {
-            const match = value.match(/(px|em|pt)/);
-            if (match) {
-                switch (match[0]) {
-                    case 'pt':
-                        result *= 4 / 3;
-                        break;
-                    case 'em':
-                        result *= parseInt(convertPX(fontSize)) || 16;
-                        break;
-                }
-                return `${result}px`;
-            }
-            else {
-                if (dimensionSize && isPercent(value)) {
-                    return `${dimensionSize * (parseInt(value) / 100)}px`;
-                }
-                return value.toString();
-            }
+export function convertPX(value: string, dpi: number, fontSize: number): string {
+    if (isNumber(value)) {
+        return `${Math.round(value)}px`;
+    }
+    else {
+        value = value.trim();
+        if (value.endsWith('px') || value.endsWith('%') || value === 'auto') {
+            return value;
         }
     }
+    const match = value.match(REGEX_PATTERN.UNIT);
+    if (match) {
+        let result = parseFloat(match[1]);
+        switch (match[2]) {
+            case 'em':
+            case 'ch':
+                result *= fontSize || 16;
+                break;
+            case 'pc':
+                result *= 12;
+            case 'pt':
+                result *= 4 / 3;
+                break;
+            case 'vw':
+                result *= window.innerWidth / 100;
+                break;
+            case 'vh':
+                result *= window.innerHeight / 100;
+                break;
+            case 'vmin':
+                result *= Math.min(window.innerWidth, window.innerHeight) / 100;
+                break;
+            case 'vmax':
+                result *= Math.max(window.innerWidth, window.innerHeight) / 100;
+                break;
+            case 'mm':
+                result /= 10;
+            case 'cm':
+                result /= 2.54;
+            case 'in':
+                result *= dpi || 96;
+                break;
+        }
+        return `${result}px`;
+    }
     return '0px';
+}
+
+export function convertPercent(value: number, precision = 0) {
+    return value < 1 ? `${precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision))}%` : `100%`;
 }
 
 export function convertAlpha(value: number) {
@@ -171,12 +189,20 @@ export function formatPX(value: any) {
     return `${!isNaN(value) ? Math.round(value) : 0}px`;
 }
 
+export function formatPercent(value: any) {
+    value = parseFloat(value);
+    if (!isNaN(value)) {
+        return value < 1 ? convertPercent(value) : `${Math.round(value)}%`;
+    }
+    return '0%';
+}
+
 export function hasBit(value: number, type: number) {
     return (value & type) === type;
 }
 
 export function isNumber(value: string | number): value is number {
-    return /^-?\d+(\.\d+)?$/.test(value.toString().trim());
+    return typeof value === 'number' || /^-?\d+(\.\d+)?$/.test(value.trim());
 }
 
 export function isString(value: any): value is string {
@@ -188,7 +214,7 @@ export function isArray<T>(value: any): value is Array<T> {
 }
 
 export function isUnit(value: string) {
-    return isString(value) ? /^-?[\d.]+[a-z]+$/.test(value.trim()) : false;
+    return REGEX_PATTERN.UNIT.test(value);
 }
 
 export function isPercent(value: string) {
@@ -221,7 +247,7 @@ export function optional(obj: UndefNull<object>, value: string, type?: string) {
     }
     switch (type) {
         case 'object':
-            return valid ? result : undefined;
+            return valid ? result : null;
         case 'number':
             return valid && !isNaN(parseInt(result)) ? parseInt(result) : 0;
         case 'boolean':
@@ -314,7 +340,7 @@ export function lastIndexOf(value: string, char = '/') {
 
 export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     for (const attr of attrs) {
-        const result = compareObject(obj1, obj2, attr);
+        const result = compareObject(obj1, obj2, attr, false);
         if (!result || result[0] !== result[1]) {
             return false;
         }

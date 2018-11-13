@@ -7,9 +7,9 @@ declare global {
             readonly localSettings: ControllerSettings;
             readonly delegateNodeInit: SelfWrapped<T, void>;
             createGroup(parent: T, node: T, children: T[]): T;
-            renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
+            renderGroup(node: T, parent: T, nodeName: number | string, options?: ExternalData): string;
             renderNode(node: T, parent: T, nodeName: number | string): string;
-            renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
+            renderNodeStatic(nodeName: number | string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             renderInclude(node: T, parent: T, name: string): string;
             renderMerge(name: string, content: string[]): string;
             renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;

@@ -191,6 +191,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                 const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 const backgroundDimensions: Undefined<ImageAsset>[] = [];
                 const backgroundGradient: BackgroundGradient[] = [];
+                const backgroundSize = stored.backgroundSize.split(',').map(value => value.trim());
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundPosition: string[] = [];
@@ -254,7 +255,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '') {
-                            const boxPosition = $dom.getBackgroundPosition(backgroundPosition[i], node.bounds, node.css('fontSize'));
+                            const boxPosition = $dom.getBackgroundPosition(backgroundPosition[i], node.bounds, node.dpi, node.fontSize);
                             const image = backgroundDimensions[i];
                             let gravity = (() => {
                                 if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
@@ -352,21 +353,6 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                     }
                                 }
                             }
-                            if (stored.backgroundSize.length > 0 && ($util.isPercent(stored.backgroundSize[0]) || $util.isPercent(stored.backgroundSize[1]))) {
-                                if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
-                                    tileMode = '';
-                                    tileModeX = '';
-                                    tileModeY = '';
-                                    gravity = '';
-                                }
-                                else if (stored.backgroundSize[0] === '100%') {
-                                    tileModeX = '';
-                                }
-                                else if (stored.backgroundSize[1] === '100%') {
-                                    tileModeY = '';
-                                }
-                                stored.backgroundSize = [];
-                            }
                             if (hasBackgroundImage) {
                                 if (node.of($enum.NODE_STANDARD.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
                                     node.android('src', `@drawable/${backgroundImage[0]}`);
@@ -404,7 +390,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                     if (gravity === 'left|top') {
                                         gravity = '';
                                     }
-                                    const imageXml: BackgroundImage = {
+                                    const imageData: BackgroundImage = {
                                         top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
                                         right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
                                         bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
@@ -417,15 +403,43 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                         height: '',
                                         src: backgroundImage[i]
                                     };
-                                    if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                        images6.push(imageXml);
+                                    if (!(backgroundSize[i] === 'auto' || backgroundSize[i] === 'auto auto' || backgroundSize[i] === 'initial')) {
+                                        switch (backgroundSize[i]) {
+                                            case 'cover':
+                                            case 'contain':
+                                            case '100% 100%':
+                                                tileMode = '';
+                                                tileModeX = '';
+                                                tileModeY = '';
+                                                gravity = '';
+                                                break;
+                                            default:
+                                                const dimensions = backgroundSize[i].split(' ');
+                                                if (dimensions[0] === '100%') {
+                                                    tileModeX = '';
+                                                }
+                                                else if (dimensions[1] === '100%') {
+                                                    tileModeY = '';
+                                                }
+                                                dimensions.forEach((value, index) => {
+                                                    if (value !== 'auto' && value !== '100%') {
+                                                        const attr = index === 0 ? 'width' : 'height';
+                                                        if ($util.isPercent(backgroundSize[i])) {
+                                                            imageData[attr] = node.convertPercent(backgroundSize[i], index === 0);
+                                                        }
+                                                        else {
+                                                            imageData[attr] = node.convertPX(backgroundSize[i]);
+                                                        }
+                                                    }
+                                                });
+                                                break;
+                                        }
+                                    }
+                                    if (imageData.width === '' && imageData.height === '' && (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '')) {
+                                        images6.push(imageData);
                                     }
                                     else {
-                                        if (stored.backgroundSize.length > 0) {
-                                            imageXml.width = stored.backgroundSize[0];
-                                            imageXml.height = stored.backgroundSize[1];
-                                        }
-                                        images5.push(imageXml);
+                                        images5.push(imageData);
                                     }
                                 }
                             }

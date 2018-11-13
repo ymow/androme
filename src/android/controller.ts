@@ -10,6 +10,7 @@ import ViewGroup from './viewgroup';
 
 import { createAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
 
+import $Node = androme.lib.base.Node;
 import $NodeList = androme.lib.base.NodeList;
 
 import $color = androme.lib.color;
@@ -195,7 +196,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                             current.android(LAYOUT_MAP.relative[current.imageElement || current.is($enum.NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline'], alignWith.stringId);
                                         }
                                         else if (alignWith.position === 'relative' && current.bounds.height < alignWith.bounds.height && current.lineHeight === 0) {
-                                            current.android(LAYOUT_MAP.relative[$util.convertInt(alignWith.top) > 0 ? 'top' : 'bottom'], alignWith.stringId);
+                                            current.android(LAYOUT_MAP.relative[alignWith.top ? 'top' : 'bottom'], alignWith.stringId);
                                         }
                                     }
                                     if (alignWith.imageElement && (!baseExcluded || current.bounds.height > baseExcluded.bounds.height)) {
@@ -235,7 +236,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 layoutMap = LAYOUT_MAP.relative;
                 let boxWidth = node.box.width;
                 if (node.renderParent.overflowX) {
-                    boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, { map: 'initial' });
+                    boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, true);
                 }
                 else if (node.renderParent.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
                     const minLeft: number = Math.min.apply(null, nodes.map(item => item.linear.left));
@@ -292,7 +293,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     }
                     else if (previous) {
                         const items = rows[rows.length - 1];
-                        const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
+                        const siblings = $dom.getBetweenElements(previous.baseElement, current.baseElement, false, true);
                         const viewGroup = current.groupElement && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
                         const previousSibling = current.previousSibling();
                         const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
@@ -1577,7 +1578,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     if (previous) {
                         let bottom = previous.linear.bottom;
                         if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
-                            const elements = $dom.getElementsBetweenSiblings(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
+                            const elements = $dom.getBetweenElements(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, current.baseElement).filter(element => element.tagName === 'BR');
                             if (elements.length > 0) {
                                 bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
                             }
@@ -1601,7 +1602,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return group;
     }
 
-    public renderGroup(node: T, parent: T, nodeType: number | string, options?: ObjectMap<StringMap>) {
+    public renderGroup(node: T, parent: T, nodeType: number | string, options: ExternalData = {}) {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         if (typeof nodeType === 'number') {
             node.nodeType = nodeType;
@@ -1611,20 +1612,17 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             case NODE_ANDROID.LINEAR:
                 options = {
                     android: {
-                        orientation: options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL
+                        orientation: options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL
                     }
                 };
                 break;
             case NODE_ANDROID.GRID:
                 options = {
                     android: {
-                        columnCount: options && $util.convertInt(options.columnCount) > 0 ? options.columnCount.toString() : '2',
-                        rowCount: options && $util.convertInt(options.rowCount) > 0 ? options.rowCount.toString() : ''
+                        columnCount: options.columnCount > 0 ? options.columnCount.toString() : '2',
+                        rowCount: options.rowCount > 0 ? options.rowCount.toString() : ''
                     }
                 };
-                break;
-            default:
-                options = {};
                 break;
         }
         node.setNodeType(nodeType);
@@ -1819,9 +1817,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     node.android('maxLength', element.maxLength.toString());
                 }
                 if (!node.hasWidth) {
-                    const cols = $util.convertInt(element.cols);
-                    if (cols > 0) {
-                        node.css('width', $util.formatPX(cols * 10));
+                    if (element.cols > 0) {
+                        node.css('width', $util.formatPX(element.cols * 10));
                     }
                 }
                 node.android('hint', element.placeholder);
@@ -1903,11 +1900,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     case 'url':
                     case 'email':
                     case 'password':
-                        if (!node.hasWidth) {
-                            const size = $util.convertInt(element.size);
-                            if (size > 0) {
-                                node.css('width', $util.formatPX(size * 10));
-                            }
+                        if (!node.hasWidth && element.size > 0) {
+                            node.css('width', $util.formatPX(element.size * 10));
                         }
                         break;
                 }
@@ -1952,7 +1946,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 break;
             case NODE_ANDROID.LINE:
                 if (!node.hasHeight) {
-                    node.android('layout_height', $util.formatPX(node.borderTopWidth + node.borderBottomWidth + node.paddingTop + node.paddingBottom || 1));
+                    node.android('layout_height', $util.formatPX($Node.getContentBoxHeight(node) || 1));
                 }
                 break;
         }
@@ -1964,7 +1958,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         );
     }
 
-    public renderNodeStatic(nodeType: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
+    public renderNodeStatic(nodeType: number | string, depth: number, options: ExternalData = {}, width = '', height = '', node?: T, children?: boolean) {
         if (!node) {
             node = new View(0, undefined, this.delegateNodeInit) as T;
         }
@@ -2279,6 +2273,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return (self: T) => {
             self.localSettings = {
                 targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : 26,
+                resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : 160,
                 supportRTL: settings.supportRTL !== undefined ? settings.supportRTL : true,
                 autoSizePaddingAndBorderWidth: settings.autoSizePaddingAndBorderWidth !== undefined ? settings.autoSizePaddingAndBorderWidth : true,
                 ellipsisOnTextOverflow: settings.ellipsisOnTextOverflow !== undefined ? settings.ellipsisOnTextOverflow : true,

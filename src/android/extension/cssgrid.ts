@@ -49,12 +49,12 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         minSize = size;
                         size = 0;
                     }
-                    else if (value.indexOf('fr') !== -1) {
+                    else if (value.endsWith('fr')) {
                         sizeWeight += parseInt(value);
                         minSize = size;
                         size = 0;
                     }
-                    else {
+                    else if (value.endsWith('px')) {
                         const gap = parseInt(value);
                         if (minSize === 0) {
                             size += gap;

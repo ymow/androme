@@ -6,6 +6,7 @@ import { BUILD_ANDROID } from './lib/enumeration';
 
 import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
 
+import $Node = androme.lib.base.Node;
 import $NodeList = androme.lib.base.NodeList;
 import $Resource = androme.lib.base.Resource;
 
@@ -42,10 +43,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private static _documentBody: View;
 
-        private static getPaddedHeight(node: View) {
-            return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
-        }
-
         public readonly constraint: Constraint = { current: {} } as any;
         public readonly renderChildren: View[] = [];
 
@@ -53,6 +50,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         protected _controlName: string;
         protected _renderParent: View;
         protected _documentParent: View;
+        protected _fontSize: number;
         protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
         protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
@@ -60,6 +58,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         private _app: StringMap = {};
         private _localSettings: LocalSettings & ObjectMap<any> = {
             targetAPI: 0,
+            resolutionDPI: 160,
             supportRTL: false
         };
 
@@ -251,6 +250,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             });
         }
 
+        public convertPX(value: string) {
+            return $util.convertPX(value, this.dpi, this.fontSize);
+        }
+
         public localizeString(value: string) {
             if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
                 return replaceRTL(value, this.localSettings);
@@ -357,7 +360,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.width;
                     }
                     else {
-                        return parent.styleElement ? (<HTMLElement> parent.element).offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
+                        return parent.styleElement ? (<HTMLElement> parent.element).offsetWidth - $Node.getContentBoxWidth(parent) : 0;
                     }
                 })();
                 const heightParent = (() => {
@@ -368,7 +371,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.height;
                     }
                     else {
-                        return parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
+                        return parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - $Node.getContentBoxHeight(parent) : 0;
                     }
                 })();
                 const styleMap = this.styleMap;
@@ -397,7 +400,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                     this.android('layout_columnWeight', (parseInt(styleMap.width) / 100).toFixed(2));
                                 }
                                 else {
-                                    const widthPercent = Math.ceil(this.bounds.width) - (!tableElement ? this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth : 0);
+                                    const widthPercent = Math.ceil(this.bounds.width) - (!tableElement ? $Node.getContentBoxWidth(this) : 0);
                                     this.android('layout_width', $util.formatPX(widthPercent), false);
                                 }
                             }
@@ -414,12 +417,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             }
                         }
                         if (this.has('minWidth')) {
-                            const minWidth = $util.convertPX(styleMap.minWidth, this.css('fontSize'), this.bounds.width);
+                            const minWidth = $util.isPercent(styleMap.minWidth) ? $util.formatPX(this.bounds.width) : this.convertPX(styleMap.minWidth);
                             this.android('layout_width', 'wrap_content', false);
                             this.android('minWidth', minWidth, false);
                         }
                         if (this.has('maxWidth')) {
-                            const maxWidth = $util.convertPX(styleMap.maxWidth, this.css('fontSize'), this.bounds.width);
+                            const maxWidth = $util.isPercent(styleMap.maxWidth) ? $util.formatPX(this.bounds.width) : this.convertPX(styleMap.maxWidth);
                             if (this.is($enum.NODE_STANDARD.TEXT)) {
                                 this.android('maxWidth', maxWidth);
                             }
@@ -488,7 +491,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 this.android('layout_height', 'match_parent', false);
                             }
                             else {
-                                const heightPercent = Math.ceil(this.bounds.height) - (!tableElement ? this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth : 0);
+                                const heightPercent = Math.ceil(this.bounds.height) - (!tableElement ? $Node.getContentBoxHeight(this) : 0);
                                 this.android('layout_height', $util.formatPX(heightPercent), false);
                             }
                         }
@@ -509,12 +512,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     }
                     if (this.has('minHeight')) {
-                        const minHeight = $util.convertPX(styleMap.minHeight, this.css('fontSize'), this.bounds.height);
+                        const minHeight = $util.isPercent(styleMap.minHeight) ? $util.formatPX(this.bounds.height) : this.convertPX(styleMap.minHeight);
                         this.android('layout_height', 'wrap_content', false);
                         this.android('minHeight', minHeight, false);
                     }
                     if (this.has('maxHeight')) {
-                        const maxHeight = $util.convertPX(styleMap.maxHeight, this.css('fontSize'), this.bounds.height);
+                        const maxHeight = $util.isPercent(styleMap.maxHeight) ? $util.formatPX(this.bounds.height) : this.convertPX(styleMap.maxHeight);
                         if (this.is($enum.NODE_STANDARD.TEXT)) {
                             this.android('maxHeight', maxHeight);
                         }
@@ -927,33 +930,18 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                 }
-                else {
-                    if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                        if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
-                            const minWidth = $util.convertInt(this.android('minWidth'));
-                            const minHeight = $util.convertInt(this.android('minHeight'));
-                            const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
-                            const paddedHeight = View.getPaddedHeight(this);
-                            if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', 0, { map: 'initial' }) > 0) {
-                                this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
-                            }
-                            if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', 0, { map: 'initial' }) > 0 && (
-                                    this.lineHeight === 0 ||
-                                    this.lineHeight < this.box.height ||
-                                    this.lineHeight === this.toInt('height')
-                               ))
-                            {
-                                this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
-                            }
-                            if (minWidth > 0 && paddedWidth > 0) {
-                                this.android('minWidth', $util.formatPX(minWidth + paddedWidth));
-                            }
-                            if (minHeight > 0 && paddedHeight > 0) {
-                                this.android('minHeight', $util.formatPX(minHeight + paddedHeight));
-                            }
+                else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                    if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
+                        const paddedWidth = $Node.getContentBoxWidth(this);
+                        const paddedHeight = $Node.getContentBoxHeight(this);
+                        if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', 0, true) > 0) {
+                            this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                         }
-                        borderWidth = true;
+                        if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', 0, true) > 0 && (this.lineHeight === 0 || this.lineHeight < this.box.height || this.lineHeight === this.toInt('height'))) {
+                            this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
+                        }
                     }
+                    borderWidth = true;
                 }
                 if (borderWidth) {
                     this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
@@ -999,12 +987,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         while (current && !this.initial.children.includes(current));
                         return current;
                     })();
-                    const elements = $dom.getElementsBetweenSiblings(
-                        previous === null ? null
-                                          : (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement),
-                        node.baseElement
-                    )
-                    .filter(element => {
+                    const elements = $dom.getBetweenElements(previous ? (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement) : null, node.baseElement).filter(element => {
                         const item = $dom.getNodeFromElement<View>(element);
                         return item && (item.lineBreak || (item.excluded && item.blockStatic));
                     });
@@ -1111,7 +1094,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
                     const offsetHeight = $util.convertInt(View.getCustomizationValue(this.localSettings.targetAPI, 'SUB', 'android', BOX_ANDROID.MARGIN_TOP));
                     if (offsetHeight > 0) {
-                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
+                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + $Node.getContentBoxHeight(this)));
                     }
                 }
                 if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) || renderChildren.some(node => node.floating || !node.siblingflow))) {
@@ -1147,7 +1130,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 if (offset !== 0) {
                     this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
                     if (offset < 0 && this.display !== 'inline-block' && renderParent.layoutHorizontal && renderParent.inlineHeight) {
-                        renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + View.getPaddedHeight(renderParent)));
+                        renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + $Node.getContentBoxHeight(renderParent)));
                     }
                 }
             }
@@ -1344,6 +1327,17 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
         get blockHeight() {
             return this._android.layout_height === 'match_parent';
+        }
+
+        get dpi() {
+            return this.localSettings.resolutionDPI;
+        }
+
+        get fontSize() {
+            if (this._fontSize === undefined) {
+                this._fontSize = parseInt($util.convertPX(this.css('fontSize'), this.dpi, 0)) || 16;
+            }
+            return this._fontSize;
         }
 
         set localSettings(value) {

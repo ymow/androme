@@ -5,7 +5,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
-import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
+import { convertFloat, convertInt, formatPercent, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -155,7 +155,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     mapWidth[index] = '0px';
                 }
                 else if (percentTotal - percent < 0) {
-                    mapWidth[index] = `${percentTotal}%`;
+                    mapWidth[index] = formatPercent(percentTotal);
                 }
                 percentTotal -= percent;
             });

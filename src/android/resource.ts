@@ -49,7 +49,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                         const radial = <RadialGradient> shape;
                         let boxPosition: BoxPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
-                            boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), true, !hasStop);
+                            boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.dpi, node.fontSize, true, !hasStop);
                         }
                         if (hasStop) {
                             gradient.gradientRadius = node.bounds.width.toString();

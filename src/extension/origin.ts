@@ -3,7 +3,7 @@ import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { convertInt, formatPX, partition } from '../lib/util';
+import { formatPX, partition } from '../lib/util';
 
 export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
@@ -41,8 +41,8 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        const left = convertInt(current.left) + current.marginLeft;
-                        const right = convertInt(current.right);
+                        const left = (current.left || 0) + current.marginLeft;
+                        const right = current.right || 0;
                         if (left < 0) {
                             if (node.marginLeft >= Math.abs(left)) {
                                 leftType = 2;

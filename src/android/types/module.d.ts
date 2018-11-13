@@ -1,6 +1,5 @@
 export interface SettingsAndroid extends Settings {
     targetAPI: number;
-    density: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
@@ -13,6 +12,7 @@ export interface SettingsAndroid extends Settings {
 }
 
 export interface EnvironmentSettings {
+    resolutionDPI: number;
     targetAPI: number;
     supportRTL: boolean;
 }

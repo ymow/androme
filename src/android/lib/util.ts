@@ -58,9 +58,9 @@ export function convertUnit(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function replaceUnit(value: string, { density = 160, convertPixels = 'dp' }, font = false) {
+export function replaceUnit(value: string, { resolutionDPI = 160, convertPixels = 'dp' }, font = false) {
     if (convertPixels === 'dp' || font) {
-        return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
+        return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], resolutionDPI, font) + capture[3]);
     }
     return value;
 }

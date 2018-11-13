@@ -7,6 +7,7 @@ type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 interface Settings {
     builtInExtensions: string[];
+    resolutionDPI: number;
     renderInlineText: boolean;
     preloadImages: boolean;
     autoSizePaddingAndBorderWidth: boolean;

@@ -63,7 +63,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 let left = 0;
                 let top = 0;
                 if (mainData.imageSrc !== '') {
-                    const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
+                    const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.dpi, node.fontSize);
                     left = boxPosition.left;
                     top = boxPosition.top;
                     image = Resource.addImageUrl(mainData.imageSrc);

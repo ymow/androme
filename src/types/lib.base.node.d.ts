@@ -98,6 +98,7 @@ declare global {
             readonly floating: boolean;
             readonly float: string;
             readonly textContent: string;
+            readonly fontSize: number;
             readonly overflowX: boolean;
             readonly overflowY: boolean;
             readonly baseline: boolean;
@@ -157,9 +158,11 @@ declare global {
             css(attr: object | string, value?: string): string;
             cssInitial(attr: string, complete?: boolean): string;
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
+            convertPX(value: string): string;
+            convertPercent(value: string, horizontal: boolean, parentBounds?: boolean): string;
             has(attr: string, checkType?: number, options?: {}): boolean;
             hasBit(attr: string, value: number): boolean;
-            toInt(attr: string, defaultValue?: number, options?: StringMap): number;
+            toInt(attr: string, defaultValue?: number, initial?: boolean): number;
             hasAlign(value: number): boolean;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
@@ -177,6 +180,8 @@ declare global {
         }
 
         export class Node implements Node {
+            public static getContentBoxWidth<T extends Node>(node: T): number;
+            public static getContentBoxHeight<T extends Node>(node: T): number;
             public static getNodeFromElement<T>(element: UndefNull<Element>): T | null;
         }
 
