@@ -23,6 +23,7 @@ import Table from './extension/table';
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
 import ResourceFonts from './extension/resource/fonts';
+import ResourceIncludes from './extension/resource/includes';
 import ResourceStrings from './extension/resource/strings';
 import ResourceStyles from './extension/resource/styles';
 import ResourceSvg from './extension/resource/svg';
@@ -74,6 +75,7 @@ const lib = {
             Background: ResourceBackground,
             Dimens: ResourceDimens,
             Fonts: ResourceFonts,
+            Includes: ResourceIncludes,
             Strings: ResourceStrings,
             Styles: ResourceStyles,
             Svg: ResourceSvg
@@ -202,6 +204,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),
             [EXT_ANDROID.RESOURCE_STRINGS]: new ResourceStrings(EXT_ANDROID.RESOURCE_STRINGS, framework),

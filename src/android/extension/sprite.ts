@@ -14,7 +14,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
         let container: T | undefined;
         const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
         if (image && image.uri && image.position) {
-            container = new View(this.application.cacheProcessing.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
+            container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
             container.siblingIndex = node.siblingIndex;
             container.nodeName = node.nodeName;
             container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
@@ -22,7 +22,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             container.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             parent.replaceNode(node, container);
             container.render(parent);
-            this.application.cacheProcessing.append(container, false);
+            this.application.processing.cache.append(container, false);
             node.parent = container;
             node.nodeType = $enum.NODE_STANDARD.IMAGE;
             node.setNodeType(NODE_ANDROID.IMAGE);

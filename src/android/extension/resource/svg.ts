@@ -35,7 +35,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     }
 
     public afterResources() {
-        for (const node of this.application.cacheProcessing) {
+        for (const node of this.application.processing.cache) {
             const stored: $Svg = node.data(Resource.KEY_NAME, 'imageSource');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
                 let result = '';

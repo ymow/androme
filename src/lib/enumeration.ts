@@ -5,11 +5,10 @@ export enum APP_FRAMEWORK {
 
 export enum APP_SECTION {
     NONE = 0,
-    INCLUDE = 2,
-    DOM_TRAVERSE = 4,
-    EXTENSION = 8,
-    RENDER = 16,
-    ALL = 30
+    DOM_TRAVERSE = 2,
+    EXTENSION = 4,
+    RENDER = 8,
+    ALL = 14
 }
 
 export enum BOX_STANDARD {

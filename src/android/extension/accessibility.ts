@@ -10,7 +10,7 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
     public readonly eventOnly = true;
 
     public afterBaseLayout() {
-        for (const node of this.application.cacheProcessing.elements) {
+        for (const node of this.application.processing.cache.elements) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 switch (node.controlName) {

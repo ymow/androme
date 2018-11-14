@@ -62,6 +62,19 @@ interface AppCurrent<T extends androme.lib.base.Node> {
     cache: androme.lib.base.NodeList<T>;
 }
 
+interface AppSession<T> {
+    cache: T;
+    image: Map<string, ImageAsset>;
+    renderQueue: Map<string, string[]>;
+}
+
+interface AppProcessing<T, U> {
+    cache: U;
+    depthMap: Map<string, Map<number, string>>;
+    node: T | null;
+    layout: FileAsset | null;
+}
+
 interface ExtensionDependency {
     name: string;
     preload: boolean;

@@ -103,9 +103,17 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
     };
 }
 
-export function installExtension(ext: Extension<T>) {
-    if (main && ext instanceof Extension) {
-        return main.installExtension(ext);
+export function installExtension(ext: Extension<T> | string) {
+    if (main) {
+        if (ext instanceof Extension) {
+            return main.installExtension(ext);
+        }
+        else {
+            const module = main.builtInExtensions[ext] || getExtension(ext);
+            if (module) {
+                return main.installExtension(module);
+            }
+        }
     }
     return false;
 }

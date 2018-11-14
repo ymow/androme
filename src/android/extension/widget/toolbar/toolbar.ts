@@ -37,7 +37,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             if (element.dataset.target) {
                 const target = document.getElementById(element.dataset.target);
                 if (target && element.parentElement !== target && !$util.includes(target.dataset.ext, WIDGET_NAME.COORDINATOR)) {
-                    this.application.viewElements.add(element);
+                    this.application.parseElements.add(element);
                 }
             }
         }
@@ -195,10 +195,10 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             else {
                 $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = this.createPlaceholder(application.cacheProcessing.nextId, node, appBarChildren) as T;
+            appBarNode = this.createPlaceholder(application.processing.cache.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.nodeId = $android_util.stripId(optionsAppBar['android'].id);
-            application.cacheProcessing.append(appBarNode, appBarChildren.length > 0);
+            application.processing.cache.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.APPBAR,
                 target ? -1 : depth,
@@ -217,11 +217,11 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 }
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                collapsingToolbarNode = this.createPlaceholder(application.cacheProcessing.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode = this.createPlaceholder(application.processing.cache.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
-                    application.cacheProcessing.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
+                    application.processing.cache.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                     const content = controller.renderNodeStatic(
                         $android_const.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,

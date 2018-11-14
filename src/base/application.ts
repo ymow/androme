@@ -91,21 +91,25 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public resourceHandler: Resource<T>;
     public nodeObject: Constructor<T>;
     public builtInExtensions: ObjectMap<Extension<T>>;
-    public renderQueue: ObjectMap<string[]> = {};
-    public nodeProcessing: T | undefined;
     public loading = false;
     public closed = false;
-    public readonly cacheImage = new Map<string, ImageAsset>();
-    public readonly cacheSession = new NodeList<T>();
-    public readonly cacheProcessing = new NodeList<T>();
-    public readonly depthMapProcessing = new Map<string, Map<number, string>>();
     public readonly extensions = new Set<Extension<T>>();
-    public readonly viewElements = new Set<HTMLElement>();
+    public readonly parseElements = new Set<HTMLElement>();
+    public readonly session: AppSession<NodeList<T>> = {
+        cache: new NodeList<T>(),
+        image: new Map<string, ImageAsset>(),
+        renderQueue: new Map<string, string[]>()
+    };
+    public readonly processing: AppProcessing<T, NodeList<T>> = {
+        cache: new NodeList<T>(),
+        depthMap: new Map<string, Map<number, string>>(),
+        node: null,
+        layout: null
+    };
 
-    private _cacheRoot = new Set<Element>();
     private _settings: Settings;
+    private _cacheRoot = new Set<Element>();
     private _renderPosition: ObjectMap<number[]> = {};
-    private _currentIndex = -1;
     private readonly _views: FileAsset[] = [];
     private readonly _includes: FileAsset[] = [];
 
@@ -114,13 +118,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public registerController(controller: Controller<T>) {
         controller.application = this;
-        controller.cache = this.cacheProcessing;
+        controller.cache = this.processing.cache;
         this.viewController = controller;
     }
 
     public registerResource(resource: Resource<T>) {
         resource.application = this;
-        resource.cache = this.cacheProcessing;
+        resource.cache = this.processing.cache;
         this.resourceHandler = resource;
     }
 
@@ -149,7 +153,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public finalize() {
         this.processRenderQueue();
-        const nodes = this.cacheSession.filter(node => node.visible && node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
+        const nodes = this.session.cache.filter(node => node.visible && node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
         for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setBaseLayout();
@@ -187,23 +191,22 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public reset() {
-        this.cacheSession.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport'));
+        this.session.cache.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport'));
         for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
         }
         this.appName = '';
-        this.renderQueue = {};
-        this.cacheImage.clear();
-        this.cacheSession.reset();
-        this.cacheProcessing.reset();
+        this.session.renderQueue.clear();
+        this.session.image.clear();
+        this.session.cache.reset();
+        this.processing.cache.reset();
         this.viewController.reset();
         this.resourceHandler.reset();
         this._cacheRoot.clear();
         this._views.length = 0;
         this._includes.length = 0;
         this._renderPosition = {};
-        this._currentIndex = -1;
         for (const ext of this.extensions) {
             ext.subscribers.clear();
             ext.subscribersChild.clear();
@@ -213,7 +216,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public parseDocument(...elements: any[]): FunctionMap<void> {
         let __THEN: () => void;
-        this.viewElements.clear();
+        this.parseElements.clear();
         this.loading = false;
         this.setStyleMap();
         if (this.appName === '' && elements.length === 0) {
@@ -222,22 +225,22 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const item of elements) {
             const element = typeof item === 'string' ? document.getElementById(item) : item;
             if (element && isStyleElement(element)) {
-                this.viewElements.add(element);
+                this.parseElements.add(element);
             }
         }
-        const documentRoot = this.viewElements.values().next().value;
+        const documentRoot = this.parseElements.values().next().value;
         const parseResume = () => {
             this.loading = false;
             if (this.settings.preloadImages) {
                 Array.from(documentRoot.getElementsByClassName('androme.preload')).forEach(element => documentRoot.removeChild(element));
             }
-            for (const [uri, image] of this.cacheImage.entries()) {
+            for (const [uri, image] of this.session.image.entries()) {
                 Resource.ASSETS.images.set(uri, image);
             }
             for (const ext of this.extensions) {
                 ext.beforeParseDocument();
             }
-            for (const element of this.viewElements as Set<HTMLElement>) {
+            for (const element of this.parseElements as Set<HTMLElement>) {
                 if (this.appName === '') {
                     this.appName = element.id || 'untitled';
                 }
@@ -268,12 +271,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         };
         if (this.settings.preloadImages) {
-            Array.from(this.viewElements).forEach(element => {
+            Array.from(this.parseElements).forEach(element => {
                 element.querySelectorAll('svg image').forEach((image: SVGImageElement) => {
                     if (image.href) {
                         const uri = resolvePath(image.href.baseVal);
                         if (uri) {
-                            this.cacheImage.set(uri, {
+                            this.session.image.set(uri, {
                                 width: image.width.baseVal.value,
                                 height: image.height.baseVal.value,
                                 uri
@@ -282,7 +285,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 });
             });
-            for (const image of this.cacheImage.values()) {
+            for (const image of this.session.image.values()) {
                 if (image.width === 0 && image.height === 0 && image.uri) {
                     const imageElement = <HTMLImageElement> document.createElement('IMG');
                     imageElement.src = image.uri;
@@ -298,7 +301,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        const images = Array.from(this.viewElements).map(element => {
+        const images = Array.from(this.parseElements).map(element => {
             const incomplete: HTMLImageElement[] = [];
             Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
                 if (!(image instanceof SVGImageElement)) {
@@ -890,11 +893,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
         };
         if (documentRoot && this._views.length > 0 && this._views[0].content === '') {
             this._views[0] = layout;
-            this._currentIndex = 0;
         }
         else {
-            this.layoutProcessing = layout;
+            this._views.push(layout);
         }
+        this.processing.layout = layout;
     }
 
     public addIncludeFile(filename: string, content: string) {
@@ -905,16 +908,66 @@ export default class Application<T extends Node> implements androme.lib.base.App
         });
     }
 
-    public addRenderQueue(id: string, views: string[]) {
-        if (this.renderQueue[id] === undefined) {
-            this.renderQueue[id] = [];
+    public addRenderTemplate(node: T, parent: T, output: string, group = false) {
+        if (output !== '') {
+            if (group) {
+                node.renderChildren.some((item: T) => {
+                    for (const templates of this.processing.depthMap.values()) {
+                        let content = templates.get(item.id);
+                        if (content) {
+                            const indent = node.renderDepth + 1;
+                            if (item.renderDepth !== indent) {
+                                content = replaceIndent(content, indent);
+                                item.renderDepth = indent;
+                            }
+                            templates.set(item.id, content);
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            }
+            if (!this.parseElements.has(<HTMLElement> node.element)) {
+                if (node.dataset.target) {
+                    const target = document.getElementById(node.dataset.target);
+                    if (target && target !== parent.element) {
+                        this.addRenderQueue(node.dataset.target, [output]);
+                        node.positioned = true;
+                        return;
+                    }
+                }
+                else if (parent.dataset.target) {
+                    const target = document.getElementById(parent.dataset.target);
+                    if (target) {
+                        this.addRenderQueue(parent.nodeId, [output]);
+                        node.dataset.target = parent.nodeId;
+                        return;
+                    }
+                }
+            }
+            const key = parent.id + (node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
+            if (!this.processing.depthMap.has(key)) {
+                this.processing.depthMap.set(key, new Map<number, string>());
+            }
+            const template = this.processing.depthMap.get(key);
+            if (template) {
+                template.set(node.id, output);
+            }
         }
-        this.renderQueue[id].push(...views);
+    }
+
+    public addRenderQueue(id: string, templates: string[]) {
+        if (!this.session.renderQueue.has(id)) {
+            this.session.renderQueue.set(id, templates);
+        }
+        else {
+            (this.session.renderQueue.get(id) as string[]).push(...templates);
+        }
     }
 
     public addPreloadImage(element: HTMLImageElement) {
         if (element && element.complete && hasValue(element.src)) {
-            this.cacheImage.set(element.src, {
+            this.session.image.set(element.src, {
                 width: element.naturalWidth,
                 height: element.naturalHeight,
                 uri: element.src
@@ -971,9 +1024,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
             Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
         }
         const elements = documentRoot !== document.body ? documentRoot.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
-        this.nodeProcessing = undefined;
-        this.cacheProcessing.delegateAppend = undefined;
-        this.cacheProcessing.clear();
+        this.processing.node = null;
+        this.processing.cache.delegateAppend = undefined;
+        this.processing.cache.clear();
         for (const ext of this.extensions) {
             ext.beforeInit(documentRoot);
         }
@@ -981,7 +1034,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (nodeRoot) {
             nodeRoot.parent = new this.nodeObject(0, (documentRoot === document.body ? documentRoot : documentRoot.parentElement) || document.body, this.viewController.delegateNodeInit);
             nodeRoot.documentRoot = true;
-            this.nodeProcessing = nodeRoot;
+            this.processing.node = nodeRoot;
         }
         else {
             return false;
@@ -998,9 +1051,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
             );
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
-            if (!this.viewElements.has(element)) {
+            if (!this.parseElements.has(element)) {
                 prioritizeExtensions(documentRoot, element, Array.from(this.extensions)).some(item => item.init(element));
-                if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
+                if (!this.parseElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
                     if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
                         setElementCache(element, 'inlineSupport', true);
                     }
@@ -1010,7 +1063,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (current === documentRoot) {
                             break;
                         }
-                        else if (current !== documentRoot && this.viewElements.has(current)) {
+                        else if (current !== documentRoot && this.parseElements.has(current)) {
                             valid = false;
                             break;
                         }
@@ -1034,8 +1087,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        if (this.cacheProcessing.length > 0) {
-            for (const node of this.cacheProcessing) {
+        if (this.processing.cache.length > 0) {
+            for (const node of this.processing.cache) {
                 const nodes: Element[] = [];
                 let valid = false;
                 Array.from(node.element.childNodes).forEach((element: Element) => {
@@ -1057,7 +1110,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             const preAlignment: ObjectIndex<StringMap> = {};
             const direction: HTMLElement[] = [];
-            for (const node of this.cacheProcessing) {
+            for (const node of this.processing.cache) {
                 if (node.styleElement) {
                     const element = <HTMLElement> node.element;
                     const textAlign = node.css('textAlign');
@@ -1107,7 +1160,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 node.setMultiLine();
             }
-            for (const node of this.cacheProcessing) {
+            for (const node of this.processing.cache) {
                 if (node.styleElement) {
                     const element = <HTMLElement> node.element;
                     const attrs = preAlignment[node.id];
@@ -1127,11 +1180,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            for (const node of this.cacheProcessing) {
+            for (const node of this.processing.cache) {
                 if (!node.documentRoot) {
                     let parent: T | null = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T;
                     if (!parent && !node.pageflow) {
-                        parent = this.nodeProcessing;
+                        parent = this.processing.node;
                     }
                     if (parent) {
                         node.parent = parent;
@@ -1142,7 +1195,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            for (const node of this.cacheProcessing.elements) {
+            for (const node of this.processing.cache.elements) {
                 if (node.htmlElement) {
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
@@ -1157,7 +1210,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            sortAsc(this.cacheProcessing.children, 'depth', 'id');
+            sortAsc(this.processing.cache.children, 'depth', 'id');
             for (const ext of this.extensions) {
                 ext.afterInit(documentRoot);
             }
@@ -1168,7 +1221,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     protected setBaseLayout() {
         const localSettings = this.viewController.localSettings;
-        const documentRoot = this.nodeProcessing as T;
+        const documentRoot = this.processing.node as T;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
@@ -1195,7 +1248,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         setMapY(-1, 0, documentRoot.parent as T);
         let maxDepth = 0;
-        for (const node of this.cacheProcessing.visible) {
+        for (const node of this.processing.cache.visible) {
             const x = Math.floor(node.linear.left);
             if (mapX[node.depth] === undefined) {
                 mapX[node.depth] = {};
@@ -1210,7 +1263,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (let i = 0; i < maxDepth; i++) {
             mapY.set((i * -1) - 2, new Map<number, T>());
         }
-        this.cacheProcessing.delegateAppend = (node: T) => {
+        this.processing.cache.delegateAppend = (node: T) => {
             deleteMapY(node.id);
             setMapY((node.initial.depth * -1) - 2, node.id, node);
             node.cascade().forEach((item: T) => {
@@ -1219,58 +1272,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             });
         };
         for (const depth of mapY.values()) {
-            this.depthMapProcessing.clear();
-            const insertTemplate = (node: T, parentId: string, value: string) => {
-                const key = parentId + (node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
-                if (!this.depthMapProcessing.has(key)) {
-                    this.depthMapProcessing.set(key, new Map<number, string>());
-                }
-                const template = this.depthMapProcessing.get(key);
-                if (template) {
-                    template.set(node.id, value);
-                }
-            };
-            const renderNode = (node: T, parent: T, output: string, group = false) => {
-                if (output !== '') {
-                    if (group) {
-                        node.some((item: T) => {
-                            for (const views of this.depthMapProcessing.values()) {
-                                let template = views.get(item.id);
-                                if (template) {
-                                    const indent = node.renderDepth + 1;
-                                    if (item.renderDepth !== indent) {
-                                        template = replaceIndent(template, indent);
-                                        item.renderDepth = indent;
-                                    }
-                                    insertTemplate(item, node.id.toString(), template);
-                                    views.delete(item.id);
-                                    return true;
-                                }
-                            }
-                            return false;
-                        });
-                    }
-                    if (!this.viewElements.has(<HTMLElement> node.element)) {
-                        if (node.dataset.target) {
-                            const target = document.getElementById(node.dataset.target);
-                            if (target && target !== parent.element) {
-                                this.addRenderQueue(node.dataset.target, [output]);
-                                node.positioned = true;
-                                return;
-                            }
-                        }
-                        else if (parent.dataset.target) {
-                            const target = document.getElementById(parent.dataset.target);
-                            if (target) {
-                                this.addRenderQueue(parent.nodeId, [output]);
-                                node.dataset.target = parent.nodeId;
-                                return;
-                            }
-                        }
-                    }
-                    insertTemplate(node, parent.id.toString(), output);
-                }
-            };
+            this.processing.depthMap.clear();
             for (const parent of depth.values()) {
                 if (parent.length === 0 || parent.every(node => node.rendered)) {
                     continue;
@@ -1307,7 +1309,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
-                    if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.viewElements.has(<HTMLElement> nodeY.element))) {
+                    if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.parseElements.has(<HTMLElement> nodeY.element))) {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
@@ -1486,7 +1488,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                             if (group) {
-                                renderNode(group, parentY, groupOutput, true);
+                                this.addRenderTemplate(group, parentY, groupOutput, true);
                                 parentY = nodeY.parent as T;
                             }
                             if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
@@ -1499,10 +1501,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
                             const result = ext.processChild(nodeY, parentY);
                             if (result.output !== '') {
-                                renderNode(nodeY, parentY, result.output);
+                                this.addRenderTemplate(nodeY, parentY, result.output);
                             }
                             if (result.renderAs && result.renderOutput) {
-                                renderNode(result.renderAs as T, parentY, result.renderOutput);
+                                this.addRenderTemplate(result.renderAs as T, parentY, result.renderOutput);
                             }
                             if (result.parent) {
                                 parentY = result.parent as T;
@@ -1521,10 +1523,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 if (item.is(nodeY) && item.condition(nodeY, parentY)) {
                                     const result =  item.processNode(nodeY, parentY, mapX, mapY);
                                     if (result.output !== '') {
-                                        renderNode(nodeY, parentY, result.output);
+                                        this.addRenderTemplate(nodeY, parentY, result.output);
                                     }
                                     if (result.renderAs && result.renderOutput) {
-                                        renderNode(result.renderAs as T, parentY, result.renderOutput);
+                                        this.addRenderTemplate(result.renderAs as T, parentY, result.renderOutput);
                                     }
                                     if (result.parent) {
                                         parentY = result.parent as T;
@@ -1687,37 +1689,36 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         else {
                             output = this.writeNode(nodeY, parentY, nodeY.controlName);
                         }
-                        renderNode(nodeY, parentY, output);
+                        this.addRenderTemplate(nodeY, parentY, output);
+                    }
+                }
+            }
+            for (const [key, templates] of this.processing.depthMap.entries()) {
+                const parentId = key.split(':')[0];
+                if (this._renderPosition[parentId]) {
+                    const sorted = new Map<number, string>();
+                    this._renderPosition[parentId].forEach(id => {
+                        const result = templates.get(id);
+                        if (result) {
+                            sorted.set(id, result);
+                        }
+                    });
+                    if (sorted.size === templates.size) {
+                        this.processing.depthMap.set(key, sorted);
                     }
                 }
             }
             for (const ext of this.extensions) {
                 ext.afterDepthLevel();
             }
-            for (const [key, templates] of this.depthMapProcessing.entries()) {
-                const content: string[] = [];
-                const [parentId, position] = key.split(':');
-                const views = Array.from(templates.values());
-                if (views.length > 0) {
-                    if (this._renderPosition[parentId]) {
-                        const parsed: string[] = [];
-                        this._renderPosition[parentId].forEach(value => {
-                            const result = views.find(view => view.indexOf(formatPlaceholder(value, '@')) !== -1);
-                            if (result) {
-                                parsed.push(result);
-                            }
-                        });
-                        if (parsed.length === views.length) {
-                            content.push(...parsed);
-                        }
-                    }
-                    if (content.length === 0) {
-                        content.push(...views);
-                    }
+            for (const [key, templates] of this.processing.depthMap.entries()) {
+                if (templates.size > 0) {
+                    const [parentId, position] = key.split(':');
+                    const views = Array.from(templates.values());
                     const id = parentId + (position ? `:${position}` : '');
                     const placeholder = formatPlaceholder(id);
                     if (baseTemplate.indexOf(placeholder) !== -1) {
-                        baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
+                        baseTemplate = replacePlaceholder(baseTemplate, placeholder, views.join(''));
                         empty = false;
                     }
                     else {
@@ -1737,7 +1738,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (empty && documentRoot.renderExtension.size === 0) {
             documentRoot.hide();
         }
-        this.cacheProcessing.sort((a, b) => {
+        this.processing.cache.sort((a, b) => {
             if (!a.visible) {
                 return 1;
             }
@@ -1774,7 +1775,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         });
-        this.cacheSession.children.push(...this.cacheProcessing.duplicate());
+        this.session.cache.children.push(...this.processing.cache.duplicate());
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.postBaseLayout(node);
@@ -1809,7 +1810,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
+                    node = new this.nodeObject(this.processing.cache.nextId, element, this.viewController.delegateNodeInit);
                     node.nodeName = 'PLAINTEXT';
                     if (parent) {
                         node.parent = parent;
@@ -1829,7 +1830,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         }
         else if (isStyleElement(element)) {
-            const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
+            const elementNode = new this.nodeObject(this.processing.cache.nextId, element, this.viewController.delegateNodeInit);
             if (isElementVisible(element, this.settings.hideOffScreenElements)) {
                 node = elementNode;
                 node.setExclusions();
@@ -1840,14 +1841,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         }
         if (node) {
-            this.cacheProcessing.append(node);
+            this.processing.cache.append(node);
         }
         return node;
     }
 
     protected processRenderQueue() {
         const template: StringMap = {};
-        for (const id in this.renderQueue) {
+        for (const [id, templates] of this.session.renderQueue.entries()) {
             const [nodeId] = id.split(':');
             let replaceId = nodeId;
             if (!isNumber(replaceId)) {
@@ -1856,9 +1857,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     replaceId = target.id.toString();
                 }
             }
-            let output = this.renderQueue[id].join('\n');
+            let output = templates.join('\n');
             if (replaceId !== nodeId) {
-                const target = this.cacheSession.find('id', parseInt(replaceId));
+                const target = this.session.cache.find('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
                     output = replaceIndent(output, depth);
@@ -1866,7 +1867,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     let match: RegExpExecArray | null;
                     let i = 0;
                     while ((match = pattern.exec(output)) !== null) {
-                        const node = this.cacheSession.find('id', parseInt(match[1]));
+                        const node = this.session.cache.find('id', parseInt(match[1]));
                         if (node) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;
@@ -1976,8 +1977,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         .map((value: string) => value.trim())
                                         .forEach(value => {
                                             const uri = cssResolveUrl(value);
-                                            if (uri !== '' && !this.cacheImage.has(uri)) {
-                                                this.cacheImage.set(uri, { width: 0, height: 0, uri });
+                                            if (uri !== '' && !this.session.image.has(uri)) {
+                                                this.session.image.set(uri, { width: 0, height: 0, uri });
                                             }
                                         });
                                 }
@@ -2041,21 +2042,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return this._settings;
     }
 
-    set layoutProcessing(value) {
-        this._currentIndex = this._views.length;
-        this._views.push(value);
-    }
-    get layoutProcessing() {
-        return this._views[this._currentIndex];
-    }
-
     get layouts() {
         return [...this._views, ...this._includes];
     }
 
     get viewData(): ViewData<NodeList<T>> {
         return {
-            cache: this.cacheSession,
+            cache: this.session.cache,
             views: this._views,
             includes: this._includes
         };

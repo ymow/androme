@@ -34,7 +34,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
                     item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
                 }
             });
-            this.application.viewElements.add(element);
+            this.application.parseElements.add(element);
             return true;
         }
         return false;
@@ -97,16 +97,16 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     }
 
     public postProcedure(node: T) {
-        const application = this.application;
         const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
         if (header && !header.hasHeight) {
             header.android('layout_height', 'wrap_content');
         }
-        if (application.renderQueue[node.nodeId]) {
-            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
+        const renderQueue = this.application.session.renderQueue;
+        if (renderQueue.has(node.nodeId)) {
+            const target = this.application.session.cache.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
             if (target) {
-                application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
-                delete application.renderQueue[node.nodeId];
+                renderQueue.set(target.nodeId, renderQueue.get(node.nodeId) as string[]);
+                renderQueue.delete(node.nodeId);
             }
         }
     }

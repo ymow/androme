@@ -171,7 +171,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
         const application = this.application;
         const settings = <SettingsAndroid> application.settings;
         const useColorAlias = application.getExtensionOptionsValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
-        application.cacheProcessing.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
+        application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
                 function checkPartialBackgroundPosition(current: string, adjacent: string, defaultPosition: string) {

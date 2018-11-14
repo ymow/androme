@@ -1,4 +1,5 @@
 export const EXT_ANDROID = {
+    RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',
     RESOURCE_SVG: 'android.resource.svg',
     RESOURCE_STRINGS: 'android.resource.strings',

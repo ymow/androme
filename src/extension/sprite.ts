@@ -20,7 +20,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
             }
             if (url !== '') {
                 url = cssResolveUrl(url);
-                const image = <ImageAsset> this.application.cacheImage.get(url);
+                const image = <ImageAsset> this.application.session.image.get(url);
                 if (image) {
                     const dpi = node.dpi;
                     const fontSize = node.fontSize;

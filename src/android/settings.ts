@@ -12,6 +12,7 @@ const settings: SettingsAndroid = {
         'androme.percent',
         'androme.custom',
         'androme.accessibility',
+        'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',
         'android.resource.strings',

@@ -7,6 +7,13 @@ import Node from '../base/node';
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
 import { convertFloat, convertInt, formatPercent, formatPX, isPercent, isUnit } from '../lib/util';
 
+const enum LAYOUT_TABLE {
+    NONE = 0,
+    STRETCH = 1,
+    FIXED = 2,
+    VARIABLE = 3
+}
+
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const table: T[] = [];
@@ -168,23 +175,23 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
             if (mapWidth.some(value => isPercent(value)) || mapWidth.every(value => isUnit(value) && value !== '0px')) {
-                return 3;
+                return LAYOUT_TABLE.VARIABLE;
             }
             if (mapWidth.every(value => value === mapWidth[0])) {
                 if (multiLine) {
-                    return node.some(td => td.has('height')) ? 2 : 3;
+                    return node.some(td => td.has('height')) ? LAYOUT_TABLE.FIXED : LAYOUT_TABLE.VARIABLE;
                 }
                 if (mapWidth[0] === 'auto') {
-                    return node.has('width') ? 3 : 0;
+                    return node.has('width') ? LAYOUT_TABLE.VARIABLE : LAYOUT_TABLE.NONE;
                 }
                 if (node.hasWidth) {
-                    return 2;
+                    return LAYOUT_TABLE.FIXED;
                 }
             }
             if (mapWidth.every(value => value === 'auto' || (isUnit(value) && value !== '0px'))) {
-                return 1;
+                return LAYOUT_TABLE.STRETCH;
             }
-            return 0;
+            return LAYOUT_TABLE.NONE;
         })();
         if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
             node.data(EXT_NAME.TABLE, 'expand', true);
@@ -247,7 +254,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 const columnWidth = mapWidth[columnIndex[i]];
                 if (columnWidth !== 'undefined') {
                     switch (typeWidth) {
-                        case 3:
+                        case LAYOUT_TABLE.VARIABLE:
                             if (columnWidth === 'auto') {
                                 if (mapPercent >= 1) {
                                     setBoundsWidth(td);
@@ -286,10 +293,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                                 td.data(EXT_NAME.TABLE, 'expand', false);
                             }
                             break;
-                        case 2:
+                        case LAYOUT_TABLE.FIXED:
                             td.css('width', '0px');
                             break;
-                        case 1:
+                        case LAYOUT_TABLE.STRETCH:
                             if (columnWidth === 'auto') {
                                 td.css('width', '0px');
                             }

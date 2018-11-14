@@ -83,7 +83,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 valid = Array.from(element.children).every(item => item.tagName === tagName);
                 let current = element.parentElement;
                 while (current) {
-                    if (current.tagName === 'NAV' && this.application.viewElements.has(current)) {
+                    if (current.tagName === 'NAV' && this.application.parseElements.has(current)) {
                         valid = false;
                         break;
                     }
@@ -97,7 +97,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                         item.style.display = 'block';
                     }
                 });
-                this.application.viewElements.add(<HTMLElement> element);
+                this.application.parseElements.add(<HTMLElement> element);
             }
         }
         return false;
@@ -250,8 +250,9 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                     $dom.deleteElementCache(item, 'andromeExternalDisplay');
                 }
             });
-            if (node === this.application.nodeProcessing) {
-                this.application.layoutProcessing.pathname = 'res/menu';
+            const processing = this.application.processing;
+            if (node === processing.node && processing.layout) {
+                processing.layout.pathname = 'res/menu';
             }
         }
     }

@@ -126,7 +126,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
         const settings = <SettingsAndroid> this.application.settings;
         const nameMap: ObjectMap<T[]> = {};
         const groupMap: ObjectMap<StyleList[]> = {};
-        for (const node of this.application.cacheSession) {
+        for (const node of this.application.session.cache) {
             if (node.visible && node.data(Resource.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
                 if (nameMap[node.nodeName] === undefined) {
                     nameMap[node.nodeName] = [];
@@ -395,7 +395,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
             }
         }
         for (const id in nodeMap) {
-            const node = this.application.cacheSession.find('id', parseInt(id));
+            const node = this.application.session.cache.find('id', parseInt(id));
             if (node) {
                 const styles = nodeMap[id].styles;
                 if (styles.length > 0) {

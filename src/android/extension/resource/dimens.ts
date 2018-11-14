@@ -20,7 +20,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
 
     public afterProcedure() {
         const groups: ObjectMapNested<T[]> = {};
-        for (const node of this.application.cacheSession.visible) {
+        for (const node of this.application.session.cache.visible) {
             const nodeName = node.nodeName.toLowerCase();
             if (groups[nodeName] === undefined) {
                 groups[nodeName] = {};

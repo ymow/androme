@@ -12,7 +12,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
     public readonly eventOnly = true;
 
     public afterResources() {
-        for (const node of this.application.cacheProcessing) {
+        for (const node of this.application.processing.cache) {
             if (node.tagName === 'SELECT') {
                 const stored: ObjectMap<string[]> = node.data(Resource.KEY_NAME, 'optionArray');
                 if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)) {
