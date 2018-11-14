@@ -100,7 +100,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return { output };
     }
 
-    public postRenderElement(node: T) {
+    public postBaseLayout(node: T) {
         node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
         node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
     }

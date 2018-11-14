@@ -70,7 +70,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         return { output, complete: true };
     }
 
-    public postRenderDocument(node: T) {
+    public postParseDocument(node: T) {
         const application = this.application;
         const options = $android_util.createAttribute(this.options.navigation);
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');

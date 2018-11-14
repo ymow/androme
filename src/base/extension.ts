@@ -93,15 +93,16 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return { output: '', complete: false };
     }
 
-    public postRenderElement(node: T) {}
-    public postRenderDocument(node: T) {}
+    public postBaseLayout(node: T) {}
+    public postParseDocument(node: T) {}
     public postProcedure(node: T) {}
 
-    public beforeRenderDocument() {}
-    public afterRenderElement() {}
+    public beforeParseDocument() {}
+    public afterDepthLevel() {}
+    public afterBaseLayout() {}
     public afterConstraints() {}
     public afterResources() {}
-    public afterRenderDocument() {}
+    public afterParseDocument() {}
     public afterProcedure() {}
     public afterFinalize() {}
 

@@ -92,14 +92,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public nodeObject: Constructor<T>;
     public builtInExtensions: ObjectMap<Extension<T>>;
     public renderQueue: ObjectMap<string[]> = {};
+    public nodeProcessing: T | undefined;
     public loading = false;
     public closed = false;
     public readonly cacheImage = new Map<string, ImageAsset>();
     public readonly cacheSession = new NodeList<T>();
     public readonly cacheProcessing = new NodeList<T>();
+    public readonly depthMapProcessing = new Map<string, Map<number, string>>();
     public readonly extensions = new Set<Extension<T>>();
     public readonly viewElements = new Set<HTMLElement>();
-    public nodeProcessing: T | undefined;
 
     private _cacheRoot = new Set<Element>();
     private _settings: Settings;
@@ -151,7 +152,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const nodes = this.cacheSession.filter(node => node.visible && node.rendered && !node.hasAlign(NODE_ALIGNMENT.SPACE));
         for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
-                node.setLayout();
+                node.setBaseLayout();
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
                 node.setAlignment();
@@ -210,35 +211,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.closed = false;
     }
 
-    public setConstraints() {
-        this.viewController.setConstraints();
-        for (const ext of this.extensions) {
-            ext.afterConstraints();
-        }
-    }
-
-    public setResources() {
-        this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setFontStyle();
-        this.resourceHandler.setBoxSpacing();
-        this.resourceHandler.setValueString();
-        this.resourceHandler.setOptionArray();
-        this.resourceHandler.setImageSource();
-        for (const ext of this.extensions) {
-            ext.afterResources();
-        }
-    }
-
-    public setImageCache(element: HTMLImageElement) {
-        if (element && hasValue(element.src)) {
-            this.cacheImage.set(element.src, {
-                width: element.naturalWidth,
-                height: element.naturalHeight,
-                uri: element.src
-            });
-        }
-    }
-
     public parseDocument(...elements: any[]): FunctionMap<void> {
         let __THEN: () => void;
         this.viewElements.clear();
@@ -263,7 +235,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 this.resourceHandler.imageAssets.set(uri, image);
             }
             for (const ext of this.extensions) {
-                ext.beforeRenderDocument();
+                ext.beforeParseDocument();
             }
             for (const element of this.viewElements as Set<HTMLElement>) {
                 if (this.appName === '') {
@@ -277,7 +249,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 element.dataset.iteration = iteration.toString();
                 element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
                 if (this.createCache(element)) {
-                    this.renderElement();
+                    this.setBaseLayout();
                     this.setConstraints();
                     this.setResources();
                     this._cacheRoot.add(element);
@@ -285,11 +257,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const ext of this.extensions) {
                 for (const node of ext.subscribers) {
-                    ext.postRenderDocument(node);
+                    ext.postParseDocument(node);
                 }
             }
             for (const ext of this.extensions) {
-                ext.afterRenderDocument();
+                ext.afterParseDocument();
             }
             if (typeof __THEN === 'function') {
                 __THEN.call(this);
@@ -331,7 +303,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
                 if (!(image instanceof SVGImageElement)) {
                     if (image.complete) {
-                        this.setImageCache(image);
+                        this.addPreloadImage(image);
                     }
                     else {
                         incomplete.push(image);
@@ -356,7 +328,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (Array.isArray(result)) {
                     for (const item of result) {
                         try {
-                            this.setImageCache(<HTMLImageElement> item.srcElement);
+                            this.addPreloadImage(<HTMLImageElement> item.srcElement);
                         }
                         catch {
                         }
@@ -381,871 +353,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         };
-    }
-
-    public createCache(documentRoot: HTMLElement) {
-        let nodeTotal = 0;
-        if (documentRoot === document.body) {
-            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
-        }
-        const elements = documentRoot !== document.body ? documentRoot.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
-        this.nodeProcessing = undefined;
-        this.cacheProcessing.delegateAppend = undefined;
-        this.cacheProcessing.clear();
-        for (const ext of this.extensions) {
-            ext.beforeInit(documentRoot);
-        }
-        const nodeRoot = this.insertNode(documentRoot);
-        if (nodeRoot) {
-            nodeRoot.parent = new this.nodeObject(0, (documentRoot === document.body ? documentRoot : documentRoot.parentElement) || document.body, this.viewController.delegateNodeInit);
-            nodeRoot.documentRoot = true;
-            this.nodeProcessing = nodeRoot;
-        }
-        else {
-            return false;
-        }
-        const localSettings = this.viewController.localSettings;
-        const inlineAlways = localSettings.inline.always;
-        const inlineSupport = this.settings.renderInlineText ? [] : localSettings.inline.tagName;
-        function inlineElement(element: Element) {
-            const styleMap = getElementCache(element, 'styleMap');
-            return (
-                (styleMap === undefined || Object.keys(styleMap).length === 0) &&
-                element.children.length === 0 &&
-                inlineSupport.includes(element.tagName)
-            );
-        }
-        for (const element of Array.from(elements) as HTMLElement[]) {
-            if (!this.viewElements.has(element)) {
-                prioritizeExtensions(documentRoot, element, Array.from(this.extensions)).some(item => item.init(element));
-                if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
-                    if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
-                        setElementCache(element, 'inlineSupport', true);
-                    }
-                    let valid = true;
-                    let current = element.parentElement;
-                    while (current) {
-                        if (current === documentRoot) {
-                            break;
-                        }
-                        else if (current !== documentRoot && this.viewElements.has(current)) {
-                            valid = false;
-                            break;
-                        }
-                        current = current.parentElement;
-                    }
-                    if (valid) {
-                        let styleMap = getElementCache(element, 'styleMap');
-                        if (styleMap === undefined) {
-                            styleMap = {};
-                            setElementCache(element, 'styleMap', styleMap);
-                        }
-                        switch (element.tagName) {
-                            case 'SELECT':
-                                if (styleMap.verticalAlign === undefined && (<HTMLSelectElement> element).size > 1) {
-                                    styleMap.verticalAlign = 'text-bottom';
-                                }
-                                break;
-                        }
-                        this.insertNode(element);
-                    }
-                }
-            }
-        }
-        if (this.cacheProcessing.length > 0) {
-            for (const node of this.cacheProcessing) {
-                const nodes: Element[] = [];
-                let valid = false;
-                Array.from(node.element.childNodes).forEach((element: Element) => {
-                    if (element.nodeName === '#text') {
-                        if (node.tagName !== 'SELECT') {
-                            nodes.push(element);
-                        }
-                    }
-                    else if (element.tagName !== 'BR') {
-                        const elementNode = Node.getNodeFromElement(element);
-                        if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
-                            valid = true;
-                        }
-                    }
-                });
-                if (valid) {
-                    nodes.forEach(element => this.insertNode(element, node));
-                }
-            }
-            const preAlignment: ObjectIndex<StringMap> = {};
-            const direction: HTMLElement[] = [];
-            for (const node of this.cacheProcessing) {
-                if (node.styleElement) {
-                    const element = <HTMLElement> node.element;
-                    const textAlign = node.css('textAlign');
-                    preAlignment[node.id] = {};
-                    const attrs = preAlignment[node.id];
-                    ['right', 'end', element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type !== 'button' ? 'center' : ''].some(value => {
-                        if (value === textAlign) {
-                            attrs.textAlign = value;
-                            element.style.textAlign = 'left';
-                            return true;
-                        }
-                        return false;
-                    });
-                    if (node.marginLeft < 0) {
-                        attrs.marginLeft = node.css('marginLeft');
-                        element.style.marginLeft = '0px';
-                    }
-                    if (node.marginTop < 0) {
-                        attrs.marginTop = node.css('marginTop');
-                        element.style.marginTop = '0px';
-                    }
-                    if (node.position === 'relative') {
-                        ['top', 'right', 'bottom', 'left'].forEach(value => {
-                            if (node.has(value)) {
-                                attrs[value] = node.styleMap[value];
-                                element.style[value] = 'auto';
-                            }
-                        });
-                    }
-                    if (node.overflowX || node.overflowY) {
-                        if (node.has('width')) {
-                            attrs.width = node.styleMap.width;
-                            element.style.width = 'auto';
-                        }
-                        if (node.has('height')) {
-                            attrs.height = node.styleMap.height;
-                            element.style.height = 'auto';
-                        }
-                        attrs.overflow = node.style.overflow || '';
-                        element.style.overflow = 'visible';
-                    }
-                    if (element.dir === 'rtl') {
-                        element.dir = 'ltr';
-                        direction.push(element);
-                    }
-                    node.setBounds();
-                }
-                node.setMultiLine();
-            }
-            for (const node of this.cacheProcessing) {
-                if (node.styleElement) {
-                    const element = <HTMLElement> node.element;
-                    const attrs = preAlignment[node.id];
-                    if (attrs) {
-                        for (const attr in attrs) {
-                            element.style[attr] = attrs[attr];
-                        }
-                        if (direction.includes(element)) {
-                            element.dir = 'rtl';
-                        }
-                    }
-                }
-                if (node.length === 1) {
-                    const firstNode = node.item(0) as T;
-                    if (!firstNode.pageflow && firstNode.toInt('top') === 0 && firstNode.toInt('right') === 0 && firstNode.toInt('bottom') === 0 && firstNode.toInt('left') === 0) {
-                        firstNode.pageflow = true;
-                    }
-                }
-            }
-            for (const node of this.cacheProcessing) {
-                if (!node.documentRoot) {
-                    let parent: T | null = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T;
-                    if (!parent && !node.pageflow) {
-                        parent = this.nodeProcessing;
-                    }
-                    if (parent) {
-                        node.parent = parent;
-                        node.documentParent = parent;
-                    }
-                    else {
-                        node.hide();
-                    }
-                }
-            }
-            for (const node of this.cacheProcessing.elements) {
-                if (node.htmlElement) {
-                    let i = 0;
-                    Array.from(node.element.childNodes).forEach((element: Element) => {
-                        const item = Node.getNodeFromElement(element);
-                        if (item && !item.excluded && item.pageflow) {
-                            item.siblingIndex = i++;
-                        }
-                    });
-                    if (node.length > 0) {
-                        node.sort(NodeList.siblingIndex);
-                        node.initial.children.push(...node.duplicate());
-                    }
-                }
-            }
-            sortAsc(this.cacheProcessing.children, 'depth', 'id');
-            for (const ext of this.extensions) {
-                ext.afterInit(documentRoot);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public renderElement() {
-        const localSettings = this.viewController.localSettings;
-        const documentRoot = this.nodeProcessing as T;
-        const mapX: LayoutMapX<T> = [];
-        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
-        let baseTemplate = localSettings.baseTemplate;
-        let empty = true;
-        function setMapY(depth: number, id: number, node: T) {
-            if (!mapY.has(depth)) {
-                mapY.set(depth, new Map<number, T>());
-            }
-            const mapIndex = mapY.get(depth);
-            if (mapIndex) {
-                mapIndex.set(id, node);
-            }
-        }
-        function deleteMapY(id: number) {
-            for (const mapNode of mapY.values()) {
-                for (const node of mapNode.values()) {
-                    if (node.id === id) {
-                        mapNode.delete(node.id);
-                        return;
-                    }
-                }
-            }
-        }
-        setMapY(-1, 0, documentRoot.parent as T);
-        let maxDepth = 0;
-        for (const node of this.cacheProcessing.visible) {
-            const x = Math.floor(node.linear.left);
-            if (mapX[node.depth] === undefined) {
-                mapX[node.depth] = {};
-            }
-            if (mapX[node.depth][x] === undefined) {
-                mapX[node.depth][x] = [];
-            }
-            mapX[node.depth][x].push(node);
-            setMapY(node.depth, node.id, node);
-            maxDepth = Math.max(node.depth, maxDepth);
-        }
-        for (let i = 0; i < maxDepth; i++) {
-            mapY.set((i * -1) - 2, new Map<number, T>());
-        }
-        this.cacheProcessing.delegateAppend = (node: T) => {
-            deleteMapY(node.id);
-            setMapY((node.initial.depth * -1) - 2, node.id, node);
-            node.cascade().forEach((item: T) => {
-                deleteMapY(item.id);
-                setMapY((item.initial.depth * -1) - 2, item.id, item);
-            });
-        };
-        for (const depth of mapY.values()) {
-            function insertNodeTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
-                const key = parentId + (current === '' && node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
-                if (!data.has(key)) {
-                    data.set(key, new Map<number, string>());
-                }
-                const template = data.get(key);
-                if (template) {
-                    template.set(node.id, value);
-                }
-            }
-            const partial = new Map<string, Map<number, string>>();
-            const external = new Map<string, Map<number, string>>();
-            const renderNode = (node: T, parent: T, output: string, current = '', group = false) => {
-                if (output !== '') {
-                    if (group) {
-                        node.each((item: T) => {
-                            [partial, external].some(data => {
-                                for (const views of partial.values()) {
-                                    let template = views.get(item.id);
-                                    if (template) {
-                                        const indent = node.renderDepth + 1;
-                                        if (item.renderDepth !== indent) {
-                                            template = replaceIndent(template, indent);
-                                            item.renderDepth = indent;
-                                        }
-                                        insertNodeTemplate(data, item, node.id.toString(), template, current);
-                                        views.delete(item.id);
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            });
-                        });
-                    }
-                    if (current !== '') {
-                        insertNodeTemplate(external, node, current, output, current);
-                    }
-                    else {
-                        if (!this.viewElements.has(<HTMLElement> node.element)) {
-                            if (node.dataset.target) {
-                                const target = document.getElementById(node.dataset.target);
-                                if (target && target !== parent.element) {
-                                    this.addRenderQueue(node.dataset.target, [output]);
-                                    node.positioned = true;
-                                    return;
-                                }
-                            }
-                            else if (parent.dataset.target) {
-                                const target = document.getElementById(parent.dataset.target);
-                                if (target) {
-                                    this.addRenderQueue(parent.nodeId, [output]);
-                                    node.dataset.target = parent.nodeId;
-                                    return;
-                                }
-                            }
-                        }
-                        insertNodeTemplate(partial, node, parent.id.toString(), output, current);
-                    }
-                }
-            };
-            for (const parent of depth.values()) {
-                if (parent.length === 0 || parent.every(node => node.rendered)) {
-                    continue;
-                }
-                const axisY: T[] = [];
-                const below: T[] = [];
-                const middle: T[] = [];
-                const above: T[] = [];
-                parent.each((node: T) => {
-                    if (node.documentRoot) {
-                        axisY.push(node);
-                    }
-                    else if (node.pageflow || node.alignOrigin) {
-                        middle.push(node);
-                    }
-                    else {
-                        if (node.toInt('zIndex') >= 0 || node.parent.element !== node.element.parentElement) {
-                            above.push(node);
-                        }
-                        else {
-                            below.push(node);
-                        }
-                    }
-                });
-                NodeList.sortByAlignment(middle, NODE_ALIGNMENT.NONE, parent);
-                axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
-                axisY.push(...middle);
-                axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
-                const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
-                const cleared = NodeList.cleared(
-                    new Set(documentParent).size === 1
-                        ? Array.from(documentParent[0].baseElement.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item)
-                        : axisY
-                );
-                const includes: string[] = [];
-                let current = '';
-                let k = -1;
-                function getCurrent() {
-                    return includes.length > 0 ? includes[includes.length - 1] : '';
-                }
-                while (++k < axisY.length) {
-                    let nodeY = axisY[k];
-                    if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.viewElements.has(<HTMLElement> nodeY.element))) {
-                        continue;
-                    }
-                    let parentY = nodeY.parent as T;
-                    let currentY = '';
-                    if (localSettings.includes) {
-                        if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
-                            const filename = trimNull(nodeY.dataset.include);
-                            if (filename !== '' && includes.indexOf(filename) === -1) {
-                                renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
-                                includes.push(filename);
-                            }
-                            current = getCurrent();
-                            if (current !== '') {
-                                const cloneParent = parentY.clone() as T;
-                                cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
-                                nodeY.parent = cloneParent;
-                                parentY = cloneParent;
-                            }
-                            currentY = current;
-                        }
-                        else {
-                            currentY = '';
-                        }
-                    }
-                    if (nodeY.renderAs) {
-                        parentY.remove(nodeY);
-                        nodeY.hide();
-                        nodeY = nodeY.renderAs as T;
-                    }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
-                        const linearVertical = parentY.linearVertical;
-                        if (nodeY.pageflow &&
-                            current === '' &&
-                            !parentY.flex.enabled &&
-                            !parentY.has('columnCount') &&
-                            !parentY.is(NODE_STANDARD.GRID) &&
-                            (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE) || (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE)))
-                        {
-                            const horizontal: T[] = [];
-                            const vertical: T[] = [];
-                            const floatedOpen = new Set(['left', 'right']);
-                            let verticalExtended = false;
-                            let l = k;
-                            let m = 0;
-                            if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
-                                horizontal.push(nodeY);
-                                l++;
-                                m++;
-                            }
-                            domNested: {
-                                for ( ; l < axisY.length; l++, m++) {
-                                    const adjacent = axisY[l];
-                                    if (adjacent.pageflow) {
-                                        const float = cleared.get(adjacent);
-                                        if (float) {
-                                            if (float === 'both') {
-                                                floatedOpen.clear();
-                                            }
-                                            else {
-                                                floatedOpen.delete(float);
-                                            }
-                                        }
-                                        if (adjacent.floating) {
-                                            floatedOpen.add(adjacent.float);
-                                        }
-                                        const previousSibling = adjacent.previousSibling() as T;
-                                        const nextSibling = adjacent.nextSibling(true);
-                                        if (m === 0 && nextSibling) {
-                                            if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, true)) {
-                                                vertical.push(adjacent);
-                                            }
-                                            else {
-                                                horizontal.push(adjacent);
-                                            }
-                                        }
-                                        else if (previousSibling) {
-                                            const floated = NodeList.floated([...horizontal, ...vertical]);
-                                            const pending = [...horizontal, ...vertical, adjacent];
-                                            const clearedPartial = NodeList.cleared(pending);
-                                            const clearedPrevious = new Map<T, string>();
-                                            if (clearedPartial.has(previousSibling) || (previousSibling.lineBreak && cleared.has(previousSibling))) {
-                                                clearedPrevious.set(previousSibling, previousSibling.css('clear'));
-                                            }
-                                            const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious);
-                                            if (verticalAlign || clearedPartial.has(adjacent) || (this.settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2)) {
-                                                if (horizontal.length > 0) {
-                                                    if (!this.settings.floatOverlapDisabled) {
-                                                        if (floatedOpen.size > 0 && !pending.map(node => clearedPartial.get(node)).includes('both') && (floated.size === 0 || adjacent.bounds.top < Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom)))) {
-                                                            if (clearedPartial.has(adjacent)) {
-                                                                if (floatedOpen.size < 2 && floated.size === 2 && !adjacent.floating) {
-                                                                    adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
-                                                                    verticalExtended = true;
-                                                                    horizontal.push(adjacent);
-                                                                    continue;
-                                                                }
-                                                                break domNested;
-                                                            }
-                                                            else if (!verticalAlign) {
-                                                                horizontal.push(adjacent);
-                                                                continue;
-                                                            }
-                                                            if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
-                                                                horizontal.push(adjacent);
-                                                                continue;
-                                                            }
-                                                        }
-                                                    }
-                                                    break domNested;
-                                                }
-                                                if (linearVertical && vertical.length > 0) {
-                                                    const previousAbove = vertical[vertical.length - 1];
-                                                    if (previousAbove.linearVertical) {
-                                                        adjacent.parent = previousAbove;
-                                                        continue;
-                                                    }
-                                                }
-                                                vertical.push(adjacent);
-                                            }
-                                            else {
-                                                if (vertical.length > 0 || verticalExtended) {
-                                                    break domNested;
-                                                }
-                                                horizontal.push(adjacent);
-                                            }
-                                        }
-                                        else {
-                                            break domNested;
-                                        }
-                                    }
-                                }
-                            }
-                            let group: T | undefined;
-                            let groupOutput = '';
-                            if (horizontal.length > 1) {
-                                const clearedPartial = NodeList.cleared(horizontal);
-                                if (Application.isFrameHorizontal(horizontal, clearedPartial)) {
-                                    group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                    groupOutput = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
-                                }
-                                else {
-                                    if (horizontal.length === axisY.length) {
-                                        parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                    }
-                                    else {
-                                        const floated = NodeList.floated(horizontal);
-                                        if (floated.size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT))) {
-                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupOutput = this.writeConstraintLayout(group, parentY);
-                                            group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                                        }
-                                        else if (Application.isRelativeHorizontal(horizontal, clearedPartial)) {
-                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupOutput = this.writeRelativeLayout(group, parentY);
-                                            group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                        }
-                                        else {
-                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupOutput = this.writeLinearLayout(group, parentY, true);
-                                            if (floated.size > 0) {
-                                                group.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                                                group.alignmentType |= horizontal.every(node => node.float === 'right' || node.autoMarginLeft) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT;
-                                            }
-                                            else {
-                                                group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else if (vertical.length > 1) {
-                                const floated = NodeList.floated(vertical);
-                                const clearedPartial = NodeList.cleared(vertical);
-                                if (floated.size > 0 && clearedPartial.size > 0 && !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node)))) {
-                                    if (parentY.linearVertical && !hasValue(nodeY.dataset.ext)) {
-                                        group = nodeY;
-                                        groupOutput = this.writeFrameLayoutVertical(undefined, parentY, vertical, clearedPartial);
-                                    }
-                                    else {
-                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
-                                        groupOutput = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
-                                    }
-                                }
-                                else {
-                                    if (vertical.length === axisY.length) {
-                                        parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                                    }
-                                    else if (!linearVertical) {
-                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
-                                        groupOutput = this.writeLinearLayout(group, parentY, false);
-                                        group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                                    }
-                                }
-                                if (vertical.length !== axisY.length) {
-                                    const lastNode = vertical[vertical.length - 1];
-                                    if (!lastNode.blockStatic && lastNode !== axisY[axisY.length - 1]) {
-                                        lastNode.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
-                                    }
-                                }
-                            }
-                            if (group) {
-                                renderNode(group, parentY, groupOutput, '', true);
-                                parentY = nodeY.parent as T;
-                            }
-                            if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
-                                nodeY.alignmentType ^= NODE_ALIGNMENT.EXTENDABLE;
-                            }
-                        }
-                    }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
-                        let next = false;
-                        for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
-                            const result = ext.processChild(nodeY, parentY);
-                            if (result.output !== '') {
-                                renderNode(nodeY, parentY, result.output, currentY);
-                            }
-                            if (result.renderAs && result.renderOutput) {
-                                renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
-                            }
-                            if (result.parent) {
-                                parentY = result.parent as T;
-                            }
-                            next = result.next === true;
-                            if (result.complete || result.next) {
-                                break;
-                            }
-                        }
-                        if (next) {
-                            continue;
-                        }
-                        if (nodeY.styleElement) {
-                            const processed: Extension<T>[] = [];
-                            prioritizeExtensions(<HTMLElement> documentRoot.baseElement, <HTMLElement> nodeY.element, extensions).some(item => {
-                                if (item.is(nodeY) && item.condition(nodeY, parentY)) {
-                                    const result =  item.processNode(nodeY, parentY, mapX, mapY);
-                                    if (result.output !== '') {
-                                        renderNode(nodeY, parentY, result.output, currentY);
-                                    }
-                                    if (result.renderAs && result.renderOutput) {
-                                        renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
-                                    }
-                                    if (result.parent) {
-                                        parentY = result.parent as T;
-                                    }
-                                    if (isString(result.output) || result.include === true) {
-                                        processed.push(item);
-                                    }
-                                    next = result.next === true;
-                                    if (result.complete || result.next) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            });
-                            processed.forEach(item => item.subscribers.add(nodeY) && nodeY.renderExtension.add(item));
-                            if (next) {
-                                continue;
-                            }
-                        }
-                    }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
-                        let output = '';
-                        if (nodeY.controlName === '') {
-                            const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                            const backgroundImage = REGEX_PATTERN.CSS_URL.test(nodeY.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(nodeY.css('background'));
-                            const backgroundColor = nodeY.has('backgroundColor');
-                            const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
-                            if (nodeY.length === 0) {
-                                const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
-                                if (freeFormText || (borderVisible && nodeY.textContent.length > 0)) {
-                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
-                                }
-                                else if (backgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat' && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
-                                    nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
-                                    nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
-                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
-                                }
-                                else if (nodeY.block && (backgroundColor || backgroundImage) && (borderVisible || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft > 0)) {
-                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
-                                }
-                                else if (!nodeY.documentRoot) {
-                                    if (this.settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !backgroundVisible) {
-                                        parentY.remove(nodeY);
-                                        nodeY.hide();
-                                    }
-                                    else if (backgroundVisible) {
-                                        output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
-                                    }
-                                    else {
-                                        output = this.writeFrameLayout(nodeY, parentY);
-                                    }
-                                }
-                            }
-                            else {
-                                if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.has('columnCount')) {
-                                    output = this.writeConstraintLayout(nodeY, parentY);
-                                }
-                                else {
-                                    if (nodeY.length === 1) {
-                                        const targeted = nodeY.filter(node => {
-                                            if (node.dataset.target) {
-                                                const element = document.getElementById(node.dataset.target);
-                                                return element !== null && hasValue(element.dataset.ext) && element !== parentY.element;
-                                            }
-                                            return false;
-                                        });
-                                        if (nodeY.documentRoot && targeted.length === 1) {
-                                            nodeY.hide();
-                                            continue;
-                                        }
-                                        else if ((this.settings.collapseUnattributedElements &&
-                                            !hasValue(nodeY.element.id) &&
-                                            !hasValue(nodeY.dataset.ext) &&
-                                            !hasValue(nodeY.dataset.target) &&
-                                            nodeY.toInt('width') === 0 &&
-                                            nodeY.toInt('height') === 0 &&
-                                            !backgroundVisible &&
-                                            !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
-                                            nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
-                                            !this.viewController.hasAppendProcessing(nodeY.id)))
-                                        {
-                                            const child = nodeY.item(0) as T;
-                                            child.documentRoot = nodeY.documentRoot;
-                                            child.siblingIndex = nodeY.siblingIndex;
-                                            child.parent = parentY;
-                                            nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
-                                            child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
-                                            child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
-                                            child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
-                                            child.modifyBox(BOX_STANDARD.MARGIN_LEFT, nodeY.paddingLeft);
-                                            nodeY.hide();
-                                            axisY[k] = child;
-                                            k--;
-                                            continue;
-                                        }
-                                        else {
-                                            output = this.writeFrameLayout(nodeY, parentY);
-                                        }
-                                    }
-                                    else {
-                                        const children = nodeY.children as T[];
-                                        const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
-                                        const clearedInside = NodeList.cleared(children);
-                                        const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
-                                        if (!parentY.flex.enabled && children.every(node => node.pageflow)) {
-                                            const floated = NodeList.floated(children);
-                                            if (linearX && clearedInside.size === 0) {
-                                                if (floated.size === 0 && children.every(node => node.toInt('verticalAlign') === 0)) {
-                                                    if (children.some(node => ['text-top', 'text-bottom'].includes(node.css('verticalAlign')))) {
-                                                        output = this.writeConstraintLayout(nodeY, parentY);
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                    }
-                                                    else if (Application.isRelativeHorizontal(children)) {
-                                                        output = this.writeRelativeLayout(nodeY, parentY);
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                    }
-                                                }
-                                                if (output === '') {
-                                                    if (floated.size === 0 || !floated.has('right')) {
-                                                        if (Application.isRelativeHorizontal(children)) {
-                                                            output = this.writeRelativeLayout(nodeY, parentY);
-                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                        }
-                                                        else {
-                                                            output = this.writeLinearLayout(nodeY, parentY, true);
-                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            else {
-                                                if (linearY || (!relativeWrap && children.some(node => node.alignedVertically(node.previousSibling(), clearedInside)))) {
-                                                    output = this.writeLinearLayout(nodeY, parentY, false);
-                                                    if (linearY && !nodeY.documentRoot) {
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        if (output === '') {
-                                            if (relativeWrap) {
-                                                if (Application.isFrameHorizontal(children, clearedInside, true)) {
-                                                    output = this.writeFrameLayoutHorizontal(nodeY, parentY, children, clearedInside);
-                                                }
-                                                else {
-                                                    output = this.writeRelativeLayout(nodeY, parentY);
-                                                    if (getBetweenElements(children[0].baseElement, children[children.length - 1].baseElement).filter(element => isLineBreak(element)).length === 0) {
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                    }
-                                                }
-                                            }
-                                            else {
-                                                output = this.writeConstraintLayout(nodeY, parentY);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            output = this.writeNode(nodeY, parentY, nodeY.controlName);
-                        }
-                        renderNode(nodeY, parentY, output, currentY);
-                    }
-                    if (localSettings.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
-                        includes.pop();
-                    }
-                }
-            }
-            for (const [key, templates] of partial.entries()) {
-                const content: string[] = [];
-                const [parentId, position] = key.split(':');
-                const views = Array.from(templates.values());
-                if (views.length > 0) {
-                    if (this._renderPosition[parentId]) {
-                        const parsed: string[] = [];
-                        this._renderPosition[parentId].forEach(value => {
-                            const result = views.find(view => view.indexOf(formatPlaceholder(value, '@')) !== -1);
-                            if (result) {
-                                parsed.push(result);
-                            }
-                        });
-                        if (parsed.length === views.length) {
-                            content.push(...parsed);
-                        }
-                    }
-                    if (content.length === 0) {
-                        content.push(...views);
-                    }
-                    const id = parentId + (position ? `:${position}` : '');
-                    const placeholder = formatPlaceholder(id);
-                    if (baseTemplate.indexOf(placeholder) !== -1) {
-                        baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
-                        empty = false;
-                    }
-                    else {
-                        this.addRenderQueue(id, views);
-                    }
-                }
-            }
-            if (localSettings.includes) {
-                for (const [filename, templates] of external.entries()) {
-                    const content = Array.from(templates.values());
-                    if (content.length > 0) {
-                        const output = this.viewController.renderMerge(filename, content);
-                        this.addIncludeFile(filename, output);
-                    }
-                }
-            }
-        }
-        if (documentRoot.dataset.layoutName && (!hasValue(documentRoot.dataset.target) || documentRoot.renderExtension.size === 0)) {
-            this.addLayoutFile(
-                trimString(trimNull(documentRoot.dataset.pathname), '/'),
-                documentRoot.dataset.layoutName,
-                !empty ? baseTemplate : '',
-                documentRoot.renderExtension.size > 0 && Array.from(documentRoot.renderExtension).some(item => item.documentRoot)
-            );
-        }
-        if (empty && documentRoot.renderExtension.size === 0) {
-            documentRoot.hide();
-        }
-        this.cacheProcessing.sort((a, b) => {
-            if (!a.visible) {
-                return 1;
-            }
-            else if (!b.visible) {
-                return -1;
-            }
-            else if (a.renderDepth !== b.renderDepth) {
-                return a.renderDepth < b.renderDepth ? -1 : 1;
-            }
-            else {
-                if (!a.domElement) {
-                    const nodeA = Node.getNodeFromElement(a.baseElement);
-                    if (nodeA) {
-                        a = nodeA as T;
-                    }
-                    else {
-                        return 1;
-                    }
-                }
-                if (!b.domElement) {
-                    const nodeB = Node.getNodeFromElement(a.baseElement);
-                    if (nodeB) {
-                        b = nodeB as T;
-                    }
-                    else {
-                        return -1;
-                    }
-                }
-                if (a.documentParent !== b.documentParent) {
-                    return a.documentParent.id < b.documentParent.id ? -1 : 1;
-                }
-                else {
-                    return a.renderIndex < b.renderIndex ? -1 : 1;
-                }
-            }
-        });
-        this.cacheSession.children.push(...this.cacheProcessing.duplicate());
-        for (const ext of this.extensions) {
-            for (const node of ext.subscribers) {
-                ext.postRenderElement(node);
-            }
-        }
-        for (const ext of this.extensions) {
-            ext.afterRenderElement();
-        }
     }
 
     public writeFrameLayout(node: T, parent: T, children = false) {
@@ -1805,49 +912,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.renderQueue[id].push(...views);
     }
 
-    public preserveRenderPosition(node: T) {
-        this._renderPosition[node.id.toString()] = node.map(item => item.id);
+    public addPreloadImage(element: HTMLImageElement) {
+        if (element && element.complete && hasValue(element.src)) {
+            this.cacheImage.set(element.src, {
+                width: element.naturalWidth,
+                height: element.naturalHeight,
+                uri: element.src
+            });
+        }
     }
 
-    public insertNode(element: Element, parent?: T) {
-        let node: T | null = null;
-        if (element.nodeName.charAt(0) === '#') {
-            if (element.nodeName === '#text') {
-                if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
-                    node.nodeName = 'PLAINTEXT';
-                    if (parent) {
-                        node.parent = parent;
-                        node.inherit(parent, 'style');
-                    }
-                    else {
-                        node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
-                    }
-                    node.css({
-                        position: 'static',
-                        display: 'inline',
-                        clear: 'none',
-                        cssFloat: 'none',
-                        verticalAlign: 'baseline'
-                    });
-                }
-            }
-        }
-        else if (isStyleElement(element)) {
-            const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
-            if (isElementVisible(element, this.settings.hideOffScreenElements)) {
-                node = elementNode;
-                node.setExclusions();
-            }
-            else {
-                elementNode.excluded = true;
-                elementNode.visible = false;
-            }
-        }
-        if (node) {
-            this.cacheProcessing.append(node);
-        }
-        return node;
+    public preserveRenderPosition(node: T) {
+        this._renderPosition[node.id.toString()] = node.map(item => item.id);
     }
 
     public getExtension(name: string) {
@@ -1887,6 +963,886 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public toString() {
         return this._views.length > 0 ? this._views[0].content : '';
+    }
+
+    protected createCache(documentRoot: HTMLElement) {
+        let nodeTotal = 0;
+        if (documentRoot === document.body) {
+            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
+        }
+        const elements = documentRoot !== document.body ? documentRoot.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
+        this.nodeProcessing = undefined;
+        this.cacheProcessing.delegateAppend = undefined;
+        this.cacheProcessing.clear();
+        for (const ext of this.extensions) {
+            ext.beforeInit(documentRoot);
+        }
+        const nodeRoot = this.insertNode(documentRoot);
+        if (nodeRoot) {
+            nodeRoot.parent = new this.nodeObject(0, (documentRoot === document.body ? documentRoot : documentRoot.parentElement) || document.body, this.viewController.delegateNodeInit);
+            nodeRoot.documentRoot = true;
+            this.nodeProcessing = nodeRoot;
+        }
+        else {
+            return false;
+        }
+        const localSettings = this.viewController.localSettings;
+        const inlineAlways = localSettings.inline.always;
+        const inlineSupport = this.settings.renderInlineText ? [] : localSettings.inline.tagName;
+        function inlineElement(element: Element) {
+            const styleMap = getElementCache(element, 'styleMap');
+            return (
+                (styleMap === undefined || Object.keys(styleMap).length === 0) &&
+                element.children.length === 0 &&
+                inlineSupport.includes(element.tagName)
+            );
+        }
+        for (const element of Array.from(elements) as HTMLElement[]) {
+            if (!this.viewElements.has(element)) {
+                prioritizeExtensions(documentRoot, element, Array.from(this.extensions)).some(item => item.init(element));
+                if (!this.viewElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
+                    if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
+                        setElementCache(element, 'inlineSupport', true);
+                    }
+                    let valid = true;
+                    let current = element.parentElement;
+                    while (current) {
+                        if (current === documentRoot) {
+                            break;
+                        }
+                        else if (current !== documentRoot && this.viewElements.has(current)) {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                    if (valid) {
+                        let styleMap = getElementCache(element, 'styleMap');
+                        if (styleMap === undefined) {
+                            styleMap = {};
+                            setElementCache(element, 'styleMap', styleMap);
+                        }
+                        switch (element.tagName) {
+                            case 'SELECT':
+                                if (styleMap.verticalAlign === undefined && (<HTMLSelectElement> element).size > 1) {
+                                    styleMap.verticalAlign = 'text-bottom';
+                                }
+                                break;
+                        }
+                        this.insertNode(element);
+                    }
+                }
+            }
+        }
+        if (this.cacheProcessing.length > 0) {
+            for (const node of this.cacheProcessing) {
+                const nodes: Element[] = [];
+                let valid = false;
+                Array.from(node.element.childNodes).forEach((element: Element) => {
+                    if (element.nodeName === '#text') {
+                        if (node.tagName !== 'SELECT') {
+                            nodes.push(element);
+                        }
+                    }
+                    else if (element.tagName !== 'BR') {
+                        const elementNode = Node.getNodeFromElement(element);
+                        if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
+                            valid = true;
+                        }
+                    }
+                });
+                if (valid) {
+                    nodes.forEach(element => this.insertNode(element, node));
+                }
+            }
+            const preAlignment: ObjectIndex<StringMap> = {};
+            const direction: HTMLElement[] = [];
+            for (const node of this.cacheProcessing) {
+                if (node.styleElement) {
+                    const element = <HTMLElement> node.element;
+                    const textAlign = node.css('textAlign');
+                    preAlignment[node.id] = {};
+                    const attrs = preAlignment[node.id];
+                    ['right', 'end', element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type !== 'button' ? 'center' : ''].some(value => {
+                        if (value === textAlign) {
+                            attrs.textAlign = value;
+                            element.style.textAlign = 'left';
+                            return true;
+                        }
+                        return false;
+                    });
+                    if (node.marginLeft < 0) {
+                        attrs.marginLeft = node.css('marginLeft');
+                        element.style.marginLeft = '0px';
+                    }
+                    if (node.marginTop < 0) {
+                        attrs.marginTop = node.css('marginTop');
+                        element.style.marginTop = '0px';
+                    }
+                    if (node.position === 'relative') {
+                        ['top', 'right', 'bottom', 'left'].forEach(value => {
+                            if (node.has(value)) {
+                                attrs[value] = node.styleMap[value];
+                                element.style[value] = 'auto';
+                            }
+                        });
+                    }
+                    if (node.overflowX || node.overflowY) {
+                        if (node.has('width')) {
+                            attrs.width = node.styleMap.width;
+                            element.style.width = 'auto';
+                        }
+                        if (node.has('height')) {
+                            attrs.height = node.styleMap.height;
+                            element.style.height = 'auto';
+                        }
+                        attrs.overflow = node.style.overflow || '';
+                        element.style.overflow = 'visible';
+                    }
+                    if (element.dir === 'rtl') {
+                        element.dir = 'ltr';
+                        direction.push(element);
+                    }
+                    node.setBounds();
+                }
+                node.setMultiLine();
+            }
+            for (const node of this.cacheProcessing) {
+                if (node.styleElement) {
+                    const element = <HTMLElement> node.element;
+                    const attrs = preAlignment[node.id];
+                    if (attrs) {
+                        for (const attr in attrs) {
+                            element.style[attr] = attrs[attr];
+                        }
+                        if (direction.includes(element)) {
+                            element.dir = 'rtl';
+                        }
+                    }
+                }
+                if (node.length === 1) {
+                    const firstNode = node.item(0) as T;
+                    if (!firstNode.pageflow && firstNode.toInt('top') === 0 && firstNode.toInt('right') === 0 && firstNode.toInt('bottom') === 0 && firstNode.toInt('left') === 0) {
+                        firstNode.pageflow = true;
+                    }
+                }
+            }
+            for (const node of this.cacheProcessing) {
+                if (!node.documentRoot) {
+                    let parent: T | null = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T;
+                    if (!parent && !node.pageflow) {
+                        parent = this.nodeProcessing;
+                    }
+                    if (parent) {
+                        node.parent = parent;
+                        node.documentParent = parent;
+                    }
+                    else {
+                        node.hide();
+                    }
+                }
+            }
+            for (const node of this.cacheProcessing.elements) {
+                if (node.htmlElement) {
+                    let i = 0;
+                    Array.from(node.element.childNodes).forEach((element: Element) => {
+                        const item = Node.getNodeFromElement(element);
+                        if (item && !item.excluded && item.pageflow) {
+                            item.siblingIndex = i++;
+                        }
+                    });
+                    if (node.length > 0) {
+                        node.sort(NodeList.siblingIndex);
+                        node.initial.children.push(...node.duplicate());
+                    }
+                }
+            }
+            sortAsc(this.cacheProcessing.children, 'depth', 'id');
+            for (const ext of this.extensions) {
+                ext.afterInit(documentRoot);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    protected setBaseLayout() {
+        const localSettings = this.viewController.localSettings;
+        const documentRoot = this.nodeProcessing as T;
+        const mapX: LayoutMapX<T> = [];
+        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
+        const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
+        let baseTemplate = localSettings.baseTemplate;
+        let empty = true;
+        function setMapY(depth: number, id: number, node: T) {
+            if (!mapY.has(depth)) {
+                mapY.set(depth, new Map<number, T>());
+            }
+            const mapIndex = mapY.get(depth);
+            if (mapIndex) {
+                mapIndex.set(id, node);
+            }
+        }
+        function deleteMapY(id: number) {
+            for (const mapNode of mapY.values()) {
+                for (const node of mapNode.values()) {
+                    if (node.id === id) {
+                        mapNode.delete(node.id);
+                        return;
+                    }
+                }
+            }
+        }
+        setMapY(-1, 0, documentRoot.parent as T);
+        let maxDepth = 0;
+        for (const node of this.cacheProcessing.visible) {
+            const x = Math.floor(node.linear.left);
+            if (mapX[node.depth] === undefined) {
+                mapX[node.depth] = {};
+            }
+            if (mapX[node.depth][x] === undefined) {
+                mapX[node.depth][x] = [];
+            }
+            mapX[node.depth][x].push(node);
+            setMapY(node.depth, node.id, node);
+            maxDepth = Math.max(node.depth, maxDepth);
+        }
+        for (let i = 0; i < maxDepth; i++) {
+            mapY.set((i * -1) - 2, new Map<number, T>());
+        }
+        this.cacheProcessing.delegateAppend = (node: T) => {
+            deleteMapY(node.id);
+            setMapY((node.initial.depth * -1) - 2, node.id, node);
+            node.cascade().forEach((item: T) => {
+                deleteMapY(item.id);
+                setMapY((item.initial.depth * -1) - 2, item.id, item);
+            });
+        };
+        for (const depth of mapY.values()) {
+            this.depthMapProcessing.clear();
+            const insertTemplate = (node: T, parentId: string, value: string) => {
+                const key = parentId + (node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
+                if (!this.depthMapProcessing.has(key)) {
+                    this.depthMapProcessing.set(key, new Map<number, string>());
+                }
+                const template = this.depthMapProcessing.get(key);
+                if (template) {
+                    template.set(node.id, value);
+                }
+            };
+            const renderNode = (node: T, parent: T, output: string, group = false) => {
+                if (output !== '') {
+                    if (group) {
+                        node.some((item: T) => {
+                            for (const views of this.depthMapProcessing.values()) {
+                                let template = views.get(item.id);
+                                if (template) {
+                                    const indent = node.renderDepth + 1;
+                                    if (item.renderDepth !== indent) {
+                                        template = replaceIndent(template, indent);
+                                        item.renderDepth = indent;
+                                    }
+                                    insertTemplate(item, node.id.toString(), template);
+                                    views.delete(item.id);
+                                    return true;
+                                }
+                            }
+                            return false;
+                        });
+                    }
+                    if (!this.viewElements.has(<HTMLElement> node.element)) {
+                        if (node.dataset.target) {
+                            const target = document.getElementById(node.dataset.target);
+                            if (target && target !== parent.element) {
+                                this.addRenderQueue(node.dataset.target, [output]);
+                                node.positioned = true;
+                                return;
+                            }
+                        }
+                        else if (parent.dataset.target) {
+                            const target = document.getElementById(parent.dataset.target);
+                            if (target) {
+                                this.addRenderQueue(parent.nodeId, [output]);
+                                node.dataset.target = parent.nodeId;
+                                return;
+                            }
+                        }
+                    }
+                    insertTemplate(node, parent.id.toString(), output);
+                }
+            };
+            for (const parent of depth.values()) {
+                if (parent.length === 0 || parent.every(node => node.rendered)) {
+                    continue;
+                }
+                const axisY: T[] = [];
+                const below: T[] = [];
+                const middle: T[] = [];
+                const above: T[] = [];
+                parent.each((node: T) => {
+                    if (node.documentRoot) {
+                        axisY.push(node);
+                    }
+                    else if (node.pageflow || node.alignOrigin) {
+                        middle.push(node);
+                    }
+                    else {
+                        if (node.toInt('zIndex') >= 0 || node.parent.element !== node.element.parentElement) {
+                            above.push(node);
+                        }
+                        else {
+                            below.push(node);
+                        }
+                    }
+                });
+                NodeList.sortByAlignment(middle, NODE_ALIGNMENT.NONE, parent);
+                axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
+                axisY.push(...middle);
+                axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
+                const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
+                const cleared = NodeList.cleared(
+                    new Set(documentParent).size !== 1 ? axisY
+                                                       : Array.from(documentParent[0].baseElement.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item)
+                );
+                let k = -1;
+                while (++k < axisY.length) {
+                    let nodeY = axisY[k];
+                    if (!nodeY.visible || nodeY.rendered || (!nodeY.documentRoot && this.viewElements.has(<HTMLElement> nodeY.element))) {
+                        continue;
+                    }
+                    let parentY = nodeY.parent as T;
+                    if (nodeY.renderAs) {
+                        parentY.remove(nodeY);
+                        nodeY.hide();
+                        nodeY = nodeY.renderAs as T;
+                    }
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
+                        const linearVertical = parentY.linearVertical;
+                        if (nodeY.pageflow &&
+                            !parentY.flex.enabled &&
+                            !parentY.has('columnCount') &&
+                            !parentY.is(NODE_STANDARD.GRID) &&
+                            (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE) || (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE)))
+                        {
+                            const horizontal: T[] = [];
+                            const vertical: T[] = [];
+                            const floatedOpen = new Set(['left', 'right']);
+                            let verticalExtended = false;
+                            let l = k;
+                            let m = 0;
+                            if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
+                                horizontal.push(nodeY);
+                                l++;
+                                m++;
+                            }
+                            domNested: {
+                                for ( ; l < axisY.length; l++, m++) {
+                                    const adjacent = axisY[l];
+                                    if (adjacent.pageflow) {
+                                        const float = cleared.get(adjacent);
+                                        if (float) {
+                                            if (float === 'both') {
+                                                floatedOpen.clear();
+                                            }
+                                            else {
+                                                floatedOpen.delete(float);
+                                            }
+                                        }
+                                        if (adjacent.floating) {
+                                            floatedOpen.add(adjacent.float);
+                                        }
+                                        const previousSibling = adjacent.previousSibling() as T;
+                                        const nextSibling = adjacent.nextSibling(true);
+                                        if (m === 0 && nextSibling) {
+                                            if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, true)) {
+                                                vertical.push(adjacent);
+                                            }
+                                            else {
+                                                horizontal.push(adjacent);
+                                            }
+                                        }
+                                        else if (previousSibling) {
+                                            const floated = NodeList.floated([...horizontal, ...vertical]);
+                                            const pending = [...horizontal, ...vertical, adjacent];
+                                            const clearedPartial = NodeList.cleared(pending);
+                                            const clearedPrevious = new Map<T, string>();
+                                            if (clearedPartial.has(previousSibling) || (previousSibling.lineBreak && cleared.has(previousSibling))) {
+                                                clearedPrevious.set(previousSibling, previousSibling.css('clear'));
+                                            }
+                                            const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious);
+                                            if (verticalAlign || clearedPartial.has(adjacent) || (this.settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2)) {
+                                                if (horizontal.length > 0) {
+                                                    if (!this.settings.floatOverlapDisabled) {
+                                                        if (floatedOpen.size > 0 && !pending.map(node => clearedPartial.get(node)).includes('both') && (floated.size === 0 || adjacent.bounds.top < Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom)))) {
+                                                            if (clearedPartial.has(adjacent)) {
+                                                                if (floatedOpen.size < 2 && floated.size === 2 && !adjacent.floating) {
+                                                                    adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                                                    verticalExtended = true;
+                                                                    horizontal.push(adjacent);
+                                                                    continue;
+                                                                }
+                                                                break domNested;
+                                                            }
+                                                            else if (!verticalAlign) {
+                                                                horizontal.push(adjacent);
+                                                                continue;
+                                                            }
+                                                            if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
+                                                                horizontal.push(adjacent);
+                                                                continue;
+                                                            }
+                                                        }
+                                                    }
+                                                    break domNested;
+                                                }
+                                                if (linearVertical && vertical.length > 0) {
+                                                    const previousAbove = vertical[vertical.length - 1];
+                                                    if (previousAbove.linearVertical) {
+                                                        adjacent.parent = previousAbove;
+                                                        continue;
+                                                    }
+                                                }
+                                                vertical.push(adjacent);
+                                            }
+                                            else {
+                                                if (vertical.length > 0 || verticalExtended) {
+                                                    break domNested;
+                                                }
+                                                horizontal.push(adjacent);
+                                            }
+                                        }
+                                        else {
+                                            break domNested;
+                                        }
+                                    }
+                                }
+                            }
+                            let group: T | undefined;
+                            let groupOutput = '';
+                            if (horizontal.length > 1) {
+                                const clearedPartial = NodeList.cleared(horizontal);
+                                if (Application.isFrameHorizontal(horizontal, clearedPartial)) {
+                                    group = this.viewController.createGroup(parentY, nodeY, horizontal);
+                                    groupOutput = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
+                                }
+                                else {
+                                    if (horizontal.length === axisY.length) {
+                                        parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                    }
+                                    else {
+                                        const floated = NodeList.floated(horizontal);
+                                        if (floated.size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT))) {
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
+                                            groupOutput = this.writeConstraintLayout(group, parentY);
+                                            group.alignmentType |= NODE_ALIGNMENT.PERCENT;
+                                        }
+                                        else if (Application.isRelativeHorizontal(horizontal, clearedPartial)) {
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
+                                            groupOutput = this.writeRelativeLayout(group, parentY);
+                                            group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                        }
+                                        else {
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
+                                            groupOutput = this.writeLinearLayout(group, parentY, true);
+                                            if (floated.size > 0) {
+                                                group.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                                                group.alignmentType |= horizontal.every(node => node.float === 'right' || node.autoMarginLeft) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT;
+                                            }
+                                            else {
+                                                group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if (vertical.length > 1) {
+                                const floated = NodeList.floated(vertical);
+                                const clearedPartial = NodeList.cleared(vertical);
+                                if (floated.size > 0 && clearedPartial.size > 0 && !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node)))) {
+                                    if (parentY.linearVertical && !hasValue(nodeY.dataset.ext)) {
+                                        group = nodeY;
+                                        groupOutput = this.writeFrameLayoutVertical(undefined, parentY, vertical, clearedPartial);
+                                    }
+                                    else {
+                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
+                                        groupOutput = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
+                                    }
+                                }
+                                else {
+                                    if (vertical.length === axisY.length) {
+                                        parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                    }
+                                    else if (!linearVertical) {
+                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
+                                        groupOutput = this.writeLinearLayout(group, parentY, false);
+                                        group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                    }
+                                }
+                                if (vertical.length !== axisY.length) {
+                                    const lastNode = vertical[vertical.length - 1];
+                                    if (!lastNode.blockStatic && lastNode !== axisY[axisY.length - 1]) {
+                                        lastNode.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                    }
+                                }
+                            }
+                            if (group) {
+                                renderNode(group, parentY, groupOutput, true);
+                                parentY = nodeY.parent as T;
+                            }
+                            if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
+                                nodeY.alignmentType ^= NODE_ALIGNMENT.EXTENDABLE;
+                            }
+                        }
+                    }
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
+                        let next = false;
+                        for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
+                            const result = ext.processChild(nodeY, parentY);
+                            if (result.output !== '') {
+                                renderNode(nodeY, parentY, result.output);
+                            }
+                            if (result.renderAs && result.renderOutput) {
+                                renderNode(result.renderAs as T, parentY, result.renderOutput);
+                            }
+                            if (result.parent) {
+                                parentY = result.parent as T;
+                            }
+                            next = result.next === true;
+                            if (result.complete || result.next) {
+                                break;
+                            }
+                        }
+                        if (next) {
+                            continue;
+                        }
+                        if (nodeY.styleElement) {
+                            const processed: Extension<T>[] = [];
+                            prioritizeExtensions(<HTMLElement> documentRoot.baseElement, <HTMLElement> nodeY.element, extensions).some(item => {
+                                if (item.is(nodeY) && item.condition(nodeY, parentY)) {
+                                    const result =  item.processNode(nodeY, parentY, mapX, mapY);
+                                    if (result.output !== '') {
+                                        renderNode(nodeY, parentY, result.output);
+                                    }
+                                    if (result.renderAs && result.renderOutput) {
+                                        renderNode(result.renderAs as T, parentY, result.renderOutput);
+                                    }
+                                    if (result.parent) {
+                                        parentY = result.parent as T;
+                                    }
+                                    if (isString(result.output) || result.include === true) {
+                                        processed.push(item);
+                                    }
+                                    next = result.next === true;
+                                    if (result.complete || result.next) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            });
+                            processed.forEach(item => item.subscribers.add(nodeY) && nodeY.renderExtension.add(item));
+                            if (next) {
+                                continue;
+                            }
+                        }
+                    }
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
+                        let output = '';
+                        if (nodeY.controlName === '') {
+                            const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
+                            const backgroundImage = REGEX_PATTERN.CSS_URL.test(nodeY.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(nodeY.css('background'));
+                            const backgroundColor = nodeY.has('backgroundColor');
+                            const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
+                            if (nodeY.length === 0) {
+                                const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
+                                if (freeFormText || (borderVisible && nodeY.textContent.length > 0)) {
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
+                                }
+                                else if (backgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat' && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
+                                    nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                                    nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
+                                }
+                                else if (nodeY.block && (backgroundColor || backgroundImage) && (borderVisible || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft > 0)) {
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
+                                }
+                                else if (!nodeY.documentRoot) {
+                                    if (this.settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !backgroundVisible) {
+                                        parentY.remove(nodeY);
+                                        nodeY.hide();
+                                    }
+                                    else if (backgroundVisible) {
+                                        output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
+                                    }
+                                    else {
+                                        output = this.writeFrameLayout(nodeY, parentY);
+                                    }
+                                }
+                            }
+                            else {
+                                if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.has('columnCount')) {
+                                    output = this.writeConstraintLayout(nodeY, parentY);
+                                }
+                                else {
+                                    if (nodeY.length === 1) {
+                                        const targeted = nodeY.filter(node => {
+                                            if (node.dataset.target) {
+                                                const element = document.getElementById(node.dataset.target);
+                                                return element !== null && hasValue(element.dataset.ext) && element !== parentY.element;
+                                            }
+                                            return false;
+                                        });
+                                        if (nodeY.documentRoot && targeted.length === 1) {
+                                            nodeY.hide();
+                                            continue;
+                                        }
+                                        else if ((this.settings.collapseUnattributedElements &&
+                                            !hasValue(nodeY.element.id) &&
+                                            !hasValue(nodeY.dataset.ext) &&
+                                            !hasValue(nodeY.dataset.target) &&
+                                            nodeY.toInt('width') === 0 &&
+                                            nodeY.toInt('height') === 0 &&
+                                            !backgroundVisible &&
+                                            !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
+                                            nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
+                                            !this.viewController.hasAppendProcessing(nodeY.id)))
+                                        {
+                                            const child = nodeY.item(0) as T;
+                                            child.documentRoot = nodeY.documentRoot;
+                                            child.siblingIndex = nodeY.siblingIndex;
+                                            child.parent = parentY;
+                                            nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
+                                            child.modifyBox(BOX_STANDARD.MARGIN_LEFT, nodeY.paddingLeft);
+                                            nodeY.hide();
+                                            axisY[k] = child;
+                                            k--;
+                                            continue;
+                                        }
+                                        else {
+                                            output = this.writeFrameLayout(nodeY, parentY);
+                                        }
+                                    }
+                                    else {
+                                        const children = nodeY.children as T[];
+                                        const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
+                                        const clearedInside = NodeList.cleared(children);
+                                        const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
+                                        if (!parentY.flex.enabled && children.every(node => node.pageflow)) {
+                                            const floated = NodeList.floated(children);
+                                            if (linearX && clearedInside.size === 0) {
+                                                if (floated.size === 0 && children.every(node => node.toInt('verticalAlign') === 0)) {
+                                                    if (children.some(node => ['text-top', 'text-bottom'].includes(node.css('verticalAlign')))) {
+                                                        output = this.writeConstraintLayout(nodeY, parentY);
+                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                    }
+                                                    else if (Application.isRelativeHorizontal(children)) {
+                                                        output = this.writeRelativeLayout(nodeY, parentY);
+                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                    }
+                                                }
+                                                if (output === '') {
+                                                    if (floated.size === 0 || !floated.has('right')) {
+                                                        if (Application.isRelativeHorizontal(children)) {
+                                                            output = this.writeRelativeLayout(nodeY, parentY);
+                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                        }
+                                                        else {
+                                                            output = this.writeLinearLayout(nodeY, parentY, true);
+                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                if (linearY || (!relativeWrap && children.some(node => node.alignedVertically(node.previousSibling(), clearedInside)))) {
+                                                    output = this.writeLinearLayout(nodeY, parentY, false);
+                                                    if (linearY && !nodeY.documentRoot) {
+                                                        nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (output === '') {
+                                            if (relativeWrap) {
+                                                if (Application.isFrameHorizontal(children, clearedInside, true)) {
+                                                    output = this.writeFrameLayoutHorizontal(nodeY, parentY, children, clearedInside);
+                                                }
+                                                else {
+                                                    output = this.writeRelativeLayout(nodeY, parentY);
+                                                    if (getBetweenElements(children[0].baseElement, children[children.length - 1].baseElement).filter(element => isLineBreak(element)).length === 0) {
+                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                output = this.writeConstraintLayout(nodeY, parentY);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            output = this.writeNode(nodeY, parentY, nodeY.controlName);
+                        }
+                        renderNode(nodeY, parentY, output);
+                    }
+                }
+            }
+            for (const ext of this.extensions) {
+                ext.afterDepthLevel();
+            }
+            for (const [key, templates] of this.depthMapProcessing.entries()) {
+                const content: string[] = [];
+                const [parentId, position] = key.split(':');
+                const views = Array.from(templates.values());
+                if (views.length > 0) {
+                    if (this._renderPosition[parentId]) {
+                        const parsed: string[] = [];
+                        this._renderPosition[parentId].forEach(value => {
+                            const result = views.find(view => view.indexOf(formatPlaceholder(value, '@')) !== -1);
+                            if (result) {
+                                parsed.push(result);
+                            }
+                        });
+                        if (parsed.length === views.length) {
+                            content.push(...parsed);
+                        }
+                    }
+                    if (content.length === 0) {
+                        content.push(...views);
+                    }
+                    const id = parentId + (position ? `:${position}` : '');
+                    const placeholder = formatPlaceholder(id);
+                    if (baseTemplate.indexOf(placeholder) !== -1) {
+                        baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
+                        empty = false;
+                    }
+                    else {
+                        this.addRenderQueue(id, views);
+                    }
+                }
+            }
+        }
+        if (documentRoot.dataset.layoutName && (!hasValue(documentRoot.dataset.target) || documentRoot.renderExtension.size === 0)) {
+            this.addLayoutFile(
+                trimString(trimNull(documentRoot.dataset.pathname), '/'),
+                documentRoot.dataset.layoutName,
+                !empty ? baseTemplate : '',
+                documentRoot.renderExtension.size > 0 && Array.from(documentRoot.renderExtension).some(item => item.documentRoot)
+            );
+        }
+        if (empty && documentRoot.renderExtension.size === 0) {
+            documentRoot.hide();
+        }
+        this.cacheProcessing.sort((a, b) => {
+            if (!a.visible) {
+                return 1;
+            }
+            else if (!b.visible) {
+                return -1;
+            }
+            else if (a.renderDepth !== b.renderDepth) {
+                return a.renderDepth < b.renderDepth ? -1 : 1;
+            }
+            else {
+                if (!a.domElement) {
+                    const nodeA = Node.getNodeFromElement(a.baseElement);
+                    if (nodeA) {
+                        a = nodeA as T;
+                    }
+                    else {
+                        return 1;
+                    }
+                }
+                if (!b.domElement) {
+                    const nodeB = Node.getNodeFromElement(a.baseElement);
+                    if (nodeB) {
+                        b = nodeB as T;
+                    }
+                    else {
+                        return -1;
+                    }
+                }
+                if (a.documentParent !== b.documentParent) {
+                    return a.documentParent.id < b.documentParent.id ? -1 : 1;
+                }
+                else {
+                    return a.renderIndex < b.renderIndex ? -1 : 1;
+                }
+            }
+        });
+        this.cacheSession.children.push(...this.cacheProcessing.duplicate());
+        for (const ext of this.extensions) {
+            for (const node of ext.subscribers) {
+                ext.postBaseLayout(node);
+            }
+        }
+        for (const ext of this.extensions) {
+            ext.afterBaseLayout();
+        }
+    }
+
+    protected setConstraints() {
+        this.viewController.setConstraints();
+        for (const ext of this.extensions) {
+            ext.afterConstraints();
+        }
+    }
+
+    protected setResources() {
+        this.resourceHandler.setBoxStyle();
+        this.resourceHandler.setFontStyle();
+        this.resourceHandler.setBoxSpacing();
+        this.resourceHandler.setValueString();
+        this.resourceHandler.setOptionArray();
+        this.resourceHandler.setImageSource();
+        for (const ext of this.extensions) {
+            ext.afterResources();
+        }
+    }
+
+    protected insertNode(element: Element, parent?: T) {
+        let node: T | null = null;
+        if (element.nodeName.charAt(0) === '#') {
+            if (element.nodeName === '#text') {
+                if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    node = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
+                    node.nodeName = 'PLAINTEXT';
+                    if (parent) {
+                        node.parent = parent;
+                        node.inherit(parent, 'style');
+                    }
+                    else {
+                        node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
+                    }
+                    node.css({
+                        position: 'static',
+                        display: 'inline',
+                        clear: 'none',
+                        cssFloat: 'none',
+                        verticalAlign: 'baseline'
+                    });
+                }
+            }
+        }
+        else if (isStyleElement(element)) {
+            const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
+            if (isElementVisible(element, this.settings.hideOffScreenElements)) {
+                node = elementNode;
+                node.setExclusions();
+            }
+            else {
+                elementNode.excluded = true;
+                elementNode.visible = false;
+            }
+        }
+        if (node) {
+            this.cacheProcessing.append(node);
+        }
+        return node;
     }
 
     protected processRenderQueue() {

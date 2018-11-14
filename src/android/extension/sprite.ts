@@ -4,8 +4,8 @@ import Controller from '../controller';
 import Resource from '../resource';
 import View from '../view';
 
-import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
+import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Sprite<T> {

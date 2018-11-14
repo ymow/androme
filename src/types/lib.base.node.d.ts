@@ -125,7 +125,7 @@ declare global {
             pageflow: boolean;
             multiLine: boolean;
             setNodeType(viewName: string): void;
-            setLayout(): void;
+            setBaseLayout(): void;
             setAlignment(settings: Settings): void;
             applyOptimizations(settings: Settings): void;
             applyCustomizations(settings: Settings): void;

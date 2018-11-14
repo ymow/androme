@@ -10,10 +10,6 @@ declare global {
             renderGroup(node: T, parent: T, nodeName: number | string, options?: ExternalData): string;
             renderNode(node: T, parent: T, nodeName: number | string): string;
             renderNodeStatic(nodeName: number | string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
-            renderInclude(node: T, parent: T, name: string): string;
-            renderMerge(name: string, content: string[]): string;
-            renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
-            baseRenderDepth(name: string): number;
             setConstraints(): void;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;

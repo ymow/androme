@@ -29,7 +29,6 @@ interface Settings {
 }
 
 interface ControllerSettings {
-    includes: boolean;
     baseTemplate: string;
     inline: {
         always: string[];

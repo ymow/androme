@@ -311,7 +311,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public setLayout() {
+        public setBaseLayout() {
             if (this.nodeType >= $enum.NODE_STANDARD.SCROLL_HORIZONTAL) {
                 this.android('layout_width', this.nodeType === $enum.NODE_STANDARD.SCROLL_HORIZONTAL && this.has('width', $enum.CSS_STANDARD.UNIT) ? this.css('width') : 'wrap_content');
                 this.android('layout_height', this.nodeType === $enum.NODE_STANDARD.SCROLL_VERTICAL && this.has('height', $enum.CSS_STANDARD.UNIT) ? this.css('height') : 'wrap_content');

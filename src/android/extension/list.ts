@@ -7,9 +7,9 @@ import View from '../view';
 
 import { createAttribute } from '../lib/util';
 
-import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.List<T> {
@@ -175,8 +175,8 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
         return { output: '' };
     }
 
-    public postRenderElement(node: T) {
-        super.postRenderElement(node);
+    public postBaseLayout(node: T) {
+        super.postBaseLayout(node);
         const columnCount = node.android('columnCount');
         for (let i = 0; i < node.renderChildren.length; i++) {
             const current = node.renderChildren[i];

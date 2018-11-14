@@ -61,7 +61,7 @@ function setAlignParent(node: View, orientation: string, bias = false) {
     }
 }
 
-export default class Controller<T extends View> extends androme.lib.base.Controller<T> {
+export default class Controller<T extends View> extends androme.lib.base.Controller<T> implements android.lib.base.Controller<T> {
     public static getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {
         const indent = $util.repeat(Math.max(0, depth));
         let output = preXml +
@@ -81,7 +81,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
 
     public settings: SettingsAndroid;
     public readonly localSettings: ControllerSettings = {
-        includes: true,
         baseTemplate: BASE_TMPL,
         layout: {
             pathName: 'res/layout',
@@ -96,8 +95,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     };
 
-    private _merge = {};
-
     public finalize(data: ViewData<$NodeList<T>>) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
@@ -110,7 +107,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public reset() {
         super.reset();
         resetId();
-        this._merge = {};
     }
 
     public setConstraints() {
@@ -2003,37 +1999,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return output;
     }
 
-    public renderInclude(node: T, parent: T, name: string) {
-        this._merge[name] = node.dataset.includeMerge === 'true';
-        node.documentRoot = !this._merge[name];
-        return this.renderNodeStatic(
-            'include',
-            parent.renderDepth + 1,
-            {
-                layout: `@layout/${name}`
-            }
-        );
-    }
-
-    public renderMerge(name: string, value: string[]) {
-        let xml = value.join('');
-        if (this._merge[name]) {
-            const node = new View(0, undefined, this.delegateNodeInit) as T;
-            node.documentRoot = true;
-            xml = this.renderNodeStatic(
-                'merge',
-                0,
-                {},
-                '',
-                '',
-                node,
-                true
-            )
-            .replace('{:0}', xml);
-        }
-        return xml;
-    }
-
     public renderColumnSpace(depth: number, width: string, height = '', columnSpan = 1) {
         let percent = '';
         if ($util.isPercent(width)) {
@@ -2052,10 +2017,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             width,
             $util.hasValue(height) ? height : 'wrap_content'
         );
-    }
-
-    public baseRenderDepth(name: string) {
-        return this._merge[name] ? 0 : -1;
     }
 
     protected addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {

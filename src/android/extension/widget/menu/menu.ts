@@ -241,7 +241,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         return { output, complete: true, next };
     }
 
-    public postRenderElement(node: T) {
+    public postBaseLayout(node: T) {
         if (this.included(<HTMLElement> node.element)) {
             Array.from(node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = $dom.getElementCache(item, 'andromeExternalDisplay');

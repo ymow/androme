@@ -24,7 +24,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
         return super.processChild(node, parent);
     }
 
-    public postRenderElement(node: T) {
+    public postBaseLayout(node: T) {
         if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
             const mainData: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
             if (mainData) {
@@ -48,7 +48,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                                 else {
                                     this.application.viewController.appendAfter(
                                         item.id,
-                                        this.application.viewController.renderColumnSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
+                                        (<android.lib.base.Controller<T>> this.application.viewController).renderColumnSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
                                     );
                                 }
                             }

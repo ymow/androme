@@ -122,7 +122,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
     };
     public readonly eventOnly = true;
 
-    public afterRenderDocument() {
+    public afterParseDocument() {
         const settings = <SettingsAndroid> this.application.settings;
         const nameMap: ObjectMap<T[]> = {};
         const groupMap: ObjectMap<StyleList[]> = {};

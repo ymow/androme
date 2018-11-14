@@ -7,15 +7,16 @@ declare global {
             nodeObject: Constructor<T>;
             builtInExtensions: ObjectMap<Extension<T>>;
             renderQueue: ObjectMap<string[]>;
-            loading: boolean;
-            appName: string;
             nodeProcessing: T | undefined;
-            layoutProcessing: FileAsset;
+            loading: boolean;
             closed: boolean;
+            appName: string;
+            layoutProcessing: FileAsset;
             readonly framework: number;
             readonly cacheImage: Map<string, ImageAsset>;
             readonly cacheSession: NodeList<T>;
             readonly cacheProcessing: NodeList<T>;
+            readonly depthMapProcessing: Map<string, Map<number, string>>;
             readonly viewElements: Set<Element>;
             readonly extensions: Set<Extension<T>>;
             readonly layouts: FileAsset[];
@@ -29,10 +30,6 @@ declare global {
             saveAllToDisk(): void;
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
-            setConstraints(): void;
-            setResources(): void;
-            createCache(layoutRoot: HTMLElement): boolean;
-            renderElement(): void;
             writeFrameLayout(node: T, parent: T, children?: boolean): string;
             writeLinearLayout(node: T, parent: T, horizontal: boolean): string;
             writeGridLayout(node: T, parent: T, columnCount: number, rowCount?: number): string;
@@ -44,6 +41,7 @@ declare global {
             addLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderQueue(id: string, views: string[]): void;
+            addPreloadImage(element: HTMLImageElement): void;
             preserveRenderPosition(node: T): void;
             getExtension(name: string): Extension<T> | null;
             getExtensionOptionsValue(name: string, attr: string): any;
@@ -51,7 +49,6 @@ declare global {
             getExtensionOptionsValueAsString(name: string, attr: string): string;
             getExtensionOptionsValueAsNumber(name: string, attr: string): number;
             getExtensionOptionsValueAsBoolean(name: string, attr: string): boolean;
-            insertNode(element: Element, parent?: T): T | null;
             toString(): string;
         }
 

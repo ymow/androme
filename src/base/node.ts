@@ -88,7 +88,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public abstract setNodeType(viewName: string): void;
-    public abstract setLayout(width?: number, height?: number): void;
+    public abstract setBaseLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
     public abstract applyOptimizations(): void;
     public abstract applyCustomizations(): void;

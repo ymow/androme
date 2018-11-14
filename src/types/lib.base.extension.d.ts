@@ -22,14 +22,15 @@ declare global {
             condition(node: T, parent?: T): boolean;
             processNode(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
             processChild(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
-            postRenderElement(node: T): void;
-            postRenderDocument(node: T): void;
+            postBaseLayout(node: T): void;
+            postParseDocument(node: T): void;
             postProcedure(node: T): void;
-            beforeRenderDocument(): void;
-            afterRenderElement(): void;
+            beforeParseDocument(): void;
+            afterDepthLevel(): void;
+            afterBaseLayout(): void;
             afterConstraints(): void;
             afterResources(): void;
-            afterRenderDocument(): void;
+            afterParseDocument(): void;
             afterProcedure(): void;
             afterFinalize(): void;
         }

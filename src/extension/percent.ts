@@ -13,13 +13,4 @@ export default abstract class Percent<T extends Node> extends Extension<T> {
             !node.imageElement
         );
     }
-
-    public processNode(node: T, parent: T): ExtensionResult<T> {
-        const controller = this.application.viewController;
-        const group = controller.createGroup(parent, node, [node]);
-        const renderOutput = this.application.writeGridLayout(group, parent, 2, 1);
-        group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-        controller[node.float === 'right' || node.autoMarginLeft ? 'prependBefore' : 'appendAfter'](node.id, controller.renderColumnSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`));
-        return { output: '', complete: true, parent: group, renderAs: group, renderOutput, include: true };
-    }
 }
