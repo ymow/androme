@@ -129,7 +129,12 @@ interface BoxStyle {
     backgroundPositionY: string;
 }
 
-interface ResourceMap {
+interface ResourceAssetMap {
+    ids: Map<string, string[]>;
+    images: Map<string, ImageAsset>;
+}
+
+interface ResourceStoredMap {
     strings: Map<string, string>;
     arrays: Map<string, string[]>;
     fonts: Map<string, ObjectMap<boolean>>;

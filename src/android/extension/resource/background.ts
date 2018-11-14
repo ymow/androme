@@ -200,7 +200,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         backgroundImage.push(...stored.backgroundImage);
                         for (let i = 0; i < backgroundImage.length; i++) {
                             if (backgroundImage[i] && backgroundImage[i] !== 'none') {
-                                backgroundDimensions.push(application.resourceHandler.imageAssets.get($dom.cssResolveUrl(backgroundImage[i])));
+                                backgroundDimensions.push(Resource.ASSETS.images.get($dom.cssResolveUrl(backgroundImage[i])));
                                 backgroundImage[i] = Resource.addImageUrl(backgroundImage[i]);
                                 const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
                                 const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];

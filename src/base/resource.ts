@@ -13,7 +13,12 @@ import { convertInt, hasValue, isNumber, isString } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
-    public static STORED: ResourceMap = {
+    public static KEY_NAME = 'androme.resource';
+    public static ASSETS: ResourceAssetMap = {
+        ids: new Map(),
+        images: new Map()
+    };
+    public static STORED: ResourceStoredMap = {
         strings: new Map(),
         arrays: new Map(),
         fonts: new Map(),
@@ -23,7 +28,29 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         drawables: new Map(),
         images: new Map()
     };
-    public static KEY_NAME = 'androme.resource';
+
+    public static generateId(section: string, name: string, start: number) {
+        const prefix = name;
+        let i = start;
+        if (start === 1) {
+            name += `_${i.toString()}`;
+        }
+        if (!this.ASSETS.ids.has(section)) {
+            this.ASSETS.ids.set(section, []);
+        }
+        const unavailable = this.ASSETS.ids.get(section) as string[];
+        do {
+            if (!unavailable.includes(name)) {
+                unavailable.push(name);
+                break;
+            }
+            else {
+                name = `${prefix}_${(++i).toString()}`;
+            }
+        }
+        while (true);
+        return name;
+    }
 
     public static getStoredName(asset: string, value: any) {
         for (const [name, stored] of Resource.STORED[asset].entries()) {
@@ -83,7 +110,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
-    public imageAssets = new Map<string, ImageAsset>();
 
     protected constructor(public fileHandler: File<T>) {
         fileHandler.stored = Resource.STORED;
@@ -92,6 +118,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public abstract finalize(viewData: ViewData<NodeList<T>>): void;
 
     public reset() {
+        for (const name in Resource.ASSETS) {
+            Resource.ASSETS[name] = new Map();
+        }
         for (const name in Resource.STORED) {
             Resource.STORED[name] = new Map();
         }
@@ -573,7 +602,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     result.dpi = node.dpi;
                     result.fontSize = node.fontSize;
                     result.defs.image.forEach(item => {
-                        const dimensions = this.imageAssets.get(item.uri);
+                        const dimensions = Resource.ASSETS.images.get(item.uri);
                         if (dimensions) {
                             if (item.width === 0) {
                                 item.width = dimensions.width;

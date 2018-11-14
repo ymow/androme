@@ -5,8 +5,6 @@ import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 import File from './file';
 import View from './view';
 
-import { generateId } from './lib/util';
-
 import $color = androme.lib.color;
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -187,7 +185,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
                 if (Resource.STORED.strings.has(name)) {
-                    name = generateId('strings', name, 1);
+                    name = Resource.generateId('string', name, 1);
                 }
                 Resource.STORED.strings.set(name, value);
             }
@@ -283,7 +281,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                         name = shade.name;
                     }
                     else {
-                        name = generateId('color', shade.name, 1);
+                        name = Resource.generateId('color', shade.name, 1);
                     }
                     Resource.STORED.colors.set(valueARGB, name);
                 }

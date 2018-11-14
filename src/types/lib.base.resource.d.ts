@@ -5,7 +5,6 @@ declare global {
             settings: Settings;
             cache: NodeList<T>;
             fileHandler: File<T>;
-            imageAssets: Map<string, ImageAsset>;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             setBoxSpacing(): void;
@@ -17,8 +16,10 @@ declare global {
         }
 
         export class Resource<T extends Node> implements Resource<T> {
-            public static STORED: ResourceMap;
             public static KEY_NAME: string;
+            public static ASSETS: ResourceAssetMap;
+            public static STORED: ResourceStoredMap;
+            public static generateId(section: string, name: string, start: number): string;
             public static getStoredName(asset: string, value: any): string;
             public static insertStoredAsset(asset: string, name: string, value: any): string;
             public static isBorderVisible(border: BorderAttribute | undefined): boolean;

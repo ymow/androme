@@ -26,7 +26,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
 
     public abstract settings: Settings;
     public appName = '';
-    public stored: ResourceMap;
+    public stored: ResourceStoredMap;
     public readonly queue: FileAsset[] = [];
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;

@@ -1,12 +1,10 @@
-import { generateId } from '../../lib/util';
-
 import Resource from '../../resource';
 import View from '../../view';
 
 import $util = androme.lib.util;
 
 function getResourceKey(dimens: Map<string, string>, key: string, value: string) {
-    return (dimens.has(key) && dimens.get(key) !== value ? generateId('dimens', key, 1) : key);
+    return dimens.has(key) && dimens.get(key) !== value ? Resource.generateId('dimen', key, 1) : key;
 }
 
 function getAttributeName(value: string) {

@@ -3,7 +3,7 @@ declare global {
         export interface File<T extends Node> {
             settings: Settings;
             appName: string;
-            stored: ResourceMap;
+            stored: ResourceStoredMap;
             readonly queue: FileAsset[];
             saveAllToDisk(data: ViewData<NodeList<T>>): void;
             addAsset(pathname: string, filename: string, content?: string, uri?: string): void;

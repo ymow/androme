@@ -37,7 +37,7 @@ type T = Node;
 let main: androme.lib.base.Application<T>;
 let framework: AppFramework<T>;
 let settings: Settings = {} as any;
-let system: FunctionMap<any> = {} as any;
+let system: FunctionMap<any> = {};
 
 const extensionsAsync = new Set<Extension<T>>();
 const optionsAsync = new Map<string, ExternalData>();

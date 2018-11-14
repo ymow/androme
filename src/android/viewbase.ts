@@ -4,7 +4,7 @@ import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/co
 import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
 import { BUILD_ANDROID } from './lib/enumeration';
 
-import { calculateBias, generateId, replaceRTL, stripId } from './lib/util';
+import { calculateBias, replaceRTL, stripId } from './lib/util';
 
 import $Node = androme.lib.base.Node;
 import $NodeList = androme.lib.base.NodeList;
@@ -303,10 +303,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (!this.nodeId) {
                 const element = <HTMLInputElement> this.element;
                 let name = $util.trimNull(element.id || element.name);
-                if (RESERVED_JAVA.includes(name)) {
+                if (name === 'parent' || RESERVED_JAVA.includes(name)) {
                     name = `_${name}`;
                 }
-                this.nodeId = $util.convertWord(generateId('android', name || $util.lastIndexOf(this.controlName, '.').toLowerCase(), name ? 0 : 1));
+                this.nodeId = $util.convertWord($Resource.generateId('android', name || $util.lastIndexOf(this.controlName, '.').toLowerCase(), name ? 0 : 1));
                 this.android('id', this.stringId);
             }
         }

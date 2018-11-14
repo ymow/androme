@@ -5,39 +5,6 @@ import { BUILD_ANDROID } from './enumeration';
 
 const $xml = androme.lib.xml;
 
-let ID_MAP: ObjectMap<string[]>;
-
-export function resetId() {
-    ID_MAP = {
-        android: ['parent']
-    };
-}
-
-export function generateId(section: string, name: string, start: number) {
-    if (ID_MAP === undefined) {
-        resetId();
-    }
-    const prefix = name;
-    let i = start;
-    if (start === 1) {
-        name += `_${i.toString()}`;
-    }
-    if (ID_MAP[section] === undefined) {
-        ID_MAP[section] = [];
-    }
-    do {
-        if (!ID_MAP[section].includes(name)) {
-            ID_MAP[section].push(name);
-            break;
-        }
-        else {
-            name = `${prefix}_${(++i).toString()}`;
-        }
-    }
-    while (true);
-    return name;
-}
-
 export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }

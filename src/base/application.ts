@@ -232,7 +232,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 Array.from(documentRoot.getElementsByClassName('androme.preload')).forEach(element => documentRoot.removeChild(element));
             }
             for (const [uri, image] of this.cacheImage.entries()) {
-                this.resourceHandler.imageAssets.set(uri, image);
+                Resource.ASSETS.images.set(uri, image);
             }
             for (const ext of this.extensions) {
                 ext.beforeParseDocument();

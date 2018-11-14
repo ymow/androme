@@ -8,7 +8,7 @@ import Resource from './resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 
-import { createAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit, resetId } from './lib/util';
+import { createAttribute, getXmlNs, replaceRTL, replaceTab, replaceUnit } from './lib/util';
 
 import $Node = androme.lib.base.Node;
 import $NodeList = androme.lib.base.NodeList;
@@ -102,11 +102,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             value.content = replaceTab(value.content, this.settings);
             value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
         }
-    }
-
-    public reset() {
-        super.reset();
-        resetId();
     }
 
     public setConstraints() {
