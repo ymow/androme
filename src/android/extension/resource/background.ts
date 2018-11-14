@@ -242,11 +242,13 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         stored.borderBottom,
                         stored.borderLeft
                     ];
-                    const borderVisible: BorderAttribute[] = [];
-                    borders.forEach(item => {
-                        if (Resource.isBorderVisible(item)) {
+                    const borderFiltered: BorderAttribute[] = [];
+                    const borderVisible: boolean[] = [];
+                    borders.forEach((item, index) => {
+                        borderVisible[index] = Resource.isBorderVisible(item);
+                        if (borderVisible[index]) {
                             item.color = Resource.addColor(item.color);
-                            borderVisible.push(item);
+                            borderFiltered.push(item);
                         }
                     });
                     const images5: BackgroundImage[] = [];
@@ -530,43 +532,38 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             '6': images6.length > 0 ? images6 : false,
                             '7': []
                         };
-                        const borderWidth = new Set(borderVisible.map(item => item.width));
-                        const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
-                        const borderData = borderVisible[0];
+                        const borderWidth = new Set(borderFiltered.map(item => item.width));
+                        const borderStyle = new Set(borderFiltered.map(item => getBorderStyle(item)));
+                        const borderData = borderFiltered[0];
                         if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                             const width = parseInt(borderData.width);
                             if (width > 2 && borderData.style === 'double') {
                                 insertDoubleBorder.apply(null, [
                                     borderData,
-                                    Resource.isBorderVisible(stored.borderTop),
-                                    Resource.isBorderVisible(stored.borderRight),
-                                    Resource.isBorderVisible(stored.borderBottom),
-                                    Resource.isBorderVisible(stored.borderLeft),
+                                    ...borderVisible,
                                     data,
                                     borderRadius
                                 ]);
                             }
                             else {
                                 const hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
-                                const topVisible = Resource.isBorderVisible(stored.borderTop);
+                                const leftTop = !borderVisible[0] && !borderVisible[3];
+                                const topOnly = !borderVisible[0] && borderVisible[1] && borderVisible[2] && borderVisible[3];
+                                const leftOnly = borderVisible[0] && borderVisible[1] && borderVisible[2] && !borderVisible[3];
                                 data['7'].push({
-                                    top: topVisible ? '' : hideWidth,
-                                    right: Resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
-                                    bottom: Resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
-                                    left: Resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
-                                    'stroke': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    top: borderVisible[0] ? '' : hideWidth,
+                                    right: borderVisible[1] ? (borderVisible[3] || leftTop || leftOnly ? '' : borderData.width) : hideWidth,
+                                    bottom: borderVisible[2] ? (borderVisible[0] || leftTop || topOnly ? '' : borderData.width) : hideWidth,
+                                    left: borderVisible[3] ? '' : hideWidth,
+                                    'stroke': getShapeAttribute(<BoxStyle> { border: borderData }, 'stroke'),
                                     'corners': borderRadius
                                 });
                             }
                         }
                         else {
-                            let topVisible = false;
                             for (let i = 0; i < borders.length; i++) {
-                                const border = borders[i];
-                                if (Resource.isBorderVisible(border)) {
-                                    if (i === 0) {
-                                        topVisible = true;
-                                    }
+                                if (borderVisible[i]) {
+                                    const border = borders[i];
                                     const width = parseInt(border.width);
                                     if (width > 2 && border.style === 'double') {
                                         insertDoubleBorder.apply(null, [
@@ -585,8 +582,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                         let hideWidth = `-${$util.formatPX(getHideWidth(outsetWidth))}`;
                                         data['7'].push({
                                             top:  i === 0 ? '' : hideWidth,
-                                            right: i === 1 ? '' : hideWidth,
-                                            bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                            right: i === 1 ? (border.width === '1px' ? border.width : '') : hideWidth,
+                                            bottom: i === 2 ? (border.width === '1px' ? border.width : '') : hideWidth,
                                             left: i === 3 ? '' : hideWidth,
                                             'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             'corners': borderRadius
@@ -595,8 +592,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                             hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
                                             data['7'].unshift({
                                                 top:  i === 0 ? '' : hideWidth,
-                                                right: i === 1 ? '' : hideWidth,
-                                                bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                                right: i === 1 ? (border.width === '1px' ? border.width : '') : hideWidth,
+                                                bottom: i === 2 ? (border.width === '1px' ? border.width : '') : hideWidth,
                                                 left: i === 3 ? '' : hideWidth,
                                                 'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
                                                 'corners': false

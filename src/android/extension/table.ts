@@ -1,6 +1,7 @@
 import View from '../view';
 
 import $const = androme.lib.constant;
+import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Table<T> {
@@ -36,7 +37,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
                             item.android('layout_columnWeight', '0.01');
                         }
                         else {
-                            if (item.textElement) {
+                            if (item.textElement && !/[\s\n\-]/.test(item.textContent.trim())) {
                                 item.android('maxLines', '1');
                             }
                             if (item.has('width') && item.toInt('width') < item.bounds.width) {
@@ -83,5 +84,20 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
             );
         }
         return { output: '' };
+    }
+
+    public postProcedure(node: T) {
+        const layoutWidth = $util.convertInt(node.android('layout_width'));
+        if (layoutWidth > 0) {
+            if (node.bounds.width > layoutWidth) {
+                node.android('layout_width', $util.formatPX(node.bounds.width));
+            }
+            if (layoutWidth > 0 && node.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && node.renderChildren.every(item => item.inlineWidth)) {
+                for (const item of node.renderChildren) {
+                    item.android('layout_width', '0px');
+                    item.android('layout_columnWeight', '1');
+                }
+            }
+        }
     }
 }

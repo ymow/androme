@@ -916,18 +916,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
                 else if (this.tagName === 'TABLE') {
-                    const width = $util.convertInt(this.android('layout_width'));
-                    if (width > 0) {
-                        if (this.bounds.width > width) {
-                            this.android('layout_width', $util.formatPX(this.bounds.width));
-                        }
-                        if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && this.renderChildren.every(node => node.inlineWidth)) {
-                            for (const node of this.renderChildren) {
-                                node.android('layout_width', '0px');
-                                node.android('layout_columnWeight', '1');
-                            }
-                        }
-                    }
                     borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                 }
                 else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {

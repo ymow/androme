@@ -5,17 +5,10 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
-import { convertFloat, convertInt, formatPercent, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
+import { convertFloat, convertInt, formatPercent, formatPX, isPercent, isUnit } from '../lib/util';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        function setAutoWidth(td: T) {
-            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
-            td.data(EXT_NAME.TABLE, 'expand', true);
-        }
-        function setBoundsWidth(td: T) {
-            td.css('width', formatPX(td.bounds.width));
-        }
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');
         const tbody = node.filter(item => item.tagName === 'TBODY');
@@ -23,9 +16,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
         if (thead.length > 0) {
-            thead[0].cascade()
-                .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
-                .forEach(item => item.inherit(thead[0], 'styleMap'));
+            thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...thead[0].children as T[]);
             thead.forEach(item => item.hide());
         }
@@ -36,9 +27,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             });
         }
         if (tfoot.length > 0) {
-            tfoot[0].cascade()
-                .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
-                .forEach(item => item.inherit(tfoot[0], 'styleMap'));
+            tfoot[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
             table.push(...tfoot[0].children as T[]);
             tfoot.forEach(item => item.hide());
         }
@@ -66,11 +55,13 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const mapWidth: string[] = [];
         const mapBounds: number[] = [];
         const rowWidth: number[] = [];
+        const tableFilled: T[][] = [];
         let columnIndex = new Array(table.length).fill(0);
         let multiLine = false;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             rowWidth[i] = horizontal;
+            tableFilled[i] = [];
             for (let j = 0; j < tr.length; j++) {
                 const td = tr.item(j) as T;
                 const element = <HTMLTableCellElement> td.element;
@@ -146,7 +137,6 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
         }
         const columnCount: number = Math.max.apply(null, columnIndex);
-        let rowCount = table.length;
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
             let percentTotal = 100;
             mapWidth.forEach((value, index) => {
@@ -199,8 +189,16 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
-        const caption = node.find(item => item.tagName === 'CAPTION');
+        function setAutoWidth(td: T) {
+            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
+            td.data(EXT_NAME.TABLE, 'expand', true);
+        }
+        function setBoundsWidth(td: T) {
+            td.css('width', formatPX(td.bounds.width));
+        }
+        const caption = node.find(item => item.tagName === 'CAPTION') as T;
         node.clear();
+        let rowCount = table.length;
         if (caption) {
             if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
@@ -213,7 +211,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 else {
                     if (caption.bounds.width > Math.max.apply(null, rowWidth)) {
-                        setBoundsWidth(caption as T);
+                        setBoundsWidth(caption);
                     }
                 }
             }
@@ -222,47 +220,29 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             caption.parent = node;
         }
         columnIndex = new Array(table.length).fill(0);
-        let borderInside = 0;
+        const hasWidth = node.hasWidth;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             const children = tr.duplicate();
             for (let j = 0; j < children.length; j++) {
                 const td = children[j] as T;
                 const element = <HTMLTableCellElement> td.element;
-                for (let k = 0; k < element.rowSpan - 1; k++)  {
+                const rowSpan = element.rowSpan;
+                const colSpan = element.colSpan;
+                for (let k = 0; k < rowSpan - 1; k++)  {
                     const l = (i + 1) + k;
                     if (columnIndex[l] !== undefined) {
-                        columnIndex[l] += element.colSpan;
+                        columnIndex[l] += colSpan;
                     }
                 }
-                if (element.rowSpan > 1) {
-                    td.data(EXT_NAME.TABLE, 'rowSpan', element.rowSpan);
+                if (rowSpan > 1) {
+                    td.data(EXT_NAME.TABLE, 'rowSpan', rowSpan);
                 }
-                if (element.colSpan > 1) {
-                    td.data(EXT_NAME.TABLE, 'colSpan', element.colSpan);
+                if (colSpan > 1) {
+                    td.data(EXT_NAME.TABLE, 'colSpan', colSpan);
                 }
                 if (!td.has('verticalAlign')) {
                     td.css('verticalAlign', 'middle');
-                }
-                if (i === 0) {
-                    if (td.has('borderTopStyle') && convertInt(td.css('borderTopWidth')) > 0) {
-                        borderInside |= 2;
-                    }
-                }
-                if (j === 0) {
-                    if (td.has('borderLeftStyle') && convertInt(td.css('borderLeftWidth')) > 0) {
-                        borderInside |= 4;
-                    }
-                }
-                if (j === children.length - 1) {
-                    if (td.has('borderRightStyle') && convertInt(td.css('borderRightWidth')) > 0) {
-                        borderInside |= 8;
-                    }
-                }
-                if (i === table.length - 1) {
-                    if (td.has('borderBottomStyle') && convertInt(td.css('borderBottomWidth')) > 0) {
-                        borderInside |= 16;
-                    }
                 }
                 const columnWidth = mapWidth[columnIndex[i]];
                 if (columnWidth !== 'undefined') {
@@ -271,7 +251,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                             if (columnWidth === 'auto') {
                                 if (mapPercent >= 1) {
                                     setBoundsWidth(td);
-                                    td.data(EXT_NAME.TABLE, 'exceed', true);
+                                    td.data(EXT_NAME.TABLE, 'exceed', !hasWidth);
                                     td.data(EXT_NAME.TABLE, 'downsized', true);
                                 }
                                 else {
@@ -326,7 +306,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
 
                     }
                 }
-                columnIndex[i] += element.colSpan;
+                columnIndex[i] += colSpan;
+                for (let k = 0; k < rowSpan; k++) {
+                    for (let l = 0; l < colSpan; l++) {
+                        tableFilled[i + k].push(td);
+                    }
+                }
                 td.parent = node;
             }
             if (columnIndex[i] < columnCount) {
@@ -335,12 +320,89 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
             tr.hide();
         }
-        if (borderCollapse && borderInside !== 0) {
+        if (borderCollapse) {
+            const borderTopColor = node.css('borderTopColor');
+            const borderTopStyle = node.css('borderTopStyle');
+            const borderTopWidth = node.css('borderTopWidth');
+            const borderRightColor = node.css('borderRightColor');
+            const borderRightStyle = node.css('borderRightStyle');
+            const borderRightWidth = node.css('borderRightWidth');
+            const borderBottomColor = node.css('borderBottomColor');
+            const borderBottomStyle = node.css('borderBottomStyle');
+            const borderBottomWidth = node.css('borderBottomWidth');
+            const borderLeftColor = node.css('borderLeftColor');
+            const borderLeftStyle = node.css('borderLeftStyle');
+            const borderLeftWidth = node.css('borderLeftWidth');
+            for (let i = 0; i < rowCount; i++) {
+                for (let j = 0; j < columnCount; j++) {
+                    const td = tableFilled[i][j];
+                    if (td && td.css('visibility') === 'visible') {
+                        if (i === 0) {
+                            if (td.borderTopWidth < parseInt(borderTopWidth)) {
+                                td.css({
+                                    borderTopColor,
+                                    borderTopStyle,
+                                    borderTopWidth
+                                });
+                            }
+                        }
+                        if (i >= 0 && i < rowCount - 1) {
+                            const next = tableFilled[i + 1][j];
+                            if (next && next !== td && next.css('visibility') === 'visible') {
+                                if (td.borderBottomWidth >= next.borderTopWidth) {
+                                    next.css('borderTopWidth', '0px');
+                                }
+                                else {
+                                    td.css('borderBottomWidth', '0px');
+                                }
+                            }
+                        }
+                        if (i === rowCount - 1) {
+                            if (td.borderBottomWidth < parseInt(borderBottomWidth)) {
+                                td.css({
+                                    borderBottomColor,
+                                    borderBottomStyle,
+                                    borderBottomWidth
+                                });
+                            }
+                        }
+                        if (j === 0) {
+                            if (td.borderLeftWidth < parseInt(borderLeftWidth)) {
+                                td.css({
+                                    borderLeftColor,
+                                    borderLeftStyle,
+                                    borderLeftWidth
+                                });
+                            }
+                        }
+                        if (j >= 0 && j < columnCount - 1) {
+                            const next = tableFilled[i][j + 1];
+                            if (next && next !== td && next.css('visibility') === 'visible') {
+                                if (td.borderRightWidth >= next.borderLeftWidth) {
+                                    next.css('borderLeftWidth', '0px');
+                                }
+                                else {
+                                    td.css('borderRightWidth', '0px');
+                                }
+                            }
+                        }
+                        if (j === columnCount - 1) {
+                            if (td.borderRightWidth < parseInt(borderRightWidth)) {
+                                td.css({
+                                    borderRightColor,
+                                    borderRightStyle,
+                                    borderRightWidth
+                                });
+                            }
+                        }
+                    }
+                }
+            }
             node.css({
-                borderTopWidth: hasBit(borderInside, 2) ? '0px' : '',
-                borderRightWidth: hasBit(borderInside, 8) ? '0px' : '',
-                borderBottomWidth: hasBit(borderInside, 16) ? '0px' : '',
-                borderLeftWidth: hasBit(borderInside, 4) ? '0px' : ''
+                borderTopWidth: '0px',
+                borderRightWidth: '0px',
+                borderBottomWidth: '0px',
+                borderLeftWidth: '0px'
             });
         }
         const output = this.application.writeGridLayout(node, parent, columnCount, rowCount);
