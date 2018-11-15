@@ -656,7 +656,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public resetBox(region: number, node?: T, negative = false) {
+    public resetBox(region: number, node?: T, inherit = false, negative = false) {
         const attrs: string[] = [];
         if (hasBit(region, BOX_STANDARD.MARGIN)) {
             attrs.push('marginTop', 'marginRight', 'marginBottom', 'marginLeft');
@@ -665,9 +665,18 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             attrs.push('paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft');
         }
         for (const attr of attrs) {
-            this._boxReset[attr] = 1;
-            if (node) {
-                node.modifyBox(attr, this[attr], negative);
+            if (inherit && node) {
+                const value = this._boxAdjustment[attr];
+                if (value > 0 || (negative && value < 0)) {
+                    node.modifyBox(attr, this._boxAdjustment[attr], negative);
+                    this._boxAdjustment[attr] = 0;
+                }
+            }
+            else {
+                this._boxReset[attr] = 1;
+                if (node) {
+                    node.modifyBox(attr, this[attr], negative);
+                }
             }
         }
     }

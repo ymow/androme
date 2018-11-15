@@ -19,6 +19,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             container.nodeName = node.nodeName;
             container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
             container.setNodeType(NODE_ANDROID.FRAME);
+            container.excludeProcedure |= $enum.NODE_PROCEDURE.CUSTOMIZATION;
             container.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             parent.replaceNode(node, container);
             container.render(parent);

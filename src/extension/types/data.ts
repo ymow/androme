@@ -18,6 +18,8 @@ export interface CssGridData<T> {
     column: CssGridDataAttribute;
     rowData: T[][][];
     templateAreas: ObjectMap<CssGridCellData>;
+    alignItems: string;
+    justifyItems: string;
 }
 
 export interface CssGridCellData {

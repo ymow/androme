@@ -170,7 +170,7 @@ declare global {
             setMultiLine(): void;
             replaceNode(node: Node, withNode: Node, append?: boolean): void;
             appendRendered(node: Node): void;
-            resetBox(region: number, node?: Node, negative?: boolean): void;
+            resetBox(region: number, node?: Node, inherit?: boolean, negative?: boolean): void;
             removeElement(): void;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;

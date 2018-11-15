@@ -50,7 +50,9 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             rowData: [],
             templateAreas: {},
             row: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('rowGap'))) }),
-            column: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('columnGap'))) })
+            column: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('columnGap'))) }),
+            alignItems: node.css('alignItems'),
+            justifyItems: node.css('justifyItems')
         };
         const gridAutoFlow = node.css('gridAutoFlow');
         const horizontal = gridAutoFlow.indexOf('row') !== -1;
@@ -269,43 +271,29 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             }
         }
         node.each((item: T, index) => {
-            const placement = gridPosition[index].placement;
-            const rowSpan = gridPosition[index].rowSpan;
-            const columnSpan = gridPosition[index].columnSpan;
-            const ROW_SPAN = horizontal ? rowSpan : columnSpan;
-            const COLUMN_SPAN = horizontal ? columnSpan : rowSpan;
+            const position = gridPosition[index];
+            const placement = position.placement;
+            const ROW_SPAN = horizontal ? position.rowSpan : position.columnSpan;
+            const COLUMN_SPAN = horizontal ? position.columnSpan : position.rowSpan;
             const COLUMN_COUNT = horizontal ? mainData.column.count : mainData.row.count;
             const rowA = horizontal ? 0 : 1;
             const colA = horizontal ? 1 : 0;
             const rowB = horizontal ? 2 : 3;
             const colB = horizontal ? 3 : 2;
-            if (dense) {
-                rowInvalid = {};
-            }
             while (!placement[0] || !placement[1]) {
                 const PLACEMENT = placement.slice();
-                let invalidIndex = -1;
                 if (!PLACEMENT[rowA]) {
-                    for (let i = 0; i < cellsPerRow.length; i++) {
+                    for (let i = 0, j = 0; i < rowData.length; i++) {
                         if (!rowInvalid[i] && cellsPerRow[i] < COLUMN_COUNT) {
-                            let valid = true;
-                            for (let j = 1; j < ROW_SPAN; j++) {
-                                const value = cellsPerRow[i + j] || 0;
-                                if (value >= COLUMN_COUNT) {
-                                    valid = false;
-                                    break;
-                                }
-                            }
-                            if (valid) {
+                            if (++j === ROW_SPAN) {
                                 PLACEMENT[rowA] = i + 1;
-                                invalidIndex = i;
                                 break;
                             }
                         }
                     }
                 }
                 if (!PLACEMENT[rowA]) {
-                    placement[rowA] = cellsPerRow.length + 1;
+                    placement[rowA] = rowData.length + 1;
                     if (!placement[colA]) {
                         placement[colA] = 1;
                     }
@@ -375,10 +363,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     placement[rowA] = PLACEMENT[rowA];
                     placement[colA] = PLACEMENT[colA];
                 }
-                else {
-                    if (invalidIndex !== -1) {
-                        rowInvalid[invalidIndex] = true;
-                    }
+                else if (PLACEMENT[rowA]) {
+                    rowInvalid[PLACEMENT[rowA] - 1] = true;
                 }
             }
             if (!placement[rowB]) {
@@ -394,6 +380,9 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     columnStart: placement[1] - 1,
                     columnSpan: placement[3] - placement[1]
                 });
+                if (dense) {
+                    rowInvalid = {};
+                }
             }
         });
         if (horizontal) {

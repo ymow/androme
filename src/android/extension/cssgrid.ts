@@ -1,16 +1,22 @@
 import { CssGridCellData, CssGridData, CssGridDataAttribute } from '../../extension/types/data';
 
+import { NODE_ANDROID } from '../lib/constant';
+
+import Controller from '../controller';
 import View from '../view';
 
 import $const = androme.lib.constant;
+import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: CssGridData<T> = parent.data($const.EXT_NAME.CSS_GRID, 'mainData');
         const cellData: CssGridCellData = node.data($const.EXT_NAME.CSS_GRID, 'cellData');
+        let output = '';
+        let container: T | undefined;
         if (mainData && cellData) {
-            function applyLayout(direction: string, dimension: string) {
+            function applyLayout(item: T, direction: string, dimension: string) {
                 const cellSpan = `${direction}Span`;
                 const cellStart = `${direction}Start`;
                 const minDimension = `min${$util.capitalize(dimension)}`;
@@ -73,23 +79,74 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         minSize += value;
                     }
                 }
-                node.android(`layout_${direction}`, cellData[cellStart].toString());
+                item.android(`layout_${direction}`, cellData[cellStart].toString());
                 if (cellData[cellSpan] > 1) {
-                    node.android(`layout_${direction}Span`, cellData[cellSpan].toString());
+                    item.android(`layout_${direction}Span`, cellData[cellSpan].toString());
                 }
-                if (size > 0 && !node.has(dimension)) {
-                    node.css(dimension, $util.formatPX(size));
+                if (size > 0 && !item.has(dimension)) {
+                    item.css(dimension, $util.formatPX(size));
                 }
-                if (minSize > 0 && !node.has(minDimension)) {
-                    node.css(minDimension, $util.formatPX(minSize));
+                if (minSize > 0 && !item.has(minDimension)) {
+                    item.css(minDimension, $util.formatPX(minSize));
                 }
-                node.android(`layout_${direction}Weight`, sizeWeight > 0 ? sizeWeight.toString() : '0');
+                item.android(`layout_${direction}Weight`, sizeWeight > 0 ? sizeWeight.toString() : '0');
             }
-            applyLayout('column', 'width');
-            applyLayout('row', 'height');
-            node.mergeGravity('layout_gravity', 'fill_vertical');
+            const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
+            const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
+            if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
+                output = '';
+                container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
+                container.siblingIndex = node.siblingIndex;
+                container.nodeName = node.nodeName;
+                container.inherit(node, 'initial', 'base');
+                container.setNodeType(NODE_ANDROID.FRAME);
+                container.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION;
+                container.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
+                parent.replaceNode(node, container);
+                container.render(parent);
+                this.application.processing.cache.append(container, false);
+                node.parent = container;
+                output = Controller.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
+                applyLayout(container, 'column', 'width');
+                applyLayout(container, 'row', 'height');
+                container.mergeGravity('layout_gravity', 'fill_vertical');
+                let inlineWidth = false;
+                if (justifyItems.endsWith('start') || justifyItems.endsWith('left') || justifyItems.endsWith('baseline')) {
+                    node.mergeGravity('layout_gravity', node.localizeString('left'));
+                    inlineWidth = true;
+                }
+                else if (justifyItems.endsWith('end') || justifyItems.endsWith('right')) {
+                    node.mergeGravity('layout_gravity', node.localizeString('right'));
+                    inlineWidth = true;
+                }
+                else if (justifyItems.endsWith('center')) {
+                    node.mergeGravity('layout_gravity', 'center_horizontal');
+                    inlineWidth = true;
+                }
+                if (!node.hasWidth) {
+                    node.android('layout_width', inlineWidth ? 'wrap_content' : 'match_parent');
+                }
+                if (alignItems.endsWith('start') || alignItems.endsWith('baseline')) {
+                    node.mergeGravity('layout_gravity', 'top');
+                }
+                else if (alignItems.endsWith('end')) {
+                    node.mergeGravity('layout_gravity', 'bottom');
+                }
+                else if (alignItems.endsWith('center')) {
+                    node.mergeGravity('layout_gravity', 'center_vertical');
+                }
+                else if (!node.hasHeight) {
+                    node.mergeGravity('layout_height', 'match_parent');
+                }
+                container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
+                node.resetBox($enum.BOX_STANDARD.MARGIN, container, true);
+            }
+            const target = container || node;
+            applyLayout(target, 'column', 'width');
+            applyLayout(target, 'row', 'height');
+            target.mergeGravity('layout_gravity', 'fill_vertical');
         }
-        return { output: '' };
+        return { output, parent: container, complete: true };
     }
 
     public postProcedure(node: T) {

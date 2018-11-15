@@ -1612,7 +1612,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             child.documentRoot = nodeY.documentRoot;
                                             child.siblingIndex = nodeY.siblingIndex;
                                             child.parent = parentY;
-                                            nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
+                                            nodeY.resetBox(BOX_STANDARD.MARGIN, child, false, true);
                                             child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
                                             child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
                                             child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
