@@ -42,9 +42,9 @@ let system: FunctionMap<any> = {};
 const extensionsAsync = new Set<Extension<T>>();
 const optionsAsync = new Map<string, ExternalData>();
 
-export function setFramework(module: AppFramework<T>, cached = false) {
-    if (framework !== module) {
-        const appBase: AppBase<T> = cached ? module.cached() : module.create();
+export function setFramework(value: AppFramework<T>, cached = false) {
+    if (framework !== value) {
+        const appBase: AppBase<T> = cached ? value.cached() : value.create();
         if (main || Object.keys(settings).length === 0) {
             settings = appBase.settings;
         }
@@ -70,8 +70,8 @@ export function setFramework(module: AppFramework<T>, cached = false) {
             }
             register.forEach(item => main.installExtension(item));
         }
-        framework = module;
-        system = module.system;
+        framework = value;
+        system = value.system;
     }
     reset();
 }
@@ -103,27 +103,28 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
     };
 }
 
-export function installExtension(ext: Extension<T> | string) {
+export function installExtension(value: Extension<T> | string) {
     if (main) {
-        if (ext instanceof Extension) {
-            return main.installExtension(ext);
+        if (value instanceof Extension) {
+            return main.installExtension(value);
         }
-        else {
-            const module = main.builtInExtensions[ext] || getExtension(ext);
-            if (module) {
-                return main.installExtension(module);
+        else if (util.isString(value)) {
+            value = value.trim();
+            const ext = main.builtInExtensions[value] || getExtension(value);
+            if (ext) {
+                return main.installExtension(ext);
             }
         }
     }
     return false;
 }
 
-export function installExtensionAsync(ext: Extension<T>) {
-    if (installExtension(ext)) {
+export function installExtensionAsync(value: Extension<T> | string) {
+    if (installExtension(value)) {
         return true;
     }
-    else if (ext instanceof Extension) {
-        extensionsAsync.add(ext);
+    else if (value instanceof Extension) {
+        extensionsAsync.add(value);
         if (settings.handleExtensionsAsync) {
             return true;
         }
@@ -131,20 +132,21 @@ export function installExtensionAsync(ext: Extension<T>) {
     return false;
 }
 
-export function removeExtension(module: Extension<T> | string) {
+export function removeExtension(value: Extension<T> | string) {
     if (main) {
-        if (module instanceof Extension) {
-            if (extensionsAsync.has(module)) {
-                extensionsAsync.delete(module);
-                main.removeExtension(module);
+        if (value instanceof Extension) {
+            if (extensionsAsync.has(value)) {
+                extensionsAsync.delete(value);
+                main.removeExtension(value);
                 return true;
             }
             else {
-                return main.removeExtension(module);
+                return main.removeExtension(value);
             }
         }
-        else if (util.isString(module)) {
-            const ext = main.getExtension(module);
+        else if (util.isString(value)) {
+            value = value.trim();
+            const ext = main.getExtension(value);
             if (ext) {
                 return main.removeExtension(ext);
             }
@@ -153,21 +155,22 @@ export function removeExtension(module: Extension<T> | string) {
     return false;
 }
 
-export function configureExtension(module: Extension<T> | string, options: {}) {
+export function configureExtension(value: Extension<T> | string, options: {}) {
     if (typeof options === 'object') {
-        if (module instanceof Extension) {
-            Object.assign(module.options, options);
+        if (value instanceof Extension) {
+            Object.assign(value.options, options);
             return true;
         }
-        else if (util.isString(module)) {
+        else if (util.isString(value)) {
             if (main) {
-                const ext = main.getExtension(module) || Array.from(extensionsAsync).find(item => item.name === module);
+                value = value.trim();
+                const ext = main.getExtension(value) || Array.from(extensionsAsync).find(item => item.name === value);
                 if (ext) {
                     Object.assign(ext.options, options);
                     return true;
                 }
                 else {
-                    optionsAsync.set(module, options);
+                    optionsAsync.set(value, options);
                     if (settings.handleExtensionsAsync) {
                         return true;
                     }
@@ -178,23 +181,24 @@ export function configureExtension(module: Extension<T> | string, options: {}) {
     return false;
 }
 
-export function getExtension(name: string) {
-    return main && main.getExtension(name);
-}
-
-export function ext(module: Extension<T> | string, options?: ExternalData) {
-    if (module instanceof Extension) {
-        return installExtension(module);
+export function ext(value: Extension<T> | string, options?: ExternalData) {
+    if (value instanceof Extension) {
+        return installExtension(value);
     }
-    else if (util.isString(module)) {
+    else if (util.isString(value)) {
+        value = value.trim();
         if (typeof options === 'object') {
-            return configureExtension(module, options);
+            return configureExtension(value, options);
         }
         else {
-            return getExtension(module);
+            return getExtension(value);
         }
     }
     return false;
+}
+
+export function getExtension(value: string) {
+    return main && main.getExtension(value);
 }
 
 export function ready() {
