@@ -211,6 +211,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 while ((match = pattern.exec(value)) !== null) {
                                     let gradient: Gradient;
                                     if (match[1] === 'linear') {
+                                        if (!/^to/.test(match[2]) && !/deg$/.test(match[2])) {
+                                            match[3] = match[2] + match[3];
+                                            match[2] = '180deg';
+                                        }
                                         gradient = <LinearGradient> {
                                             type: 'linear',
                                             angle: (() => {
@@ -272,7 +276,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     for (let i = 0; i < stopMatch.length; i += 3) {
                                         const rgba = stopMatch[i + 1];
                                         if (isString(rgba)) {
-                                            const color = parseRGBA(rgba, rgba.startsWith('rgba') ? undefined : opacity);
+                                            const color = parseRGBA(rgba, opacity);
                                             if (color && color.visible) {
                                                 gradient.colorStop.push({
                                                     color: color.valueRGBA,
@@ -287,7 +291,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     }
                                 }
                                 if (gradients.length > 0) {
-                                    boxStyle.backgroundGradient = gradients.reverse();
+                                    boxStyle.backgroundGradient = gradients;
                                 }
                                 else {
                                     const images: string[] = [];

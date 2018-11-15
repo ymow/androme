@@ -9,6 +9,7 @@ import $color = androme.lib.color;
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $util = androme.lib.util;
+import $svg = androme.lib.svg;
 import $xml = androme.lib.xml;
 
 type ThemeTemplate = {
@@ -26,25 +27,25 @@ function getHexARGB(value: ColorHexAlpha | null) {
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
     public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], useColorAlias = true) {
         const result: BackgroundGradient[] = [];
-        for (const shape of gradients) {
-            const hasStop = node.svgElement || shape.colorStop.filter(item => $util.convertInt(item.offset) > 0).length > 0;
+        const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
+        for (const item of gradients) {
             const gradient: BackgroundGradient = {
-                type: shape.type,
-                startColor: !hasStop ? Resource.addColor(shape.colorStop[0].color) : '',
-                centerColor: !hasStop && shape.colorStop.length > 2 ? Resource.addColor(shape.colorStop[1].color) : '',
-                endColor: !hasStop ? Resource.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
+                type: item.type,
+                startColor: !hasStop ? Resource.addColor(item.colorStop[0].color) : '',
+                centerColor: !hasStop && item.colorStop.length > 2 ? Resource.addColor(item.colorStop[1].color) : '',
+                endColor: !hasStop ? Resource.addColor(item.colorStop[item.colorStop.length - 1].color) : '',
                 colorStop: []
             };
-            switch (shape.type) {
+            switch (item.type) {
                 case 'radial':
                     if (node.svgElement) {
-                        const radial = <SvgRadialGradient> shape;
+                        const radial = <SvgRadialGradient> item;
                         gradient.gradientRadius = radial.r.toString();
                         gradient.centerX = radial.cx.toString();
                         gradient.centerY = radial.cy.toString();
                     }
                     else {
-                        const radial = <RadialGradient> shape;
+                        const radial = <RadialGradient> item;
                         let boxPosition: BoxPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
                             boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.dpi, node.fontSize, true, !hasStop);
@@ -67,37 +68,47 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                     break;
                 case 'linear':
                     if (node.svgElement) {
-                        const linear = <SvgLinearGradient> shape;
+                        const linear = <SvgLinearGradient> item;
                         gradient.startX = linear.x1.toString();
                         gradient.startY = linear.y1.toString();
                         gradient.endX = linear.x2.toString();
                         gradient.endY = linear.y2.toString();
                     }
                     else {
-                        const linear = <LinearGradient> shape;
-                        if (linear.angle) {
-                            gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
+                        const linear = <LinearGradient> item;
+                        if (linear.angle !== undefined) {
+                            if (hasStop) {
+                                const x = Math.round(node.bounds.width / 2);
+                                const y = Math.round(node.bounds.height / 2);
+                                gradient.startX = Math.round($svg.getOffsetX(linear.angle + 180, x) + x).toString();
+                                gradient.startY = Math.round($svg.getOffsetY(linear.angle + 180, y) + y).toString();
+                                gradient.endX = Math.round($svg.getOffsetX(linear.angle + 1, x) + x).toString();
+                                gradient.endY = Math.round($svg.getOffsetY(linear.angle + 1, y) + y).toString();
+                            }
+                            else {
+                                gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
+                            }
                         }
                     }
                     break;
             }
             if (hasStop) {
-                for (let i = 0; i < shape.colorStop.length; i++) {
-                    const item = shape.colorStop[i];
-                    const color = useColorAlias ? `@color/${Resource.addColor(item.color)}` : getHexARGB($color.parseRGBA(item.color));
-                    let offset = $util.convertInt(item.offset);
+                for (let i = 0; i < item.colorStop.length; i++) {
+                    const stop = item.colorStop[i];
+                    const color = useColorAlias ? `@color/${Resource.addColor(stop.color)}` : getHexARGB($color.parseRGBA(stop.color));
+                    let offset = parseInt(stop.offset);
                     if (i === 0) {
                         if (!node.svgElement && offset !== 0) {
                             gradient.colorStop.push({
                                 color,
                                 offset: '0',
-                                opacity: item.opacity
+                                opacity: stop.opacity
                             });
                         }
                     }
                     else if (offset === 0) {
-                        if (i < shape.colorStop.length - 1) {
-                            offset = Math.round(($util.convertInt(shape.colorStop[i - 1].offset) + $util.convertInt(shape.colorStop[i + 1].offset)) / 2);
+                        if (i < item.colorStop.length - 1) {
+                            offset = Math.round((parseInt(item.colorStop[i - 1].offset) + parseInt(item.colorStop[i + 1].offset)) / 2);
                         }
                         else {
                             offset = 100;
@@ -106,7 +117,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                     gradient.colorStop.push({
                         color,
                         offset: (offset / 100).toFixed(2),
-                        opacity: item.opacity
+                        opacity: stop.opacity
                     });
                 }
             }

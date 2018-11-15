@@ -123,7 +123,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         {
                             mapWidth[m] = columnWidth;
                         }
-                        if (element.colSpan === 1) {
+                        if (mapBounds[m] === undefined || element.colSpan === 1) {
                             mapBounds[m] = td.bounds.width;
                         }
                     }

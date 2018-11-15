@@ -69,6 +69,8 @@ declare global {
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
             export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): BoxPosition | undefined;
+            export function getOffsetX(angle: number, radius: number): number;
+            export function getOffsetY(angle: number, radius: number): number;
             export function isSvgVisible(element: SVGGraphicsElement): boolean;
         }
 

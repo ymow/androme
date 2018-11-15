@@ -73,6 +73,14 @@ export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, 
     return undefined;
 }
 
+export function getOffsetX(angle: number, radius: number) {
+    return radius * Math.sin(angle * Math.PI / 180);
+}
+
+export function getOffsetY(angle: number, radius: number) {
+    return radius * Math.cos(angle * Math.PI / 180) * -1;
+}
+
 export function isSvgVisible(element: SVGGraphicsElement) {
     return cssAttribute(element, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(element, 'visibility'));
 }

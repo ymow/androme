@@ -193,7 +193,7 @@ const appBase: AppFramework<T> = {
         application.registerController(viewController);
         application.registerResource(resourceHandler);
         application.nodeObject = View;
-        application.builtInExtensions = {
+        Object.assign(application.builtInExtensions, {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
             [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
@@ -211,7 +211,7 @@ const appBase: AppFramework<T> = {
             [EXT_ANDROID.RESOURCE_FONTS]: new ResourceFonts(EXT_ANDROID.RESOURCE_FONTS, framework),
             [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
             [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework)
-        };
+        });
         initialized = true;
         return {
             application,

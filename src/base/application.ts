@@ -81,7 +81,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     )
                 );
             }) && (
-                visible.some(node => ((node.textElement || node.imageElement || node.svgElement) && node.baseline) || (node.plainText && node.multiLine)) ||
+                visible.some(node => (node.baseline && (node.textElement || node.imageElement || node.svgElement)) || (node.plainText && node.multiLine)) ||
                 (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
             )
         );
@@ -90,11 +90,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public viewController: Controller<T>;
     public resourceHandler: Resource<T>;
     public nodeObject: Constructor<T>;
-    public builtInExtensions: ObjectMap<Extension<T>>;
     public loading = false;
     public closed = false;
+    public readonly builtInExtensions: ObjectMap<Extension<T>> = {};
     public readonly extensions = new Set<Extension<T>>();
-    public readonly parseElements = new Set<HTMLElement>();
     public readonly session: AppSession<NodeList<T>> = {
         cache: new NodeList<T>(),
         image: new Map<string, ImageAsset>(),
@@ -106,6 +105,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         node: null,
         layout: null
     };
+    public readonly parseElements = new Set<HTMLElement>();
 
     private _settings: Settings;
     private _cacheRoot = new Set<Element>();

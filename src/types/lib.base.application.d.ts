@@ -5,15 +5,15 @@ declare global {
             viewController: Controller<T>;
             resourceHandler: Resource<T>;
             nodeObject: Constructor<T>;
-            builtInExtensions: ObjectMap<Extension<T>>;
             loading: boolean;
             closed: boolean;
             appName: string;
             readonly framework: number;
-            readonly parseElements: Set<Element>;
+            readonly builtInExtensions: ObjectMap<Extension<T>>;
             readonly session: AppSession<NodeList<T>>;
             readonly processing: AppProcessing<T, NodeList<T>>;
             readonly extensions: Set<Extension<T>>;
+            readonly parseElements: Set<Element>;
             readonly layouts: FileAsset[];
             readonly viewData: ViewData<NodeList<T>>;
             readonly size: number;

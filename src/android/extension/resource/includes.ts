@@ -48,7 +48,6 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                     for (let j = 0; j < close.length; j++) {
                         const closeData = close[j];
                         if (closeData.index >= openData.index) {
-                            const group: T[] = [];
                             const location = new Map<string, T[]>();
                             let valid = true;
                             for (let k = openData.index; k <= closeData.index; k++) {
@@ -60,7 +59,6 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                         location.set(key, []);
                                     }
                                     (location.get(key) as T[]).push(item);
-                                    group.push(item);
                                 }
                                 else {
                                     valid = false;
@@ -68,6 +66,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                             }
                             if (valid) {
                                 const content = new Map<number, string>();
+                                const group: T[] = [];
                                 let k = 0;
                                 for (const [key, templates] of processing.depthMap.entries()) {
                                     const includeParent = location.get(key);
@@ -85,6 +84,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                                     deleteIds.push(id);
                                                 }
                                                 content.set(id, template);
+                                                group.push(item);
                                             }
                                         }
                                         deleteIds.forEach(value => templates.delete(value));
@@ -106,7 +106,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                         baseNode.documentRoot = true;
                                         xml = controller.renderNodeStatic('merge', 0, {}, '', '', baseNode, true).replace('{:0}', xml);
                                     }
-                                    else {
+                                    else if (!openData.item.documentRoot) {
                                         const placeholder = $xml.formatPlaceholder(openData.item.id, '@');
                                         xml = xml.replace(placeholder, `{#0}${placeholder}`);
                                     }

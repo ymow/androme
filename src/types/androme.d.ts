@@ -14,6 +14,7 @@ declare global {
         export function saveAllToDisk(): void;
         export function toString(): string;
         export const settings: Settings;
+        export const system: FunctionMap<any>;
     }
 }
 
