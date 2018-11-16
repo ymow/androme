@@ -1,4 +1,5 @@
 export const EXT_ANDROID = {
+    CONSTRAINT_GUIDELINE: 'android.constraint.guideline',
     RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',
     RESOURCE_SVG: 'android.resource.svg',
@@ -63,6 +64,37 @@ export const BOX_ANDROID = {
 export const AXIS_ANDROID = {
     HORIZONTAL: 'horizontal',
     VERTICAL: 'vertical'
+};
+
+export const LAYOUT_ANDROID = {
+    relativeParent: {
+        left: 'layout_alignParentLeft',
+        top: 'layout_alignParentTop',
+        right: 'layout_alignParentRight',
+        bottom: 'layout_alignParentBottom'
+    },
+    relative: {
+        left: 'layout_alignLeft',
+        top: 'layout_alignTop',
+        right: 'layout_alignRight',
+        bottom: 'layout_alignBottom',
+        baseline: 'layout_alignBaseline',
+        leftRight: 'layout_toRightOf',
+        rightLeft: 'layout_toLeftOf',
+        topBottom: 'layout_below',
+        bottomTop: 'layout_above',
+    },
+    constraint: {
+        left: 'layout_constraintLeft_toLeftOf',
+        top: 'layout_constraintTop_toTopOf',
+        right: 'layout_constraintRight_toRightOf',
+        bottom: 'layout_constraintBottom_toBottomOf',
+        leftRight: 'layout_constraintLeft_toRightOf',
+        rightLeft: 'layout_constraintRight_toLeftOf',
+        baseline: 'layout_constraintBaseline_toBaselineOf',
+        topBottom: 'layout_constraintTop_toBottomOf',
+        bottomTop: 'layout_constraintBottom_toTopOf'
+    }
 };
 
 export const XMLNS_ANDROID = {

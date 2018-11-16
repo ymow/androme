@@ -9,6 +9,8 @@
         #androme_ui {
             position: relative;
             width: 400px;
+            height: 400px;
+            border: 1px solid #000;
         }
         span {
             position: absolute;
@@ -31,9 +33,7 @@
             androme = result;
             System.import('/build/android/main.js').then(result => {
                 androme.setFramework(result['default']);
-                androme.settings.constraintCirclePositionAbsolute = true;
-                androme.settings.constraintChainDisabled = true;
-                androme.settings.alwaysReevaluateResources = true;
+                androme.configureExtension('android.constraint.guideline', { circlePosition: true });
                 addView();
                 closeDocument();
             });
@@ -67,7 +67,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui">
+    <div id="androme_ui" data-ext="android.constraint.guideline">
         <span>1</span>
         <span>2</span>
         <span>3</span>

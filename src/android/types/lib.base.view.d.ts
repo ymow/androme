@@ -13,7 +13,9 @@ declare global {
             formatted(value: string, overwrite?: boolean): void;
             mergeGravity(attr: string, ...alignment: string[]): string;
             anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean): void;
-            alignParent(position: string): boolean;
+            anchorParent(position: string): boolean;
+            anchorSibling(position: string): string;
+            anchorDelete(...position: string[]): void;
             horizontalBias(): number;
             verticalBias(): number;
             supported(obj: string, attr: string, result?: {}): boolean;

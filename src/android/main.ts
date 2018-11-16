@@ -20,6 +20,8 @@ import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 
+import ConstraintGuideline from './extension/constraint/guideline';
+
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
 import ResourceFonts from './extension/resource/fonts';
@@ -71,6 +73,9 @@ const lib = {
         Percent,
         Sprite,
         Table,
+        constraint: {
+            Guideline: ConstraintGuideline
+        },
         resource: {
             Background: ResourceBackground,
             Dimens: ResourceDimens,
@@ -204,6 +209,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

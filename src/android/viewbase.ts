@@ -1,6 +1,6 @@
 import { Constraint, LocalSettings } from './types/module';
 
-import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
+import { AXIS_ANDROID, BOX_ANDROID, LAYOUT_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
 import { BUILD_ANDROID } from './lib/enumeration';
 
@@ -123,31 +123,73 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
-            if (arguments.length === 1 || this.constraint.current[position] === undefined || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
+            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
+                if (arguments.length === 1 || this.constraint.current[position] === undefined || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
+                    if (overwrite === undefined) {
+                        overwrite = adjacent === 'parent';
+                    }
+                    const attr: string = LAYOUT_ANDROID.constraint[position];
+                    if (attr) {
+                        this.app(this.localizeString(attr), adjacent, overwrite);
+                        if (orientation) {
+                            this.constraint[orientation] = true;
+                        }
+                        this.constraint.current[position] = { adjacent, orientation, overwrite };
+                    }
+                }
+            }
+            else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
                 if (overwrite === undefined) {
-                    overwrite = adjacent === 'parent' || adjacent === 'true';
+                    overwrite = adjacent === 'true';
                 }
-                this[this.renderParent.controlName === NODE_ANDROID.RELATIVE ? 'android' : 'app'](position, adjacent, overwrite);
-                if (orientation) {
-                    this.constraint[orientation] = true;
-                }
-                this.constraint.current[position] = { adjacent, orientation, overwrite };
+                const attr: string = LAYOUT_ANDROID.relative[position];
+                this.android(this.localizeString(attr), adjacent, overwrite);
             }
         }
 
-        public alignParent(position: string) {
-            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
-                position = $util.capitalize(position);
-                if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {
-                    const attr = `layout_constraint${position}_to${position}Of`;
+        public anchorSibling(position: string) {
+            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
+                const attr: string = LAYOUT_ANDROID.constraint[position];
+                const value = this.app(this.localizeString(attr)) || this.app(attr);
+                return value !== 'parent' && value !== this.renderParent.stringId ? value : '';
+            }
+            else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
+                const attr = LAYOUT_ANDROID.relative[position];
+                return this.android(this.localizeString(attr)) || this.android(attr);
+            }
+            return '';
+        }
+
+        public anchorParent(position: string) {
+            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
+                const attr: string = LAYOUT_ANDROID.constraint[position];
+                if (attr) {
                     return this.app(this.localizeString(attr)) === 'parent' || this.app(attr) === 'parent';
                 }
-                else {
-                    const attr = `layout_alignParent${position}`;
+            }
+            else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
+                const attr: string = LAYOUT_ANDROID.relativeParent[position];
+                if (attr) {
                     return this.android(this.localizeString(attr)) === 'true' || this.android(attr) === 'true';
                 }
             }
             return false;
+        }
+
+        public anchorDelete(...position: string[]) {
+            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
+                this.delete('app', ...position.map(value => LAYOUT_ANDROID.constraint[value]), ...position.map(value => this.localizeString(LAYOUT_ANDROID.constraint[value])));
+            }
+            else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
+                for (const value of position) {
+                    if (this.anchorSibling(value)) {
+                        this.delete('android', LAYOUT_ANDROID.relative[value], this.localizeString(LAYOUT_ANDROID.relative[value]));
+                    }
+                    else {
+                        this.delete('android', LAYOUT_ANDROID.relativeParent[value], this.localizeString(LAYOUT_ANDROID.relativeParent[value]));
+                    }
+                }
+            }
         }
 
         public horizontalBias() {
@@ -389,7 +431,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
-                    if (this.android('layout_width') !== '0px') {
+                    const gridParent = renderParent.is($enum.NODE_STANDARD.GRID);
+                    const columnWeight = this.android('layout_columnWeight');
+                    if (gridParent && columnWeight && columnWeight !== '0') {
+                        this.android('layout_width', '0px');
+                    }
+                    else if (this.android('layout_width') !== '0px') {
                         if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is($enum.NODE_STANDARD.GRID) || !this.has('width', 0, { map: 'initial' }))) {
                             if (this.has('width', $enum.CSS_STANDARD.PERCENT)) {
                                 if (styleMap.width === '100%') {
@@ -437,12 +484,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     if (this.android('layout_width') === '') {
                         const widthDefined = renderChildren.filter(node => !node.autoMargin && node.has('width', $enum.CSS_STANDARD.UNIT, { map: 'initial' }));
-                        const gridParent = renderParent.is($enum.NODE_STANDARD.GRID);
-                        const columnWeight = this.android('layout_columnWeight');
-                        if (gridParent && columnWeight && columnWeight !== '0') {
-                            this.android('layout_width', '0px');
-                        }
-                        else if ((widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) || this.svgElement) {
+                        if ((widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) || this.svgElement) {
                             this.android('layout_width', 'wrap_content');
                         }
                         else {
@@ -952,7 +994,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: View, index) => {
-                    if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                    if (!(node.floating || (this.layoutRelative && node.anchorParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
@@ -1173,7 +1215,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
                 if (stored) {
-                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right') && !(this.position === 'relative' && this.alignNegative)) {
+                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.anchorParent('left') && this.anchorParent('right') && !(this.position === 'relative' && this.alignNegative)) {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                     }

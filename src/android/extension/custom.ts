@@ -1,7 +1,7 @@
+import { EXT_ANDROID } from '../lib/constant';
+
 import Resource from '../resource';
 import View from '../view';
-
-import { EXT_ANDROID } from '../lib/constant';
 
 export default class <T extends View> extends androme.lib.extensions.Custom<T> {
     public postProcedure(node: T) {
