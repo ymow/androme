@@ -3,8 +3,6 @@ export interface SettingsAndroid extends Settings {
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
-    constraintChainPackedHorizontalOffset: number;
-    constraintChainPackedVerticalOffset: number;
     constraintCirclePositionAbsolute: boolean;
     constraintPercentAccuracy: number;
     showAttributes: boolean;

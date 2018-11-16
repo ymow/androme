@@ -93,49 +93,51 @@ export function convertFloat(value: string | null) {
 }
 
 export function convertPX(value: string, dpi: number, fontSize: number): string {
-    if (isNumber(value)) {
-        return `${Math.round(value)}px`;
-    }
-    else {
-        value = value.trim();
-        if (value.endsWith('px') || value.endsWith('%') || value === 'auto') {
-            return value;
+    if (value) {
+        if (isNumber(value)) {
+            return `${Math.round(value)}px`;
         }
-    }
-    const match = value.match(REGEX_PATTERN.UNIT);
-    if (match) {
-        let result = parseFloat(match[1]);
-        switch (match[2]) {
-            case 'em':
-            case 'ch':
-                result *= fontSize || 16;
-                break;
-            case 'pc':
-                result *= 12;
-            case 'pt':
-                result *= 4 / 3;
-                break;
-            case 'vw':
-                result *= window.innerWidth / 100;
-                break;
-            case 'vh':
-                result *= window.innerHeight / 100;
-                break;
-            case 'vmin':
-                result *= Math.min(window.innerWidth, window.innerHeight) / 100;
-                break;
-            case 'vmax':
-                result *= Math.max(window.innerWidth, window.innerHeight) / 100;
-                break;
-            case 'mm':
-                result /= 10;
-            case 'cm':
-                result /= 2.54;
-            case 'in':
-                result *= dpi || 96;
-                break;
+        else {
+            value = value.trim();
+            if (value.endsWith('px') || value.endsWith('%') || value === 'auto') {
+                return value;
+            }
         }
-        return `${result}px`;
+        const match = value.match(REGEX_PATTERN.UNIT);
+        if (match) {
+            let result = parseFloat(match[1]);
+            switch (match[2]) {
+                case 'em':
+                case 'ch':
+                    result *= fontSize || 16;
+                    break;
+                case 'pc':
+                    result *= 12;
+                case 'pt':
+                    result *= 4 / 3;
+                    break;
+                case 'vw':
+                    result *= window.innerWidth / 100;
+                    break;
+                case 'vh':
+                    result *= window.innerHeight / 100;
+                    break;
+                case 'vmin':
+                    result *= Math.min(window.innerWidth, window.innerHeight) / 100;
+                    break;
+                case 'vmax':
+                    result *= Math.max(window.innerWidth, window.innerHeight) / 100;
+                    break;
+                case 'mm':
+                    result /= 10;
+                case 'cm':
+                    result /= 2.54;
+                case 'in':
+                    result *= dpi || 96;
+                    break;
+            }
+            return `${result}px`;
+        }
     }
     return '0px';
 }
