@@ -169,6 +169,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 }
             }
             if (columnCount > 0) {
+                node.android('layout_width', '0px');
                 node.android('layout_columnWeight', '1');
             }
         }

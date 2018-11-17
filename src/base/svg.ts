@@ -143,8 +143,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     group.setTransformOrigin(this.dpi, this.fontSize);
                 }
                 for (let i = 0; i < item.children.length; i++) {
-                    const subitem = item.children[i];
-                    switch (subitem.tagName) {
+                    switch (item.children[i].tagName) {
                         case 'g':
                         case 'use':
                         case 'image':

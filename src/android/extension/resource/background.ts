@@ -11,6 +11,8 @@ import View from '../../view';
 
 import { getXmlNs } from '../../lib/util';
 
+import $SvgPath = androme.lib.base.SvgPath;
+
 import $color = androme.lib.color;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
@@ -217,7 +219,10 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    backgroundGradient.push(...Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true));
+                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true);
+                    if (gradients.length > 0) {
+                        backgroundGradient.push(gradients[0]);
+                    }
                 }
                 const companion = node.companion;
                 if (companion && !companion.visible && companion.htmlElement && !$dom.cssFromParent(companion.element, 'backgroundColor')) {
@@ -482,7 +487,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             '1': [{
                                 '2': [{
                                     clipPaths: false,
-                                    d: `'M0,0 L${width},0 L${width},${height} L0,${height} Z`,
+                                    d: $SvgPath.getRect(width, height),
                                     fill: [{ 'gradients': backgroundGradient }]
                                 }]
                             }]

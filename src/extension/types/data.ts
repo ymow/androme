@@ -6,6 +6,7 @@ export interface CssGridDataAttribute {
     count: number;
     gap: number;
     unit: string[];
+    unitMin: string[];
     auto: string[];
     autoFit: boolean;
     autoFill: boolean;

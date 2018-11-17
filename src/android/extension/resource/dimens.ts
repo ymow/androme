@@ -29,7 +29,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
                 const obj = node.namespace(namespace);
                 for (const attr in obj) {
                     const value = obj[attr].trim();
-                    if (/^[\d.]+(px|dp|sp)$/.test(value)) {
+                    if (/^-?[\d.]+(px|dp|sp)$/.test(value)) {
                         const dimen = `${namespace},${attr},${value}`;
                         if (groups[nodeName][dimen] === undefined) {
                             groups[nodeName][dimen] = [];

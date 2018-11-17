@@ -98,7 +98,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
     }
 
     get display() {
-        return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
+        return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.FLOAT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
     }
 
     get baseElement() {

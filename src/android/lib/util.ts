@@ -49,6 +49,7 @@ export function calculateBias(start: number, end: number, accuracy = 4) {
 }
 
 export function replaceRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {
+    value = value ? value.trim() : '';
     if (supportRTL && targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
         value = value.replace(/left/g, 'start').replace(/right/g, 'end');
         value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');

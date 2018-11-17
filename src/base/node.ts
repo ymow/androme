@@ -262,6 +262,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     case 'base':
                         this.style = node.style;
                         this.documentParent = node.documentParent;
+                        if (this.nodeName === '') {
+                            this.nodeName = node.nodeName;
+                        }
                     case 'dimensions':
                         this.bounds = assignBounds(node.bounds);
                         this.linear = assignBounds(node.linear);
@@ -344,7 +347,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
                 (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
                 (!firstNode && cleared.has(this)) ||
-                (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom)
+                (!firstNode && this.linear.top >= previous.linear.bottom && this.floating && previous.floating && (!this.has('width', CSS_STANDARD.PERCENT) || !previous.has('width', CSS_STANDARD.PERCENT)))
             );
         }
         return false;
@@ -658,13 +661,17 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public resetBox(region: number, node?: T, inherit = false, negative = false) {
         const attrs: string[] = [];
+        const margin = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
+        const padding = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
         if (hasBit(region, BOX_STANDARD.MARGIN)) {
-            attrs.push('marginTop', 'marginRight', 'marginBottom', 'marginLeft');
+            attrs.push(...margin);
         }
         if (hasBit(region, BOX_STANDARD.PADDING)) {
-            attrs.push('paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft');
+            attrs.push(...padding);
         }
-        for (const attr of attrs) {
+        const visibleBox = !!node && (node.hasWidth || node.borderTopWidth > 0 || node.borderRightWidth > 0 || node.borderBottomWidth > 0 || node.borderLeftWidth > 0);
+        for (let i = 0; i < attrs.length; i++) {
+            const attr = attrs[i];
             if (inherit && node) {
                 const value = this._boxAdjustment[attr];
                 if (value > 0 || (negative && value < 0)) {
@@ -675,7 +682,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             else {
                 this._boxReset[attr] = 1;
                 if (node) {
-                    node.modifyBox(attr, this[attr], negative);
+                    switch (region) {
+                        case BOX_STANDARD.PADDING:
+                            node.modifyBox(margin[i], this[padding[i]]);
+                            break;
+                        case BOX_STANDARD.MARGIN:
+                            node.modifyBox(visibleBox ? margin[i] : padding[i], this[margin[i]]);
+                            break;
+                    }
                 }
             }
         }
@@ -866,6 +880,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         );
     }
 
+    set tagName(value) {
+        this._tagName = value;
+    }
     get tagName() {
         return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
     }
@@ -1050,6 +1067,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
     get borderLeftWidth() {
         return this.css('borderLeftStyle') !== 'none' ? convertInt(this.css('borderLeftWidth')) : 0;
+    }
+    get borderVisible() {
+        return this.borderTopWidth > 0 || this.borderRightWidth > 0 || this.borderBottomWidth > 0 || this.borderLeftWidth > 0;
     }
 
     get paddingTop() {

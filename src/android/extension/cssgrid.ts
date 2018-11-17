@@ -17,14 +17,24 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         let container: T | undefined;
         if (mainData && cellData) {
             function applyLayout(item: T, direction: string, dimension: string) {
+                const data = <CssGridDataAttribute> mainData[direction];
                 const cellSpan = `${direction}Span`;
                 const cellStart = `${direction}Start`;
                 const minDimension = `min${$util.capitalize(dimension)}`;
-                const data = <CssGridDataAttribute> mainData[direction];
                 let size = 0;
                 let minSize = 0;
+                let minUnitSize = 0;
                 let sizeWeight = 0;
+                if (data.unit.every(value => value === 'auto')) {
+                    if (dimension === 'width') {
+                        data.unit = data.unit.map(value => '1fr');
+                    }
+                    else {
+                        data.unit.length = 0;
+                    }
+                }
                 for (let i = 0, j = 0; i < cellData[cellSpan]; i++) {
+                    minUnitSize += parseInt(parent.convertPX(data.unitMin[cellData[cellStart] + i]));
                     let value = data.unit[cellData[cellStart] + i];
                     if (!$util.hasValue(value)) {
                         if (data.auto[j]) {
@@ -37,36 +47,38 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                             continue;
                         }
                     }
-                    if (value === 'auto' || value === 'min-content' || value === 'max-content') {
-                        if (parent.has(dimension) || value === 'min-content') {
-                            size = node.bounds[dimension];
-                            minSize = 0;
-                            sizeWeight = 0;
+                    if ($util.hasValue(value)) {
+                        if (value === 'auto' || value === 'min-content' || value === 'max-content') {
+                            if (parent.has(dimension) || value === 'min-content') {
+                                size = node.bounds[dimension];
+                                minSize = 0;
+                                sizeWeight = 0;
+                            }
+                            else {
+                                size = 0;
+                                minSize = 0;
+                                sizeWeight = 0.01;
+                            }
+                            break;
                         }
-                        else {
+                        else if ($util.isPercent(value)) {
+                            sizeWeight += parseInt(value) / 100;
+                            minSize = size;
                             size = 0;
-                            minSize = 0;
-                            sizeWeight = 0.01;
                         }
-                        break;
-                    }
-                    else if ($util.isPercent(value)) {
-                        sizeWeight += parseInt(value) / 100;
-                        minSize = size;
-                        size = 0;
-                    }
-                    else if (value.endsWith('fr')) {
-                        sizeWeight += parseInt(value);
-                        minSize = size;
-                        size = 0;
-                    }
-                    else if (value.endsWith('px')) {
-                        const gap = parseInt(value);
-                        if (minSize === 0) {
-                            size += gap;
+                        else if (value.endsWith('fr')) {
+                            sizeWeight += parseInt(value);
+                            minSize = size;
+                            size = 0;
                         }
-                        else {
-                            minSize += gap;
+                        else if (value.endsWith('px')) {
+                            const gap = parseInt(value);
+                            if (minSize === 0) {
+                                size += gap;
+                            }
+                            else {
+                                minSize += gap;
+                            }
                         }
                     }
                 }
@@ -79,17 +91,23 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         minSize += value;
                     }
                 }
+                if (minUnitSize > 0) {
+                    minSize = minUnitSize;
+                }
                 item.android(`layout_${direction}`, cellData[cellStart].toString());
                 if (cellData[cellSpan] > 1) {
                     item.android(`layout_${direction}Span`, cellData[cellSpan].toString());
                 }
-                if (size > 0 && !item.has(dimension)) {
-                    item.css(dimension, $util.formatPX(size));
-                }
                 if (minSize > 0 && !item.has(minDimension)) {
                     item.css(minDimension, $util.formatPX(minSize));
                 }
-                item.android(`layout_${direction}Weight`, sizeWeight > 0 ? sizeWeight.toString() : '0');
+                if (sizeWeight > 0) {
+                    item.android(`layout_${dimension}`, '0px');
+                    item.android(`layout_${direction}Weight`, sizeWeight.toString());
+                }
+                else if (size > 0 && !item.has(dimension)) {
+                    item.css(dimension, $util.formatPX(size));
+                }
             }
             const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
             const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
@@ -151,25 +169,27 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
 
     public postProcedure(node: T) {
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
-        const columnGap = (!mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0);
-        if (columnGap > 0 && node.viewWidth > 0) {
-            if (node.has('width')) {
-                let width = $util.convertInt(node.android('layout_width'));
-                if (width > 0) {
-                    width += columnGap;
-                    node.android('layout_width', $util.formatPX(width));
+        if (mainData) {
+            const columnGap = (!mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0);
+            if (columnGap > 0 && node.viewWidth > 0) {
+                if (node.has('width')) {
+                    let width = $util.convertInt(node.android('layout_width'));
+                    if (width > 0) {
+                        width += columnGap;
+                        node.android('layout_width', $util.formatPX(width));
+                    }
+                }
+                if (node.has('minSize')) {
+                    let minSize = $util.convertInt(node.android('minSize'));
+                    if (minSize > 0) {
+                        minSize += columnGap;
+                        node.android('minSize', $util.formatPX(minSize));
+                    }
                 }
             }
-            if (node.has('minSize')) {
-                let minSize = $util.convertInt(node.android('minSize'));
-                if (minSize > 0) {
-                    minSize += columnGap;
-                    node.android('minSize', $util.formatPX(minSize));
-                }
+            if (node.has('maxWidth') && node.inlineWidth) {
+                node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
             }
-        }
-        if (node.has('maxWidth') && node.inlineWidth) {
-            node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
         }
     }
 }

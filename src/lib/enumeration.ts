@@ -47,7 +47,7 @@ export enum NODE_ALIGNMENT {
     ABSOLUTE = 32,
     FLOAT = 64,
     SEGMENTED = 128,
-    PERCENT = 256,
+    COLUMN = 256,
     TOP = 512,
     RIGHT = 1024,
     BOTTOM = 2048,

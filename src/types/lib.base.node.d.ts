@@ -44,7 +44,6 @@ declare global {
             readonly inlineHeight: boolean;
             readonly blockWidth: boolean;
             readonly blockHeight: boolean;
-            readonly tagName: string;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
             readonly domElement: boolean;
@@ -74,6 +73,7 @@ declare global {
             readonly borderRightWidth: number;
             readonly borderBottomWidth: number;
             readonly borderLeftWidth: number;
+            readonly borderVisible: boolean;
             readonly paddingTop: number;
             readonly paddingRight: number;
             readonly paddingBottom: number;
@@ -123,6 +123,7 @@ declare global {
             renderAs: Node;
             renderDepth: number;
             pageflow: boolean;
+            tagName: string;
             multiLine: boolean;
             setNodeType(viewName: string): void;
             setBaseLayout(): void;

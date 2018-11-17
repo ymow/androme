@@ -3,19 +3,20 @@ import { Constraint, LocalSettings } from './module';
 declare global {
     namespace android.lib.base {
         export interface View extends androme.lib.base.Node {
+            anchored: boolean;
             readonly constraint: Constraint;
             readonly renderChildren: View[];
             readonly stringId: string;
-            readonly anchored: boolean;
             readonly localSettings: LocalSettings;
             android(attr: string, value?: string, overwrite?: boolean);
             app(attr: string, value?: string, overwrite?: boolean);
             formatted(value: string, overwrite?: boolean): void;
             mergeGravity(attr: string, ...alignment: string[]): string;
             anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean): void;
-            anchorParent(position: string): boolean;
-            anchorSibling(position: string): string;
+            anchorParent(orientation: string, overwrite?: boolean, constraintBias?: boolean): void;
             anchorDelete(...position: string[]): void;
+            alignParent(position: string): boolean;
+            alignSibling(position: string): string;
             horizontalBias(): number;
             verticalBias(): number;
             supported(obj: string, attr: string, result?: {}): boolean;

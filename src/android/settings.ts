@@ -32,6 +32,7 @@ const settings: SettingsAndroid = {
     whitespaceHorizontalOffset: 3.5,
     whitespaceVerticalOffset: 16,
     constraintChainDisabled: false,
+    constraintAlignParentBottomOffset: 3.5,
     constraintPercentAccuracy: 4,
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,

@@ -6,7 +6,7 @@ import { BOX_STANDARD } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { convertInt, isNumber, isUnit, trimString } from '../lib/util';
+import { convertInt, isNumber, isUnit, trimString, withinFraction } from '../lib/util';
 
 type GridPosition = {
     placement: number[],
@@ -18,7 +18,7 @@ const REGEX_PARTIAL = {
     UNIT: '[\\d.]+[a-z%]+|auto|max-content|min-content',
     MINMAX: 'minmax\\((.*?), (.*?)\\)',
     FIT_CONTENT: 'fit-content\\(([\\d.]+[a-z%]+)\\)',
-    REPEAT: 'repeat\\((auto-fit|auto-fill|[0-9]+), (.*?)\\)',
+    REPEAT: 'repeat\\((auto-fit|auto-fill|[0-9]+), ((?:minmax|fit-content)\\(.*?\\)|.*?)\\)',
     NAMED: '\\[([\\w\\-\\s]+)\\]'
 };
 
@@ -27,12 +27,17 @@ const PATTERN_GRID = {
     NAMED: new RegExp(`\\s*(${REGEX_PARTIAL.NAMED}|${REGEX_PARTIAL.REPEAT}|${REGEX_PARTIAL.MINMAX}|${REGEX_PARTIAL.FIT_CONTENT}|${REGEX_PARTIAL.UNIT})\\s*`, 'g')
 };
 
+function cssOrder<T extends Node>(a: T, b: T) {
+    return a.toInt('order') >= b.toInt('order') ? 1 : -1;
+}
+
 export default class CssGrid<T extends Node> extends Extension<T> {
     public static createDataAttribute() {
         return <CssGridDataAttribute> {
             count: 0,
             gap: 0,
             unit: [],
+            unitMin: [],
             auto: [],
             autoFill: false,
             autoFit: false,
@@ -59,7 +64,9 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const dense = gridAutoFlow.indexOf('dense') !== -1;
         const rowData: T[][][] = [];
         const cellsPerRow: number[] = [];
+        const gridPosition: GridPosition[] = [];
         let rowInvalid: ObjectIndex<boolean> = {};
+        let output = '';
         function setDataRows(item: T, placement: number[]) {
             if (placement.every(value => value > 0)) {
                 for (let i = placement[horizontal ? 0 : 1] - 1; i < placement[horizontal ? 2 : 3] - 1; i++) {
@@ -110,15 +117,23 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                     iterations = convertInt(match[3]);
                                     break;
                             }
-                            for (let j = 0; j < iterations; j++) {
-                                if (PATTERN_GRID.UNIT.test(match[4])) {
+                            const minmax = new RegExp(REGEX_PARTIAL.MINMAX).exec(match[4]);
+                            if (minmax) {
+                                data.unit.push(convertUnit(minmax[2]));
+                                data.unitMin.push(convertUnit(minmax[1]));
+                                i++;
+                            }
+                            else if (PATTERN_GRID.UNIT.test(match[4])) {
+                                for (let j = 0; j < iterations; j++) {
                                     data.unit.push(match[4]);
+                                    data.unitMin.push('');
                                     i++;
                                 }
                             }
                         }
                         else if (PATTERN_GRID.UNIT.test(match[1])) {
                             data.unit.push(convertUnit(match[1]));
+                            data.unitMin.push('');
                             i++;
                         }
                     }
@@ -128,132 +143,150 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
             }
         });
-        node.css('gridTemplateAreas').split(/"[\s\n]+"/).map(value => trimString(value.trim(), '"')).forEach((value, i) => {
-            value.split(' ').forEach((area, j) => {
-                if (area !== '.') {
-                    if (mainData.templateAreas[area] === undefined) {
-                        mainData.templateAreas[area] = {
-                            rowStart: i,
-                            rowSpan: 1,
-                            columnStart: j,
-                            columnSpan: 1
-                        };
-                    }
-                    else {
-                        mainData.templateAreas[area].rowSpan = (i - mainData.templateAreas[area].rowStart) + 1;
-                        mainData.templateAreas[area].columnSpan++;
-                    }
+        if (!node.has('gridTemplateAreas') && node.every(item => item.css('gridRow') === 'auto / auto' && item.css('gridColumn') === 'auto / auto')) {
+            let row = 0;
+            let column = 0;
+            const direction = horizontal ? 'left' : 'top';
+            node.sort(cssOrder).each((item: T, index) => {
+                if (withinFraction(item.linear[direction], node.box[direction])) {
+                    row++;
+                    column = 1;
                 }
+                gridPosition[index] = <GridPosition> {
+                    placement: horizontal ? [row, column, row + 1, column + 1] : [column, row, column + 1, row + 1],
+                    rowSpan: 1,
+                    columnSpan: 1
+                };
+                column++;
             });
-        });
-        const gridPosition: GridPosition[] = [];
-        node.sort((a, b) => a.toInt('order') >= b.toInt('order') ? 1 : -1).each((item: T, index) => {
-            const positions = [
-                item.css('gridRowStart'),
-                item.css('gridColumnStart'),
-                item.css('gridRowEnd'),
-                item.css('gridColumnEnd')
-            ];
-            const placement: number[] = [];
-            let rowSpan = 1;
-            let columnSpan = 1;
-            for (let i = 0; i < positions.length; i++) {
-                const value = positions[i];
-                let template = mainData.templateAreas[value];
-                if (template === undefined) {
-                    const match = /^([\w\-]+)-(start|end)$/.exec(value);
-                    if (match) {
-                        template = mainData.templateAreas[match[1]];
-                        if (template) {
-                            if (match[2] === 'start') {
-                                switch (i) {
-                                    case 0:
-                                    case 2:
-                                        placement[i] = template.rowStart + 1;
-                                        break;
-                                    case 1:
-                                    case 3:
-                                        placement[i] = template.columnStart + 1;
-                                        break;
-                                }
-                            }
-                            else {
-                                switch (i) {
-                                    case 0:
-                                    case 2:
-                                        placement[i] = template.rowStart + template.rowSpan + 1;
-                                        break;
-                                    case 1:
-                                    case 3:
-                                        placement[i] = template.columnStart + template.columnSpan + 1;
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
-                else {
-                    switch (i) {
-                        case 0:
-                            placement[i] = template.rowStart + 1;
-                            break;
-                        case 1:
-                            placement[i] = template.columnStart + 1;
-                            break;
-                        case 2:
-                            placement[i] = template.rowStart + template.rowSpan + 1;
-                            break;
-                        case 3:
-                            placement[i] = template.columnStart + template.columnSpan + 1;
-                            break;
-                    }
-                }
-            }
-            if (placement.filter(value => value).length < 4) {
-                function setPlacement(value: string, position: number) {
-                    if (isNumber(value)) {
-                        placement[position] = parseInt(value);
-                        return true;
-                    }
-                    else if (value.startsWith('span')) {
-                        const span = parseInt(value.split(' ')[1]);
-                        if (!placement[position - 2]) {
-                            if (position % 2 === 0) {
-                                rowSpan = span;
-                            }
-                            else {
-                                columnSpan = span;
-                            }
+        }
+        else {
+            node.css('gridTemplateAreas').split(/"[\s\n]+"/).map(value => trimString(value.trim(), '"')).forEach((value, i) => {
+                value.split(' ').forEach((area, j) => {
+                    if (area !== '.') {
+                        if (mainData.templateAreas[area] === undefined) {
+                            mainData.templateAreas[area] = {
+                                rowStart: i,
+                                rowSpan: 1,
+                                columnStart: j,
+                                columnSpan: 1
+                            };
                         }
                         else {
-                            placement[position] = placement[position - 2] + span;
+                            mainData.templateAreas[area].rowSpan = (i - mainData.templateAreas[area].rowStart) + 1;
+                            mainData.templateAreas[area].columnSpan++;
                         }
-                        return true;
                     }
-                    return false;
-                }
+                });
+            });
+            node.sort(cssOrder).each((item: T, index) => {
+                const positions = [
+                    item.css('gridRowStart'),
+                    item.css('gridColumnStart'),
+                    item.css('gridRowEnd'),
+                    item.css('gridColumnEnd')
+                ];
+                const placement: number[] = [];
+                let rowSpan = 1;
+                let columnSpan = 1;
                 for (let i = 0; i < positions.length; i++) {
                     const value = positions[i];
-                    if (value !== 'auto' && !placement[i] && !setPlacement(value, i)) {
-                        const data = mainData[i % 2 === 0 ? 'row' : 'column'];
-                        const alias = value.split(' ');
-                        if (alias.length === 1) {
-                            alias[1] = alias[0];
-                            alias[0] = '1';
+                    let template = mainData.templateAreas[value];
+                    if (template === undefined) {
+                        const match = /^([\w\-]+)-(start|end)$/.exec(value);
+                        if (match) {
+                            template = mainData.templateAreas[match[1]];
+                            if (template) {
+                                if (match[2] === 'start') {
+                                    switch (i) {
+                                        case 0:
+                                        case 2:
+                                            placement[i] = template.rowStart + 1;
+                                            break;
+                                        case 1:
+                                        case 3:
+                                            placement[i] = template.columnStart + 1;
+                                            break;
+                                    }
+                                }
+                                else {
+                                    switch (i) {
+                                        case 0:
+                                        case 2:
+                                            placement[i] = template.rowStart + template.rowSpan + 1;
+                                            break;
+                                        case 1:
+                                        case 3:
+                                            placement[i] = template.columnStart + template.columnSpan + 1;
+                                            break;
+                                    }
+                                }
+                            }
                         }
-                        if (data.name[alias[1]] && parseInt(alias[0]) <= data.name[alias[1]].length) {
-                            placement[i] = data.name[alias[1]][parseInt(alias[0]) - 1] + (alias[1] === positions[i - 2] ? 1 : 0);
+                    }
+                    else {
+                        switch (i) {
+                            case 0:
+                                placement[i] = template.rowStart + 1;
+                                break;
+                            case 1:
+                                placement[i] = template.columnStart + 1;
+                                break;
+                            case 2:
+                                placement[i] = template.rowStart + template.rowSpan + 1;
+                                break;
+                            case 3:
+                                placement[i] = template.columnStart + template.columnSpan + 1;
+                                break;
                         }
                     }
                 }
-                item.css('gridArea').split(/\s*\/\s*/).forEach((value, position) => !placement[position] && setPlacement(value, position));
-            }
-            gridPosition[index] = <GridPosition> {
-                placement,
-                rowSpan,
-                columnSpan
-            };
-        });
+                if (placement.filter(value => value).length < 4) {
+                    function setPlacement(value: string, position: number) {
+                        if (isNumber(value)) {
+                            placement[position] = parseInt(value);
+                            return true;
+                        }
+                        else if (value.startsWith('span')) {
+                            const span = parseInt(value.split(' ')[1]);
+                            if (!placement[position - 2]) {
+                                if (position % 2 === 0) {
+                                    rowSpan = span;
+                                }
+                                else {
+                                    columnSpan = span;
+                                }
+                            }
+                            else {
+                                placement[position] = placement[position - 2] + span;
+                            }
+                            return true;
+                        }
+                        return false;
+                    }
+                    for (let i = 0; i < positions.length; i++) {
+                        const value = positions[i];
+                        if (value !== 'auto' && !placement[i] && !setPlacement(value, i)) {
+                            const data = mainData[i % 2 === 0 ? 'row' : 'column'];
+                            const alias = value.split(' ');
+                            if (alias.length === 1) {
+                                alias[1] = alias[0];
+                                alias[0] = '1';
+                            }
+                            if (data.name[alias[1]] && parseInt(alias[0]) <= data.name[alias[1]].length) {
+                                placement[i] = data.name[alias[1]][parseInt(alias[0]) - 1] + (alias[1] === positions[i - 2] ? 1 : 0);
+                            }
+                        }
+                    }
+                    item.css('gridArea').split(/\s*\/\s*/).forEach((value, position) => !placement[position] && setPlacement(value, position));
+                }
+                gridPosition[index] = <GridPosition> {
+                    placement,
+                    rowSpan,
+                    columnSpan
+                };
+            });
+        }
         {
             const data = mainData[horizontal ? 'column' : 'row'];
             data.count = Math.max(data.unit.length, 1);
@@ -263,10 +296,11 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     data.count = Math.max(data.count, item.placement[horizontal ? 1 : 0] || 0, horizontal ? item.columnSpan : item.rowSpan, (item.placement[horizontal ? 3 : 2] || 0) - 1);
                 }
             }
-            const repeatUnit = data.unit[data.unit.length - 1] || 'auto';
+            const unitRepeat = data.unit[data.unit.length - 1] || 'auto';
             if (data.autoFill || data.autoFit) {
                 for (let i = data.unit.length; i < data.count; i++) {
-                    data.unit[i] = repeatUnit;
+                    data.unit[i] = unitRepeat;
+                    data.unitMin[i] = '';
                 }
             }
         }
@@ -433,10 +467,9 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
                 node.replace(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
-                const output = this.application.writeGridLayout(node, parent, mainData.column.count, mainData.row.count);
-                return { output, complete: true };
+                output = this.application.writeGridLayout(node, parent, mainData.column.count, mainData.row.count);
             }
         }
-        return { output: '' };
+        return { output, complete: true };
     }
 }

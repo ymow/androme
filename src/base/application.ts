@@ -1,5 +1,5 @@
 import { REGEX_PATTERN } from '../lib/constant';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Controller from './controller';
 import Extension from './extension';
@@ -1322,7 +1322,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         const linearVertical = parentY.linearVertical;
                         if (nodeY.pageflow &&
                             !parentY.flex.enabled &&
-                            !parentY.has('columnCount') &&
                             !parentY.is(NODE_STANDARD.GRID) &&
                             (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE) || (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE)))
                         {
@@ -1422,8 +1421,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             let group: T | undefined;
                             let groupOutput = '';
                             if (horizontal.length > 1) {
+                                const floated = NodeList.floated(horizontal);
                                 const clearedPartial = NodeList.cleared(horizontal);
-                                if (Application.isFrameHorizontal(horizontal, clearedPartial)) {
+                                if (floated.size === 1 && horizontal.every(node => node.floating)) {
+                                    group = this.viewController.createGroup(parentY, nodeY, horizontal);
+                                    groupOutput = this.writeConstraintLayout(group, parentY);
+                                    group.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                                    group.alignmentType |= floated.has('right') ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT;
+                                }
+                                else if (Application.isFrameHorizontal(horizontal, clearedPartial)) {
                                     group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                     groupOutput = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
                                 }
@@ -1432,13 +1438,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                     }
                                     else {
-                                        const floated = NodeList.floated(horizontal);
-                                        if (floated.size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT))) {
-                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupOutput = this.writeConstraintLayout(group, parentY);
-                                            group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                                        }
-                                        else if (Application.isRelativeHorizontal(horizontal, clearedPartial)) {
+                                        if (Application.isRelativeHorizontal(horizontal, clearedPartial)) {
                                             group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                             groupOutput = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
@@ -1550,7 +1550,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
                         let output = '';
                         if (nodeY.controlName === '') {
-                            const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
+                            const borderVisible = nodeY.borderVisible;
                             const backgroundImage = REGEX_PATTERN.CSS_URL.test(nodeY.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(nodeY.css('background'));
                             const backgroundColor = nodeY.has('backgroundColor');
                             const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
@@ -1581,7 +1581,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                             else {
-                                if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.has('columnCount')) {
+                                if (nodeY.has('columnCount')) {
+                                    nodeY.alignmentType |= NODE_ALIGNMENT.COLUMN;
+                                }
+                                if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.hasAlign(NODE_ALIGNMENT.COLUMN)) {
                                     output = this.writeConstraintLayout(nodeY, parentY);
                                 }
                                 else {
@@ -1589,10 +1592,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const targeted = nodeY.filter(node => {
                                             if (node.dataset.target) {
                                                 const element = document.getElementById(node.dataset.target);
-                                                return element !== null && hasValue(element.dataset.ext) && element !== parentY.element;
+                                                return !!element && hasValue(element.dataset.ext) && element !== parentY.element;
                                             }
                                             return false;
                                         });
+                                        const child = nodeY.item(0) as T;
                                         if (nodeY.documentRoot && targeted.length === 1) {
                                             nodeY.hide();
                                             continue;
@@ -1603,12 +1607,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             !hasValue(nodeY.dataset.target) &&
                                             nodeY.toInt('width') === 0 &&
                                             nodeY.toInt('height') === 0 &&
+                                            !child.hasWidth && !child.borderVisible &&
                                             !backgroundVisible &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
                                             nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
                                             !this.viewController.hasAppendProcessing(nodeY.id)))
                                         {
-                                            const child = nodeY.item(0) as T;
                                             child.documentRoot = nodeY.documentRoot;
                                             child.siblingIndex = nodeY.siblingIndex;
                                             child.parent = parentY;

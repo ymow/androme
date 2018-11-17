@@ -102,7 +102,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     }
                                     let xml = Array.from(content.values()).join('');
                                     if (merge) {
-                                        const baseNode = new View(0, undefined, controller.delegateNodeInit) as T;
+                                        const baseNode = new View(0) as T;
                                         baseNode.documentRoot = true;
                                         xml = controller.renderNodeStatic('merge', 0, {}, '', '', baseNode, true).replace('{:0}', xml);
                                     }

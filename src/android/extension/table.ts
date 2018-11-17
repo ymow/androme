@@ -34,6 +34,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
                     }
                     if (downsized) {
                         if (exceed) {
+                            item.android('layout_width', '0px');
                             item.android('layout_columnWeight', '0.01');
                         }
                         else {

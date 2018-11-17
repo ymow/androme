@@ -3,6 +3,7 @@ export interface SettingsAndroid extends Settings {
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
+    constraintAlignParentBottomOffset: number;
     constraintPercentAccuracy: number;
     showAttributes: boolean;
     convertPixels: string;
@@ -25,17 +26,19 @@ export interface Constraint {
     horizontal: boolean;
     vertical: boolean;
     current: {
-        adjacent: string;
-        orientation: string;
-        overwrite: boolean;
+        adjacent?: string;
+        orientation?: string;
+        overwrite?: boolean;
     };
-    layoutWidth: boolean;
-    layoutHeight: boolean;
-    layoutHorizontal: boolean;
-    layoutVertical: boolean;
-    marginHorizontal: string;
-    marginVertical: string;
-    guideline: ObjectMapNested<ObjectMapNested<number>>;
+    layoutWidth?: boolean;
+    layoutHeight?: boolean;
+    layoutHorizontal?: boolean;
+    layoutVertical?: boolean;
+    marginHorizontal?: string;
+    marginVertical?: string;
+    chainHorizontal?: boolean;
+    chainVertical?: boolean;
+    guideline?: ObjectMapNested<ObjectMapNested<number>>;
 }
 
 export interface ViewAttribute {

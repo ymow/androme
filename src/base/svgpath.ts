@@ -4,6 +4,40 @@ import { isSvgVisible } from '../lib/svg';
 import { convertInt, isString } from '../lib/util';
 
 export default class SvgPath implements androme.lib.base.SvgPath {
+    public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
+        return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
+    }
+    public static getRect(width: number, height: number, x = 0, y = 0) {
+        return width > 0 && height > 0 ? `M${x},${y} H${x + width} V${y + height} H${x} Z` : '';
+    }
+
+    public static getPolyline(points: Point[] | DOMPoint[] | SVGPointList) {
+        const data: Point[] = [];
+        if (points instanceof SVGPointList) {
+            for (let j = 0; j < points.numberOfItems; j++) {
+                const pt = points.getItem(j);
+                data.push(pt);
+            }
+        }
+        else {
+            data.push(...points);
+        }
+        return data.length > 0 ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
+    }
+
+    public static getPolygon(points: Point[] | DOMPoint[] | SVGPointList) {
+        const value = this.getPolyline(points);
+        return value !== '' ? value + ' Z' : '';
+    }
+
+    public static getCircle(cx: number, cy: number, r: number) {
+        return r > 0 ? `M${cx},${cy} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0` : '';
+    }
+
+    public static getEllipse(cx: number, cy: number, rx: number, ry: number) {
+        return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0` : '';
+    }
+
     public name: string;
     public visibility = true;
     public d: string;
@@ -51,48 +85,28 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 }
                 case 'line': {
                     const item = <SVGLineElement> element;
-                    if (item.x1.baseVal.value !== 0 || item.y1.baseVal.value !== 0 || item.x2.baseVal.value !== 0 || item.y2.baseVal.value !== 0) {
-                        this.d = `M${item.x1.baseVal.value},${item.y1.baseVal.value} L${item.x2.baseVal.value},${item.y2.baseVal.value}`;
-                    }
+                    this.d = SvgPath.getLine(item.x1.baseVal.value, item.y1.baseVal.value, item.x2.baseVal.value , item.y2.baseVal.value);
                     break;
                 }
                 case 'rect': {
                     const item = <SVGRectElement> element;
-                    if (item.width.baseVal.value > 0 && item.height.baseVal.value > 0) {
-                        const x = item.x.baseVal.value;
-                        const y = item.y.baseVal.value;
-                        this.d = `M${x},${y} H${x + item.width.baseVal.value} V${y + item.height.baseVal.value} H${x} Z`;
-                    }
+                    this.d = SvgPath.getRect(item.width.baseVal.value, item.height.baseVal.value, item.x.baseVal.value, item.y.baseVal.value);
                     break;
                 }
                 case 'polyline':
                 case 'polygon': {
                     const item = <SVGPolygonElement> element;
-                    if (item.points.numberOfItems > 0) {
-                        const data: string[] = [];
-                        for (let j = 0; j < item.points.numberOfItems; j++) {
-                            const pt = item.points.getItem(j);
-                            data.push(`${pt.x},${pt.y}`);
-                        }
-                        this.d = `M${data.join(' ') + (element.tagName === 'polygon' ? ' Z' : '')}`;
-                    }
+                    this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(item.points) : SvgPath.getPolyline(item.points);
                     break;
                 }
                 case 'circle': {
                     const item = <SVGCircleElement> element;
-                    const r = item.r.baseVal.value;
-                    if (r > 0) {
-                        this.d = `M${item.cx.baseVal.value},${item.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`;
-                    }
+                    this.d = SvgPath.getCircle(item.cx.baseVal.value , item.cy.baseVal.value, item.r.baseVal.value);
                     break;
                 }
                 case 'ellipse': {
                     const item = <SVGEllipseElement> element;
-                    const rx = item.rx.baseVal.value;
-                    const ry = item.ry.baseVal.value;
-                    if (rx > 0 && ry > 0) {
-                        this.d = `M${item.cx.baseVal.value - rx},${item.cy.baseVal.value} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0`;
-                    }
+                    this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
                     break;
                 }
             }

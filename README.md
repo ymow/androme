@@ -111,6 +111,7 @@ androme.settings = {
     whitespaceHorizontalOffset: 3.5, // Chrome/Safari/Edge: 3.5 | Firefox: 3
     whitespaceVerticalOffset: 16,  // 1em
     constraintChainDisabled: false,
+    constraintAlignParentBottomOffset: 3.5,
     constraintPercentAccuracy: 4, // eq: 1px
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
