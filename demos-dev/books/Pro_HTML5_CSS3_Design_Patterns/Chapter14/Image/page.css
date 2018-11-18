@@ -1,6 +1,6 @@
 /* Non-essential styles */ 
 
-.porthole { float:left; position:relative; width:24%; height:150px; 
+.porthole { float:right; position:relative; width:24%; height:150px; 
              overflow:hidden; text-align:center; color:white;
              border-left:1px solid gray; border-right:2px solid black; 
              border-top:1px solid gray; border-bottom:2px solid black; }

@@ -5,7 +5,9 @@ declare global {
             addGuideline(node: T, orientation?: string, percent?: boolean, opposite?: boolean): void;
         }
 
-        export class Controller<T extends View> implements Controller<T> {}
+        export class Controller<T extends View> implements Controller<T> {
+            public static getEnclosingTag(depth: number, controlName: string, id: number, xml?: string, preXml?: string, postXml?: string): string;
+        }
     }
 }
 

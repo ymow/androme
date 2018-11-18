@@ -394,9 +394,6 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                     backgroundImage.length = 0;
                                 }
                                 else {
-                                    if (gravity === 'left|top') {
-                                        gravity = '';
-                                    }
                                     const imageData: BackgroundImage = {
                                         top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
                                         right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',

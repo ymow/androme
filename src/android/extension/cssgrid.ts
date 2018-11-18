@@ -157,7 +157,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     node.mergeGravity('layout_height', 'match_parent');
                 }
                 container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
-                node.resetBox($enum.BOX_STANDARD.MARGIN, container, true);
+                node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
             }
             const target = container || node;
             applyLayout(target, 'column', 'width');

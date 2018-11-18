@@ -114,7 +114,7 @@ declare global {
             export function hasValue(value: any): boolean;
             export function withinRange(a: number, b: number, offset?: number): boolean;
             export function withinFraction(lower: number, upper: number): boolean;
-            export function overwriteDefault(options: {}, ...attrs: string[]): void;
+            export function defaultWhenNull(options: {}, ...attrs: string[]): void;
             export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]];
             export function sortAsc<T>(list: T[], ...attrs: string[]): T[];
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];

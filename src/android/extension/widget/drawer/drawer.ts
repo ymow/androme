@@ -43,12 +43,12 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     public processNode(node: T): ExtensionResult<T> {
         const options = $android_util.createAttribute(this.options.self);
         if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
-            $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
             this.setStyleTheme();
         }
         else {
             const optionsNavigationView = $android_util.createAttribute(this.options.navigationView);
-            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
+            $util.defaultWhenNull(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
             const navView = node.item() as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
@@ -76,15 +76,15 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         const headerLayout = $util.optionalAsString($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         if (menu !== '') {
-            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            $util.defaultWhenNull(options, 'app', 'menu', `@menu/${menu}`);
         }
         if (headerLayout !== '') {
-            $util.overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
+            $util.defaultWhenNull(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
         }
         if (menu !== '' || headerLayout !== '') {
-            $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
-            $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            $util.overwriteDefault(options, 'android', 'layout_gravity', node.localizeString('left'));
+            $util.defaultWhenNull(options, 'android', 'id', `${node.stringId}_navigation`);
+            $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
+            $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
             const output = application.viewController.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,
@@ -113,15 +113,15 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
 
     private setStyleTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.overwriteDefault(options, 'appTheme', 'AppTheme');
-        $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
+        $util.defaultWhenNull(options, 'appTheme', 'AppTheme');
+        $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,
             '1': []
         };
-        $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
-        $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
+        $util.defaultWhenNull(options, 'output', 'path', 'res/values-v21');
+        $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

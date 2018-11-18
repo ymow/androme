@@ -126,29 +126,33 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
+        public anchor(position: string, stringId = '', orientation?: string, overwrite?: boolean) {
             if (this.rendered) {
                 if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
-                    if (arguments.length === 1 || this.constraint.current[position] === undefined || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
-                        if (overwrite === undefined) {
-                            overwrite = adjacent === 'parent';
+                    if (stringId === undefined || this.constraint.current[position] === undefined || overwrite || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
+                        if (stringId && overwrite === undefined) {
+                            overwrite = stringId === 'parent';
                         }
                         const attr: string = LAYOUT_ANDROID.constraint[position];
                         if (attr) {
-                            this.app(this.localizeString(attr), adjacent, overwrite);
+                            this.app(this.localizeString(attr), stringId, overwrite);
                             if (orientation) {
                                 this.constraint[orientation] = true;
                             }
-                            this.constraint.current[position] = { adjacent, orientation, overwrite };
+                            this.constraint.current[position] = {
+                                stringId,
+                                horizontal: $util.indexOf(position.toLowerCase(), 'left', 'right') !== -1,
+                                overwrite: !!overwrite
+                            };
                         }
                     }
                 }
                 else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
-                    if (overwrite === undefined) {
-                        overwrite = adjacent === 'true';
+                    if (stringId && overwrite === undefined) {
+                        overwrite = stringId === 'true';
                     }
-                    const attr: string = LAYOUT_ANDROID[adjacent === 'true' ? 'relativeParent' : 'relative'][position];
-                    this.android(this.localizeString(attr), adjacent, overwrite);
+                    const attr: string = LAYOUT_ANDROID[stringId === 'true' ? 'relativeParent' : 'relative'][position];
+                    this.android(this.localizeString(attr), stringId, overwrite);
                 }
             }
         }
@@ -176,15 +180,15 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         public anchorDelete(...position: string[]) {
             if (this.rendered) {
                 if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT)) {
-                    this.delete('app', ...position.map(value => LAYOUT_ANDROID.constraint[value]), ...position.map(value => this.localizeString(LAYOUT_ANDROID.constraint[value])));
+                    this.delete('app', ...position.map(value => this.localizeString(LAYOUT_ANDROID.constraint[value])));
                 }
                 else if (this.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
                     for (const value of position) {
                         if (this.alignSibling(value)) {
                             this.delete('android', LAYOUT_ANDROID.relative[value], this.localizeString(LAYOUT_ANDROID.relative[value]));
                         }
-                        else {
-                            this.delete('android', LAYOUT_ANDROID.relativeParent[value], this.localizeString(LAYOUT_ANDROID.relativeParent[value]));
+                        else if (LAYOUT_ANDROID.relativeParent[value]) {
+                            this.delete('android', this.localizeString(LAYOUT_ANDROID.relativeParent[value]));
                         }
                     }
                 }
@@ -262,7 +266,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public valueBox(region: number) {
+        public valueBox(region: number): [number, number] {
             const name = $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID);
             if (name !== '') {
                 const attr = name.replace('layout_', '');
@@ -386,6 +390,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public setBaseLayout() {
+            if (this.documentBody) {
+                if (!this.has('width') && this.some(node => node.blockStatic || (node.siblingflow && node.right !== null))) {
+                    this.android('layout_width', 'match_parent', false);
+                }
+                if (!this.has('height') && this.some(node => !node.siblingflow && node.bottom !== null)) {
+                    this.android('layout_height', 'match_parent', false);
+                }
+            }
             if (this.nodeType >= $enum.NODE_STANDARD.SCROLL_HORIZONTAL) {
                 this.android('layout_width', this.nodeType === $enum.NODE_STANDARD.SCROLL_HORIZONTAL && this.has('width', $enum.CSS_STANDARD.UNIT) ? this.css('width') : 'wrap_content');
                 this.android('layout_height', this.nodeType === $enum.NODE_STANDARD.SCROLL_VERTICAL && this.has('height', $enum.CSS_STANDARD.UNIT) ? this.css('height') : 'wrap_content');
@@ -449,16 +461,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 })();
                 const styleMap = this.styleMap;
-                const constraint = this.constraint;
                 const tableElement = this.tagName === 'TABLE';
-                if (this.documentBody || (this.documentRoot && !this.flex.enabled && this.is($enum.NODE_STANDARD.FRAME, $enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE))) {
-                    if (!this.hasWidth && this.block && !constraint.layoutHorizontal) {
-                        this.android('layout_width', 'match_parent', false);
-                    }
-                    if (!this.hasHeight && this.cascade().some(node => !node.pageflow) && !constraint.layoutHeight && !constraint.layoutVertical) {
-                        this.android('layout_height', 'match_parent', false);
-                    }
-                }
                 if (this.android('layout_width') !== '0px') {
                     if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is($enum.NODE_STANDARD.GRID) || !this.has('width', 0, { map: 'initial' }))) {
                         if (this.has('width', $enum.CSS_STANDARD.PERCENT)) {
@@ -472,14 +475,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         else {
                             this.android('layout_width', $util.convertInt(parent.android('layout_width')) > 0 && parent.viewWidth > 0 && this.viewWidth >= parent.viewWidth ? 'match_parent' : styleMap.width, renderParent.tagName !== 'TABLE');
-                        }
-                    }
-                    if (constraint.layoutWidth) {
-                        if (constraint.layoutHorizontal) {
-                            this.android('layout_width', parent.hasWidth ? 'match_parent' : 'wrap_content', false);
-                        }
-                        else {
-                            this.android('layout_width', this.bounds.width >= widthParent ? 'match_parent' : $util.formatPX(this.bounds.width), false);
                         }
                     }
                     if (this.has('minWidth')) {
@@ -557,18 +552,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         else {
                             this.android('layout_height', this.css('overflow') === 'hidden' && this.toInt('height') < Math.floor(this.box.height) ? 'wrap_content' : styleMap.height);
-                        }
-                    }
-                    if (constraint.layoutHeight) {
-                        if (constraint.layoutVertical) {
-                            this.android('layout_height', 'wrap_content', false);
-                        }
-                        else if (this.documentRoot) {
-                            const bottomHeight: number = Math.max.apply(null, renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom));
-                            this.android('layout_height', bottomHeight > 0 ? $util.formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent', false);
-                        }
-                        else {
-                            this.android('layout_height', this.actualHeight < heightParent ? $util.formatPX(this.actualHeight) : 'match_parent', false);
                         }
                     }
                     if (this.has('minHeight')) {
@@ -1187,7 +1170,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const bottom = this.toInt('bottom');
                 const left = this.toInt('left');
                 if (top !== 0) {
-                    if (top < 0 && this.floating && !!this.data('RESOURCE', 'backgroundImage') && renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR)) {
+                    if (top < 0 && this.floating && this.data('RESOURCE', 'backgroundImage') && renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR)) {
                         let found = false;
                         renderParent.renderChildren.some((node: View) => {
                             if (node === this) {
@@ -1247,7 +1230,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                         const dimension = region + direction;
-                        const value: number = (this._boxReset[dimension] === 0 ? this[dimension] : 0) + this._boxAdjustment[dimension];
+                        let value: number = this._boxAdjustment[dimension];
+                        if (!(dimension === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
+                            value += this._boxReset[dimension] === 0 ? this[dimension] : 0;
+                        }
                         if (value !== 0) {
                             this.android(
                                 this.localizeString(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`]),

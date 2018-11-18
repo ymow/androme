@@ -30,10 +30,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
                             found = true;
                         }
                         else {
-                            if (!attrMap.has(value)) {
-                                attrMap.set(value, 0);
-                            }
-                            attrMap.set(value, (attrMap.get(value) as number) + 1);
+                            attrMap.set(value, (attrMap.get(value) || 0) + 1);
                         }
                         return false;
                     });

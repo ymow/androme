@@ -25,7 +25,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const options = $android_util.createAttribute(this.options[node.element.id]);
-        $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
+        $util.defaultWhenNull(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.BOTTOM_NAVIGATION,
             node.depth,
@@ -58,22 +58,22 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = $android_util.createAttribute(this.options[node.element.id]);
-            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            $util.defaultWhenNull(options, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', options.app.menu);
         }
     }
 
     private setStyleTheme() {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.overwriteDefault(options, 'appTheme', 'AppTheme');
-        $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        $util.defaultWhenNull(options, 'appTheme', 'AppTheme');
+        $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,
             '1': []
         };
-        $util.overwriteDefault(options, 'output', 'path', 'res/values');
-        $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
+        $util.defaultWhenNull(options, 'output', 'path', 'res/values');
+        $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

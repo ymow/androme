@@ -120,6 +120,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     Object.assign(options.android, {
                         minWidth,
                         gravity: paddingLeft > 20 ? node.localizeString(gravity) : '',
+                        [BOX_ANDROID.MARGIN_TOP]: node === parent.children[0] && node.marginTop > 0 ? $util.formatPX(node.marginTop) : '',
                         [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: layoutMarginLeft,
                         [node.localizeString(BOX_ANDROID.PADDING_LEFT)]: gravity === '' && image === '' ? $util.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
                         [node.localizeString(BOX_ANDROID.PADDING_RIGHT)]: gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '',
@@ -157,8 +158,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     controller.prependBefore(
                         node.id,
                         controller.renderNodeStatic(
-                            image !== '' ? $enum.NODE_STANDARD.IMAGE
-                                         : mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE,
+                            image !== '' ? $enum.NODE_STANDARD.IMAGE : (mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE),
                             parent.renderDepth + 1,
                             options,
                             'wrap_content',

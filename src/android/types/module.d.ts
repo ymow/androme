@@ -25,21 +25,21 @@ export interface LocalSettings extends EnvironmentSettings {
 export interface Constraint {
     horizontal: boolean;
     vertical: boolean;
-    current: {
-        adjacent?: string;
-        orientation?: string;
-        overwrite?: boolean;
-    };
-    layoutWidth?: boolean;
-    layoutHeight?: boolean;
-    layoutHorizontal?: boolean;
-    layoutVertical?: boolean;
+    current: ObjectMap<ConstraintPosition>;
     marginHorizontal?: string;
     marginVertical?: string;
     chainHorizontal?: boolean;
     chainVertical?: boolean;
+    guidelineHorizontal?: string;
+    guidelineVertical?: string;
     guideline?: ObjectMapNested<ObjectMapNested<number>>;
 }
+
+type ConstraintPosition = {
+    stringId: string;
+    horizontal: boolean;
+    overwrite: boolean;
+};
 
 export interface ViewAttribute {
     android: StringMap;

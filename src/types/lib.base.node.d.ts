@@ -44,6 +44,7 @@ declare global {
             readonly inlineHeight: boolean;
             readonly blockWidth: boolean;
             readonly blockHeight: boolean;
+            readonly tagName: string;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
             readonly domElement: boolean;
@@ -123,7 +124,6 @@ declare global {
             renderAs: Node;
             renderDepth: number;
             pageflow: boolean;
-            tagName: string;
             multiLine: boolean;
             setNodeType(viewName: string): void;
             setBaseLayout(): void;
@@ -131,7 +131,7 @@ declare global {
             applyOptimizations(settings: Settings): void;
             applyCustomizations(settings: Settings): void;
             modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
-            valueBox(region: number): string[];
+            valueBox(region: number): [number, number];
             localizeString(value: string): string;
             clone(id?: number, children?: boolean): Node;
             init(): void;
@@ -148,7 +148,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previous: Node | null, cleared?: Map<Node, string>, firstT?: boolean): boolean;
+            alignedVertically(previous: Node | null, cleared?: Map<Node, string>, floatSize?: number, firstNode?: boolean): boolean;
             intersect(rect: BoxDimensions, dimension?: string): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
@@ -171,7 +171,8 @@ declare global {
             setMultiLine(): void;
             replaceNode(node: Node, withNode: Node, append?: boolean): void;
             appendRendered(node: Node): void;
-            resetBox(region: number, node?: Node, inherit?: boolean, negative?: boolean): void;
+            resetBox(region: number, node?: Node, fromParent?: boolean): void;
+            inheritBox(region: number, node: Node): void;
             removeElement(): void;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;

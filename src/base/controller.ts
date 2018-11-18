@@ -3,6 +3,56 @@ import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
+    public static partitionHorizontal<T extends Node>(list: T[], parent?: T) {
+        const cleared = parent && this.clearedElement(parent) && NodeList.cleared(list);
+        const result: T[][] = [];
+        let row: T[] = [];
+        for (let i = 0; i < list.length; i++) {
+            const node = list[i];
+            const previous = node.previousSibling() as T;
+            if (i === 0 || previous === null) {
+                row.push(node);
+            }
+            else {
+                if (node.alignedVertically(previous, cleared)) {
+                    result.push(row);
+                    row = [node];
+                }
+                else {
+                    row.push(node);
+                }
+                if (i === list.length - 1) {
+                    result.push(row);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static alignRowPrevious<T extends Node>(list: T[], node: T) {
+        const result: T[] = [];
+        for (let i = 0; i < list.length; i++) {
+            const above = list[i];
+            if (node.intersectY(above.linear) && node.linear.top >= above.linear.bottom) {
+                result.push(above);
+            }
+        }
+        return result;
+    }
+
+    public static clearedElement<T extends Node>(parent: T) {
+        const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
+        if (documentParent.length > 0) {
+            if (new Set(documentParent).size !== 1) {
+                return undefined;
+            }
+            else {
+                return NodeList.cleared(Array.from(documentParent[0].baseElement.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item));
+            }
+        }
+        return new Map<T, string>();
+    }
+
     public cache: NodeList<T>;
     public application: Application<T>;
     public abstract settings: Settings;

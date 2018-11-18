@@ -9,6 +9,9 @@ import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, sear
 
 type T = Node;
 
+const BOX_MARGIN = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
+const BOX_PADDING = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
+
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
     public static getContentBoxWidth<T extends Node>(node: T) {
         return node.borderLeftWidth + node.paddingLeft + node.paddingRight + node.borderRightWidth;
@@ -93,7 +96,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyOptimizations(): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
-    public abstract valueBox(region: number): string[];
+    public abstract valueBox(region: number): [number, number];
     public abstract convertPX(value: string): string;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
@@ -333,21 +336,32 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public alignedVertically(previous: T | null, cleared = new Map<T, string>(), firstNode = false) {
+    public alignedVertically(previous: T | null, cleared?: Map<T, string>, floatSize = 2, firstNode = false) {
         if (previous && this.documentParent.baseElement === previous.documentParent.baseElement) {
             const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
             return (
                 this.lineBreak ||
-                previous.lineBreak ||
+                (previous.lineBreak && !this.floating) ||
                 previous.blockStatic ||
-                (previous.bounds && previous.bounds.width > widthParent && (!previous.textElement || previous.css('whiteSpace') === 'nowrap')) ||
                 (previous.float === 'left' && this.autoMarginRight) ||
                 (previous.float === 'right' && this.autoMarginLeft) ||
-                (!previous.floating && ((!this.inlineElement && !this.floating) || this.blockStatic)) ||
                 (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
-                (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
-                (!firstNode && cleared.has(this)) ||
-                (!firstNode && this.linear.top >= previous.linear.bottom && this.floating && previous.floating && (!this.has('width', CSS_STANDARD.PERCENT) || !previous.has('width', CSS_STANDARD.PERCENT)))
+                (previous.bounds && previous.bounds.width > widthParent && (
+                    !previous.textElement ||
+                    previous.css('whiteSpace') === 'nowrap'
+                )) ||
+                (!previous.floating && (
+                    (!this.inlineElement && !this.floating) ||
+                    this.blockStatic
+                )) ||
+                (this.blockStatic && (
+                    !previous.inlineElement ||
+                    (cleared && cleared.has(previous) && previous.floating)
+                )) ||
+                (!firstNode && previous && previous.linear && (
+                    (cleared && cleared.has(this)) ||
+                    (this.linear.top >= previous.linear.bottom && this.floating && previous.floating && floatSize === 2)
+                ))
             );
         }
         return false;
@@ -566,11 +580,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 width: 0,
                 height: 0
             };
+            const absolute = this.every(node => !node.siblingflow);
             this.box = {
-                top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
-                right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
-                bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
-                left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
+                top: this.bounds.top + ((absolute ? 0 : this.paddingTop) + this.borderTopWidth),
+                right: this.bounds.right - ((absolute ? 0 : this.paddingRight) + this.borderRightWidth),
+                bottom: this.bounds.bottom - ((absolute ? 0 : this.paddingBottom) + this.borderBottomWidth),
+                left: this.bounds.left + ((absolute ? 0 : this.paddingLeft) + this.borderLeftWidth),
                 width: 0,
                 height: 0
             };
@@ -659,40 +674,33 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public resetBox(region: number, node?: T, inherit = false, negative = false) {
-        const attrs: string[] = [];
-        const margin = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
-        const padding = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
-        if (hasBit(region, BOX_STANDARD.MARGIN)) {
-            attrs.push(...margin);
-        }
-        if (hasBit(region, BOX_STANDARD.PADDING)) {
-            attrs.push(...padding);
-        }
-        const visibleBox = !!node && (node.hasWidth || node.borderTopWidth > 0 || node.borderRightWidth > 0 || node.borderBottomWidth > 0 || node.borderLeftWidth > 0);
-        for (let i = 0; i < attrs.length; i++) {
-            const attr = attrs[i];
-            if (inherit && node) {
-                const value = this._boxAdjustment[attr];
-                if (value > 0 || (negative && value < 0)) {
-                    node.modifyBox(attr, this._boxAdjustment[attr], negative);
-                    this._boxAdjustment[attr] = 0;
-                }
-            }
-            else {
-                this._boxReset[attr] = 1;
-                if (node) {
-                    switch (region) {
-                        case BOX_STANDARD.PADDING:
-                            node.modifyBox(margin[i], this[padding[i]]);
-                            break;
-                        case BOX_STANDARD.MARGIN:
-                            node.modifyBox(visibleBox ? margin[i] : padding[i], this[margin[i]]);
-                            break;
+    public resetBox(region: number, node?: T, fromParent = false) {
+        [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
+            if ((index === 0 && hasBit(region, BOX_STANDARD.MARGIN)) || (index === 1 && hasBit(region, BOX_STANDARD.PADDING))) {
+                for (let i = 0; i < item.length; i++) {
+                    const attr = item[i];
+                    this._boxReset[attr] = 1;
+                    if (node) {
+                        node.modifyBox(fromParent ? BOX_MARGIN[i] : BOX_PADDING[i], this[index === 0 ? BOX_MARGIN[i] : BOX_PADDING[i]]);
                     }
                 }
             }
-        }
+        });
+    }
+
+    public inheritBox(region: number, node: T) {
+        [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
+            if ((index === 0 && hasBit(region, BOX_STANDARD.MARGIN)) || (index === 1 && hasBit(region, BOX_STANDARD.PADDING))) {
+                for (let i = 0; i < item.length; i++) {
+                    const attr = item[i];
+                    const value = this._boxAdjustment[attr];
+                    if (value > 0) {
+                        node.modifyBox(attr, this._boxAdjustment[attr], false);
+                        this._boxAdjustment[attr] = 0;
+                    }
+                }
+            }
+        });
     }
 
     public removeElement() {
@@ -871,7 +879,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     set nodeName(value) {
-        this._nodeName = value;
+        if (hasValue(value)) {
+            this._nodeName = value.toString();
+        }
     }
     get nodeName() {
         return (
@@ -880,9 +890,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         );
     }
 
-    set tagName(value) {
-        this._tagName = value;
-    }
     get tagName() {
         return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
     }

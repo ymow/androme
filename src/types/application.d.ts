@@ -30,13 +30,13 @@ interface Settings {
 
 interface ControllerSettings {
     baseTemplate: string;
-    inline: {
-        always: string[];
-        tagName: string[];
-    };
     layout: {
         pathName: string;
         fileExtension: string;
+    };
+    inline: {
+        always: string[];
+        tagName: Set<string>
     };
     unsupported: {
         tagName: Set<string>

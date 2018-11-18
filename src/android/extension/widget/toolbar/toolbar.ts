@@ -64,7 +64,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 if ($util.hasValue(element.dataset.navigationIcon)) {
                     const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
-                        $util.overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                        $util.defaultWhenNull(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
                             children--;
                         }
@@ -73,7 +73,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 if ($util.hasValue(element.dataset.collapseIcon)) {
                     const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
-                        $util.overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                        $util.defaultWhenNull(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
                             children--;
                         }
@@ -104,26 +104,26 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let appBarOverlay = '';
         let popupOverlay = '';
         if (hasCollapsingToolbar) {
-            $util.overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
+            $util.defaultWhenNull(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
         }
         else {
             if (!hasAppBar) {
-                $util.overwriteDefault(optionsToolbar, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(optionsToolbar, 'android', 'fitsSystemWindows', 'true');
             }
-            $util.overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
+            $util.defaultWhenNull(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage) {
-                $util.overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
+                $util.defaultWhenNull(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
                 node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
-                $util.overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
+                $util.defaultWhenNull(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
             }
         }
         if (appBarChildren.length > 0) {
-            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', '?android:attr/actionBarSize');
+            $util.defaultWhenNull(optionsAppBar, 'android', 'layout_height', '?android:attr/actionBarSize');
         }
         else {
-            $util.overwriteDefault(optionsToolbar, 'android', 'layout_height', '?android:attr/actionBarSize');
+            $util.defaultWhenNull(optionsToolbar, 'android', 'layout_height', '?android:attr/actionBarSize');
             node.excludeProcedure |= $enum.NODE_PROCEDURE.LAYOUT;
         }
         if (hasMenu) {
@@ -163,11 +163,11 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                         scaleType = 'matrix';
                         break;
                 }
-                $util.overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                $util.overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
-                $util.overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
-                $util.overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
-                $util.overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
+                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
+                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'src', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
+                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'scaleType', scaleType);
+                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
                 output = controller.renderNodeStatic(
                     $android_const.NODE_ANDROID.IMAGE,
                     innerDepth,
@@ -182,9 +182,9 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let appBarNode: T | undefined;
         let collapsingToolbarNode: T | undefined;
         if (hasAppBar) {
-            $util.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
-            $util.overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
+            $util.defaultWhenNull(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
+            $util.defaultWhenNull(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
+            $util.defaultWhenNull(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar['android'].theme) {
                     appBarOverlay = optionsAppBar['android'].theme;
@@ -193,7 +193,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 this.setStyleTheme(appBarOverlay, popupOverlay);
             }
             else {
-                $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+                $util.defaultWhenNull(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             appBarNode = this.createPlaceholder(application.processing.cache.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
@@ -210,13 +210,13 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             );
             if (hasCollapsingToolbar) {
                 depth++;
-                $util.overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
-                $util.overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
+                $util.defaultWhenNull(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
                 if (!backgroundImage) {
-                    $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                    $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
                 }
-                $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
-                $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
+                $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
+                $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = this.createPlaceholder(application.processing.cache.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
@@ -276,15 +276,15 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         if (menu !== '') {
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = $android_util.createAttribute(options.self);
-            $util.overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
+            $util.defaultWhenNull(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', optionsToolbar['app'].menu);
         }
     }
 
     private setStyleTheme(appBarOverlay: string, popupOverlay: string) {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.overwriteDefault(options, 'appTheme', 'AppTheme');
-        $util.overwriteDefault(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        $util.defaultWhenNull(options, 'appTheme', 'AppTheme');
+        $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,
@@ -292,8 +292,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
             '1': []
         };
-        $util.overwriteDefault(options, 'output', 'path', 'res/values');
-        $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
+        $util.defaultWhenNull(options, 'output', 'path', 'res/values');
+        $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_APPBAR_TMPL, data, options);
     }
 

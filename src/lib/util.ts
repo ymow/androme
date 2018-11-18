@@ -398,22 +398,22 @@ export function withinFraction(lower: number, upper: number) {
     );
 }
 
-export function overwriteDefault(options: {}, ...attrs: string[]) {
+export function defaultWhenNull(options: {}, ...attrs: string[]) {
     let current = options;
     for (let i = 0 ; i < attrs.length - 1; i++) {
         const value = attrs[i];
         if (i === attrs.length - 2) {
-            if (!hasValue(current[value])) {
+            if (!hasValue(options[value])) {
                 current[value] = attrs[i + 1];
             }
         }
         else if (isString(value)) {
             if (typeof current[value] === 'object') {
-                current = options[value];
+                current = current[value];
             }
-            else if (options[value] === undefined) {
-                options[value] = {};
-                current = options[value];
+            else if (current[value] === undefined) {
+                current[value] = {};
+                current = current[value];
             }
             else {
                 break;

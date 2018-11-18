@@ -35,13 +35,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         if (start === 1) {
             name += `_${i.toString()}`;
         }
-        if (!this.ASSETS.ids.has(section)) {
-            this.ASSETS.ids.set(section, []);
-        }
-        const unavailable = this.ASSETS.ids.get(section) as string[];
+        const previous = this.ASSETS.ids.get(section) || [];
         do {
-            if (!unavailable.includes(name)) {
-                unavailable.push(name);
+            if (!previous.includes(name)) {
+                previous.push(name);
                 break;
             }
             else {
@@ -49,6 +46,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             }
         }
         while (true);
+        this.ASSETS.ids.set(section, previous);
         return name;
     }
 

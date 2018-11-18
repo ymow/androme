@@ -55,10 +55,9 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                 const key = node.id.toString() + (item.renderPosition !== -1 ? `:${item.renderPosition}` : '');
                                 const depthMap = processing.depthMap.get(key);
                                 if (depthMap && depthMap.has(item.id)) {
-                                    if (!location.has(key)) {
-                                        location.set(key, []);
-                                    }
-                                    (location.get(key) as T[]).push(item);
+                                    const items = location.get(key) || [];
+                                    items.push(item);
+                                    location.set(key, items);
                                 }
                                 else {
                                     valid = false;
@@ -69,11 +68,11 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                 const group: T[] = [];
                                 let k = 0;
                                 for (const [key, templates] of processing.depthMap.entries()) {
-                                    const includeParent = location.get(key);
-                                    if (includeParent) {
+                                    const parent = location.get(key);
+                                    if (parent) {
                                         const deleteIds: number[] = [];
                                         for (const [id, template] of templates.entries()) {
-                                            const item = includeParent.find(sibling => sibling.id === id);
+                                            const item = parent.find(sibling => sibling.id === id);
                                             if (item) {
                                                 if (k === 0) {
                                                     const xml = controller.renderNodeStatic('include', item.renderDepth, { layout: `@layout/${openData.name}` });
@@ -95,9 +94,12 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     const depth = merge ? 1 : 0;
                                     for (const item of group) {
                                         if (item.renderDepth !== depth) {
-                                            const output = $xml.replaceIndent(content.get(item.id) as string, depth);
-                                            content.set(item.id, output);
-                                            item.renderDepth = depth;
+                                            let output = content.get(item.id);
+                                            if (output) {
+                                                output = $xml.replaceIndent(output, depth);
+                                                content.set(item.id, output);
+                                                item.renderDepth = depth;
+                                            }
                                         }
                                     }
                                     let xml = Array.from(content.values()).join('');

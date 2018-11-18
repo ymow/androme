@@ -28,9 +28,9 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         if (backgroundColor) {
             colorValue = $Resource.addColor(backgroundColor);
         }
-        $util.overwriteDefault(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
+        $util.defaultWhenNull(options, 'android', 'backgroundTint', colorValue !== '' ? `@color/${colorValue}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
-            $util.overwriteDefault(options, 'android', 'focusable', 'false');
+            $util.defaultWhenNull(options, 'android', 'focusable', 'false');
         }
         let src = '';
         switch (element.tagName) {
@@ -50,7 +50,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
                 break;
         }
         if (src !== '') {
-            $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
+            $util.defaultWhenNull(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,

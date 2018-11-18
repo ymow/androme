@@ -89,101 +89,9 @@ function checkSingleLine<T extends View>(node: T, nowrap = false, flexParent = f
     }
 }
 
-function chainAligned<T extends View>(node: T, siblings: T[], orientation: string, validate: boolean) {
-    const coordinate = orientation === AXIS_ANDROID.HORIZONTAL ? ['top', 'bottom'] : ['left', 'right'];
-    const distance = orientation === AXIS_ANDROID.HORIZONTAL ? ['left', 'right'] : ['top', 'bottom'];
-    return coordinate.map(value => {
-        let result: T[] = [];
-        const aligned = siblings.filter(item => $util.withinFraction(node.linear[value], item.linear[value]));
-        if (validate) {
-            if (aligned.length > 1) {
-                type SortableOffset = {
-                    offset: number;
-                    nodes: Set<T>;
-                };
-                const offsetMap: SortableOffset[] = [];
-                for (let i = 0; i < aligned.length; i++) {
-                    const current = aligned[i];
-                    for (let j = 0; j < aligned.length; j++) {
-                        const adjacent = aligned[j];
-                        if (i !== j) {
-                            let offset = adjacent.linear[distance[0]] - current.linear[distance[1]];
-                            if (offset >= 0) {
-                                offset = Math.round(offset);
-                                let indexItem = offsetMap.find(item => item.offset === offset);
-                                if (indexItem === undefined) {
-                                    indexItem = {
-                                        offset,
-                                        nodes: new Set<T>()
-                                    };
-                                    offsetMap.push(indexItem);
-                                }
-                                indexItem.nodes.add(current).add(adjacent);
-                            }
-                        }
-                    }
-                }
-                offsetMap.sort((a, b) => {
-                    if (a.nodes.size > b.nodes.size) {
-                        return -1;
-                    }
-                    else if (a.nodes.size === b.nodes.size) {
-                        return a.offset < b.offset ? -1 : 1;
-                    }
-                    return 0;
-                });
-                result = $util.sortAsc(Array.from(offsetMap[0].nodes), coordinate[0]);
-            }
-        }
-        else {
-            result = $util.sortAsc(aligned, coordinate[0]);
-        }
-        return result;
-    })
-    .sort(chainLength)[0];
-}
-
-function chainPartition<T extends View>(nodes: T[], validate: boolean) {
-    nodes = nodes.filter(node => node.pageflow);
-    const horizontal: T[][] = [];
-    const vertical: T[][] = [];
-    const available = new Set<string>();
-    function chainAvailable(list: T[]) {
-        if (!validate || list.length > 1) {
-            const id = list.map(item => item.id).sort().join('-');
-            return !available.has(id) && !!available.add(id);
-        }
-        return false;
-    }
-    const checkHorizontal = nodes.some(node => !node.constraint.horizontal);
-    const checkVertical = validate && nodes.some(node => !node.constraint.vertical);
-    nodes.some(node => {
-        if (checkHorizontal) {
-            const result = chainAligned(node, nodes, AXIS_ANDROID.HORIZONTAL, validate);
-            if (chainAvailable(result)) {
-                horizontal.push(result);
-                return result.length === nodes.length;
-            }
-        }
-        if (checkVertical) {
-            const result = chainAligned(node, nodes, AXIS_ANDROID.VERTICAL, true);
-            if (chainAvailable(result)) {
-                vertical.push(result);
-                return result.length === nodes.length;
-            }
-        }
-        return false;
-    });
-    return [horizontal.sort(chainLength), vertical.sort(chainLength)];
-}
-
-function chainLength(a, b) {
-    return a.length <= b.length ? 1 : -1;
-}
-
 function chainMinMax<T extends View>(node: T, dimension: string) {
-    const minWH = node.css(`min${dimension}`);
-    const maxWH = node.css(`max${dimension}`);
+    const minWH = node.cssInitial(`min${dimension}`);
+    const maxWH = node.cssInitial(`max${dimension}`);
     if ($util.isUnit(minWH)) {
         node.app(`layout_constraint${dimension}_min`, minWH);
     }
@@ -197,30 +105,25 @@ function anchorEvaluate<T extends View>(nodes: T[]) {
     const vertical = nodes.filter(item => item.constraint.vertical);
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
-        if (!node.anchored) {
-            const result: string[][] = $util.searchObject(node.namespace('app'), '*constraint*').filter(item => item[1] !== 'parent');
-            if (result.length > 0) {
-                if (!node.constraint.horizontal) {
-                    const left = node.localizeString('Left');
-                    const right = node.localizeString('Right');
-                    for (const [key, value] of result) {
-                        if ($util.indexOf(key, left, right) !== -1 && horizontal.find(item => item.stringId === value)) {
-                            node.constraint.horizontal = true;
-                            horizontal.push(node);
-                            i = -1;
-                            break;
-                        }
-                    }
+        if (!node.constraint.horizontal) {
+            for (const attr in node.constraint.current) {
+                const position = node.constraint.current[attr];
+                if (position.horizontal && horizontal.find(item => item.stringId === position.stringId)) {
+                    node.constraint.horizontal = true;
+                    horizontal.push(node);
+                    i = -1;
+                    break;
                 }
-                if (!node.constraint.vertical) {
-                    for (const [key, value] of result) {
-                        if ($util.indexOf(key, 'Top', 'Bottom') !== -1 && vertical.find(item => item.stringId === value)) {
-                            node.constraint.vertical = true;
-                            vertical.push(node);
-                            i = -1;
-                            break;
-                        }
-                    }
+            }
+        }
+        if (!node.constraint.vertical) {
+            for (const attr in node.constraint.current) {
+                const position = node.constraint.current[attr];
+                if (!position.horizontal && vertical.find(item => item.stringId === position.stringId)) {
+                    node.constraint.vertical = true;
+                    vertical.push(node);
+                    i = -1;
+                    break;
                 }
             }
         }
@@ -254,7 +157,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         },
         inline: {
             always: ['BR'],
-            tagName: WEBVIEW_ANDROID,
+            tagName: new Set(WEBVIEW_ANDROID),
         },
         unsupported: {
             tagName: new Set(['OPTION', 'MAP', 'AREA', 'svg'])
@@ -474,7 +377,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 item.anchor('top', 'true');
                                 break;
                             case 'middle':
-                                rows[0].forEach(sibling => sibling.bounds.height <= item.bounds.height && sibling.anchor('layout_centerVertical', 'true'));
+                                item.anchor('centerVertical', 'true');
+                                rows[0].forEach(sibling => item !== sibling && sibling.bounds.height <= item.actualHeight && sibling.anchor('centerVertical', 'true'));
                                 break;
                         }
                     });
@@ -503,6 +407,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             else if (node.layoutConstraint) {
                 const [absolute, pageflow] = $util.partition(children, item => !item.pageflow || (item.position === 'relative' && item.alignNegative));
+                const documentParent = node.groupElement ? node : null;
                 let resetPadding = false;
                 for (const item of absolute) {
                     let alignLeft = false;
@@ -621,71 +526,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                     }
                 }
-                else if (node.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
-                    const [chainHorizontal] = chainPartition(pageflow, false);
-                    chainHorizontal.forEach((chainable, index) => {
-                        const floatRight = node.hasAlign($enum.NODE_ALIGNMENT.RIGHT);
-                        if (floatRight) {
-                            chainable.reverse();
-                        }
-                        const first = chainable[0];
-                        for (let i = 0; i < chainable.length; i++) {
-                            const chain = chainable[i];
-                            const previous: T | undefined = chainable[i - 1];
-                            const next: T | undefined = chainable[i + 1];
-                            const previousRow = chainHorizontal[index - 1];
-                            if (i === 0) {
-                                if (index === 0) {
-                                    chain.anchor('top', 'parent');
-                                }
-                                chain.anchor('left', 'parent');
-                            }
-                            else if (next === undefined) {
-                                chain.anchor('right', 'parent');
-                            }
-                            if (next) {
-                                chain.anchor('rightLeft', next.stringId);
-                            }
-                            if (previous) {
-                                chain.anchor('leftRight', previous.stringId);
-                            }
-                            if (previousRow) {
-                                let anchorAbove: T | undefined;
-                                if (previousRow[i]) {
-                                    anchorAbove = previousRow[i];
-                                }
-                                else {
-                                    const bottom = Math.max.apply(null, previousRow.map(item => item.linear.bottom));
-                                    anchorAbove = previousRow.find(item => item.linear.bottom === bottom);
-                                }
-                                if (anchorAbove) {
-                                    chain.anchor('topBottom', anchorAbove.stringId);
-                                }
-                            }
-                            const width = chain.css('width');
-                            if ($util.isPercent(width)) {
-                                chain.app('layout_constraintWidth_percent', (parseInt(width) / 100).toFixed(2));
-                                chain.android('layout_width', '0px');
-                            }
-                            chainMinMax(chain, 'Width');
-                            chain.anchored = true;
-                        }
-                        if (!node.renderParent.autoMarginHorizontal) {
-                            if (floatRight) {
-                                first.app('layout_constraintHorizontal_bias', '1');
-                            }
-                            else {
-                                first.app('layout_constraintHorizontal_bias', '0');
-                            }
-                        }
-                        first.app('layout_constraintHorizontal_chainStyle', 'packed');
-                    });
-                    node.android('layout_width', 'match_parent');
-                }
                 else if (node.hasAlign($enum.NODE_ALIGNMENT.COLUMN)) {
                     const columnCount = node.toInt('columnCount');
-                    const columns: T[][] = [];
                     const perRowCount = Math.ceil(pageflow.length / Math.min(columnCount, pageflow.length));
+                    const columns: T[][] = [];
                     for (let i = 0, j = 0; i < pageflow.length; i++) {
                         const item = pageflow[i];
                         if (i % perRowCount === 0) {
@@ -698,12 +542,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                         columns[j].push(item);
                     }
-                    const row: T[] = [];
                     const marginLeft = $util.convertInt(node.css('columnGap')) || 16;
                     const marginTotal: number = columns.map(list => Math.max.apply(null, list.map(item => item.marginLeft + item.marginRight))).reduce((a: number, b: number) => a + b, 0);
                     const marginPercent = Math.max(((marginTotal + (marginLeft * (columnCount - 1))) / node.box.width) / columnCount, 0.01);
                     const chainHorizontal: T[][] = [];
                     const chainVertical: T[][] = [];
+                    const row: T[] = [];
                     for (let i = 0; i < columns.length; i++) {
                         const column = columns[i];
                         const first = column[0];
@@ -751,9 +595,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 else {
                     const flex = node.flex;
-                    let chainHorizontal: Null<T>[][] = [];
-                    let chainVertical: Null<T>[][] = [];
-                    let requireMargin = false;
+                    const chainHorizontal: T[][] = [];
+                    const chainVertical: T[][] = [];
+                    let requireMargin = true;
                     if (flex.enabled) {
                         if (flex.wrap === 'nowrap') {
                             if (pageflow.some(item => item.flex.order !== 0)) {
@@ -781,8 +625,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                         else {
                             const sorted = pageflow.slice();
-                            const map = new Map<number, Null<T>[]>();
-                            let rowLength = 0;
+                            const map = new Map<number, T[]>();
                             sorted.sort((a, b) => {
                                 if (a.intersectX(b.linear)) {
                                     return a.linear.left < b.linear.left ? -1 : 1;
@@ -793,347 +636,360 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             });
                             for (const item of sorted) {
                                 const y = Math.round(item.linear.top);
-                                const items: Null<T>[] = map.get(y) || [];
+                                const items: T[] = map.get(y) || [];
                                 items.push(item);
-                                rowLength = Math.max(items.length, rowLength);
                                 map.set(y, items);
                             }
-                            for (const items of map.values()) {
-                                const length = items.length;
-                                if (length < rowLength) {
-                                    const insert = flex.direction === 'row' || (flex.direction.startsWith('column') && flex.wrap === 'wrap');
-                                    for (let i = 0; i < rowLength - length; i++) {
-                                        items[insert ? 'push' : 'unshift'](null);
-                                    }
-                                }
-                                chainHorizontal.push(items);
-                            }
+                            chainHorizontal.push(...Array.from(map.values()));
                             requireMargin = flex.direction.startsWith('column');
                         }
                     }
                     else if (pageflow.length > 0) {
                         for (const current of pageflow) {
-                            const parent = node.renderParent.is($enum.NODE_STANDARD.GRID) && !node.styleElement ? node : current.documentParent;
+                            const parent = documentParent || current.documentParent;
+                            if (current.float === 'right') {
+                                if ($util.withinFraction(current.linear.right, parent.box.right) || current.linear.right > parent.box.right) {
+                                    current.anchor('right', 'parent', AXIS_ANDROID.HORIZONTAL);
+                                }
+                            }
+                            else {
+                                if ($util.withinFraction(current.linear.left, parent.box.left) || current.linear.left < parent.box.left) {
+                                    current.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
+                                }
+                            }
+                            if ($util.withinFraction(current.linear.top, parent.box.top) || current.linear.top < parent.box.top) {
+                                current.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
+                            }
+                        }
+                        if (node.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
+                            chainHorizontal.push(...Controller.partitionHorizontal(pageflow, node));
+                            chainHorizontal.forEach((chainable, index) => {
+                                const first = chainable[0];
+                                const floatRight = node.hasAlign($enum.NODE_ALIGNMENT.RIGHT);
+                                if (floatRight) {
+                                    chainable.reverse();
+                                }
+                                let chained = true;
+                                if (index > 0 && (chainable.length === 1 || !chainable.some(item => item.alignParent('left') || item.alignParent('right')))) {
+                                    const rowPrevious = chainHorizontal[index - 1];
+                                    for (let i = 0; i < rowPrevious.length; i++) {
+                                        const current = rowPrevious[i];
+                                        if (first.linear.left === current.linear.left) {
+                                            first.anchor('left', current.stringId);
+                                            chained = false;
+                                        }
+                                        if (first.linear.right === current.linear.right) {
+                                            first.anchor('right', current.stringId);
+                                            chained = false;
+                                        }
+                                        if (!chained) {
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (chained) {
+                                    first.app('layout_constraintHorizontal_chainStyle', 'packed');
+                                    if (floatRight) {
+                                        first.app('layout_constraintHorizontal_bias', '1');
+                                    }
+                                    else {
+                                        first.app('layout_constraintHorizontal_bias', '0');
+                                    }
+                                }
+                            });
+                            if (pageflow.some(item => item.has('width', $enum.CSS_STANDARD.PERCENT))) {
+                                node.android('layout_width', 'match_parent');
+                            }
+                        }
+                        else if (!this.settings.constraintChainDisabled && pageflow.length > 1) {
+                            chainHorizontal.push(...Controller.partitionHorizontal(pageflow, node));
+                        }
+                    }
+                    [chainHorizontal, chainVertical].forEach((partitions, index) => {
+                        if (partitions.length === 0) {
+                            return;
+                        }
+                        const inverse = index === 0 ? 1 : 0;
+                        partitions.forEach((chainable, level) => {
+                            const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
+                            const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
+                            const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
+                            const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][inverse]];
+                            const orientation = HV.toLowerCase();
+                            const orientationInverse = VH.toLowerCase();
+                            const dimension = WH.toLowerCase();
+                            const first = chainable[0];
+                            const last = flex.enabled || chainable.length > 1 ? chainable[chainable.length - 1] : null;
+                            const chained = last !== null && first.alignSibling('left') === '' && first.alignSibling('right') === '';
+                            if (chained || first.groupElement) {
+                                first.anchor(LT, 'parent', orientation, false);
+                                if (last) {
+                                    last.anchor(RB, 'parent', orientation, false);
+                                }
+                            }
+                            for (let i = 0; i < chainable.length; i++) {
+                                const chain = chainable[i];
+                                if (chain) {
+                                    const previous = chainable[i - 1];
+                                    const next = chainable[i + 1];
+                                    if (partitions.length > 1) {
+                                        const rowPrevious = partitions[level - 1];
+                                        if (rowPrevious) {
+                                            const abovePrevious = Controller.alignRowPrevious(rowPrevious, chain);
+                                            const stringId = abovePrevious.length > 0 ? abovePrevious[0].stringId : rowPrevious[0].stringId;
+                                            chain.anchor('topBottom', stringId);
+                                            if (requireMargin) {
+                                                chain.constraint.marginVertical = stringId;
+                                            }
+                                        }
+                                        else if (flex.enabled) {
+                                            chain.anchor('top', 'parent');
+                                        }
+                                        const rowNext = partitions[level + 1];
+                                        if (rowNext) {
+                                            for (let j = 0; j < rowNext.length; j++) {
+                                                if (chain.intersectY(rowNext[j].linear)) {
+                                                    chain.anchor('bottomTop', rowNext[j].stringId);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            if (flex.enabled || this.alignParentBottom(chain.linear.bottom, node.box.bottom)) {
+                                                chain.anchor('bottom', 'parent');
+                                            }
+                                        }
+                                    }
+                                    if (next) {
+                                        chain.anchor(CHAIN_MAP['rightLeftBottomTop'][index], next.stringId);
+                                    }
+                                    if (previous) {
+                                        chain.anchor(CHAIN_MAP['leftRightTopBottom'][index], previous.stringId);
+                                        if (requireMargin && index === 0) {
+                                            chain.constraint.marginHorizontal = previous.stringId;
+                                        }
+                                    }
+                                    chainMinMax(chain, WH);
+                                    if (last) {
+                                        chain.constraint[`chain${HV}`] = chained;
+                                    }
+                                    else {
+                                        if (chain.autoMarginHorizontal) {
+                                            chain.anchorParent(AXIS_ANDROID.HORIZONTAL);
+                                        }
+                                    }
+                                    if (flex.enabled) {
+                                        chain.app(`layout_constraint${HV}_weight`, chain.flex.grow.toString());
+                                        if (chain[`view${WH}`] === 0 && chain.flex.grow === 0 && chain.flex.shrink <= 1) {
+                                            chain.android(`layout_${dimension}`, 'wrap_content');
+                                        }
+                                        else if (chain.flex.grow > 0) {
+                                            chain.android(`layout_${dimension}`, '0px');
+                                        }
+                                        if (chain.flex.shrink === 0) {
+                                            chain.app(`layout_constrained${WH}`, 'true');
+                                        }
+                                        switch (chain.flex.alignSelf) {
+                                            case 'flex-start':
+                                                chain.anchor(TL, 'parent', orientationInverse);
+                                                break;
+                                            case 'flex-end':
+                                                chain.anchor(BR, 'parent', orientationInverse);
+                                                break;
+                                            case 'baseline':
+                                                const valid = chainable.some(adjacent => {
+                                                    if (adjacent && adjacent !== chain && adjacent.nodeType <= $enum.NODE_STANDARD.TEXT) {
+                                                        chain.anchor('baseline', adjacent.stringId);
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                });
+                                                if (valid) {
+                                                    chain.anchorDelete('top', 'bottom');
+                                                    for (const item of chainable) {
+                                                        if (item) {
+                                                            if (item.alignSibling('top') === chain.stringId) {
+                                                                item.anchorDelete('top');
+                                                            }
+                                                            if (item.alignSibling('bottom') === chain.stringId) {
+                                                                item.anchorDelete('bottom');
+                                                            }
+                                                        }
+                                                    }
+                                                    chain.constraint.vertical = true;
+                                                }
+                                                break;
+                                            case 'center':
+                                            case 'stretch':
+                                                if (chain.flex.alignSelf !== 'center') {
+                                                    chain.android(`layout_${HW.toLowerCase()}`, '0px');
+                                                }
+                                                chain.anchorParent(orientationInverse, true);
+                                                break;
+                                        }
+                                        if (chain.flex.basis !== 'auto') {
+                                            const basis = $util.convertInt(chain.flex.basis);
+                                            if (basis > 0) {
+                                                if ($util.isPercent(chain.flex.basis)) {
+                                                    chain.app(`layout_constraint${WH}_percent`, (basis / 100).toFixed(2));
+                                                }
+                                                else {
+                                                    chain.app(`layout_constraint${WH}_min`, $util.formatPX(basis));
+                                                    chain.constraint[`min${WH}`] = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        const width = chain.css('width');
+                                        if ($util.isPercent(width)) {
+                                            chain.app('layout_constraintWidth_percent', (parseInt(width) / 100).toFixed(2));
+                                            chain.android('layout_width', '0px');
+                                        }
+                                    }
+                                }
+                            }
+                            if (chained) {
+                                const chainStyle = `layout_constraint${HV}_chainStyle`;
+                                if (flex.enabled && node.has('justifyContent') && Math.max.apply(null, chainable.map(item => item ? item.flex.grow : 0)) === 0) {
+                                    switch (flex.justifyContent) {
+                                        case 'space-between':
+                                            first.app(chainStyle, 'spread_inside');
+                                            break;
+                                        case 'space-evenly':
+                                            first.app(chainStyle, 'spread');
+                                            chainable.forEach(item => item && item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
+                                            break;
+                                        case 'space-around':
+                                            first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
+                                            first.constraint[orientation] = false;
+                                            first.constraint[orientation] = false;
+                                            this.addGuideline(first, orientation, true, false);
+                                            if (last) {
+                                                this.addGuideline(last, orientation, true, true);
+                                            }
+                                            break;
+                                        default:
+                                            let justifyContent = flex.justifyContent;
+                                            if (flex.direction.indexOf('reverse') !== -1) {
+                                                switch (flex.justifyContent) {
+                                                    case 'flex-start':
+                                                        justifyContent = 'flex-end';
+                                                        break;
+                                                    case 'flex-end':
+                                                        justifyContent = 'flex-start';
+                                                        break;
+                                                }
+                                            }
+                                            let bias = '0.5';
+                                            switch (justifyContent) {
+                                                case 'flex-start':
+                                                    bias = '0';
+                                                    break;
+                                                case 'flex-end':
+                                                    bias = '1';
+                                                    break;
+                                            }
+                                            first.app(chainStyle, 'packed');
+                                            first.app(`layout_constraint${HV}_bias`, bias);
+                                            break;
+                                    }
+                                }
+                                else if (last) {
+                                    const parentLeft = $util.withinFraction(node.box.left, first.linear.left);
+                                    const parentRight = last !== null && $util.withinFraction(last.linear.right, node.box.right);
+                                    const parentTop = $util.withinFraction(node.box.top, first.linear.top);
+                                    const parentBottom = last !== null && $util.withinFraction(last.linear.bottom, node.box.bottom);
+                                    if ((orientation === AXIS_ANDROID.HORIZONTAL && parentLeft && parentRight) || (orientation === AXIS_ANDROID.VERTICAL && parentTop && parentBottom)) {
+                                        if (flex.enabled) {
+                                            first.app(chainStyle, 'spread_inside', false);
+                                        }
+                                        else {
+                                            first.app(chainStyle, 'packed', false);
+                                            first.app(`layout_constraint${HV}_bias`, index === 0 && node.float === 'right' ? '1' : '0', false);
+                                        }
+                                    }
+                                    else if (node.flex.wrap !== 'nowrap' || (orientation === AXIS_ANDROID.HORIZONTAL && (parentLeft || parentRight))) {
+                                        let bias = '';
+                                        if (orientation === AXIS_ANDROID.HORIZONTAL) {
+                                            if (parentLeft) {
+                                                bias = '0';
+                                            }
+                                            else if (parentRight) {
+                                                bias = '1';
+                                            }
+                                        }
+                                        if (bias === '') {
+                                            bias = chainable[`${orientation}Bias`];
+                                        }
+                                        first.app(chainStyle, 'packed', false);
+                                        first.app(`layout_constraint${HV}_bias`, bias, false);
+                                    }
+                                    else {
+                                        first.app(chainStyle, 'spread', false);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    const chainEnabled = chainHorizontal.length > 0 || chainVertical.length > 0;
+                    if (!chainEnabled) {
+                        for (const current of pageflow) {
+                            const parent = documentParent || current.documentParent;
                             if (current.autoMarginHorizontal) {
                                 current.anchorParent(AXIS_ANDROID.HORIZONTAL);
                             }
                             else {
-                                if (current.linear.left <= parent.box.left || $util.withinFraction(current.linear.left, parent.box.left)) {
+                                if ($util.withinFraction(current.linear.left, parent.box.left) || current.linear.left < parent.box.left) {
                                     current.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
                                 }
-                                if (current.linear.right >= parent.box.right || $util.withinFraction(current.linear.right, parent.box.right)) {
+                                if ($util.withinFraction(current.linear.right, parent.box.right) || current.linear.right > parent.box.right) {
                                     current.anchor('right', 'parent', parent.hasWidth || current.float === 'right' || current.autoMarginLeft ? AXIS_ANDROID.HORIZONTAL : '');
                                 }
                             }
-                            if (current.linear.top <= parent.box.top || $util.withinFraction(current.linear.top, parent.box.top)) {
+                            if ($util.withinFraction(current.linear.top, parent.box.top) || current.linear.top < parent.box.top) {
                                 current.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
                             }
-                            if (current.linear.bottom >= parent.box.bottom || $util.withinRange(current.linear.bottom, parent.box.bottom, this.settings.constraintAlignParentBottomOffset)) {
+                            else if (this.alignParentBottom(current.linear.bottom, parent.box.bottom)) {
                                 current.anchor('bottom', 'parent', parent.hasHeight ? AXIS_ANDROID.VERTICAL : '');
                             }
-                        }
-                        if (!this.settings.constraintChainDisabled && pageflow.length > 1) {
-                            [chainHorizontal, chainVertical] = chainPartition(pageflow, true);
-                        }
-                    }
-                    [chainHorizontal, chainVertical].forEach((connected, index) => {
-                        if (connected.length > 0) {
-                            const inverse = index === 0 ? 1 : 0;
-                            const rowFirstPartial = connected[0].some(item => item === null);
-                            const rowLastPartial = connected[connected.length - 1].some(item => item === null);
-                            connected.forEach((chainable, level) => {
-                                if (chainable.length > 0) {
-                                    const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
-                                    const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
-                                    const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
-                                    const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][inverse]];
-                                    const orientation = HV.toLowerCase();
-                                    const orientationInverse = VH.toLowerCase();
-                                    const dimension = WH.toLowerCase();
-                                    const chainFirst = chainable.find(item => item !== null) as T;
-                                    const chainLast = chainable.slice().reverse().find(item => item !== null) as T;
-                                    if (!flex.enabled) {
-                                        if (chainable.every(item => item === null || item.constraint[orientation])) {
-                                            return;
-                                        }
-                                        let disconnected = false;
-                                        const attrs = index === 0 ? ['left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'hasWidth', 'right', 'marginHorizontal']
-                                                                  : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
-                                        for (let i = 0, j = 0; i < chainable.length; i++) {
-                                            const item = chainable[i];
-                                            if (item) {
-                                                if (j === 0) {
-                                                    if (!item.alignSibling(attrs[0])) {
-                                                        disconnected = true;
-                                                        break;
-                                                    }
-                                                }
-                                                else {
-                                                    if (!item.alignSibling(attrs[1])) {
-                                                        disconnected = true;
-                                                        break;
-                                                    }
-                                                }
-                                                j++;
-                                            }
-                                        }
-                                        if (!disconnected) {
-                                            if (chainable.every(item => item === null || $util.hasSameValue(chainFirst, item, `linear.${attrs[2]}`))) {
-                                                for (let j = 0; j < chainable.length; j++) {
-                                                    const item = chainable[j];
-                                                    if (item && item !== chainFirst) {
-                                                        if (!item.constraint[attrs[3]]) {
-                                                            item.anchor(attrs[2], chainFirst.stringId, attrs[3]);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            if (node[attrs[4]] === 0) {
-                                                chainLast.anchorDelete(attrs[5]);
-                                                chainLast.constraint[attrs[6]] = chainLast.alignSibling(attrs[1]);
-                                            }
-                                        }
-                                    }
-                                    chainFirst.anchor(LT, 'parent', orientation);
-                                    chainLast.anchor(RB, 'parent', orientation);
-                                    for (let i = 0; i < chainable.length; i++) {
-                                        const chain = chainable[i];
-                                        if (chain) {
-                                            const previous = chainable[i - 1];
-                                            const next = chainable[i + 1];
-                                            if (flex.enabled) {
-                                                if (connected.length > 1) {
-                                                    if ((!rowFirstPartial || connected[0][i]) && (!rowLastPartial || connected[connected.length - 1][i])) {
-                                                        const rowPrevious = connected[level - 1];
-                                                        const rowNext = connected[level + 1];
-                                                        if (rowPrevious) {
-                                                            const chainNext = rowPrevious[i];
-                                                            if (chainNext) {
-                                                                chain.anchor('topBottom', chainNext.stringId);
-                                                            }
-                                                        }
-                                                        else {
-                                                            chain.anchor('top', 'parent');
-                                                        }
-                                                        if (rowNext) {
-                                                            const chainNext = rowNext[i];
-                                                            if (chainNext) {
-                                                                chain.anchor('bottomTop', chainNext.stringId);
-                                                            }
-                                                        }
-                                                        else {
-                                                            chain.anchor('bottom', 'parent');
-                                                        }
-                                                    }
-                                                    else {
-                                                        const adjacent = flex.direction === 'row-reverse' || flex.direction.startsWith('column') && flex.wrap === 'wrap-reverse' ? next : previous;
-                                                        if (adjacent) {
-                                                            if ($util.withinFraction(chain.linear.bottom, adjacent.linear.bottom)) {
-                                                                chain.anchor('bottom', adjacent.stringId);
-                                                            }
-                                                            if ($util.withinFraction(chain.linear.top, adjacent.linear.top)) {
-                                                                chain.anchor('top', adjacent.stringId);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            if (next) {
-                                                chain.anchor(CHAIN_MAP['rightLeftBottomTop'][index], next.stringId);
-                                            }
-                                            if (previous) {
-                                                chain.anchor(CHAIN_MAP['leftRightTopBottom'][index], previous.stringId);
-                                                if (requireMargin) {
-                                                    chain.constraint[`margin${HV}`] = previous.stringId;
-                                                }
-                                            }
-                                            chainMinMax(chain, WH);
-                                            chain.constraint[`chain${HV}`] = true;
-                                            if (flex.enabled) {
-                                                chain.app(`layout_constraint${HV}_weight`, chain.flex.grow.toString());
-                                                if (chain[`view${WH}`] === 0 && chain.flex.grow === 0 && chain.flex.shrink <= 1) {
-                                                    chain.android(`layout_${dimension}`, 'wrap_content');
-                                                }
-                                                else if (chain.flex.grow > 0) {
-                                                    chain.android(`layout_${dimension}`, '0px');
-                                                }
-                                                if (chain.flex.shrink === 0) {
-                                                    chain.app(`layout_constrained${WH}`, 'true');
-                                                }
-                                                switch (chain.flex.alignSelf) {
-                                                    case 'flex-start':
-                                                        chain.anchor(TL, 'parent', orientationInverse);
-                                                        break;
-                                                    case 'flex-end':
-                                                        chain.anchor(BR, 'parent', orientationInverse);
-                                                        break;
-                                                    case 'baseline':
-                                                        const valid = chainable.some(adjacent => {
-                                                            if (adjacent && adjacent !== chain && adjacent.nodeType <= $enum.NODE_STANDARD.TEXT) {
-                                                                chain.anchor('baseline', adjacent.stringId);
-                                                                return true;
-                                                            }
-                                                            return false;
-                                                        });
-                                                        if (valid) {
-                                                            chain.anchorDelete('top', 'bottom');
-                                                            for (const item of chainable) {
-                                                                if (item) {
-                                                                    if (item.alignSibling('top') === chain.stringId) {
-                                                                        item.anchorDelete('top');
-                                                                    }
-                                                                    if (item.alignSibling('bottom') === chain.stringId) {
-                                                                        item.anchorDelete('bottom');
-                                                                    }
-                                                                }
-                                                            }
-                                                            chain.constraint.vertical = true;
-                                                        }
-                                                        break;
-                                                    case 'center':
-                                                    case 'stretch':
-                                                        if (chain.flex.alignSelf !== 'center') {
-                                                            chain.android(`layout_${HW.toLowerCase()}`, '0px');
-                                                        }
-                                                        chain.anchorParent(orientationInverse, true);
-                                                        break;
-                                                }
-                                                if (chain.flex.basis !== 'auto') {
-                                                    const basis = $util.convertInt(chain.flex.basis);
-                                                    if (basis > 0) {
-                                                        if ($util.isPercent(chain.flex.basis)) {
-                                                            chain.app(`layout_constraint${WH}_percent`, (basis / 100).toFixed(2));
-                                                        }
-                                                        else {
-                                                            chain.app(`layout_constraint${WH}_min`, $util.formatPX(basis));
-                                                            chain.constraint[`min${WH}`] = true;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    const chainStyle = `layout_constraint${HV}_chainStyle`;
-                                    if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainable.map(item => item ? item.flex.grow : 0)) === 0) {
-                                        switch (flex.justifyContent) {
-                                            case 'space-between':
-                                                chainFirst.app(chainStyle, 'spread_inside');
-                                                break;
-                                            case 'space-evenly':
-                                                chainFirst.app(chainStyle, 'spread');
-                                                chainable.forEach(item => item && item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
-                                                break;
-                                            case 'space-around':
-                                                chainFirst.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
-                                                chainFirst.constraint[orientation] = false;
-                                                chainLast.constraint[orientation] = false;
-                                                this.addGuideline(chainFirst, orientation, true, false);
-                                                this.addGuideline(chainLast, orientation, true, true);
-                                                break;
-                                            default:
-                                                let justifyContent = flex.justifyContent;
-                                                if (flex.direction.indexOf('reverse') !== -1) {
-                                                    switch (flex.justifyContent) {
-                                                        case 'flex-start':
-                                                            justifyContent = 'flex-end';
-                                                            break;
-                                                        case 'flex-end':
-                                                            justifyContent = 'flex-start';
-                                                            break;
-                                                    }
-                                                }
-                                                let bias = '0.5';
-                                                switch (justifyContent) {
-                                                    case 'flex-start':
-                                                        bias = '0';
-                                                        break;
-                                                    case 'flex-end':
-                                                        bias = '1';
-                                                        break;
-                                                }
-                                                chainFirst.app(chainStyle, 'packed');
-                                                chainFirst.app(`layout_constraint${HV}_bias`, bias);
-                                                break;
-                                        }
-                                    }
-                                    else {
-                                        const parentLeft = $util.withinFraction(node.box.left, chainFirst.linear.left);
-                                        const parentRight = $util.withinFraction(chainLast.linear.right, node.box.right);
-                                        const parentTop = $util.withinFraction(node.box.top, chainFirst.linear.top);
-                                        const parentBottom = $util.withinFraction(chainLast.linear.bottom, node.box.bottom);
-                                        if ((orientation === AXIS_ANDROID.HORIZONTAL && parentLeft && parentRight) || (orientation === AXIS_ANDROID.VERTICAL && parentTop && parentBottom)) {
-                                            if (flex.enabled) {
-                                                chainFirst.app(chainStyle, 'spread_inside');
-                                            }
-                                            else {
-                                                chainFirst.app(chainStyle, 'packed');
-                                                chainFirst.app(`layout_constraint${HV}_bias`, index === 0 && node.float === 'right' ? '1' : '0');
-                                            }
-                                        }
-                                        else if (node.flex.wrap !== 'nowrap' || (orientation === AXIS_ANDROID.HORIZONTAL && (parentLeft || parentRight))) {
-                                            let bias = '';
-                                            if (orientation === AXIS_ANDROID.HORIZONTAL) {
-                                                if (parentLeft) {
-                                                    bias = '0';
-                                                }
-                                                else if (parentRight) {
-                                                    bias = '1';
-                                                }
-                                            }
-                                            if (bias === '') {
-                                                bias = chainable[`${orientation}Bias`];
-                                            }
-                                            chainFirst.app(chainStyle, 'packed');
-                                            chainFirst.app(`layout_constraint${HV}_bias`, bias);
-                                        }
-                                        else {
-                                            chainFirst.app(chainStyle, 'spread');
-                                        }
-                                        if (!flex.enabled) {
-                                            (index === 0 ? [[TL, BR], [BR, TL]] : [[LT, RB], [RB, LT]]).forEach(opposing => {
-                                                if (chainable.some(lower => !!lower && !$util.hasSameValue(chainFirst, lower, `linear.${opposing[1]}`)) && chainable.every(upper => upper === null || $util.hasSameValue(chainFirst, upper, `linear.${opposing[0]}`))) {
-                                                    chainable.forEach(item => item && item.anchorDelete(opposing[1]));
-                                                }
-                                            });
-                                            for (const chain of chainable) {
-                                                if (chain) {
-                                                    for (const siblings of connected) {
-                                                        if (siblings.find(item => !!item && item.id === chain.id)) {
-                                                            siblings.length = 0;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    });
-                    if (!flex.enabled) {
-                        anchorEvaluate(pageflow);
-                        for (const current of pageflow.filter(item => !item.anchored)) {
                             for (const adjacent of pageflow) {
                                 if (current !== adjacent) {
                                     const stringId = adjacent.stringId;
                                     const alignOrigin = current.alignOrigin && adjacent.alignOrigin;
                                     if (!current.constraint.horizontal) {
                                         const horizontal = adjacent.constraint.horizontal ? AXIS_ANDROID.HORIZONTAL : '';
+                                        const leftParent = current.alignParent('left');
+                                        const rightParent = current.alignParent('right');
                                         if (!current.hasWidth && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
-                                            if (!current.alignParent('right')) {
+                                            if (!rightParent && !current.alignSibling('leftRight')) {
                                                 current.anchor('left', stringId);
                                             }
-                                            if (!current.alignParent('left')) {
+                                            if (!leftParent && !current.alignSibling('rightLeft')) {
                                                 current.anchor('right', stringId);
                                             }
                                         }
-                                        if ($util.withinFraction(current.linear.left, adjacent.linear.right) || (alignOrigin && $util.withinRange(current.linear.left, adjacent.linear.right, this.settings.whitespaceHorizontalOffset))) {
+                                        if ($util.withinFraction(current.linear.left, adjacent.linear.right) ||
+                                            (alignOrigin && $util.withinRange(current.linear.left, adjacent.linear.right, this.settings.whitespaceHorizontalOffset)))
+                                        {
                                             if (current.float !== 'right' || current.float === adjacent.float) {
                                                 current.anchor('leftRight', stringId, horizontal, current.withinX(adjacent.linear));
+                                                if (!leftParent) {
+                                                    current.anchorDelete('left');
+                                                }
+                                                current.constraint.marginHorizontal = stringId;
                                             }
                                         }
-                                        if ($util.withinFraction(current.linear.right, adjacent.linear.left) || (alignOrigin && $util.withinRange(current.linear.right, adjacent.linear.left, this.settings.whitespaceHorizontalOffset))) {
+                                        if ($util.withinFraction(current.linear.right, adjacent.linear.left) ||
+                                            (alignOrigin && $util.withinRange(current.linear.right, adjacent.linear.left, this.settings.whitespaceHorizontalOffset)))
+                                        {
                                             current.anchor('rightLeft', stringId, horizontal, current.withinX(adjacent.linear));
+                                            if (!rightParent) {
+                                                current.anchorDelete('right');
+                                            }
+                                            if (!adjacent.constraint.marginHorizontal) {
+                                                adjacent.constraint.marginHorizontal = current.stringId;
+                                            }
                                         }
                                     }
                                     if (!current.constraint.vertical) {
@@ -1147,15 +1003,25 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                            ))
                                         {
                                             current.anchor('topBottom', stringId, vertical, intersectY);
+                                            if (!topParent) {
+                                                current.anchorDelete('top');
+                                            }
+                                            current.constraint.marginVertical = stringId;
                                         }
                                         if ((intersectY || !current.inlineElement || !topParent) && (
                                                 $util.withinFraction(current.linear.bottom, adjacent.linear.top) ||
-                                                (alignOrigin && intersectY && $util.withinRange(current.linear.bottom, adjacent.linear.top, this.settings.constraintAlignParentBottomOffset))
+                                                (alignOrigin && intersectY && $util.withinRange(current.linear.bottom, adjacent.linear.top, this.settings.whitespaceVerticalOffset))
                                            ))
                                         {
                                             current.anchor('bottomTop', stringId, vertical, intersectY);
+                                            if (!bottomParent) {
+                                                current.anchorDelete('bottom');
+                                            }
+                                            if (!adjacent.constraint.marginVertical) {
+                                                adjacent.constraint.marginVertical = current.stringId;
+                                            }
                                         }
-                                        if (!topParent && !bottomParent) {
+                                        if (!topParent && !bottomParent && !current.alignSibling('topBottom') && !current.alignSibling('bottomTop')) {
                                             if (current.linear.top === adjacent.linear.top) {
                                                 current.anchor('top', stringId, vertical);
                                             }
@@ -1168,263 +1034,142 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             }
                         }
                         for (const item of pageflow) {
-                            if (!!item.constraint.chainHorizontal && !!item.constraint.chainVertical) {
-                                const leftRight = item.alignSibling('leftRight');
-                                const topBottom = item.alignSibling('topBottom');
-                                if (leftRight) {
-                                    item.constraint.marginHorizontal = leftRight;
-                                    item.anchorDelete('left');
-                                }
-                                if (item.alignSibling('rightLeft')) {
-                                    item.anchorDelete('right');
-                                }
-                                if (topBottom) {
-                                    item.constraint.marginVertical = topBottom;
-                                    item.anchorDelete('top');
-                                }
-                                if (item.alignSibling('bottomTop')) {
-                                    item.anchorDelete('bottom');
-                                }
-                                if (item.alignParent('left') && item.alignParent('right')) {
-                                    if (item.autoMargin) {
-                                        if (item.autoMarginLeft) {
-                                            item.anchorDelete('left');
+                            if (item.alignParent('left') && item.alignParent('right')) {
+                                if (item.autoMargin) {
+                                    if (item.autoMarginLeft) {
+                                        item.anchorDelete('left');
+                                    }
+                                    if (item.autoMarginRight) {
+                                        item.anchorDelete('right');
+                                    }
+                                    if (item.autoMarginHorizontal) {
+                                        if (node.hasWidth && !item.has('width', $enum.CSS_STANDARD.PERCENT)) {
+                                            item.android('layout_width', 'match_parent');
                                         }
-                                        if (item.autoMarginRight) {
-                                            item.anchorDelete('right');
-                                        }
-                                        if (item.autoMarginHorizontal) {
-                                            if (node.hasWidth && !item.has('width', $enum.CSS_STANDARD.PERCENT)) {
-                                                item.android('layout_width', 'match_parent');
-                                            }
-                                            else if (item.inlineElement && !item.hasWidth) {
-                                                item.android('layout_width', 'wrap_content');
-                                            }
+                                        else if (item.inlineElement && !item.hasWidth) {
+                                            item.android('layout_width', 'wrap_content');
                                         }
                                     }
-                                    else if (item.floating) {
-                                        item.anchorDelete(item.float === 'right' ? 'left' : 'right');
-                                    }
-                                    else if (item.inlineElement) {
-                                        if (item.nodeType <= $enum.NODE_STANDARD.IMAGE) {
-                                            switch (item.css('textAlign')) {
-                                                case 'center':
-                                                    break;
-                                                case 'right':
-                                                case 'end' :
-                                                    item.anchorDelete('left');
-                                                    break;
-                                                default:
-                                                    item.anchorDelete('right');
-                                                    break;
-                                            }
-                                        }
-                                        else {
-                                            item.anchorDelete('right');
+                                }
+                                else if (item.floating) {
+                                    item.anchorDelete(item.float === 'right' ? 'left' : 'right');
+                                }
+                                else if (item.inlineElement) {
+                                    if (item.nodeType <= $enum.NODE_STANDARD.IMAGE) {
+                                        switch (item.css('textAlign')) {
+                                            case 'center':
+                                                break;
+                                            case 'right':
+                                            case 'end' :
+                                                item.anchorDelete('left');
+                                                break;
+                                            default:
+                                                item.anchorDelete('right');
+                                                break;
                                         }
                                     }
                                     else {
                                         item.anchorDelete('right');
-                                        item.android('layout_width', 'match_parent');
                                     }
                                 }
-                                if (item.plainText || (!item.styleElement && item.renderChildren.some(sibling => sibling.textElement))) {
-                                    const textAlign = item.cssParent('textAlign');
-                                    if (textAlign === 'right') {
-                                        item.anchor('right', 'parent', AXIS_ANDROID.HORIZONTAL);
-                                        item.constraint.horizontal = true;
-                                    }
-                                    else if (textAlign === 'center') {
-                                        item.anchorParent(AXIS_ANDROID.HORIZONTAL, true);
-                                    }
+                                else {
+                                    item.anchorDelete('right');
+                                    item.android('layout_width', 'match_parent');
+                                }
+                            }
+                            if (item.plainText || (!item.styleElement && item.renderChildren.some(sibling => sibling.textElement))) {
+                                const textAlign = item.cssParent('textAlign');
+                                if (textAlign === 'right') {
+                                    item.anchor('right', 'parent', AXIS_ANDROID.HORIZONTAL);
+                                    item.constraint.horizontal = true;
+                                }
+                                else if (textAlign === 'center') {
+                                    item.anchorParent(AXIS_ANDROID.HORIZONTAL, true);
                                 }
                             }
                         }
                         if (resetPadding && pageflow.length <= 1) {
                             const content: T | undefined = pageflow[0];
                             if (content) {
-                                if (content.alignParent('top') && content.alignParent('bottom')) {
-                                    node.resetBox($enum.BOX_STANDARD.PADDING, content);
+                                if (content.alignParent('top')) {
+                                    node.resetBox($enum.BOX_STANDARD.PADDING, content, true);
+                                    if (this.alignParentBottom(content.linear.bottom, content.documentParent.box.bottom)) {
+                                        content.anchor('bottom', 'parent', AXIS_ANDROID.VERTICAL);
+                                    }
                                 }
                             }
                             else {
-                                node.resetBox($enum.BOX_STANDARD.PADDING, content);
+                                node.resetBox($enum.BOX_STANDARD.PADDING, content, true);
                             }
                         }
-                        anchorEvaluate(pageflow);
-                        children.forEach(item => {
-                            if (!item.anchored) {
-                                this.addGuideline(item);
-                                if (item.pageflow) {
-                                    anchorEvaluate(pageflow);
-                                }
-                            }
-                        });
-                        const connected: ObjectMapNested<string> = {};
                         for (const item of children) {
-                            if (!!item.constraint.chainHorizontal && !!item.constraint.chainVertical) {
-                                const top = item.alignParent('top');
-                                let right = item.alignParent('right');
-                                let bottom = item.alignParent('bottom');
-                                const left = item.alignParent('left');
-                                connected[item.stringId] = {
-                                    leftRight: item.alignSibling('leftRight'),
-                                    rightLeft: item.alignSibling('rightLeft'),
-                                    topBottom: item.alignSibling('topBottom'),
-                                    bottomTop: item.alignSibling('bottomTop')
-                                };
-                                if ((bottom && item.alignSibling('topBottom') && item.hasHeight) || (top && bottom && !$util.withinRange(item.linear.bottom, node.box.bottom, item.pageflow ? this.settings.constraintAlignParentBottomOffset : 0) && !item.has('marginTop', $enum.CSS_STANDARD.AUTO))) {
+                            const top = item.alignParent('top');
+                            let right = item.alignParent('right');
+                            let bottom = item.alignParent('bottom');
+                            const left = item.alignParent('left');
+                            if (item.pageflow) {
+                                if ((bottom && item.alignSibling('topBottom') && item.hasHeight) || (top && bottom && this.alignParentBottom(item.linear.bottom, node.box.bottom) && !item.has('marginTop', $enum.CSS_STANDARD.AUTO))) {
                                     item.anchorDelete('bottom');
                                     bottom = false;
                                 }
-                                if (item.pageflow) {
-                                    const applyLayoutDimension = (orientation: string, directionStart: string, directionEnd: string) => {
-                                        const parentStart = item.alignParent(directionStart);
-                                        const parentEnd = item.alignParent(directionEnd);
-                                        if (parentStart || parentEnd) {
-                                            const chainReverse = directionEnd + $util.capitalize(directionStart);
-                                            let valid = parentStart && parentEnd;
-                                            let next: T | null = item;
-                                            if (!valid) {
-                                                const chainForward = directionStart + $util.capitalize(directionEnd);
-                                                do {
-                                                    const stringId = next.alignSibling(parentStart ? chainReverse : chainForward);
-                                                    if (stringId) {
-                                                        next = this.getNodeByStringId(stringId);
-                                                        if (next && ((parentStart && next.alignParent(directionEnd)) || (parentEnd && next.alignParent(directionStart)))) {
-                                                            valid = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    else {
-                                                        next = null;
-                                                    }
-                                                }
-                                                while (next);
-                                            }
-                                            if (valid) {
-                                                node.constraint[`layout${orientation}`] = true;
-                                            }
-                                            if (!item.constraint[`chain${orientation}`]) {
-                                                if (parentStart && parentEnd) {
-                                                    if (!item.autoMargin && !item.linearVertical) {
-                                                        item.android(`layout_${orientation === 'Horizontal' ? 'width' : 'height'}`, 'match_parent', false);
-                                                    }
-                                                }
-                                                else if (parentEnd) {
-                                                    if (valid) {
-                                                        const below = this.getNodeByStringId(item.alignSibling(chainReverse));
-                                                        if (below && below.marginBottom === 0) {
-                                                            item.anchorDelete(directionStart);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    };
-                                    applyLayoutDimension('Horizontal', 'left', 'right');
-                                    applyLayoutDimension('Vertical', 'top', 'bottom');
-                                    if (left) {
-                                        if (item.is($enum.NODE_STANDARD.TEXT) && item.cssParent('textAlign', true) === 'center') {
-                                            item.anchor('right', 'parent');
-                                        }
-                                        if (item.textElement &&
-                                            !item.hasWidth &&
-                                            item.toInt('maxWidth') === 0 &&
-                                            item.multiLine &&
-                                            !$dom.hasLineBreak(item.element) &&
-                                            !children.some(sibling => sibling.alignSibling('rightLeft') === item.stringId))
-                                        {
-                                            item.android('layout_width', 'match_parent');
-                                        }
+                                if (left) {
+                                    if (item.is($enum.NODE_STANDARD.TEXT) && item.cssParent('textAlign', true) === 'center') {
+                                        item.anchor('right', 'parent');
                                     }
-                                }
-                                else {
-                                    if (left && right && item.right === null && item.hasWidth) {
-                                        switch (item.cssParent('textAlign', true)) {
-                                            case 'center':
-                                            case 'right':
-                                            case 'end':
-                                                break;
-                                            default:
-                                                item.anchorDelete('right');
-                                                right = false;
-                                                break;
-                                        }
-                                    }
-                                    if (top && bottom && item.bottom === null && item.hasHeight) {
-                                        switch (item.css('verticalAlign')) {
-                                            case 'bottom':
-                                            case 'text-bottom':
-                                            case 'middle':
-                                                break;
-                                            default:
-                                                item.anchorDelete('bottom');
-                                                bottom = false;
-                                                break;
-                                        }
-                                    }
-                                    if (left && right && !node.hasWidth) {
-                                        node.constraint.layoutWidth = true;
-                                    }
-                                    if (top && bottom && !node.hasHeight) {
-                                        node.constraint.layoutHeight = true;
-                                    }
-                                    if (right && item.toInt('right') > 0) {
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, Math.max(item.toInt('right') - node.paddingRight, 0));
-                                    }
-                                    if (bottom && item.toInt('bottom') > 0) {
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.max(item.toInt('bottom') - node.paddingBottom, 0));
-                                    }
-                                    if (right && bottom && node.documentRoot) {
-                                        if (!node.hasWidth) {
-                                            node.constraint.layoutWidth = false;
-                                            node.constraint.layoutHorizontal = false;
-                                        }
-                                        if (!node.hasHeight) {
-                                            node.constraint.layoutHeight = false;
-                                            node.constraint.layoutVertical = false;
-                                        }
+                                    if (item.textElement &&
+                                        !item.hasWidth &&
+                                        item.toInt('maxWidth') === 0 &&
+                                        item.multiLine &&
+                                        !$dom.hasLineBreak(item.element) &&
+                                        !children.some(sibling => sibling.alignSibling('rightLeft') === item.stringId))
+                                    {
+                                        item.android('layout_width', 'match_parent');
                                     }
                                 }
                             }
-                        }
-                        for (const left in connected) {
-                            for (const right in connected) {
-                                if (left !== right) {
-                                    ['leftRight', 'rightLeft', 'bottomTop', 'topBottom'].forEach(value => {
-                                        if (connected[left][value] && connected[left][value] === connected[right][value]) {
-                                            const conflict = children.find(item => item.stringId === connected[left][value]);
-                                            if (conflict) {
-                                                [children.find(item => item.stringId === left), children.find(item => item.stringId === right)].some((item, index) => {
-                                                    if (item) {
-                                                        const stringId = index === 0 ? left : right;
-                                                        let valid = false;
-                                                        switch (value) {
-                                                            case 'leftRight':
-                                                            case 'rightLeft':
-                                                                valid = (!!item.alignSibling('left') || !!item.alignSibling('right')) && conflict.alignSibling(value === 'rightLeft' ? 'leftRight' : 'rightLeft') !== stringId;
-                                                                break;
-                                                            case 'bottomTop':
-                                                            case 'topBottom':
-                                                                valid = (!!item.alignSibling('top') || !!item.alignSibling('bottom')) && conflict.alignSibling(value === 'topBottom' ? 'bottomTop' : 'topBottom') !== stringId;
-                                                                break;
-                                                        }
-                                                        if (valid) {
-                                                            item.anchorDelete(value);
-                                                            delete connected[item.stringId][value];
-                                                            return true;
-                                                        }
-                                                    }
-                                                    return false;
-                                                });
-                                            }
-                                        }
-                                    });
+                            else {
+                                if (left && right && item.right === null && item.hasWidth) {
+                                    switch (item.cssParent('textAlign', true)) {
+                                        case 'center':
+                                        case 'right':
+                                        case 'end':
+                                            break;
+                                        default:
+                                            item.anchorDelete('right');
+                                            right = false;
+                                            break;
+                                    }
+                                }
+                                if (top && bottom && item.bottom === null && item.hasHeight) {
+                                    switch (item.css('verticalAlign')) {
+                                        case 'bottom':
+                                        case 'text-bottom':
+                                        case 'middle':
+                                            break;
+                                        default:
+                                            item.anchorDelete('bottom');
+                                            bottom = false;
+                                            break;
+                                    }
+                                }
+                                if (right && item.toInt('right') > 0) {
+                                    item.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, Math.max(item.toInt('right') - node.paddingRight, 0));
+                                }
+                                if (bottom && item.toInt('bottom') > 0) {
+                                    item.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.max(item.toInt('bottom') - node.paddingBottom, 0));
                                 }
                             }
                         }
                     }
+                    anchorEvaluate(pageflow);
+                    children.forEach(item => {
+                        if (!item.anchored) {
+                            this.addGuideline(item);
+                            if (item.pageflow) {
+                                anchorEvaluate(pageflow);
+                            }
+                        }
+                    });
                 }
             }
             for (const item of children) {
@@ -1644,8 +1389,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             parent.replaceNode(node, container);
                             container.render(parent);
                             this.cache.append(container);
-                            container.android('layout_width', width > 0 ? $util.formatPX(width) : 'wrap_content');
-                            container.android('layout_height', height > 0 ? $util.formatPX(height) : 'wrap_content');
+                            if (width > 0) {
+                                container.android('layout_width', width < parent.box.width ? $util.formatPX(width) : 'match_parent');
+                            }
+                            if (height > 0) {
+                                container.android('layout_height', height < parent.box.height ? $util.formatPX(height) : 'match_parent');
+                            }
                             return Controller.getEnclosingTag(
                                 container.renderDepth,
                                 NODE_ANDROID.FRAME,
@@ -1878,22 +1627,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         );
     }
 
-    public addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
-        if (node.pageflow) {
-            if (opposite === undefined) {
-                opposite = (
-                    node.float === 'right' ||
-                    (node.left === null && node.right !== null) ||
-                    (node.textElement && node.css('textAlign') === 'right') ||
-                    node.alignParent('right')
-                );
-            }
-            if (percent === undefined && opposite) {
-                percent = true;
-            }
+    public addGuideline(node: T, orientation = '', percent = false, opposite = false) {
+        if (node.dataset.constraintPercent === 'true') {
+            percent = true;
         }
-        if (node.dataset.constraintPercent) {
-            percent = node.dataset.constraintPercent === 'true';
+        if (node.dataset.constraintOpposite === 'true') {
+            opposite = true;
         }
         const parent = node.documentParent;
         const beginPercent = `layout_constraintGuide_${percent ? 'percent' : 'begin'}`;
@@ -1903,7 +1642,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 let RB = '';
                 let LTRB = '';
                 let RBLT = '';
-                let found = false;
                 let offset = 0;
                 switch (index) {
                     case 0:
@@ -1927,6 +1665,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 const dimension = node.pageflow ? 'bounds' : 'linear';
                 const position = percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[index === 0 ? 'width' : 'height'] : 0;
+                let found = false;
                 if (!percent) {
                     const direction = $util.capitalize(value);
                     found = parent.renderChildren.some(item => {
@@ -1959,7 +1698,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (!found) {
                     const guideline = parent.constraint.guideline || {};
                     let location = percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(this.settings.constraintPercentAccuracy))
-                                           : (!opposite ? (node[dimension][LT] + offset) - parent.box[LT] : (node[dimension][LT] + offset) - parent.box[RB]);
+                                           : (node[dimension][LT] + offset) - parent.box[!opposite ? LT : RB];
                     if (!percent && !opposite) {
                         if (location < 0) {
                             const padding = parent[`padding${$util.capitalize(LT)}`];
@@ -1991,7 +1730,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         const anchors = $util.optionalAsObject(guideline, `${value}.${beginPercent}.${LT}`);
                         if (anchors) {
                             for (const stringId in anchors) {
-                                if (anchors[stringId] === location) {
+                                if (parseInt(anchors[stringId]) === location) {
                                     node.anchor(LT, stringId, value, true);
                                     node.anchorDelete(RB);
                                     found = true;
@@ -2016,18 +1755,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             const stringId: string = options['stringId'];
                             node.anchor(LT, stringId, value, true);
                             node.anchorDelete(RB);
-                            node.constraint[`${value}Guideline`] = stringId;
-                            if (guideline[value] === undefined) {
-                                guideline[value] = {};
-                            }
-                            if (guideline[value][beginPercent] === undefined) {
-                                guideline[value][beginPercent] = {};
-                            }
-                            if (guideline[value][beginPercent][LT] === undefined) {
-                                guideline[value][beginPercent][LT] = {};
-                            }
-                            guideline[value][beginPercent][LT][stringId] = location;
+                            $util.defaultWhenNull(guideline, value, beginPercent, LT, stringId, location.toString());
                             parent.constraint.guideline = guideline;
+                            value = $util.capitalize(value);
+                            node.constraint[`guideline${value}`] = stringId;
+                            node.constraint[`margin${value}`] = '';
                         }
                     }
                 }
@@ -2037,6 +1769,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
 
     private getNodeByStringId(id: string) {
         return this.cache.find('stringId', id) || null;
+    }
+
+    private alignParentBottom(bottom: number, boxBottom: number) {
+        return bottom + this.settings.constraintAlignParentBottomOffset >= boxBottom;
     }
 
     public get delegateNodeInit(): SelfWrapped<T, void> {
