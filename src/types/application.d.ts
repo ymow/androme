@@ -40,7 +40,11 @@ interface ControllerSettings {
     };
     unsupported: {
         tagName: Set<string>
-    };
+    },
+    constraint: {
+        alignParentBottomOffset: number;
+        percentAccuracy: number;
+    }
 }
 
 interface AppFramework<T extends androme.lib.base.Node> {

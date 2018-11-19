@@ -52,15 +52,14 @@ interface BoxModel {
 }
 
 interface Flexbox {
-    enabled: boolean;
+    order: number;
+    wrap: string;
     direction: string;
+    alignSelf: string;
+    justifyContent: string;
     basis: string;
     grow: number;
     shrink: number;
-    wrap: string;
-    alignSelf: string;
-    justifyContent: string;
-    order: number;
 }
 
 interface RGBA {

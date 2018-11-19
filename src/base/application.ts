@@ -684,7 +684,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
             layers.forEach((item, index) => {
                 if (Array.isArray(item[0])) {
                     const grouping: T[] = [];
-                    (item as T[][]).forEach(list => grouping.push(...list));
+                    const segments = item as T[][];
+                    segments.forEach(segment => grouping.push(...segment));
                     grouping.sort(NodeList.siblingIndex);
                     if (this.settings.floatOverlapDisabled) {
                         floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
@@ -697,7 +698,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         else {
                             floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
                             output = replacePlaceholder(output, group.id, this.writeLinearLayout(floatgroup, group, false));
-                            if ((item as T[][]).some(list => list === rightSub || list === rightAbove)) {
+                            if (segments.some(segment => segment === rightSub || segment === rightAbove)) {
                                 floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
                             }
                         }
@@ -1300,7 +1301,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
                 const floatEnabled = axisY.some(node => node.floating);
-                const cleared = floatEnabled ? Controller.clearedElement(parent) || NodeList.cleared(axisY) : undefined;
+                const cleared = floatEnabled ? Controller.clearedAll(parent) || NodeList.cleared(axisY) : undefined;
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
@@ -1316,7 +1317,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
                         const linearVertical = parentY.linearVertical;
                         if (nodeY.pageflow &&
-                            !parentY.flex.enabled &&
                             !parentY.is(NODE_STANDARD.GRID) &&
                             (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE) || (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE)))
                         {
@@ -1611,7 +1611,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 if (nodeY.has('columnCount')) {
                                     nodeY.alignmentType |= NODE_ALIGNMENT.COLUMN;
                                 }
-                                if (nodeY.flex.enabled || nodeY.some(node => !node.pageflow) || nodeY.hasAlign(NODE_ALIGNMENT.COLUMN)) {
+                                if (nodeY.some(node => !node.pageflow) || nodeY.hasAlign(NODE_ALIGNMENT.COLUMN)) {
                                     output = this.writeConstraintLayout(nodeY, parentY);
                                 }
                                 else {
@@ -1659,11 +1659,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const floated = NodeList.floated(children);
                                         const clearedInside = NodeList.cleared(children);
                                         const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
-                                        if (!parentY.flex.enabled && children.every(node => node.pageflow)) {
+                                        if (children.every(node => node.pageflow)) {
                                             if (Application.isConstraintFloat(children, floated, linearX)) {
                                                 output = this.writeConstraintLayout(nodeY, parentY);
                                                 nodeY.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                                                nodeY.alignmentType |= floated.has('right') ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT;
+                                                if (floated.has('right')) {
+                                                    nodeY.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                                                }
                                             }
                                             else if (linearX && clearedInside.size === 0) {
                                                 if (floated.size === 0 && children.every(node => node.toInt('verticalAlign') === 0)) {

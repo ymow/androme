@@ -20,9 +20,9 @@ declare global {
         }
 
         export class Controller<T extends Node> implements Controller<T> {
-            public static partitionHorizontal<T extends Node>(list: T[], parent?: T): T[][];
-            public static alignRowPrevious<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
-            public static clearedElement<T extends Node>(parent: T): Map<T, string> | undefined;
+            public static partitionRows<T extends Node>(list: T[], parent?: T): T[][];
+            public static partitionAboveBottomBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
+            public static clearedAll<T extends Node>(parent: T): Map<T, string> | undefined;
         }
     }
 }

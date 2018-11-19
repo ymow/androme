@@ -3,8 +3,8 @@ import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
-    public static partitionHorizontal<T extends Node>(list: T[], parent?: T) {
-        const cleared = parent && this.clearedElement(parent) && NodeList.cleared(list);
+    public static partitionRows<T extends Node>(list: T[], parent?: T) {
+        const cleared = parent && this.clearedAll(parent) && NodeList.cleared(list);
         const result: T[][] = [];
         let row: T[] = [];
         for (let i = 0; i < list.length; i++) {
@@ -29,7 +29,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         return result;
     }
 
-    public static alignRowPrevious<T extends Node>(list: T[], node: T, maxBottom?: number) {
+    public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number) {
         const result: T[] = [];
         const preferred: T[] = [];
         if (maxBottom) {
@@ -58,7 +58,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         return preferred.length > 0 ? preferred : result;
     }
 
-    public static clearedElement<T extends Node>(parent: T) {
+    public static clearedAll<T extends Node>(parent: T) {
         const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
         if (documentParent.length > 0) {
             if (new Set(documentParent).size !== 1) {

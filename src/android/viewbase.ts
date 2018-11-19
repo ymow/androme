@@ -497,7 +497,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                     !this.pageflow ||
                                     !this.siblingflow ||
                                     this.display === 'table' ||
-                                    parent.flex.enabled ||
+                                    parent.display.indexOf('flex') !== -1 ||
                                     (renderParent.inlineElement && !renderParent.hasWidth && !this.inlineElement && this.nodeType > $enum.NODE_STANDARD.BLOCK) ||
                                     renderParent.is($enum.NODE_STANDARD.GRID)
                                 );
@@ -678,13 +678,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     setAutoMargin(this);
                 }
             }
-            if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
-                if (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.RIGHT))) {
-                    floating = right;
-                }
-                else if (this.hasAlign($enum.NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.LEFT))) {
-                    floating = left;
-                }
+            if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.RIGHT)))) {
+                floating = right;
             }
             if (renderParent.tagName === 'TABLE') {
                 this.mergeGravity('layout_gravity', 'fill');

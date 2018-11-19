@@ -69,6 +69,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _lineHeight: number;
     private _overflow: number;
     private _inlineText: boolean;
+    private _flexbox: Flexbox;
     private _data = {};
     private _initialized = false;
 
@@ -975,22 +976,24 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.dataset.ext ? this.dataset.ext.split(',')[0].trim() : '';
     }
 
-    get flex(): Flexbox {
-        const style = this.style;
-        if (style) {
-            return {
-                enabled: ((style.display as string).indexOf('flex') !== -1),
-                direction: style.flexDirection as string,
-                basis: style.flexBasis as string,
-                grow: convertInt(style.flexGrow),
-                shrink: convertInt(style.flexShrink),
-                wrap: style.flexWrap as string,
-                alignSelf: (!this.has('alignSelf') && this.documentParent.has('alignItems') ? this.documentParent.css('alignItems') : style.alignSelf) as string,
-                justifyContent: style.justifyContent as string,
-                order: convertInt(style.order)
+    get flexbox(): Flexbox {
+        if (this._flexbox === undefined) {
+            this._flexbox = {
+                order: parseInt(this.css('order')),
+                wrap: this.css('flexWrap'),
+                direction: this.css('flexDirection'),
+                alignSelf: !this.has('alignSelf') && this.documentParent.has('alignItems') ? this.documentParent.css('alignItems') : this.css('alignSelf'),
+                justifyContent: this.css('justifyContent'),
+                basis: this.css('flexBasis'),
+                grow: parseInt(this.css('flexGrow')),
+                shrink: parseInt(this.css('flexShrink'))
             };
         }
-        return <Flexbox> { enabled: false };
+        return this._flexbox;
+    }
+
+    get rightAligned() {
+        return this.hasAlign(NODE_ALIGNMENT.RIGHT) || this.float === 'right' || this.autoMarginLeft || this.css('textAlign') === 'right';
     }
 
     get viewWidth() {

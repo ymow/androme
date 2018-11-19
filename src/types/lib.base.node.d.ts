@@ -55,7 +55,8 @@ declare global {
             readonly documentBody: boolean;
             readonly dataset: DOMStringMap;
             readonly extension: string;
-            readonly flex: Flexbox;
+            readonly flexbox: Flexbox;
+            readonly rightAligned: boolean;
             readonly viewWidth: number;
             readonly viewHeight: number;
             readonly hasWidth: boolean;

@@ -2,9 +2,6 @@ export interface SettingsAndroid extends Settings {
     targetAPI: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
-    constraintChainDisabled: boolean;
-    constraintAlignParentBottomOffset: number;
-    constraintPercentAccuracy: number;
     showAttributes: boolean;
     convertPixels: string;
 }

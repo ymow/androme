@@ -1,7 +1,7 @@
 import { CssGridCellData, CssGridDataAttribute, CssGridData } from './types/data';
 
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD } from '../lib/enumeration';
+import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 
 import Extension from '../base/extension';
 import Node from '../base/node';
@@ -467,6 +467,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
                 node.replace(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
+                node.alignmentType = NODE_ALIGNMENT.EXCLUDE;
                 output = this.application.writeGridLayout(node, parent, mainData.column.count, mainData.row.count);
             }
         }
