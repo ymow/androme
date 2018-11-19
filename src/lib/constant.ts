@@ -79,7 +79,6 @@ export const ELEMENT_INLINE = [
 ];
 
 export const ELEMENT_MAP = {
-    INPUT: NODE_STANDARD.NONE,
     PLAINTEXT: NODE_STANDARD.TEXT,
     HR: NODE_STANDARD.LINE,
     SVG: NODE_STANDARD.SVG,
@@ -104,7 +103,6 @@ export const ELEMENT_MAP = {
 export const EXT_NAME = {
     ACCESSIBILITY: 'androme.accessibility',
     CSS_GRID: 'androme.css-grid',
-    CUSTOM: 'androme.custom',
     EXTERNAL: 'androme.external',
     GRID: 'androme.grid',
     LIST: 'androme.list',

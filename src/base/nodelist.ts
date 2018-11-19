@@ -203,7 +203,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 const parent = getDocumentParent(nodes);
                 let horizontal = false;
                 if (traverse) {
-                    if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
+                    if (nodes.every(node => node.documentParent === parent || (!!node.companion && node.companion.documentParent === parent))) {
                         const result = NodeList.clearedSiblings(parent);
                         horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                             if (index > 0) {
@@ -232,7 +232,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 return true;
             default:
                 const parent = getDocumentParent(nodes);
-                if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
+                if (nodes.every(node => node.documentParent === parent || (!!node.companion && node.companion.documentParent === parent))) {
                     const result = NodeList.clearedSiblings(parent);
                     return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                         if (index > 0 && !node.lineBreak) {

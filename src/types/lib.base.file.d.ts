@@ -4,7 +4,7 @@ declare global {
             settings: Settings;
             appName: string;
             stored: ResourceStoredMap;
-            readonly queue: FileAsset[];
+            readonly assets: FileAsset[];
             saveAllToDisk(data: ViewData<NodeList<T>>): void;
             addAsset(pathname: string, filename: string, content?: string, uri?: string): void;
             reset(): void;

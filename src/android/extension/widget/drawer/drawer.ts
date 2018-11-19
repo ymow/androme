@@ -1,4 +1,4 @@
-import WIDGET_NAME from '../namespace';
+import { WIDGET_NAME, getAppTheme } from '../common';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
 
@@ -44,29 +44,28 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const options = $android_util.createAttribute(this.options.self);
         if ($dom.getNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
-            this.setStyleTheme();
+            this.setStyleTheme(node.localSettings.targetAPI);
         }
         else {
-            const optionsNavigationView = $android_util.createAttribute(this.options.navigationView);
-            $util.defaultWhenNull(optionsNavigationView, 'android', 'layout_gravity', node.localizeString('left'));
+            const navigationViewOptions = $android_util.createAttribute(this.options.navigationView);
+            $util.defaultWhenNull(navigationViewOptions, 'android', 'layout_gravity', node.localizeString('left'));
             const navView = node.item() as T;
-            navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
+            navView.android('layout_gravity', navigationViewOptions.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.positioned = true;
         }
+        node.documentRoot = true;
+        node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
+        node.setNodeType($android_const.VIEW_SUPPORT.DRAWER, $enum.NODE_STANDARD.BLOCK);
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.DRAWER,
-            node.depth,
+            0,
             $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'match_parent',
             'match_parent',
             node,
             true
         );
-        node.documentRoot = true;
-        node.rendered = true;
-        node.nodeType = $enum.NODE_STANDARD.BLOCK;
-        node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
         return { output, complete: true };
     }
 
@@ -87,7 +86,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
             const output = application.viewController.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.NAVIGATION_VIEW,
-                node.depth + 1,
+                1,
                 $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
                 'wrap_content',
                 'match_parent'
@@ -111,16 +110,16 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         }
     }
 
-    private setStyleTheme() {
+    private setStyleTheme(api: number) {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.defaultWhenNull(options, 'appTheme', 'AppTheme');
+        $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
         $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             'appTheme': options.appTheme,
             'parentTheme': options.parentTheme,
-            '1': []
+            'items': []
         };
-        $util.defaultWhenNull(options, 'output', 'path', 'res/values-v21');
+        $util.defaultWhenNull(options, 'output', 'path', `res/values${api >= 21 ? '' : '-v21'}`);
         $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
     }

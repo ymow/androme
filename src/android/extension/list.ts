@@ -28,11 +28,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             else if (parent.item(0) === node) {
                 paddingLeft += parentLeft;
             }
-            const ordinal = <T> node.find(item =>
-                item.float === 'left' &&
-                $util.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
-                Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))
-            );
+            const ordinal = node.find(item => item.float === 'left' && $util.convertInt(item.cssInitial('marginLeft', true)) < 0 && Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
                 let output = '';
                 ordinal.parent = parent;
@@ -89,39 +85,30 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         return 10;
                     }
                 })();
-                const layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
+                const marginLeft = left > 0 ? $util.formatPX(left) : '';
                 const options = createAttribute({
                     android: {
                         layout_columnWeight: columnWeight
                     }
                 });
                 if (positionInside) {
-                    controller.prependBefore(
-                        node.id,
-                        controller.renderNodeStatic(
-                            $enum.NODE_STANDARD.SPACE,
-                            parent.renderDepth + 1,
-                            {
-                                android: {
-                                    minWidth,
-                                    layout_columnWeight: columnWeight,
-                                    [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: layoutMarginLeft
-                                }
-                            },
-                            'wrap_content',
-                            'wrap_content'
-                        )
-                    );
-                    Object.assign(options.android, {
-                        minWidth: $util.formatPX('24')
+                    const insideOptions = createAttribute({
+                        android: {
+                            minWidth,
+                            layout_columnWeight: columnWeight,
+                            [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: marginLeft
+                        }
                     });
+                    const xml = controller.renderNodeStatic(NODE_ANDROID.SPACE, parent.renderDepth + 1, insideOptions, 'wrap_content', 'wrap_content');
+                    controller.prependBefore(node.id, xml);
+                    options.android.minWidth = $util.formatPX('24');
                 }
                 else {
                     Object.assign(options.android, {
                         minWidth,
                         gravity: paddingLeft > 20 ? node.localizeString(gravity) : '',
                         [BOX_ANDROID.MARGIN_TOP]: node === parent.children[0] && node.marginTop > 0 ? $util.formatPX(node.marginTop) : '',
-                        [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: layoutMarginLeft,
+                        [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: marginLeft,
                         [node.localizeString(BOX_ANDROID.PADDING_LEFT)]: gravity === '' && image === '' ? $util.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
                         [node.localizeString(BOX_ANDROID.PADDING_RIGHT)]: gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '',
                         [BOX_ANDROID.PADDING_TOP]: node.paddingTop > 0 ? $util.formatPX(node.paddingTop) : ''
@@ -143,29 +130,19 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         });
                     }
                     else {
-                        Object.assign(options.android, { text: mainData.ordinal });
+                        options.android.text = mainData.ordinal;
                     }
                     const companion = new View(this.application.processing.cache.nextId, document.createElement('SPAN'), this.application.viewController.delegateNodeInit) as T;
                     companion.alignmentType = $enum.NODE_ALIGNMENT.SPACE;
-                    companion.nodeName = `${node.tagName}_ORDINAL`;
-                    companion.setNodeType(NODE_ANDROID.SPACE);
+                    companion.nodeName = `${node.nodeName}_ORDINAL`;
                     companion.inherit(node, 'style');
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                         companion.css('fontSize', '12px');
                     }
                     node.companion = companion;
                     this.application.processing.cache.append(companion, false);
-                    controller.prependBefore(
-                        node.id,
-                        controller.renderNodeStatic(
-                            image !== '' ? $enum.NODE_STANDARD.IMAGE : (mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE),
-                            parent.renderDepth + 1,
-                            options,
-                            'wrap_content',
-                            'wrap_content',
-                            companion
-                        )
-                    );
+                    const xml = controller.renderNodeStatic(image !== '' ? NODE_ANDROID.IMAGE : (mainData.ordinal !== '' ? NODE_ANDROID.TEXT : NODE_ANDROID.SPACE), parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion);
+                    controller.prependBefore(node.id, xml);
                 }
             }
             if (columnCount > 0) {
@@ -198,21 +175,13 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
             }
             if (spaceHeight > 0) {
-                this.application.viewController.prependBefore(
-                    current.id,
-                    this.application.viewController.renderNodeStatic(
-                        $enum.NODE_STANDARD.SPACE,
-                        current.renderDepth,
-                        {
-                            android: {
-                                layout_columnSpan: columnCount.toString()
-                            }
-                        },
-                        'match_parent',
-                        $util.formatPX(spaceHeight)
-                    ),
-                    0
-                );
+                const options = createAttribute({
+                    android: {
+                        layout_columnSpan: columnCount.toString()
+                    }
+                });
+                const xml = this.application.viewController.renderNodeStatic(NODE_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
+                this.application.viewController.prependBefore(current.id, xml, 0);
             }
         }
     }

@@ -6,7 +6,7 @@ declare global {
         }
 
         export class Controller<T extends View> implements Controller<T> {
-            public static getEnclosingTag(depth: number, controlName: string, id: number, xml?: string, preXml?: string, postXml?: string): string;
+            public static getEnclosingTag(controlName: string, id: number, depth: number, xml?: string, preXml?: string, postXml?: string): string;
         }
     }
 }

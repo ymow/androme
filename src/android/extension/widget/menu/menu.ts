@@ -108,20 +108,11 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const output = this.application.viewController.renderNodeStatic(
-            VIEW_NAVIGATION.MENU,
-            0,
-            {},
-            '',
-            '',
-            node,
-            true
-        );
         node.documentRoot = true;
-        node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
         node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-        node.rendered = true;
+        node.setNodeType(VIEW_NAVIGATION.MENU, $enum.NODE_STANDARD.INLINE);
+        const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { output, complete: true };
     }
@@ -133,7 +124,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         }
         const element = <HTMLElement> node.element;
         const options = $android_util.createAttribute();
-        let nodeName = VIEW_NAVIGATION.ITEM;
+        let controlName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let next = false;
         let layout = false;
@@ -163,11 +154,11 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 node.each(item => item.tagName !== 'NAV' && item.hide());
             }
             else if (node.tagName === 'NAV') {
-                nodeName = VIEW_NAVIGATION.MENU;
+                controlName = VIEW_NAVIGATION.MENU;
                 next = true;
             }
             else {
-                nodeName = VIEW_NAVIGATION.GROUP;
+                controlName = VIEW_NAVIGATION.GROUP;
                 let checkable = '';
                 if (node.every((item: T) => hasInputType(item, 'radio'))) {
                     checkable = 'single';
@@ -187,7 +178,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
             }
             title = (element.title || element.innerText).trim();
         }
-        switch (nodeName) {
+        switch (controlName) {
             case VIEW_NAVIGATION.ITEM:
                 parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
@@ -220,24 +211,10 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 options['android'].title = title;
             }
         }
-        if (!options['android'].id) {
-            node.setNodeType(nodeName);
-        }
-        else {
-            node.controlName = nodeName;
-        }
-        const output = this.application.viewController.renderNodeStatic(
-            nodeName,
-            parent.renderDepth + 1,
-            options,
-            '',
-            '',
-            node,
-            layout
-        );
+        node.setNodeType(controlName, $enum.NODE_STANDARD.INLINE);
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
         node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-        node.rendered = true;
+        const output = this.application.viewController.renderNodeStatic(controlName, parent.renderDepth + 1, options, '', '', node, layout);
         return { output, complete: true, next };
     }
 

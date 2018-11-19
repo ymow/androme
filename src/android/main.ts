@@ -11,7 +11,6 @@ import View from './view';
 
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
-import Custom from './extension/custom';
 import External from './extension/external';
 import Grid from './extension/grid';
 import List from './extension/list';
@@ -21,6 +20,8 @@ import Sprite from './extension/sprite';
 import Table from './extension/table';
 
 import ConstraintGuideline from './extension/constraint/guideline';
+
+import ElementCustom from './extension/element/custom';
 
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
@@ -65,7 +66,6 @@ const lib = {
     extensions: {
         Accessibility,
         CssGrid,
-        Custom,
         External,
         Grid,
         List,
@@ -75,6 +75,9 @@ const lib = {
         Table,
         constraint: {
             Guideline: ConstraintGuideline
+        },
+        element: {
+            Custom: ElementCustom
         },
         resource: {
             Background: ResourceBackground,
@@ -207,9 +210,9 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
-            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
+            [EXT_ANDROID.ELEMENT_CUSTOM]: new ElementCustom(EXT_ANDROID.ELEMENT_CUSTOM, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

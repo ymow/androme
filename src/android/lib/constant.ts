@@ -1,4 +1,5 @@
 export const EXT_ANDROID = {
+    ELEMENT_CUSTOM: 'android.element.custom',
     CONSTRAINT_GUIDELINE: 'android.constraint.guideline',
     RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',
@@ -19,8 +20,10 @@ export const NODE_ANDROID = {
     TEXT: 'TextView',
     IMAGE: 'ImageView',
     BUTTON: 'Button',
+    INLINE: 'FrameLayout',
     LINE: 'View',
     SPACE: 'Space',
+    BLOCK: 'LinearLayout',
     WEB_VIEW: 'WebView',
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',

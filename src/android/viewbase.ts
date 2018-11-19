@@ -4,7 +4,7 @@ import { AXIS_ANDROID, BOX_ANDROID, LAYOUT_ANDROID, NODE_ANDROID, RESERVED_JAVA 
 import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
 import { BUILD_ANDROID } from './lib/enumeration';
 
-import { calculateBias, replaceRTL, stripId } from './lib/util';
+import { calculateBias, replaceRTL, stripId, validateString } from './lib/util';
 
 import $Node = androme.lib.base.Node;
 import $NodeList = androme.lib.base.NodeList;
@@ -360,7 +360,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return node;
         }
 
-        public setNodeType(controlName: string) {
+        public setNodeType(controlName: string, nodeType?: number) {
+            if (nodeType) {
+                this.nodeType = nodeType;
+            }
             if (this.nodeType === 0) {
                 for (const android in NODE_ANDROID) {
                     if (NODE_ANDROID[android] === controlName) {
@@ -380,7 +383,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             if (!this.nodeId) {
                 const element = <HTMLInputElement> this.element;
-                let name = $util.trimNull(element.id || element.name);
+                let name = validateString(element.id || element.name);
                 if (name === 'parent' || RESERVED_JAVA.includes(name)) {
                     name = `_${name}`;
                 }
@@ -438,28 +441,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return this.styleElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
                     }
                 })();
-                const widthParent = (() => {
-                    if (parent.initial.box && parent.initial.box.width > 0) {
-                        return parent.initial.box.width;
-                    }
-                    else if (parent.box && parent.box.width > 0) {
-                        return parent.box.width;
-                    }
-                    else {
-                        return parent.styleElement ? (<HTMLElement> parent.element).offsetWidth - $Node.getContentBoxWidth(parent) : 0;
-                    }
-                })();
-                const heightParent = (() => {
-                    if (parent.initial.box && parent.initial.box.height > 0) {
-                        return parent.initial.box.height;
-                    }
-                    else if (parent.box && parent.box.height > 0) {
-                        return parent.box.height;
-                    }
-                    else {
-                        return parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - $Node.getContentBoxHeight(parent) : 0;
-                    }
-                })();
+                const widthParent = parent.box && parent.box.width > 0 ? parent.box.width : (parent.styleElement ? (<HTMLElement> parent.element).offsetWidth - $Node.getContentBoxWidth(parent) : 0);
+                const heightParent = parent.box && parent.box.height > 0 ? parent.box.height : (parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - $Node.getContentBoxHeight(parent) : 0);
                 const styleMap = this.styleMap;
                 const tableElement = this.tagName === 'TABLE';
                 if (this.android('layout_width') !== '0px') {
@@ -762,7 +745,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public mergeGravity(attr: string, ...alignment: string[]) {
-            const direction = new Set([...$util.trimNull(this.android(attr)).split('|'), ...alignment].filter(value => value));
+            const direction = new Set([...this.android(attr).split('|'), ...alignment].filter(value => value));
             let result = '';
             switch (direction.size) {
                 case 0:
@@ -1156,7 +1139,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private alignRelativePosition() {
             const renderParent = this.renderParent;
-            if ((this.inline || (this.imageElement && this.display === 'inline-block')) && !this.floating) {
+            if ((this.inline || ((this.imageElement || this.svgElement) && this.display === 'inline-block')) && !this.floating) {
                 const offset = this.toInt('verticalAlign');
                 if (offset !== 0) {
                     this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
@@ -1216,7 +1199,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
                 if (stored) {
-                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right') && !(this.position === 'relative' && this.alignNegative)) {
+                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right')) {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                     }
@@ -1275,21 +1258,17 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return this.nodeId ? `@+id/${this.nodeId}` : '';
         }
 
-        set controlName(value: string) {
-            this._controlName = value;
+        get controlType() {
+            return $const.ELEMENT_MAP[this.nodeName] || 0;
+        }
+
+        set controlName(value) {
+            if (!this.rendered || !this._controlName) {
+                this._controlName = value;
+            }
         }
         get controlName() {
-            if (this._controlName) {
-                return this._controlName;
-            }
-            else {
-                const value: number = $const.ELEMENT_MAP[this.nodeName];
-                if (value !== undefined) {
-                    this.nodeType = value;
-                    return View.getControlName(value);
-                }
-                return '';
-            }
+            return this._controlName;
         }
 
         set documentParent(value: View) {

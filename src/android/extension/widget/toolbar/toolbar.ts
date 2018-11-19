@@ -1,6 +1,6 @@
-import WIDGET_NAME from '../namespace';
+import { WIDGET_NAME, getAppTheme } from '../common';
 
-import EXTENSION_APPBAR_TMPL from '../__template/appbar';
+import EXTENSION_TOOLBAR_TMPL from '../__template/toolbar';
 
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -13,6 +13,12 @@ import $View = android.lib.base.View;
 
 import $android_const = android.lib.constant;
 import $android_util = android.lib.util;
+
+type ToolbarThemeData = {
+    target: boolean;
+    appBarOverlay: string;
+    popupOverlay: string;
+};
 
 export default class Toolbar<T extends $View> extends androme.lib.base.Extension<T> {
     constructor(
@@ -49,9 +55,9 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const controller = application.viewController;
         const target = $util.hasValue(node.dataset.target);
         const options: ExternalData = Object.assign({}, this.options[node.element.id]);
-        const optionsToolbar = $android_util.createAttribute(options.self);
-        const optionsAppBar = $android_util.createAttribute(options.appBar);
-        const optionsCollapsingToolbar = $android_util.createAttribute(options.collapsingToolbar);
+        const toolbarOptions = $android_util.createAttribute(options.self);
+        const appBarOptions = $android_util.createAttribute(options.appBar);
+        const collapsingToolbarOptions = $android_util.createAttribute(options.collapsingToolbar);
         const hasMenu = $dom.getNestedExtension(node.element, WIDGET_NAME.MENU) !== null;
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
@@ -104,42 +110,43 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let appBarOverlay = '';
         let popupOverlay = '';
         if (hasCollapsingToolbar) {
-            $util.defaultWhenNull(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
+            $util.defaultWhenNull(toolbarOptions, 'app', 'layout_collapseMode', 'pin');
         }
         else {
             if (!hasAppBar) {
-                $util.defaultWhenNull(optionsToolbar, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(toolbarOptions, 'android', 'fitsSystemWindows', 'true');
             }
-            $util.defaultWhenNull(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
+            $util.defaultWhenNull(toolbarOptions, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage) {
-                $util.defaultWhenNull(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
+                $util.defaultWhenNull(appBarChildren.length > 0 ? appBarOptions : toolbarOptions, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
                 node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
-                $util.defaultWhenNull(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
+                $util.defaultWhenNull(toolbarOptions, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
             }
         }
         if (appBarChildren.length > 0) {
-            $util.defaultWhenNull(optionsAppBar, 'android', 'layout_height', '?android:attr/actionBarSize');
+            $util.defaultWhenNull(appBarOptions, 'android', 'layout_height', '?android:attr/actionBarSize');
         }
         else {
-            $util.defaultWhenNull(optionsToolbar, 'android', 'layout_height', '?android:attr/actionBarSize');
+            $util.defaultWhenNull(toolbarOptions, 'android', 'layout_height', '?android:attr/actionBarSize');
             node.excludeProcedure |= $enum.NODE_PROCEDURE.LAYOUT;
         }
         if (hasMenu) {
             if (hasAppBar) {
-                if (optionsToolbar['app'].popupTheme) {
-                    popupOverlay = optionsToolbar['app'].popupTheme.replace('@style/', '');
+                if (toolbarOptions['app'].popupTheme) {
+                    popupOverlay = toolbarOptions['app'].popupTheme.replace('@style/', '');
                 }
-                optionsToolbar['app'].popupTheme = '@style/AppTheme.PopupOverlay';
+                toolbarOptions['app'].popupTheme = '@style/AppTheme.PopupOverlay';
             }
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
         const useNumberAlias = application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias');
+        node.setNodeType($android_const.VIEW_SUPPORT.TOOLBAR, $enum.NODE_STANDARD.BLOCK);
         output = controller.renderNodeStatic(
             $android_const.VIEW_SUPPORT.TOOLBAR,
             innerDepth,
-            $Resource.formatOptions(optionsToolbar, useNumberAlias),
+            $Resource.formatOptions(toolbarOptions, useNumberAlias),
             'match_parent',
             'wrap_content',
             node,
@@ -147,7 +154,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         );
         if (hasCollapsingToolbar) {
             if (backgroundImage) {
-                const optionsBackgroundImage = $android_util.createAttribute(options.backgroundImage);
+                const backgroundImageOptions = $android_util.createAttribute(options.backgroundImage);
                 let scaleType = 'center';
                 switch (node.css('backgroundSize')) {
                     case 'cover':
@@ -163,15 +170,15 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                         scaleType = 'matrix';
                         break;
                 }
-                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'src', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
-                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'scaleType', scaleType);
-                $util.defaultWhenNull(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
-                $util.defaultWhenNull(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
+                $util.defaultWhenNull(backgroundImageOptions, 'android', 'id', `${node.stringId}_image`);
+                $util.defaultWhenNull(backgroundImageOptions, 'android', 'src', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
+                $util.defaultWhenNull(backgroundImageOptions, 'android', 'scaleType', scaleType);
+                $util.defaultWhenNull(backgroundImageOptions, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(backgroundImageOptions, 'app', 'layout_collapseMode', 'parallax');
                 output = controller.renderNodeStatic(
                     $android_const.NODE_ANDROID.IMAGE,
                     innerDepth,
-                    $Resource.formatOptions(optionsBackgroundImage, useNumberAlias),
+                    $Resource.formatOptions(backgroundImageOptions, useNumberAlias),
                     'match_parent',
                     'match_parent'
                 ) + output;
@@ -182,27 +189,32 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let appBarNode: T | undefined;
         let collapsingToolbarNode: T | undefined;
         if (hasAppBar) {
-            $util.defaultWhenNull(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            $util.defaultWhenNull(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
-            $util.defaultWhenNull(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
+            $util.defaultWhenNull(appBarOptions, 'android', 'id', `${node.stringId}_appbar`);
+            $util.defaultWhenNull(appBarOptions, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
+            $util.defaultWhenNull(appBarOptions, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
-                if (optionsAppBar['android'].theme) {
-                    appBarOverlay = optionsAppBar['android'].theme;
+                if (appBarOptions['android'].theme) {
+                    appBarOverlay = appBarOptions['android'].theme;
                 }
-                optionsAppBar['android'].theme = '@style/AppTheme.AppBarOverlay';
-                this.setStyleTheme(appBarOverlay, popupOverlay);
+                appBarOptions['android'].theme = '@style/AppTheme.AppBarOverlay';
+                node.data(WIDGET_NAME.TOOLBAR, 'themeData', <ToolbarThemeData> {
+                    target,
+                    appBarOverlay,
+                    popupOverlay
+                });
             }
             else {
-                $util.defaultWhenNull(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+                $util.defaultWhenNull(appBarOptions, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             appBarNode = this.createPlaceholder(application.processing.cache.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
-            appBarNode.nodeId = $android_util.stripId(optionsAppBar['android'].id);
+            appBarNode.nodeId = $android_util.stripId(appBarOptions['android'].id);
+            appBarNode.setNodeType($android_const.VIEW_SUPPORT.APPBAR, $enum.NODE_STANDARD.BLOCK);
             application.processing.cache.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
                 $android_const.VIEW_SUPPORT.APPBAR,
                 target ? -1 : depth,
-                $Resource.formatOptions(optionsAppBar, useNumberAlias),
+                $Resource.formatOptions(appBarOptions, useNumberAlias),
                 'match_parent',
                 'wrap_content',
                 appBarNode,
@@ -210,22 +222,23 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             );
             if (hasCollapsingToolbar) {
                 depth++;
-                $util.defaultWhenNull(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
-                $util.defaultWhenNull(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
+                $util.defaultWhenNull(collapsingToolbarOptions, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
+                $util.defaultWhenNull(collapsingToolbarOptions, 'android', 'fitsSystemWindows', 'true');
                 if (!backgroundImage) {
-                    $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                    $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'contentScrim', '?attr/colorPrimary');
                 }
-                $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
-                $util.defaultWhenNull(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
+                $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
+                $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = this.createPlaceholder(application.processing.cache.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
+                    collapsingToolbarNode.setNodeType($android_const.VIEW_SUPPORT.COLLAPSING_TOOLBAR, $enum.NODE_STANDARD.BLOCK);
                     application.processing.cache.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                     const content = controller.renderNodeStatic(
                         $android_const.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,
-                        $Resource.formatOptions(optionsCollapsingToolbar, useNumberAlias),
+                        $Resource.formatOptions(collapsingToolbarOptions, useNumberAlias),
                         'match_parent',
                         'match_parent',
                         collapsingToolbarNode,
@@ -275,26 +288,39 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);
-            const optionsToolbar = $android_util.createAttribute(options.self);
-            $util.defaultWhenNull(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
-            node.app('menu', optionsToolbar['app'].menu);
+            const toolbarOptions = $android_util.createAttribute(options.self);
+            $util.defaultWhenNull(toolbarOptions, 'app', 'menu', `@menu/${menu}`);
+            node.app('menu', toolbarOptions['app'].menu);
+        }
+        const themeData: ToolbarThemeData = node.data(WIDGET_NAME.TOOLBAR, 'themeData');
+        if (themeData) {
+            this.setStyleTheme(themeData);
         }
     }
 
-    private setStyleTheme(appBarOverlay: string, popupOverlay: string) {
+    private setStyleTheme(themeData: ToolbarThemeData) {
         const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.defaultWhenNull(options, 'appTheme', 'AppTheme');
+        $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
         $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             'appTheme': options.appTheme,
-            'parentTheme': options.parentTheme,
-            'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
-            'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
-            '1': []
+            'appBarOverlay': themeData.appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
+            'popupOverlay': themeData.popupOverlay || 'ThemeOverlay.AppCompat.Light',
+            '1': [{
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                'items': []
+            }]
         };
+        if (themeData.target) {
+            data['1'] = false as any;
+        }
+        else {
+            data['items'] = data['1'][0]['items'];
+        }
         $util.defaultWhenNull(options, 'output', 'path', 'res/values');
         $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_APPBAR_TMPL, data, options);
+        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_TOOLBAR_TMPL, data, options);
     }
 
     private createPlaceholder(nextId: number, container: T, nodes: T[]) {

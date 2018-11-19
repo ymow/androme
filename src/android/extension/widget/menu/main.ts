@@ -1,8 +1,8 @@
-import WIDGET_NAME from '../namespace';
+import { FRAMEWORK, WIDGET_NAME } from '../common';
 
 import Menu from './menu';
 
-const menu = new Menu(WIDGET_NAME.MENU, WIDGET_NAME.__FRAMEWORK, ['NAV']);
+const menu = new Menu(WIDGET_NAME.MENU, FRAMEWORK.ANDROID, ['NAV']);
 
 if (androme) {
     androme.installExtensionAsync(menu);

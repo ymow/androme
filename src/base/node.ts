@@ -28,17 +28,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract readonly renderChildren: T[];
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
-    public nodeId: string;
+    public nodeId = '';
     public nodeType = 0;
     public alignmentType = 0;
     public depth = -1;
     public siblingIndex = Number.MAX_VALUE;
     public renderIndex = Number.MAX_VALUE;
     public renderPosition = -1;
-    public box: BoxDimensions;
-    public bounds: BoxDimensions;
-    public linear: BoxDimensions;
-    public companion: T;
     public excludeSection = 0;
     public excludeProcedure = 0;
     public excludeResource = 0;
@@ -48,15 +44,18 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public excluded = false;
     public rendered = false;
     public renderExtension = new Set<Extension<T>>();
+    public companion: T | undefined;
     public readonly initial: androme.lib.base.InitialData<T>;
 
     protected abstract _namespaces: Set<string>;
     protected abstract _controlName: string;
     protected abstract _renderParent: T;
     protected abstract _documentParent: T;
-    protected abstract _fontSize: number;
     protected abstract readonly _boxAdjustment: BoxModel;
     protected abstract readonly _boxReset: BoxModel;
+    protected _box: BoxDimensions;
+    protected _bounds: BoxDimensions;
+    protected _linear: BoxDimensions;
 
     private _element: Element;
     private _baseElement: Element;
@@ -90,7 +89,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public abstract setNodeType(viewName: string): void;
+    public abstract setNodeType(viewName: string, nodeType?: number): void;
     public abstract setBaseLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
     public abstract applyOptimizations(): void;
@@ -100,6 +99,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract convertPX(value: string): string;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
+    public abstract get controlType(): number;
     public abstract set controlName(value: string);
     public abstract get controlName();
     public abstract set documentParent(value: T);
@@ -269,9 +269,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                             this.nodeName = node.nodeName;
                         }
                     case 'dimensions':
-                        this.bounds = assignBounds(node.bounds);
-                        this.linear = assignBounds(node.linear);
-                        this.box = assignBounds(node.box);
+                        this._bounds = assignBounds(node.bounds);
+                        this._linear = assignBounds(node.linear);
+                        this._box = assignBounds(node.box);
                         break;
                     case 'data':
                         for (const obj in this._data) {
@@ -367,15 +367,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return false;
     }
 
-    public intersect(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
-        const top = rect.top > bounds.top && rect.top < bounds.bottom;
-        const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
-        const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
-        const left = rect.left > bounds.left && rect.left < bounds.right;
-        return (top && (left || right)) || (bottom && (left || right));
-    }
-
     public intersectX(rect: BoxDimensions, dimension = 'linear') {
         const bounds: BoxDimensions = this[dimension] || this.linear;
         return (
@@ -406,14 +397,23 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return bounds.left >= rect.left && bounds.right <= rect.right;
     }
 
+    public inside(rect: BoxDimensions, dimension = 'linear') {
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        const top = rect.top > bounds.top && rect.top < bounds.bottom;
+        const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
+        const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
+        const left = rect.left > bounds.left && rect.left < bounds.right;
+        return (top && (left || right)) || (bottom && (left || right));
+    }
+
     public outsideX(rect: BoxDimensions, dimension = 'linear') {
         const bounds: BoxDimensions = this[dimension] || this.linear;
-        return bounds.right < rect.left || bounds.left > rect.right;
+        return bounds.bottom < rect.top || bounds.top > rect.bottom;
     }
 
     public outsideY(rect: BoxDimensions, dimension = 'linear') {
         const bounds: BoxDimensions = this[dimension] || this.linear;
-        return bounds.bottom < rect.top || bounds.top > rect.bottom;
+        return bounds.right < rect.left || bounds.left > rect.right;
     }
 
     public css(attr: object | string, value = ''): string {
@@ -558,21 +558,16 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (this._element) {
             if (!calibrate) {
                 if (this.styleElement) {
-                    this.bounds = assignBounds(this._element.getBoundingClientRect());
+                    this._bounds = assignBounds(this._element.getBoundingClientRect());
                 }
                 else {
-                    const bounds = getRangeClientRect(this._element);
-                    if (bounds[0]) {
-                        this.bounds = <BoxDimensions> bounds[0];
-                    }
+                    this._bounds = getRangeClientRect(this._element)[0];
                 }
+                Object.assign(this.initial.bounds, this._bounds);
             }
         }
-        if (this.bounds) {
-            if (this.initial.bounds.width === 0 && this.initial.bounds.height === 0) {
-                Object.assign(this.initial.bounds, assignBounds(this.bounds));
-            }
-            this.linear = {
+        if (this._bounds !== undefined) {
+            this._linear = {
                 top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
                 right: this.bounds.right + this.marginRight,
                 bottom: this.bounds.bottom + this.marginBottom,
@@ -580,8 +575,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 width: 0,
                 height: 0
             };
+            this.setDimensions('linear');
             const absolute = this.every(node => !node.siblingflow);
-            this.box = {
+            this._box = {
                 top: this.bounds.top + ((absolute ? 0 : this.paddingTop) + this.borderTopWidth),
                 right: this.bounds.right - ((absolute ? 0 : this.paddingRight) + this.borderRightWidth),
                 bottom: this.bounds.bottom - ((absolute ? 0 : this.paddingBottom) + this.borderBottomWidth),
@@ -589,28 +585,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 width: 0,
                 height: 0
             };
-            this.setDimensions();
-        }
-    }
-
-    public setDimensions(region = ['linear', 'box']) {
-        for (const dimension of region) {
-            const bounds = this[dimension];
-            bounds.width = this.bounds.width;
-            if (!this.plainText) {
-                switch (dimension) {
-                    case 'linear':
-                        bounds.width += (this.marginLeft > 0 ? this.marginLeft : 0) + this.marginRight;
-                        break;
-                    case 'box':
-                        bounds.width -= Node.getContentBoxWidth(this);
-                        break;
-                }
-            }
-            bounds.height = bounds.bottom - bounds.top;
-            if (this.initial[dimension] === undefined) {
-                this.initial[dimension] = assignBounds(bounds);
-            }
+            this.setDimensions('box');
         }
     }
 
@@ -630,7 +605,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         const [bounds, multiLine] = getRangeClientRect(this._element);
                         if (this.plainText) {
                             if (bounds) {
-                                this.bounds = bounds;
+                                this._bounds = bounds;
                                 this.setBounds(true);
                             }
                             else {
@@ -655,12 +630,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public replaceNode(node: T, withNode: T, append = true) {
         for (let i = 0; i < this.length; i++) {
             if (node === this.item(i)) {
+                withNode.siblingIndex = node.siblingIndex;
                 this.item(i, withNode);
                 withNode.parent = this;
                 return true;
             }
         }
         if (append) {
+            withNode.siblingIndex = withNode.length;
             withNode.parent = this;
             return true;
         }
@@ -819,20 +796,32 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.companion && !this.companion.visible && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
     }
 
-    private boxAttribute(region: string, direction: string) {
-        const attr = region + direction;
+    protected setDimensions(dimension: string) {
+        const bounds = this[dimension];
+        bounds.width = this.bounds.width;
+        bounds.height = bounds.bottom - bounds.top;
         if (this.styleElement) {
-            const value = this.css(attr);
-            if (isPercent(value)) {
-                return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100);
-            }
-            else {
-                return convertInt(value);
+            switch (dimension) {
+                case 'linear':
+                    bounds.width += (this.marginLeft > 0 ? this.marginLeft : 0) + this.marginRight;
+                    break;
+                case 'box':
+                    bounds.width -= Node.getContentBoxWidth(this);
+                    break;
             }
         }
-        else {
-            return convertInt(this.css(attr));
+        if (this.initial[dimension] === undefined) {
+            this.initial[dimension] = assignBounds(bounds);
         }
+    }
+
+    private convertBox(region: string, direction: string) {
+        const attr = region + direction;
+        const value = this.css(attr);
+        if (isPercent(value)) {
+            return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[direction === 'Left' || direction === 'Right' ? 'width' : 'height'] * convertInt(value) / 100;
+        }
+        return convertInt(value);
     }
 
     private getOverflow() {
@@ -866,7 +855,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 }
             }
             if (this.initial.depth === -1) {
-                this.initial.depth = value.depth + 1;
+                Object.assign(this.initial, { depth: value.depth + 1 });
             }
             this.depth = value.depth + 1;
         }
@@ -938,6 +927,18 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get documentBody() {
         return this._element === document.body;
+    }
+
+    get box() {
+        return this._box || newClientRect();
+    }
+
+    get bounds() {
+        return this._bounds || newClientRect();
+    }
+
+    get linear() {
+        return this._linear || newClientRect();
     }
 
     set renderAs(value) {
@@ -1051,16 +1052,16 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get marginTop() {
-        return this.inlineStatic ? 0 : this.boxAttribute('margin', 'Top');
+        return this.inlineStatic ? 0 : this.convertBox('margin', 'Top');
     }
     get marginRight() {
-        return this.boxAttribute('margin', 'Right');
+        return this.convertBox('margin', 'Right');
     }
     get marginBottom() {
-        return this.inlineStatic ? 0 : this.boxAttribute('margin', 'Bottom');
+        return this.inlineStatic ? 0 : this.convertBox('margin', 'Bottom');
     }
     get marginLeft() {
-        return this.boxAttribute('margin', 'Left');
+        return this.convertBox('margin', 'Left');
     }
 
     get borderTopWidth() {
@@ -1080,16 +1081,16 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get paddingTop() {
-        return this.boxAttribute('padding', 'Top');
+        return this.convertBox('padding', 'Top');
     }
     get paddingRight() {
-        return this.boxAttribute('padding', 'Right');
+        return this.convertBox('padding', 'Right');
     }
     get paddingBottom() {
-        return this.boxAttribute('padding', 'Bottom');
+        return this.convertBox('padding', 'Bottom');
     }
     get paddingLeft() {
-        return this.boxAttribute('padding', 'Left');
+        return this.convertBox('padding', 'Left');
     }
 
     set pageflow(value) {
@@ -1168,10 +1169,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get alignOrigin() {
         return this.top === null && this.right === null && this.bottom === null && this.left === null;
-    }
-
-    get alignNegative() {
-        return this.toInt('top') < 0 || this.toInt('left') < 0;
     }
 
     get autoMargin() {

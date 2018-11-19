@@ -36,13 +36,13 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
             });
             if (this.options.circlePosition) {
                 const leftTop = Array.from(alignParent.values()).some(value => value.length === 2);
-                let anchorNode: T | undefined;
+                let anchor: T | undefined;
                 for (const [item, alignment] of alignParent.entries()) {
                     if (leftTop) {
                         if (alignment.length === 2) {
                             item.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
                             item.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
-                            anchorNode = item;
+                            anchor = item;
                             break;
                         }
                     }
@@ -51,25 +51,25 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                             if (alignment.includes('left')) {
                                 item.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
                                 controller.addGuideline(item, AXIS_ANDROID.VERTICAL);
-                                anchorNode = item;
+                                anchor = item;
                             }
                             else {
                                 item.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
                                 controller.addGuideline(item, AXIS_ANDROID.HORIZONTAL);
-                                anchorNode = item;
+                                anchor = item;
                             }
                             break;
                         }
                     }
                 }
-                if (anchorNode === undefined) {
-                    anchorNode = node.item(0) as T;
-                    controller.addGuideline(anchorNode);
+                if (anchor === undefined) {
+                    anchor = node.item(0) as T;
+                    controller.addGuideline(anchor);
                 }
                 node.each((item: T) => {
-                    if (anchorNode && item !== anchorNode) {
+                    if (anchor && item !== anchor) {
                         const center1 = item.center;
-                        const center2 = anchorNode.center;
+                        const center2 = anchor.center;
                         const x = Math.abs(center1.x - center2.x);
                         const y = Math.abs(center1.y - center2.y);
                         const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
@@ -110,7 +110,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                         else {
                             degrees = center1.x > center2.x ? 90 : 270;
                         }
-                        item.app('layout_constraintCircle', anchorNode.stringId);
+                        item.app('layout_constraintCircle', anchor.stringId);
                         item.app('layout_constraintCircleRadius', $util.formatPX(radius));
                         item.app('layout_constraintCircleAngle', degrees.toString());
                     }

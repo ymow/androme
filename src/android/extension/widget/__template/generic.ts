@@ -2,9 +2,9 @@ const template = [
 '<?xml version="1.0" encoding="utf-8"?>',
 '<resources>',
 '	<style name="{&appTheme}" parent="{~parentTheme}">',
-    '!1',
+    '!items',
 '		<item name="{&name}">{&value}</item>',
-    '!1',
+    '!items',
 '	</style>',
 '</resources>'
 ];

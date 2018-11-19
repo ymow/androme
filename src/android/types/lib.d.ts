@@ -29,7 +29,8 @@ declare global {
                 export function generateId(section: string, name: string, start: number): string;
                 export function stripId(value: string): string;
                 export function createAttribute(options?: ExternalData): ViewAttribute;
-                export function convertUnit(value: any, dpi?: number, font?: boolean): string;
+                export function validateString(value: string): string;
+                export function convertUnit(value: string, dpi?: number, font?: boolean): string;
                 export function replaceUnit(value: string, settings?: SettingsAndroid, font?: boolean): string;
                 export function replaceTab(value: string, settings: Settings, preserve?: boolean): string;
                 export function calculateBias(start: number, end: number, accuracy: number): number;

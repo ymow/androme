@@ -1,8 +1,8 @@
-import WIDGET_NAME from '../namespace';
+import { FRAMEWORK, WIDGET_NAME } from '../common';
 
 import Toolbar from './toolbar';
 
-const toolbar = new Toolbar(WIDGET_NAME.TOOLBAR, WIDGET_NAME.__FRAMEWORK);
+const toolbar = new Toolbar(WIDGET_NAME.TOOLBAR, FRAMEWORK.ANDROID);
 
 if (androme) {
     androme.installExtensionAsync(toolbar);

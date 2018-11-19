@@ -17,7 +17,7 @@ type ThemeTemplate = {
         path: string;
         file: string;
     }
-    item?: StringMap
+    items?: StringMap
 };
 
 function getHexARGB(value: ColorHexAlpha | null) {
@@ -313,10 +313,10 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
     }
 
     public addStyleTheme(template: string, data: TemplateData, options: ThemeTemplate) {
-        if (options.item) {
-            const items = Resource.formatOptions({ item: options.item }, this.application.getExtensionOptionsValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+        if (options.items && Array.isArray(data['items'])) {
+            const items = Resource.formatOptions(options.items, this.application.getExtensionOptionsValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             for (const name in items) {
-                data['1'].push({
+                data['items'].push({
                     name,
                     value: items[name]
                 });

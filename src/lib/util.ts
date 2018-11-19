@@ -403,7 +403,7 @@ export function defaultWhenNull(options: {}, ...attrs: string[]) {
     for (let i = 0 ; i < attrs.length - 1; i++) {
         const value = attrs[i];
         if (i === attrs.length - 2) {
-            if (!hasValue(options[value])) {
+            if (!hasValue(current[value])) {
                 current[value] = attrs[i + 1];
             }
         }

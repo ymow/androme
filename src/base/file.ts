@@ -27,19 +27,19 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     public abstract settings: Settings;
     public appName = '';
     public stored: ResourceStoredMap;
-    public readonly queue: FileAsset[] = [];
+    public readonly assets: FileAsset[] = [];
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
 
     public addAsset(pathname: string, filename: string, content = '', uri: string = '') {
         if (content !== '' || uri !== '') {
-            const index = this.queue.findIndex(item => item.pathname === pathname && item.filename === filename);
+            const index = this.assets.findIndex(item => item.pathname === pathname && item.filename === filename);
             if (index !== -1) {
-                this.queue[index].content = content || '';
-                this.queue[index].uri = uri || '';
+                this.assets[index].content = content || '';
+                this.assets[index].uri = uri || '';
             }
             else {
-                this.queue.push({
+                this.assets.push({
                     pathname,
                     filename,
                     content,
@@ -50,7 +50,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     }
 
     public reset() {
-        this.queue.length = 0;
+        this.assets.length = 0;
     }
 
     public saveToDisk(files: FileAsset[]) {
@@ -64,7 +64,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
             return;
         }
         if (files.length > 0) {
-            files.push(...this.queue);
+            files.push(...this.assets);
             fetch(`/api/savetodisk` +
                 `?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}` +
                 `&appname=${encodeURIComponent(this.appName.trim())}` +

@@ -8,6 +8,7 @@ import View from '../view';
 import $const = androme.lib.constant;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
+import $xml = androme.lib.xml;
 
 export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {
@@ -112,19 +113,16 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
             const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
             if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
-                output = '';
                 container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
-                container.siblingIndex = node.siblingIndex;
                 container.nodeName = node.nodeName;
-                container.inherit(node, 'initial', 'base');
-                container.setNodeType(NODE_ANDROID.FRAME);
                 container.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION;
                 container.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
+                container.inherit(node, 'initial', 'base');
+                container.setNodeType(NODE_ANDROID.FRAME, $enum.NODE_STANDARD.FRAME);
                 parent.replaceNode(node, container);
-                container.render(parent);
                 this.application.processing.cache.append(container, false);
-                node.parent = container;
-                output = Controller.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
+                output = Controller.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+                container.render(parent);
                 applyLayout(container, 'column', 'width');
                 applyLayout(container, 'row', 'height');
                 container.mergeGravity('layout_gravity', 'fill_vertical');
@@ -157,6 +155,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     node.mergeGravity('layout_height', 'match_parent');
                 }
                 container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
+                node.parent = container;
                 node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
             }
             const target = container || node;

@@ -566,7 +566,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             if (node.tagName === 'SELECT' && this.checkPermissions(node, 'optionArray')) {
                 const element = <HTMLSelectElement> node.element;
                 const stringArray: string[] = [];
-                let numberArray: string[] | undefined = [];
+                let numberArray: string[] | null = [];
                 let i = -1;
                 while (++i < element.children.length) {
                     const item = <HTMLOptionElement> element.children[i];
@@ -578,7 +578,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         else {
                             if (numberArray && numberArray.length > 0) {
                                 i = -1;
-                                numberArray = undefined;
+                                numberArray = null;
                                 continue;
                             }
                             if (value !== '') {
@@ -588,8 +588,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                 }
                 node.data(Resource.KEY_NAME, 'optionArray', {
-                    stringArray: stringArray.length > 0 ? stringArray : undefined,
-                    numberArray: numberArray && numberArray.length > 0 ? numberArray : undefined
+                    stringArray: stringArray.length > 0 ? stringArray : null,
+                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
                 });
             }
         }

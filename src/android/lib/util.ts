@@ -13,12 +13,16 @@ export function createAttribute(options?: ExternalData): ViewAttribute {
     return Object.assign({ android: {}, app: {} }, typeof options === 'object' ? options : {});
 }
 
-export function convertUnit(value: any, dpi = 160, font = false) {
+export function validateString(value: string) {
+    return value ? value.trim().replace(/[^\w$\-_.]/g, '_') : '';
+}
+
+export function convertUnit(value: string, dpi = 160, font = false) {
     if (value) {
-        value = parseFloat(value);
-        if (!isNaN(value)) {
-            value /= dpi / 160;
-            value = value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2);
+        let result = parseFloat(value);
+        if (!isNaN(result)) {
+            result /= dpi / 160;
+            value = result >= 1 || result === 0 ? Math.floor(result).toString() : result.toFixed(2);
             return value + (font ? 'sp' : 'dp');
         }
     }

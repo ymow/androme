@@ -71,29 +71,29 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
-    let result: BoxDimensions = newClientRect();
+    let bounds: BoxDimensions = newClientRect();
     let multiLine = false;
     if (domRect.length > 0) {
-        result = assignBounds(domRect[0]);
-        const top = new Set([result.top]);
-        const bottom = new Set([result.bottom]);
+        bounds = assignBounds(domRect[0]);
+        const top = new Set([bounds.top]);
+        const bottom = new Set([bounds.bottom]);
         for (let i = 1 ; i < domRect.length; i++) {
             const rect = domRect[i];
             top.add(rect.top);
             bottom.add(rect.bottom);
-            result.width += rect.width;
-            result.right = Math.max(rect.right, result.right);
-            result.height = Math.max(rect.height, result.height);
+            bounds.width += rect.width;
+            bounds.right = Math.max(rect.right, bounds.right);
+            bounds.height = Math.max(rect.height, bounds.height);
         }
         if (top.size > 1 && bottom.size > 1) {
-            result.top = Math.min.apply(null, Array.from(top));
-            result.bottom = Math.max.apply(null, Array.from(bottom));
+            bounds.top = Math.min.apply(null, Array.from(top));
+            bounds.bottom = Math.max.apply(null, Array.from(bottom));
             if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
                 multiLine = true;
             }
         }
     }
-    return [result, multiLine];
+    return [bounds, multiLine];
 }
 
 export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {

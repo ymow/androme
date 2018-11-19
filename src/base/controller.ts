@@ -29,15 +29,33 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         return result;
     }
 
-    public static alignRowPrevious<T extends Node>(list: T[], node: T) {
+    public static alignRowPrevious<T extends Node>(list: T[], node: T, maxBottom?: number) {
         const result: T[] = [];
+        const preferred: T[] = [];
+        if (maxBottom) {
+            list = list.filter(item => item.linear.bottom === maxBottom);
+        }
         for (let i = 0; i < list.length; i++) {
             const above = list[i];
-            if (node.intersectY(above.linear) && node.linear.top >= above.linear.bottom) {
-                result.push(above);
+            if (node.intersectY(above.linear)) {
+                if (maxBottom === undefined) {
+                    if (node.linear.top >= above.linear.bottom) {
+                        result.push(above);
+                    }
+                }
+                else {
+                    if (maxBottom === above.linear.bottom) {
+                        preferred.push(above);
+                    }
+                }
+            }
+            else {
+                if (maxBottom === above.linear.bottom) {
+                    result.push(above);
+                }
             }
         }
-        return result;
+        return preferred.length > 0 ? preferred : result;
     }
 
     public static clearedElement<T extends Node>(parent: T) {
@@ -62,9 +80,9 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _after: ObjectIndex<string[]> = {};
 
     public abstract createGroup(parent: T, node: T, children: T[]): T;
-    public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
-    public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
-    public abstract renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
+    public abstract renderGroup(node: T, parent: T, nodeType: number, options?: {}): string;
+    public abstract renderNode(node: T, parent: T, nodeType: number, options?: {}): string;
+    public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderMerge(name: string, content: string[]): string;
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;

@@ -24,7 +24,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         if (!calibrate) {
             if (this.length > 0) {
                 const nodes = NodeList.outerRegion(this.children);
-                this.bounds = {
+                this._bounds = {
                     top: nodes.top[0].linear.top,
                     right: nodes.right[0].linear.right,
                     bottom: nodes.bottom[0].linear.bottom,
@@ -34,14 +34,15 @@ export default abstract class NodeGroup<T extends Node> extends Node {
                 };
             }
             else {
-                this.bounds = newClientRect();
+                this._bounds = newClientRect();
             }
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;
         }
-        this.linear = assignBounds(this.bounds);
-        this.box = assignBounds(this.bounds);
-        this.setDimensions();
+        this._linear = assignBounds(this.bounds);
+        this.setDimensions('linear');
+        this._box = assignBounds(this.bounds);
+        this.setDimensions('box');
     }
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {

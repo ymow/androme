@@ -1,4 +1,4 @@
-import WIDGET_NAME from '../namespace';
+import { WIDGET_NAME } from '../common';
 
 import $color = androme.lib.color;
 import $enum = androme.lib.enumeration;
@@ -52,6 +52,8 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         if (src !== '') {
             $util.defaultWhenNull(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
+        node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
+        node.setNodeType($android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON, $enum.NODE_STANDARD.BUTTON);
         const output = this.application.viewController.renderNodeStatic(
             $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
@@ -60,8 +62,6 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             'wrap_content',
             node
         );
-        node.nodeType = $enum.NODE_STANDARD.BUTTON;
-        node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
         if (!node.pageflow || target) {
             const horizontalBias = node.horizontalBias();
             const verticalBias = node.verticalBias();

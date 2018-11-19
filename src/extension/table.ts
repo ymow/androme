@@ -203,7 +203,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         function setBoundsWidth(td: T) {
             td.css('width', formatPX(td.bounds.width));
         }
-        const caption = node.find(item => item.tagName === 'CAPTION') as T;
+        const caption = node.find(item => item.tagName === 'CAPTION') as T | undefined;
         node.clear();
         let rowCount = table.length;
         if (caption) {

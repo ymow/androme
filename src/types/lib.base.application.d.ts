@@ -49,8 +49,8 @@ declare global {
         }
 
         export class Application<T extends Node> implements Application<T> {
-            public static isConstraintFloat<T extends Node>(nodes: T[], floated?: Set<string>, linearX?: boolean): boolean;
-            public static isFrameHorizontal<T extends Node>(nodes: T[], cleared: Map<T, string>, lineBreak?: boolean): boolean;
+            public static isConstraintFloat<T extends Node>(nodes: T[], floated: Set<string>, linearX?: boolean): boolean;
+            public static isFrameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak?: boolean): boolean;
             public static isRelativeHorizontal<T extends Node>(nodes: T[], cleared?: Map<T, string>): boolean;
             constructor(framework: number);
         }

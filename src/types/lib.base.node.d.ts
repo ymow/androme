@@ -2,11 +2,11 @@ declare global {
     namespace androme.lib.base {
         export interface InitialData<T> {
             readonly styleMap: StringMap;
+            readonly depth: number;
             readonly children: T[];
             readonly bounds: BoxDimensions;
-            linear?: BoxDimensions;
-            box?: BoxDimensions;
-            depth: number;
+            readonly linear?: BoxDimensions;
+            readonly box?: BoxDimensions;
         }
 
         export interface Node extends Container<Node>, BoxModel {
@@ -21,9 +21,6 @@ declare global {
             renderIndex: number;
             renderPosition: number;
             renderExtension: Set<Extension<Node>>;
-            box: BoxDimensions;
-            bounds: BoxDimensions;
-            linear: BoxDimensions;
             excludeSection: number;
             excludeProcedure: number;
             excludeResource: number;
@@ -32,10 +29,14 @@ declare global {
             visible: boolean;
             excluded: boolean;
             rendered: boolean;
-            companion: Node;
+            companion: Node | undefined;
             readonly initial: InitialData<Node>;
+            readonly controlType: number;
             readonly renderChildren: Node[];
             readonly documentParent: Node;
+            readonly box: BoxDimensions;
+            readonly bounds: BoxDimensions;
+            readonly linear: BoxDimensions;
             readonly linearHorizontal: boolean;
             readonly linearVertical: boolean;
             readonly layoutHorizontal: boolean;
@@ -90,7 +91,6 @@ declare global {
             readonly block: boolean;
             readonly blockStatic: boolean;
             readonly alignOrigin: boolean;
-            readonly alignNegative: boolean;
             readonly autoMargin: boolean;
             readonly autoMarginLeft: boolean;
             readonly autoMarginRight: boolean;
@@ -116,16 +116,16 @@ declare global {
             readonly nextElementSibling: Element | null;
             readonly center: Point;
             parent: Node;
-            controlName: string;
             renderParent: Node;
             nodeName: string;
+            controlName: string;
             element: Element;
             baseElement: Element;
-            renderAs: Node;
+            renderAs: Node | undefined;
             renderDepth: number;
             pageflow: boolean;
             multiLine: boolean;
-            setNodeType(viewName: string): void;
+            setNodeType(controlName: string, nodeType?: number): void;
             setBaseLayout(): void;
             setAlignment(settings: Settings): void;
             applyOptimizations(settings: Settings): void;
@@ -149,11 +149,11 @@ declare global {
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
             alignedVertically(previous: Node | null, cleared?: Map<Node, string>, floatSize?: number, firstNode?: boolean): boolean;
-            intersect(rect: BoxDimensions, dimension?: string): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
             withinX(rect: BoxDimensions, dimension?: string): boolean;
             withinY(rect: BoxDimensions, dimension?: string): boolean;
+            inside(rect: BoxDimensions, dimension?: string): boolean;
             outsideX(rect: BoxDimensions, dimension?: string): boolean;
             outsideY(rect: BoxDimensions, dimension?: string): boolean;
             css(attr: object | string, value?: string): string;
@@ -167,7 +167,6 @@ declare global {
             hasAlign(value: number): boolean;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
-            setDimensions(region?: string[]): void;
             setMultiLine(): void;
             replaceNode(node: Node, withNode: Node, append?: boolean): void;
             appendRendered(node: Node): void;

@@ -34,7 +34,7 @@ declare global {
 
         namespace dom {
             export function isUserAgent(value: number): boolean;
-            export function getDataSet(element: HTMLElement, prefix: string): StringMap;
+            export function getDataSet(element: Element, prefix: string): StringMap;
             export function newBoxRect(): BoxRect;
             export function newClientRect(): BoxDimensions;
             export function newBoxModel(): BoxModel;
