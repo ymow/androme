@@ -158,7 +158,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this[name][attr] || '';
     }
 
-    public namespace(obj: string): StringMap {
+    public unsafe(obj: string): ObjectMap<any> {
         const name = `_${obj || '_'}`;
         return this[name] || {};
     }
@@ -979,14 +979,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get flexbox(): Flexbox {
         if (this._flexbox === undefined) {
             this._flexbox = {
-                order: parseInt(this.css('order')),
+                order: convertInt(this.css('order')),
                 wrap: this.css('flexWrap'),
                 direction: this.css('flexDirection'),
                 alignSelf: !this.has('alignSelf') && this.documentParent.has('alignItems') ? this.documentParent.css('alignItems') : this.css('alignSelf'),
                 justifyContent: this.css('justifyContent'),
                 basis: this.css('flexBasis'),
-                grow: parseInt(this.css('flexGrow')),
-                shrink: parseInt(this.css('flexShrink'))
+                grow: convertInt(this.css('flexGrow')),
+                shrink: convertInt(this.css('flexShrink'))
             };
         }
         return this._flexbox;

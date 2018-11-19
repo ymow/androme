@@ -139,7 +139,7 @@ declare global {
             is(...views: number[]): boolean;
             of(nodeType: number, ...alignmentType: number[]): boolean;
             attr(obj: string, attr: string, value?: string, overwrite?: boolean): string;
-            namespace(obj: string): StringMap;
+            unsafe(obj: string): ObjectMap<any>;
             delete(obj: string, ...attrs: string[]): void;
             apply(options: {}): void;
             each(predicate: IteratorPredicate<Node, void>, rendered?: boolean): this;

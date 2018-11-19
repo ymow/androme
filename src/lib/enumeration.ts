@@ -41,7 +41,7 @@ export enum CSS_STANDARD {
 export enum NODE_ALIGNMENT {
     NONE = 0,
     EXCLUDE = 2,
-    EXTENDABLE = 4,
+    AUTO_LAYOUT = 4,
     HORIZONTAL = 8,
     VERTICAL = 16,
     ABSOLUTE = 32,
@@ -52,7 +52,8 @@ export enum NODE_ALIGNMENT {
     LEFT = 1024,
     SINGLE = 2048,
     MULTILINE = 4096,
-    SPACE = 8192
+    EXTENDABLE = 8192,
+    SPACE = 16384
 }
 
 export enum NODE_RESOURCE {

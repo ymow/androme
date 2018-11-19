@@ -320,6 +320,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 let output = '';
                 siblings.unshift(node);
                 const group = this.application.viewController.createGroup(parent, node, siblings);
+                siblings.forEach(item => item.inherit(group, 'data'));
                 const linearX = NodeList.linearX(siblings);
                 if (linearX && Application.isRelativeHorizontal(siblings)) {
                     output = this.application.writeRelativeLayout(group, parent);
@@ -334,7 +335,6 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                     group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                 }
-                node.alignmentType |= NODE_ALIGNMENT.EXCLUDE;
                 return { output, parent: group, complete: true };
             }
         }

@@ -9,8 +9,8 @@ export function stripId(value: string) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 
-export function createAttribute(options?: ExternalData): ViewAttribute {
-    return Object.assign({ android: {}, app: {} }, typeof options === 'object' ? options : {});
+export function createAttribute(options: ExternalData = {}): ViewAttribute {
+    return Object.assign({ android: {}, app: {} }, typeof options === 'object' && options ? options : {});
 }
 
 export function validateString(value: string) {

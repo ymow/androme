@@ -12,6 +12,7 @@ import View from './view';
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
 import External from './extension/external';
+import Flexbox from './extension/flexbox';
 import Grid from './extension/grid';
 import List from './extension/list';
 import Origin from './extension/origin';
@@ -67,6 +68,7 @@ const lib = {
         Accessibility,
         CssGrid,
         External,
+        Flexbox,
         Grid,
         List,
         Origin,
@@ -206,6 +208,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
             [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
             [EXT_NAME.CSS_GRID]: new CssGrid(EXT_NAME.CSS_GRID, framework),
+            [EXT_NAME.FLEXBOX]: new Flexbox(EXT_NAME.FLEXBOX, framework),
             [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
             [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),

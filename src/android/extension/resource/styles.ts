@@ -9,7 +9,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
     public afterProcedure() {
         const styles: ObjectMap<string[]> = {};
         for (const node of this.application.session.cache.visible) {
-            const children = node.renderChildren.filter(item => item.visible && !item.positioned);
+            const children = node.renderChildren;
             if (children.length > 1) {
                 const attrMap = new Map<string, number>();
                 let style = '';

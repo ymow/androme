@@ -15,6 +15,7 @@ import SvgPath from './base/svgpath';
 
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
+import Flexbox from './extension/flexbox';
 import External from './extension/external';
 import Grid from './extension/grid';
 import List from './extension/list';
@@ -250,6 +251,7 @@ const lib = {
         Accessibility,
         CssGrid,
         External,
+        Flexbox,
         Grid,
         List,
         Origin,

@@ -104,6 +104,7 @@ export const EXT_NAME = {
     ACCESSIBILITY: 'androme.accessibility',
     CSS_GRID: 'androme.css-grid',
     EXTERNAL: 'androme.external',
+    FLEXBOX: 'androme.flexbox',
     GRID: 'androme.grid',
     LIST: 'androme.list',
     ORIGIN: 'androme.origin',

@@ -16,7 +16,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const output = this.application.writeConstraintLayout(node, parent);
-        node.alignmentType = $enum.NODE_ALIGNMENT.EXCLUDE;
+        node.alignmentType |= $enum.NODE_ALIGNMENT.EXCLUDE;
         return { output };
     }
 

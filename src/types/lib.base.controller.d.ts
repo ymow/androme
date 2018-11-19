@@ -21,7 +21,7 @@ declare global {
 
         export class Controller<T extends Node> implements Controller<T> {
             public static partitionRows<T extends Node>(list: T[], parent?: T): T[][];
-            public static partitionAboveBottomBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
+            public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
             public static clearedAll<T extends Node>(parent: T): Map<T, string> | undefined;
         }
     }

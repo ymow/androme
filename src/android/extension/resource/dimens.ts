@@ -26,7 +26,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
                 groups[nodeName] = {};
             }
             ['android', 'app'].forEach(namespace => {
-                const obj = node.namespace(namespace);
+                const obj = node.unsafe(namespace);
                 for (const attr in obj) {
                     const value = obj[attr].trim();
                     if (/^-?[\d.]+(px|dp|sp)$/.test(value)) {
