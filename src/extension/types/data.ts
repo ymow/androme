@@ -23,6 +23,18 @@ interface CssGridData<T> {
     justifyItems: string;
 }
 
+interface FlexboxData<T> {
+    children: T[];
+    wrap: boolean;
+    rowCount: number;
+    rowDirection: boolean;
+    columnDirection: boolean;
+    columnCount: number;
+    wrapReverse: boolean;
+    directionReverse: boolean;
+    justifyContent: string;
+}
+
 interface CssGridCellData {
     rowStart: number;
     rowSpan: number;

@@ -1,3 +1,4 @@
+import { EXT_NAME } from '../lib/constant';
 import { NODE_ALIGNMENT } from '../lib/enumeration';
 
 import Extension from '../base/extension';
@@ -13,11 +14,19 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = this.application.viewController;
-        const flex = node.flexbox;
-        const rowDirection = flex.direction.indexOf('row') !== -1;
         const [pageflow, absolute] = partition(node.children as T[], item => item.pageflow);
-        let output = '';
-        let rowCount = 1;
+        const flex = node.flexbox;
+        const mainData = <FlexboxData<T>> {
+            children: pageflow,
+            wrap: flex.wrap.startsWith('wrap'),
+            rowDirection: flex.direction.startsWith('row'),
+            rowCount: 0,
+            columnDirection: flex.direction.startsWith('column'),
+            columnCount: 0,
+            wrapReverse: flex.wrap === 'wrap-reverse',
+            directionReverse: flex.direction.endsWith('reverse'),
+            justifyContent: flex.justifyContent
+        };
         if (node.cssTry('display', 'block')) {
             for (const item of pageflow) {
                 const bounds = item.element.getBoundingClientRect();
@@ -25,7 +34,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             }
             node.cssFinally('display');
         }
-        if (flex.wrap === 'wrap' || flex.wrap === 'wrap-reverse') {
+        if (mainData.wrap) {
             function setFlexDirection(align: string, sort: string, size: string) {
                 const map = new Map<number, T[]>();
                 pageflow.sort((a, b) => {
@@ -43,6 +52,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                     map.set(xy, items);
                 }
                 if (map.size > 0) {
+                    let maxCount = 0;
                     Array.from(map.values()).forEach((segment, index) => {
                         const group = controller.createGroup(node, segment[0], segment);
                         group.siblingIndex = index;
@@ -51,13 +61,21 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                             box[size] = node.box[size];
                         }
                         group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                        maxCount = Math.max(segment.length, maxCount);
                     });
                     node.sort(NodeList.siblingIndex);
-                    rowCount = map.size;
+                    if (mainData.rowDirection) {
+                        mainData.rowCount = map.size;
+                        mainData.columnCount = maxCount;
+                    }
+                    else {
+                        mainData.rowCount = maxCount;
+                        mainData.columnCount = map.size;
+                    }
                 }
             }
-            if (rowDirection) {
-                setFlexDirection('top', 'left', 'right');
+            if (mainData.rowDirection) {
+                setFlexDirection(mainData.wrapReverse ? 'bottom' : 'top', 'left', 'right');
             }
             else {
                 setFlexDirection('left', 'top', 'bottom');
@@ -65,20 +83,30 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         }
         else {
             if (pageflow.some(item => item.flexbox.order !== 0)) {
-                if (flex.direction.indexOf('reverse') !== -1) {
+                if (mainData.directionReverse) {
                     sortDesc(node.children, 'flexbox.order');
                 }
                 else {
                     sortAsc(node.children, 'flexbox.order');
                 }
             }
+            if (mainData.rowDirection) {
+                mainData.rowCount = 1;
+                mainData.columnCount = node.children.length;
+            }
+            else {
+                mainData.rowCount = node.children.length;
+                mainData.columnCount = 1;
+            }
         }
-        if (absolute.length > 0 || rowCount === 1) {
+        let output = '';
+        if (absolute.length > 0 || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
             output = this.application.writeConstraintLayout(node, parent);
         }
         else {
-            output = this.application.writeLinearLayout(node, parent, !rowDirection);
+            output = this.application.writeLinearLayout(node, parent, mainData.columnDirection);
         }
+        node.data(EXT_NAME.FLEXBOX, 'mainData', mainData);
         node.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
         return { output, complete: true };
     }

@@ -93,22 +93,27 @@ function constraintMinMax<T extends View>(node: T, dimension: string) {
     }
 }
 
-function constraintPercentValue<T extends View>(node: T, dimension: string, value: string) {
+function constraintPercentValue<T extends View>(node: T, dimension: string, value: string, requirePX: boolean) {
     if ($util.isPercent(value)) {
-        node.app(`layout_constraint${dimension}_percent`, (parseInt(value) / 100).toFixed(2));
-        node.android(`layout_${dimension.toLowerCase()}`, '0px');
+        if (requirePX) {
+            node.android(`layout_${dimension.toLowerCase()}`, node.convertPercent(value, dimension === 'Width', true));
+        }
+        else {
+            node.app(`layout_constraint${dimension}_percent`, (parseInt(value) / 100).toFixed(2));
+            node.android(`layout_${dimension.toLowerCase()}`, '0px');
+        }
     }
 }
 
-function constraintPercentWidth<T extends View>(node: T) {
+function constraintPercentWidth<T extends View>(node: T, requirePX = false) {
     const value = node.has('width') ? node.css('width') : '';
-    constraintPercentValue(node, 'Width', value);
+    constraintPercentValue(node, 'Width', value, requirePX);
 }
 
-function constraintPercentHeight<T extends View>(node: T) {
+function constraintPercentHeight<T extends View>(node: T, requirePX = false) {
     if (node.documentParent.hasHeight) {
         const value = node.has('height') ? node.css('height') : '';
-        constraintPercentValue(node, 'Height', value);
+        constraintPercentValue(node, 'Height', value, requirePX);
     }
 }
 
@@ -197,10 +202,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
         else {
             if (horizontal) {
-                constraintPercentHeight(node);
+                constraintPercentHeight(node, true);
             }
             else {
-                constraintPercentWidth(node);
+                constraintPercentWidth(node, true);
             }
         }
         constraintMinMax(node, 'Width');
