@@ -12,8 +12,8 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         let container: T | undefined;
-        const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
-        if (image && image.uri && image.position) {
+        const mainData = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'mainData');
+        if (mainData && mainData.uri && mainData.position) {
             container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
             container.nodeName = node.nodeName;
             container.excludeProcedure |= $enum.NODE_PROCEDURE.CUSTOMIZATION;
@@ -35,12 +35,12 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
                 bottom: 'auto',
                 left: 'auto',
                 display: 'inline-block',
-                width: $util.formatPX(image.width),
-                height: $util.formatPX(image.height),
-                marginTop: $util.formatPX(image.position.y),
+                width: $util.formatPX(mainData.width),
+                height: $util.formatPX(mainData.height),
+                marginTop: $util.formatPX(mainData.position.y),
                 marginRight: '0px',
                 marginBottom: '0px',
-                marginLeft: $util.formatPX(image.position.x),
+                marginLeft: $util.formatPX(mainData.position.x),
                 paddingTop: '0px',
                 paddingRight: '0px',
                 paddingBottom: '0px',
@@ -54,7 +54,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
                 backgroundPositionY: '0px',
                 backgroundColor: 'transparent'
             });
-            node.android('src', `@drawable/${Resource.addImage({ mdpi: image.uri })}`);
+            node.android('src', `@drawable/${Resource.addImage({ mdpi: mainData.uri })}`);
         }
         return { output, parent: container, complete: true };
     }

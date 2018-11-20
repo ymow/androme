@@ -2,6 +2,16 @@ interface Inheritable {
     inherit: boolean;
 }
 
+interface CssGridData<T> {
+    children: Set<T>;
+    row: CssGridDataAttribute;
+    column: CssGridDataAttribute;
+    rowData: T[][][];
+    templateAreas: ObjectMap<CssGridCellData>;
+    alignItems: string;
+    justifyItems: string;
+}
+
 interface CssGridDataAttribute {
     count: number;
     gap: number;
@@ -13,28 +23,6 @@ interface CssGridDataAttribute {
     name: ObjectMap<number[]>;
 }
 
-interface CssGridData<T> {
-    children: Set<T>;
-    row: CssGridDataAttribute;
-    column: CssGridDataAttribute;
-    rowData: T[][][];
-    templateAreas: ObjectMap<CssGridCellData>;
-    alignItems: string;
-    justifyItems: string;
-}
-
-interface FlexboxData<T> {
-    children: T[];
-    wrap: boolean;
-    rowCount: number;
-    rowDirection: boolean;
-    columnDirection: boolean;
-    columnCount: number;
-    wrapReverse: boolean;
-    directionReverse: boolean;
-    justifyContent: string;
-}
-
 interface CssGridCellData {
     rowStart: number;
     rowSpan: number;
@@ -42,13 +30,25 @@ interface CssGridCellData {
     columnSpan: number;
 }
 
-interface GridData {
-    columnEnd: number[];
+interface FlexboxData<T> {
+    wrap: boolean;
+    wrapReverse: boolean;
+    directionReverse: boolean;
+    justifyContent: string;
+    rowCount: number;
+    rowDirection: boolean;
+    columnDirection: boolean;
     columnCount: number;
-    padding: BoxRect;
+    children: T[];
 }
 
-interface GridCellData extends Inheritable {
+interface GridData extends BoxPadding {
+    columnEnd: number[];
+    columnCount: number;
+}
+
+interface GridCellData<T> extends Inheritable {
+    siblings?: T[];
     rowSpan: number;
     columnSpan: number;
     index: number;

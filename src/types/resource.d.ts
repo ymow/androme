@@ -36,15 +36,21 @@ interface BoxPosition extends BoxRect {
     originalY: string;
 }
 
-interface BoxModel {
+interface BoxMargin {
     marginTop: number;
     marginRight: number;
     marginBottom: number;
     marginLeft: number;
+}
+
+interface BoxPadding {
     paddingTop: number;
     paddingRight: number;
     paddingBottom: number;
     paddingLeft: number;
+}
+
+interface BoxModel extends BoxMargin, BoxPadding{
     borderTopWidth?: number;
     borderRightWidth?: number;
     borderBottomWidth?: number;
@@ -111,17 +117,20 @@ interface FontAttribute {
     backgroundColor: string;
 }
 
-interface BoxStyle {
-    border?: BorderAttribute;
+interface BoxBorder {
     borderTop: BorderAttribute;
     borderRight: BorderAttribute;
     borderBottom: BorderAttribute;
     borderLeft: BorderAttribute;
-    backgroundColor: string;
+}
+
+interface BoxStyle extends BoxBorder {
+    border?: BorderAttribute;
     background?: string;
     borderRadius?: string[];
     backgroundImage?: string[];
     backgroundGradient?: Gradient[];
+    backgroundColor: string;
     backgroundSize: string;
     backgroundRepeat: string;
     backgroundPositionX: string;

@@ -7,13 +7,13 @@ import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Grid<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {
-        const data: GridCellData = node.data($const.EXT_NAME.GRID, 'cellData');
-        if (data) {
-            if (data.rowSpan > 1) {
-                node.android('layout_rowSpan', data.rowSpan.toString());
+        const cellData: GridCellData<T> = node.data($const.EXT_NAME.GRID, 'cellData');
+        if (cellData) {
+            if (cellData.rowSpan > 1) {
+                node.android('layout_rowSpan', cellData.rowSpan.toString());
             }
-            if (data.columnSpan > 1) {
-                node.android('layout_columnSpan', data.columnSpan.toString());
+            if (cellData.columnSpan > 1) {
+                node.android('layout_columnSpan', cellData.columnSpan.toString());
             }
             if (node.parent.tableElement && node.display === 'table-cell') {
                 node.mergeGravity('layout_gravity', 'fill');
@@ -27,21 +27,20 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
             const mainData: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
             if (mainData) {
                 node.each(item => {
-                    const cellData: GridCellData = item.data($const.EXT_NAME.GRID, 'cellData');
+                    const cellData: GridCellData<T> = item.data($const.EXT_NAME.GRID, 'cellData');
                     if (cellData) {
                         const dimensions = $dom.getBoxSpacing(item.documentParent.element, true);
-                        const padding = mainData.padding;
                         if (cellData.cellFirst) {
-                            padding.top = dimensions.paddingTop + dimensions.marginTop;
+                            mainData.paddingTop = dimensions.paddingTop + dimensions.marginTop;
                         }
                         if (cellData.rowStart) {
-                            padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
+                            mainData.paddingLeft = Math.max(dimensions.marginLeft + dimensions.paddingLeft, mainData.paddingLeft);
                         }
                         if (cellData.rowEnd) {
                             const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                             if (heightBottom > 0) {
                                 if (cellData.cellLast) {
-                                    padding.bottom = heightBottom;
+                                    mainData.paddingBottom = heightBottom;
                                 }
                                 else {
                                     this.application.viewController.appendAfter(
@@ -50,18 +49,15 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                                     );
                                 }
                             }
-                            padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
+                            mainData.paddingRight = Math.max(dimensions.marginRight + dimensions.paddingRight, mainData.paddingRight);
                         }
                     }
                 }, true);
             }
-        }
-        const data: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
-        if (data) {
-            node.modifyBox($enum.BOX_STANDARD.PADDING_TOP, data.padding.top);
-            node.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, data.padding.right);
-            node.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
-            node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, data.padding.left);
+            node.modifyBox($enum.BOX_STANDARD.PADDING_TOP, mainData.paddingTop);
+            node.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, mainData.paddingRight);
+            node.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, mainData.paddingBottom);
+            node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, mainData.paddingLeft);
         }
     }
 }

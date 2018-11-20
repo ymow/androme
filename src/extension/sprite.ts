@@ -29,7 +29,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
                     const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, dpi, fontSize);
                     if (width > 0 && position.left <= 0 && image.width > width && height > 0 && position.top <= 0 && image.height > height) {
                         image.position = { x: position.left, y: position.top };
-                        node.data(EXT_NAME.SPRITE, 'image', image);
+                        node.data(EXT_NAME.SPRITE, 'mainData', image);
                         valid = true;
                     }
                 }

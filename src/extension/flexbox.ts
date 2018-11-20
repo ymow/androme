@@ -8,6 +8,20 @@ import NodeList from '../base/nodelist';
 import { partition, sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class Flexbox<T extends Node> extends Extension<T> {
+    public static createDataAttribute<T extends Node>(children: T[]): FlexboxData<T> {
+        return {
+            wrap: false,
+            wrapReverse: false,
+            directionReverse: false,
+            justifyContent: '',
+            rowDirection: false,
+            rowCount: 0,
+            columnDirection: false,
+            columnCount: 0,
+            children
+        };
+    }
+
     public condition(node: T) {
         return node.length > 0 && node.flexElement;
     }
@@ -16,17 +30,14 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         const controller = this.application.viewController;
         const [pageflow, absolute] = partition(node.children as T[], item => item.pageflow);
         const flex = node.flexbox;
-        const mainData = <FlexboxData<T>> {
-            children: pageflow,
+        const mainData = Object.assign(Flexbox.createDataAttribute(pageflow), {
             wrap: flex.wrap.startsWith('wrap'),
-            rowDirection: flex.direction.startsWith('row'),
-            rowCount: 0,
-            columnDirection: flex.direction.startsWith('column'),
-            columnCount: 0,
             wrapReverse: flex.wrap === 'wrap-reverse',
             directionReverse: flex.direction.endsWith('reverse'),
-            justifyContent: flex.justifyContent
-        };
+            justifyContent: flex.justifyContent,
+            rowDirection: flex.direction.startsWith('row'),
+            columnDirection: flex.direction.startsWith('column')
+        });
         if (node.cssTry('display', 'block')) {
             for (const item of pageflow) {
                 const bounds = item.element.getBoundingClientRect();

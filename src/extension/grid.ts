@@ -6,10 +6,34 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { isStyleElement, newBoxRect } from '../lib/dom';
+import { isStyleElement } from '../lib/dom';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
+    public static createDataAttribute(): GridData {
+        return {
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            columnEnd: [],
+            columnCount: 0
+        };
+    }
+
+    public static createDataCellAttribute<T extends Node>(): GridCellData<T> {
+        return {
+            inherit: true,
+            rowSpan: 0,
+            columnSpan: 0,
+            index: -1,
+            cellFirst: false,
+            cellLast: false,
+            rowEnd: false,
+            rowStart: false
+        };
+    }
+
     public readonly options = {
         columnBalance: false
     };
@@ -27,11 +51,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
 
     public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
         const columnBalance = this.options.columnBalance;
-        const mainData: GridData = {
-            padding: newBoxRect(),
-            columnEnd: [],
-            columnCount: 0
-        };
+        const mainData = Grid.createDataAttribute();
         let output = '';
         let columns: T[][] = [];
         if (columnBalance) {
@@ -84,7 +104,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         for (let m = 0; m < columns.length; m++) {
                             if (columns[m].length > base.length) {
                                 const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
-                                columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'siblings', [...removed]);
+                                columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'cellData', { siblings: [...removed] });
                             }
                         }
                     }
@@ -95,7 +115,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             for (let m = 0; m < columns.length; m++) {
                                 if (found[m] > minIndex) {
                                     const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                    columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'siblings', [...removed]);
+                                    columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'cellData', { siblings: [...removed] });
                                 }
                             }
                         }
@@ -220,16 +240,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     const item = columns[l][m];
                     if (!(<any> item).spacer) {
                         item.parent = node;
-                        const data: GridCellData = {
-                            inherit: true,
-                            rowSpan: 0,
-                            columnSpan: 0,
-                            index: -1,
-                            cellFirst: false,
-                            cellLast: false,
-                            rowEnd: false,
-                            rowStart: false
-                        };
+                        const data: GridCellData<T> = Object.assign(Grid.createDataCellAttribute(), item.data(EXT_NAME.GRID, 'cellData') || {});
                         if (columnBalance) {
                             data.rowStart = m === 0;
                             data.rowEnd = m === columns[l].length - 1;
@@ -291,11 +302,11 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
 
     public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: GridData = parent.data(EXT_NAME.GRID, 'mainData');
-        const cellData: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
+        const cellData: GridCellData<T> = node.data(EXT_NAME.GRID, 'cellData');
         if (mainData && cellData) {
             let siblings: T[];
             if (this.options.columnBalance) {
-                siblings = node.data(EXT_NAME.GRID, 'siblings');
+                siblings = cellData.siblings ? cellData.siblings : [];
             }
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
@@ -312,7 +323,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 })
                 .filter(item => item) as T[];
             }
-            if (siblings && siblings.length > 0) {
+            if (siblings.length > 0) {
                 let output = '';
                 siblings.unshift(node);
                 const group = this.application.viewController.createGroup(parent, node, siblings);

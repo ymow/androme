@@ -12,6 +12,14 @@ function hasSingleImage<T extends Node>(node: T) {
 }
 
 export default abstract class List<T extends Node> extends Extension<T> {
+    public static createDataAttribute(): ListData {
+        return {
+            ordinal: '',
+            imageSrc: '',
+            imagePosition: ''
+        };
+    }
+
     public condition(node: T) {
         return super.condition(node) && node.length > 0 && (
             node.every(item => item.blockStatic) ||
@@ -34,11 +42,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         }
         let i = 0;
         for (const item of node) {
-            const mainData: ListData = {
-                ordinal: '',
-                imageSrc: '',
-                imagePosition: ''
-            };
+            const mainData: ListData = List.createDataAttribute();
             if (item.display === 'list-item' || item.has('listStyleType') || hasSingleImage(item)) {
                 let src = item.css('listStyleImage');
                 if (src && src !== 'none') {

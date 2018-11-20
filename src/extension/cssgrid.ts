@@ -30,8 +30,8 @@ function cssOrder<T extends Node>(a: T, b: T) {
 }
 
 export default class CssGrid<T extends Node> extends Extension<T> {
-    public static createDataAttribute() {
-        return <CssGridDataAttribute> {
+    public static createDataAttribute(): CssGridDataAttribute {
+        return {
             count: 0,
             gap: 0,
             unit: [],
