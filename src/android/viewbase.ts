@@ -336,10 +336,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             });
         }
 
-        public convertPX(value: string) {
-            return $util.convertPX(value, this.dpi, this.fontSize);
-        }
-
         public localizeString(value: string) {
             if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
                 return replaceRTL(value, this.localSettings);

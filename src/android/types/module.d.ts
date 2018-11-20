@@ -2,17 +2,17 @@ export interface SettingsAndroid extends Settings {
     targetAPI: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
-    showAttributes: boolean;
+    autoSizePaddingAndBorderWidth: boolean;
+    whitespaceHorizontalOffset: number;
+    whitespaceVerticalOffset: number;
+    customizationsOverwritePrivilege: boolean;
     convertPixels: string;
-}
-
-export interface EnvironmentSettings {
-    resolutionDPI: number;
-    targetAPI: number;
-    supportRTL: boolean;
+    showAttributes: boolean;
 }
 
 export interface LocalSettings extends EnvironmentSettings {
+    targetAPI: number;
+    supportRTL: boolean;
     constraintPercentAccuracy?: number;
     customizationsOverwritePrivilege?: boolean;
     autoSizePaddingAndBorderWidth?: boolean;

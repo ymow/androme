@@ -5,7 +5,7 @@ import Container from './container';
 import Extension from './extension';
 
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newClientRect, setElementCache, deleteElementCache } from '../lib/dom';
-import { assignWhenNull, convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
+import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 
 type T = Node;
 
@@ -25,6 +25,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return getNodeFromElement<T>(element);
     }
 
+    public abstract readonly localSettings: EnvironmentSettings;
     public abstract readonly renderChildren: T[];
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
@@ -97,7 +98,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyCustomizations(): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): [number, number];
-    public abstract convertPX(value: string): string;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
     public abstract get controlType(): number;
@@ -474,6 +474,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
         }
         return false;
+    }
+
+    public convertPX(value: string) {
+        return convertPX(value, this.dpi, this.fontSize);
     }
 
     public convertPercent(value: string, horizontal: boolean, parentBounds = false) {

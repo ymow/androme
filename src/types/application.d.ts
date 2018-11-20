@@ -5,20 +5,20 @@ interface LayoutMapX<T> {
 
 type LayoutMapY<T> = Map<number, Map<number, T>>;
 
-interface Settings {
-    builtInExtensions: string[];
+
+interface EnvironmentSettings {
     resolutionDPI: number;
+}
+
+interface Settings extends EnvironmentSettings {
+    builtInExtensions: string[];
     renderInlineText: boolean;
     preloadImages: boolean;
-    autoSizePaddingAndBorderWidth: boolean;
     alwaysReevaluateResources: boolean;
-    whitespaceHorizontalOffset: number;
-    whitespaceVerticalOffset: number;
     supportNegativeLeftTop: boolean;
     floatOverlapDisabled: boolean;
     hideOffScreenElements: boolean;
     collapseUnattributedElements: boolean;
-    customizationsOverwritePrivilege: boolean;
     insertSpaces: number;
     handleExtensionsAsync: boolean;
     autoCloseOnWrite: boolean;

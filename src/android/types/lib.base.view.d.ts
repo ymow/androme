@@ -5,7 +5,6 @@ declare global {
         export interface View extends androme.lib.base.Node {
             anchored: boolean;
             readonly constraint: Constraint;
-            readonly renderChildren: View[];
             readonly stringId: string;
             readonly localSettings: LocalSettings;
             android(attr: string, value?: string, overwrite?: boolean);

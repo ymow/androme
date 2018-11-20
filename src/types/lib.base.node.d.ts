@@ -30,6 +30,7 @@ declare global {
             excluded: boolean;
             rendered: boolean;
             companion: Node | undefined;
+            readonly localSettings: EnvironmentSettings;
             readonly initial: InitialData<Node>;
             readonly controlType: number;
             readonly renderChildren: Node[];
