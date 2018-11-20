@@ -125,11 +125,11 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 container.mergeGravity('layout_gravity', 'fill_vertical');
                 let inlineWidth = false;
                 if (justifyItems.endsWith('start') || justifyItems.endsWith('left') || justifyItems.endsWith('baseline')) {
-                    node.mergeGravity('layout_gravity', node.localizeString('left'));
+                    node.mergeGravity('layout_gravity', 'left');
                     inlineWidth = true;
                 }
                 else if (justifyItems.endsWith('end') || justifyItems.endsWith('right')) {
-                    node.mergeGravity('layout_gravity', node.localizeString('right'));
+                    node.mergeGravity('layout_gravity', 'right');
                     inlineWidth = true;
                 }
                 else if (justifyItems.endsWith('center')) {

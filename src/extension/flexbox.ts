@@ -14,7 +14,8 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = this.application.viewController;
         const flex = node.flexbox;
-        const [absolute, pageflow] = partition(node.children, item => !item.pageflow);
+        const rowDirection = flex.direction.indexOf('row') !== -1;
+        const [pageflow, absolute] = partition(node.children as T[], item => item.pageflow);
         let output = '';
         let rowCount = 1;
         if (node.cssTry('display', 'block')) {
@@ -25,34 +26,41 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             node.cssFinally('display');
         }
         if (flex.wrap === 'wrap' || flex.wrap === 'wrap-reverse') {
-            const alignTop = pageflow.slice() as T[];
-            const mapY = new Map<number, T[]>();
-            alignTop.sort((a, b) => {
-                if (a.intersectX(b.linear)) {
-                    return a.linear.left < b.linear.left ? -1 : 1;
-                }
-                else {
-                    return a.linear.top < b.linear.top ? -1 : 1;
-                }
-            });
-            for (const item of alignTop) {
-                const y = Math.round(item.linear.top);
-                const items: T[] = mapY.get(y) || [];
-                items.push(item);
-                mapY.set(y, items);
-            }
-            if (mapY.size > 0) {
-                Array.from(mapY.values()).forEach((segment, index) => {
-                    const group = controller.createGroup(node, segment[0], segment);
-                    group.siblingIndex = index;
-                    const box = group.unsafe('box');
-                    if (box) {
-                        box.right = node.box.right;
+            function setFlexDirection(align: string, sort: string, size: string) {
+                const map = new Map<number, T[]>();
+                pageflow.sort((a, b) => {
+                    if (a.linear[align] < b.linear[align]) {
+                        return a.linear[align] < b.linear[align] ? -1 : 1;
                     }
-                    group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                    else {
+                        return a.linear[sort] < b.linear[sort] ? -1 : 1;
+                    }
                 });
-                node.sort(NodeList.siblingIndex);
-                rowCount = mapY.size;
+                for (const item of pageflow) {
+                    const xy = Math.round(item.linear[align]);
+                    const items: T[] = map.get(xy) || [];
+                    items.push(item);
+                    map.set(xy, items);
+                }
+                if (map.size > 0) {
+                    Array.from(map.values()).forEach((segment, index) => {
+                        const group = controller.createGroup(node, segment[0], segment);
+                        group.siblingIndex = index;
+                        const box = group.unsafe('box');
+                        if (box) {
+                            box[size] = node.box[size];
+                        }
+                        group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                    });
+                    node.sort(NodeList.siblingIndex);
+                    rowCount = map.size;
+                }
+            }
+            if (rowDirection) {
+                setFlexDirection('top', 'left', 'right');
+            }
+            else {
+                setFlexDirection('left', 'top', 'bottom');
             }
         }
         else {
@@ -69,7 +77,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             output = this.application.writeConstraintLayout(node, parent);
         }
         else {
-            output = this.application.writeLinearLayout(node, parent, false);
+            output = this.application.writeLinearLayout(node, parent, !rowDirection);
         }
         node.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
         return { output, complete: true };

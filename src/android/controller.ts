@@ -468,7 +468,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                     }
                     else if (node.layoutConstraint) {
-                        const [absolute, pageflow] = $util.partition(children, item => !item.pageflow);
+                        const [pageflow, absolute] = $util.partition(children, item => item.pageflow);
                         const documentParent = node.groupElement ? node : null;
                         let resetPadding = false;
                         for (const item of absolute) {

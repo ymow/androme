@@ -5,7 +5,6 @@ interface LayoutMapX<T> {
 
 type LayoutMapY<T> = Map<number, Map<number, T>>;
 
-
 interface EnvironmentSettings {
     resolutionDPI: number;
 }

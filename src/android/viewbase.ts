@@ -671,14 +671,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     floating = floating || this.float;
                     if (floating !== 'none') {
                         if (renderParent.inlineWidth || (this.singleChild && !renderParent.documentRoot)) {
-                            renderParent.mergeGravity('layout_gravity', this.localizeString(floating));
+                            renderParent.mergeGravity('layout_gravity', floating);
                         }
                         else {
                             if (this.blockWidth) {
                                 textAlign = setTextAlign(floating);
                             }
                             else {
-                                this.mergeGravity('layout_gravity', this.localizeString(floating));
+                                this.mergeGravity('layout_gravity', floating);
                             }
                         }
                     }
@@ -716,7 +716,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public mergeGravity(attr: string, ...alignment: string[]) {
-            const direction = new Set([...this.android(attr).split('|'), ...alignment].filter(value => value));
+            const direction = new Set([...this.android(attr).split('|'), ...alignment].filter(value => value.trim() !== '').map(value => this.localizeString(value)));
             let result = '';
             switch (direction.size) {
                 case 0:
@@ -944,69 +944,71 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         private bindWhiteSpace() {
-            if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (
+            if (!this.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
+                if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (
                     this.linearHorizontal ||
                     this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
                     this.of($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL)
-               ))
-            {
-                const textAlign = this.css('textAlign');
-                const textIndent = this.toInt('textIndent');
-                const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
-                let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
-                this.each((node: View, index) => {
-                    if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
-                        const width = Math.round(node.actualLeft() - right);
-                        if (width >= 1) {
-                            node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
+                   ))
+                {
+                    const textAlign = this.css('textAlign');
+                    const textIndent = this.toInt('textIndent');
+                    const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
+                    let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
+                    this.each((node: View, index) => {
+                        if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                            const width = Math.round(node.actualLeft() - right);
+                            if (width >= 1) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
+                            }
                         }
-                    }
-                    right = node.actualRight();
-                }, true);
-            }
-            else if (this.linearVertical) {
-                function getPreviousBottom(list: View[]) {
-                    return list.sort((a, b) => a.linear.bottom <= b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                        right = node.actualRight();
+                    }, true);
                 }
-                const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
-                children.forEach((node: View) => {
-                    const previous = (() => {
-                        let current: View | null = node;
-                        do {
-                            current = current.previousSibling(true, false, false) as View;
-                        }
-                        while (current && !this.initial.children.includes(current));
-                        return current;
-                    })();
-                    const elements = $dom.getBetweenElements(previous ? (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement) : null, node.baseElement).filter(element => {
-                        const item = $dom.getNodeFromElement<View>(element);
-                        return item && (item.lineBreak || (item.excluded && item.blockStatic));
-                    });
-                    if (elements.length > 0) {
-                        let bottom: number;
-                        if (!previous) {
-                            bottom = this.box.top;
-                        }
-                        else {
-                            bottom = (() => {
-                                if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
-                                    return getPreviousBottom(previous.renderParent.renderChildren.slice());
-                                }
-                                else if (previous.layoutHorizontal && previous.groupElement && previous.renderChildren.some(item => !item.floating)) {
-                                    return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
-                                }
-                                return previous.linear.bottom;
-                            })();
-                        }
-                        if (elements.length === 1 && elements[0].tagName === 'BR' && previous && previous.inline && node.inline) {
-                            return;
-                        }
-                        const height = Math.round(node.linear.top - bottom);
-                        if (height >= 1) {
-                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
-                        }
+                else if (this.linearVertical) {
+                    function getPreviousBottom(list: View[]) {
+                        return list.sort((a, b) => a.linear.bottom <= b.linear.bottom ? 1 : -1)[0].linear.bottom;
                     }
-                });
+                    const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
+                    children.forEach((node: View) => {
+                        const previous = (() => {
+                            let current: View | null = node;
+                            do {
+                                current = current.previousSibling(true, false, false) as View;
+                            }
+                            while (current && !this.initial.children.includes(current));
+                            return current;
+                        })();
+                        const elements = $dom.getBetweenElements(previous ? (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement) : null, node.baseElement).filter(element => {
+                            const item = $dom.getNodeFromElement<View>(element);
+                            return item && (item.lineBreak || (item.excluded && item.blockStatic));
+                        });
+                        if (elements.length > 0) {
+                            let bottom: number;
+                            if (!previous) {
+                                bottom = this.box.top;
+                            }
+                            else {
+                                bottom = (() => {
+                                    if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
+                                        return getPreviousBottom(previous.renderParent.renderChildren.slice());
+                                    }
+                                    else if (previous.layoutHorizontal && previous.groupElement && previous.renderChildren.some(item => !item.floating)) {
+                                        return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
+                                    }
+                                    return previous.linear.bottom;
+                                })();
+                            }
+                            if (elements.length === 1 && elements[0].tagName === 'BR' && previous && previous.inline && node.inline) {
+                                return;
+                            }
+                            const height = Math.round(node.linear.top - bottom);
+                            if (height >= 1) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
+                            }
+                        }
+                    });
+                }
             }
         }
 
