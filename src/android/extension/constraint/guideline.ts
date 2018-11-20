@@ -16,7 +16,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const output = this.application.writeConstraintLayout(node, parent);
-        node.alignmentType |= $enum.NODE_ALIGNMENT.EXCLUDE;
+        node.excludeProcedure |= $enum.NODE_PROCEDURE.CONSTRAINT;
         return { output };
     }
 
@@ -40,8 +40,8 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                 for (const [item, alignment] of alignParent.entries()) {
                     if (leftTop) {
                         if (alignment.length === 2) {
-                            item.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
-                            item.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
+                            item.anchor('left', 'parent');
+                            item.anchor('top', 'parent');
                             anchor = item;
                             break;
                         }
@@ -49,12 +49,12 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                     else {
                         if (alignment.length === 1) {
                             if (alignment.includes('left')) {
-                                item.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
+                                item.anchor('left', 'parent');
                                 controller.addGuideline(item, AXIS_ANDROID.VERTICAL);
                                 anchor = item;
                             }
                             else {
-                                item.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
+                                item.anchor('top', 'parent');
                                 controller.addGuideline(item, AXIS_ANDROID.HORIZONTAL);
                                 anchor = item;
                             }
@@ -119,10 +119,10 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
             else {
                 for (const [item, alignment] of alignParent.entries()) {
                     if (alignment.includes('left')) {
-                        item.anchor('left', 'parent', AXIS_ANDROID.HORIZONTAL);
+                        item.anchor('left', 'parent');
                     }
                     if (alignment.includes('top')) {
-                        item.anchor('top', 'parent', AXIS_ANDROID.VERTICAL);
+                        item.anchor('top', 'parent');
                     }
                     if (alignment.length < 2) {
                         controller.addGuideline(item);

@@ -1,5 +1,22 @@
 import { isArray, isString, repeat, trimEnd } from './util';
 
+export function getEnclosingTag(controlName: string, id: number, depth: number, xml = '', preXml = '', postXml = '') {
+    const indent = repeat(Math.max(0, depth));
+    let output = preXml +
+                 `{<${id}}`;
+    if (xml !== '') {
+        output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
+                           xml +
+                  indent + `</${controlName}>\n`;
+    }
+    else {
+        output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
+    }
+    output += `{>${id}}` +
+              postXml;
+    return output;
+}
+
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }

@@ -398,6 +398,14 @@ export function withinFraction(lower: number, upper: number) {
     );
 }
 
+export function assignWhenNull(source: {}, destination: {}) {
+    for (const attr in source) {
+        if (!destination.hasOwnProperty(attr)) {
+            destination[attr] = source[attr];
+        }
+    }
+}
+
 export function defaultWhenNull(options: {}, ...attrs: string[]) {
     let current = options;
     for (let i = 0 ; i < attrs.length - 1; i++) {

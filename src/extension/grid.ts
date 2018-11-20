@@ -1,5 +1,3 @@
-import { GridCellData, GridData } from './types/data';
-
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 
@@ -22,7 +20,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
                 node.css('listStyle') === 'none' ||
                 node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                (!hasValue(node.dataset.ext) && node.display.indexOf('flex') === -1 && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
+                (!hasValue(node.dataset.ext) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
             ))
         ));
     }
@@ -279,13 +277,11 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 }
             }
             sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
-            if (node.display === 'table') {
-                if (node.css('borderCollapse') === 'collapse') {
-                    node.modifyBox(BOX_STANDARD.PADDING_TOP, null);
-                    node.modifyBox(BOX_STANDARD.PADDING_RIGHT, null);
-                    node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
-                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
-                }
+            if (node.tableElement && node.css('borderCollapse') === 'collapse') {
+                node.modifyBox(BOX_STANDARD.PADDING_TOP, null);
+                node.modifyBox(BOX_STANDARD.PADDING_RIGHT, null);
+                node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
+                node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
             }
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);

@@ -2,7 +2,7 @@ interface Inheritable {
     inherit: boolean;
 }
 
-export interface CssGridDataAttribute {
+interface CssGridDataAttribute {
     count: number;
     gap: number;
     unit: string[];
@@ -13,7 +13,7 @@ export interface CssGridDataAttribute {
     name: ObjectMap<number[]>;
 }
 
-export interface CssGridData<T> {
+interface CssGridData<T> {
     children: Set<T>;
     row: CssGridDataAttribute;
     column: CssGridDataAttribute;
@@ -23,20 +23,20 @@ export interface CssGridData<T> {
     justifyItems: string;
 }
 
-export interface CssGridCellData {
+interface CssGridCellData {
     rowStart: number;
     rowSpan: number;
     columnStart: number;
     columnSpan: number;
 }
 
-export type GridData = {
+interface GridData {
     columnEnd: number[];
     columnCount: number;
     padding: BoxRect;
-};
+}
 
-export interface GridCellData extends Inheritable {
+interface GridCellData extends Inheritable {
     rowSpan: number;
     columnSpan: number;
     index: number;
@@ -46,8 +46,8 @@ export interface GridCellData extends Inheritable {
     rowStart: boolean;
 }
 
-export type ListData = {
+interface ListData {
     ordinal: string;
     imageSrc: string;
     imagePosition: string;
-};
+}

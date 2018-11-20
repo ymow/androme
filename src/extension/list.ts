@@ -1,5 +1,3 @@
-import { ListData } from './types/data';
-
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 

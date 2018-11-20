@@ -87,6 +87,7 @@ androme.settings = {
         'androme.origin',
         'androme.sprite',
         'androme.css-grid',
+        'androme.flexbox',
         'androme.table',
         'androme.list',
         'androme.grid',

@@ -202,6 +202,12 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                 if (result !== '') {
                     node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                 }
+                if (!node.hasWidth) {
+                    node.android('layout_width', 'wrap_content');
+                }
+                if (!node.hasHeight) {
+                    node.android('layout_height', 'wrap_content');
+                }
             }
         }
     }

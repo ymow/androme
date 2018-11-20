@@ -70,14 +70,15 @@ export enum NODE_RESOURCE {
 
 export enum NODE_PROCEDURE {
     NONE = 0,
-    LAYOUT = 2,
-    ALIGNMENT = 4,
-    AUTOFIT = 8,
-    OPTIMIZATION = 16,
-    CUSTOMIZATION = 32,
-    ACCESSIBILITY = 64,
-    LOCALIZATION = 128,
-    ALL = 254
+    CONSTRAINT = 2,
+    LAYOUT = 4,
+    ALIGNMENT = 8,
+    AUTOFIT = 16,
+    OPTIMIZATION = 32,
+    CUSTOMIZATION = 64,
+    ACCESSIBILITY = 128,
+    LOCALIZATION = 256,
+    ALL = 510
 }
 
 export enum NODE_STANDARD {

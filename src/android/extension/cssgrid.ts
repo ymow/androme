@@ -1,8 +1,5 @@
-import { CssGridCellData, CssGridData, CssGridDataAttribute } from '../../extension/types/data';
-
 import { NODE_ANDROID } from '../lib/constant';
 
-import Controller from '../controller';
 import View from '../view';
 
 import $const = androme.lib.constant;
@@ -121,7 +118,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 container.setNodeType(NODE_ANDROID.FRAME, $enum.NODE_STANDARD.FRAME);
                 parent.replaceNode(node, container);
                 this.application.processing.cache.append(container, false);
-                output = Controller.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+                output = $xml.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
                 container.render(parent);
                 applyLayout(container, 'column', 'width');
                 applyLayout(container, 'row', 'height');

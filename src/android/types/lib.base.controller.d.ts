@@ -7,8 +7,8 @@ declare global {
 
         export class Controller<T extends View> implements Controller<T> {
             public static anchorEvaluate<T extends View>(nodes: T[]): void;
-            public static getEnclosingTag(controlName: string, id: number, depth: number, xml?: string, preXml?: string, postXml?: string): string;
-            public static setConstraintDimension<T extends View>(node: T, dimension?: string): void;
+            public static dimensionConstraint<T extends View>(node: T): void;
+            public static dimensionFlexbox<T extends View>(node: T, horizontal: boolean): void;
         }
     }
 }

@@ -1,7 +1,6 @@
 import View from '../view';
 
 import $const = androme.lib.constant;
-import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Table<T> {
@@ -93,7 +92,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
             if (node.bounds.width > layoutWidth) {
                 node.android('layout_width', $util.formatPX(node.bounds.width));
             }
-            if (layoutWidth > 0 && node.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && node.renderChildren.every(item => item.inlineWidth)) {
+            if (layoutWidth > 0 && node.cssInitial('width') === 'auto' && node.renderChildren.every(item => item.inlineWidth)) {
                 for (const item of node.renderChildren) {
                     item.android('layout_width', '0px');
                     item.android('layout_columnWeight', '1');

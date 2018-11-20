@@ -8,7 +8,7 @@ import { partition, sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class Flexbox<T extends Node> extends Extension<T> {
     public condition(node: T) {
-        return node.length > 0 && node.display.indexOf('flex') !== -1;
+        return node.length > 0 && node.flexElement;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -17,6 +17,13 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         const [absolute, pageflow] = partition(node.children, item => !item.pageflow);
         let output = '';
         let rowCount = 1;
+        if (node.cssTry('display', 'block')) {
+            for (const item of pageflow) {
+                const bounds = item.element.getBoundingClientRect();
+                Object.assign(item.initial.bounds, { width: bounds.width, height: bounds.height });
+            }
+            node.cssFinally('display');
+        }
         if (flex.wrap === 'wrap' || flex.wrap === 'wrap-reverse') {
             const alignTop = pageflow.slice() as T[];
             const mapY = new Map<number, T[]>();
@@ -36,9 +43,6 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             }
             if (mapY.size > 0) {
                 Array.from(mapY.values()).forEach((segment, index) => {
-                    for (let i = 0; i < segment.length; i++) {
-                        segment[i].siblingIndex = i;
-                    }
                     const group = controller.createGroup(node, segment[0], segment);
                     group.siblingIndex = index;
                     const box = group.unsafe('box');

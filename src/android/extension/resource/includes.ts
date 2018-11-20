@@ -1,4 +1,3 @@
-import Controller from '../../controller';
 import View from '../../view';
 
 import $util = androme.lib.util;
@@ -104,7 +103,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     }
                                     let xml = Array.from(content.values()).join('');
                                     if (merge) {
-                                        xml = Controller.getEnclosingTag('merge', 0, 0, xml);
+                                        xml = $xml.getEnclosingTag('merge', 0, 0, xml);
                                     }
                                     else if (!openData.item.documentRoot) {
                                         const placeholder = $xml.formatPlaceholder(openData.item.id, '@');

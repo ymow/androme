@@ -96,17 +96,9 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     }
 
     public postProcedure(node: T) {
-        const header = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, $const.EXT_NAME.EXTERNAL));
-        if (header && !header.hasHeight) {
-            header.android('layout_height', 'wrap_content');
-        }
-        const renderQueue = this.application.session.renderQueue;
-        if (renderQueue.has(node.nodeId)) {
-            const target = this.application.session.cache.find(item => item.parent === node.parent && item.controlName === $android_const.VIEW_SUPPORT.COORDINATOR);
-            if (target) {
-                renderQueue.set(target.nodeId, renderQueue.get(node.nodeId) as string[]);
-                renderQueue.delete(node.nodeId);
-            }
+        const coordinator = $dom.getNodeFromElement<T>($dom.getNestedExtension(node.element, WIDGET_NAME.COORDINATOR));
+        if (coordinator && coordinator.some(item => item.positioned) && coordinator.inlineHeight) {
+            coordinator.android('layout_height', 'match_parent');
         }
     }
 

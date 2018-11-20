@@ -129,9 +129,4 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         }
         return { output, complete: true };
     }
-
-    public postProcedure(node: T) {
-        node.android('layout_width', 'wrap_content');
-        node.android('layout_height', 'wrap_content');
-    }
 }

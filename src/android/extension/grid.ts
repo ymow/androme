@@ -1,5 +1,3 @@
-import { GridCellData, GridData } from '../../extension/types/data';
-
 import View from '../view';
 
 import $const = androme.lib.constant;
@@ -17,7 +15,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
             if (data.columnSpan > 1) {
                 node.android('layout_columnSpan', data.columnSpan.toString());
             }
-            if (node.parent.display === 'table' && node.display === 'table-cell') {
+            if (node.parent.tableElement && node.display === 'table-cell') {
                 node.mergeGravity('layout_gravity', 'fill');
             }
         }
@@ -25,7 +23,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
     }
 
     public postBaseLayout(node: T) {
-        if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
+        if (!(node.tableElement && node.css('borderCollapse') === 'collapse')) {
             const mainData: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
             if (mainData) {
                 node.each(item => {

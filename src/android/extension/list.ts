@@ -1,5 +1,3 @@
-import { ListData } from '../../extension/types/data';
-
 import { BOX_ANDROID, NODE_ANDROID } from '../lib/constant';
 
 import Resource from '../resource';

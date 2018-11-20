@@ -47,7 +47,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         return { output, complete: true };
     }
 
-    public postProcedure(node: T) {
+    public postBaseLayout(node: T) {
         const renderParent = node.renderParent as T;
         if (!renderParent.has('width')) {
             renderParent.android('layout_width', 'match_parent');

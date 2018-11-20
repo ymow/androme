@@ -25,8 +25,8 @@ export interface Constraint {
     current: ObjectMap<ConstraintPosition>;
     marginHorizontal?: string;
     marginVertical?: string;
-    chainHorizontal?: boolean;
-    chainVertical?: boolean;
+    minWidth?: boolean;
+    minHeight?: boolean;
     guidelineHorizontal?: string;
     guidelineVertical?: string;
     guideline?: ObjectMapNested<ObjectMapNested<number>>;
@@ -35,7 +35,6 @@ export interface Constraint {
 type ConstraintPosition = {
     stringId: string;
     horizontal: boolean;
-    overwrite: boolean;
 };
 
 export interface ViewAttribute {

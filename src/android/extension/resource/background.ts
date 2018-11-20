@@ -621,7 +621,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             !node.documentRoot &&
                             !node.imageElement &&
                             !node.svgElement &&
-                            node.renderParent.tagName !== 'TABLE' &&
+                            !node.renderParent.tableElement &&
                             !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
                             const sizeParent: ImageAsset = { width: 0, height: 0 };

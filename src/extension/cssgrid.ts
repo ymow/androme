@@ -1,5 +1,3 @@
-import { CssGridCellData, CssGridDataAttribute, CssGridData } from './types/data';
-
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 
@@ -46,7 +44,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
     }
 
     public condition(node: T) {
-        return node.length > 0 && node.display === 'grid';
+        return node.length > 0 && node.gridElement;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {

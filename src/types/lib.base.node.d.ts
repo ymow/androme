@@ -51,6 +51,10 @@ declare global {
             readonly domElement: boolean;
             readonly imageElement: boolean;
             readonly svgElement: boolean;
+            readonly flexElement: boolean;
+            readonly gridElement: boolean;
+            readonly textElement: boolean;
+            readonly tableElement: boolean;
             readonly groupElement: boolean;
             readonly documentBody: boolean;
             readonly dataset: DOMStringMap;
@@ -88,7 +92,6 @@ declare global {
             readonly inlineText: boolean;
             readonly plainText: boolean;
             readonly lineBreak: boolean;
-            readonly textElement: boolean;
             readonly block: boolean;
             readonly blockStatic: boolean;
             readonly alignOrigin: boolean;
@@ -160,6 +163,8 @@ declare global {
             css(attr: object | string, value?: string): string;
             cssInitial(attr: string, complete?: boolean): string;
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
+            cssTry(attr: string, value: string): boolean;
+            cssFinally(attr: string): boolean;
             convertPX(value: string): string;
             convertPercent(value: string, horizontal: boolean, parentBounds?: boolean): string;
             has(attr: string, checkType?: number, options?: {}): boolean;
