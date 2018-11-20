@@ -53,7 +53,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public static isFrameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak = false) {
         const margin = nodes.filter(node => node.autoMargin);
-        const br = lineBreak ? getBetweenElements(nodes[0].baseElement, nodes[nodes.length - 1].baseElement).filter(element => element.tagName === 'BR').length : 0;
+        const br = lineBreak ? getBetweenElements(nodes[0].element, nodes[nodes.length - 1].element).filter(element => element.tagName === 'BR').length : 0;
         return (
             br === 0 && (
                 floated.has('right') ||
@@ -200,7 +200,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public reset() {
-        this.session.cache.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'boundingClientRect', 'inlineSupport'));
+        this.session.cache.each(node => node.domElement && deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport'));
         for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
@@ -381,6 +381,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
+        node.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
         return this.viewController.renderGroup(node, parent, NODE_STANDARD.GRID, { columnCount, rowCount });
     }
 
@@ -424,6 +425,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 if (Application.isRelativeHorizontal(nodes, cleared)) {
                     output = this.writeRelativeLayout(group, parent);
+                    group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                     return output;
                 }
                 else {
@@ -714,15 +716,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         basegroup = floatgroup;
                     }
                     if (section.length > 1) {
-                        let groupOutput = '';
+                        let xml = '';
                         const subgroup = this.viewController.createGroup(basegroup, section[0], section);
                         const floatRight = section.some(node => node.float === 'right');
                         if (Application.isRelativeHorizontal(section, NodeList.cleared(section))) {
-                            groupOutput = this.writeRelativeLayout(subgroup, basegroup);
+                            xml = this.writeRelativeLayout(subgroup, basegroup);
                             subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                         }
                         else {
-                            groupOutput = this.writeLinearLayout(subgroup, basegroup, NodeList.linearX(section));
+                            xml = this.writeLinearLayout(subgroup, basegroup, NodeList.linearX(section));
                             if (floatRight && subgroup.some(node => node.marginLeft < 0)) {
                                 const sorted: T[] = [];
                                 let marginRight = 0;
@@ -766,7 +768,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 subgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
                             }
                         }
-                        output = replacePlaceholder(output, basegroup.id, groupOutput);
+                        output = replacePlaceholder(output, basegroup.id, xml);
                         basegroup.appendRendered(subgroup);
                     }
                     else if (section.length > 0) {
@@ -893,7 +895,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return output;
     }
 
-    public addLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
+    public addLayoutFile(filename: string, content: string, pathname?: string, documentRoot = false) {
         pathname = pathname || this.viewController.localSettings.layout.pathName;
         const layout: FileAsset = {
             pathname,
@@ -1317,7 +1319,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
                         const linearVertical = parentY.linearVertical;
                         if (nodeY.pageflow &&
-                            !parentY.is(NODE_STANDARD.GRID) &&
+                            !parentY.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT) &&
                             (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE) || (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE)))
                         {
                             const horizontal: T[] = [];
@@ -1546,7 +1548,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         if (nodeY.styleElement) {
                             const processed: Extension<T>[] = [];
-                            prioritizeExtensions(<HTMLElement> documentRoot.baseElement, <HTMLElement> nodeY.element, extensions).some(item => {
+                            prioritizeExtensions(<HTMLElement> documentRoot.element, <HTMLElement> nodeY.element, extensions).some(item => {
                                 if (item.is(nodeY) && item.condition(nodeY, parentY)) {
                                     const result =  item.processNode(nodeY, parentY, mapX, mapY);
                                     if (result.output !== '') {
@@ -1707,7 +1709,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 }
                                                 else {
                                                     output = this.writeRelativeLayout(nodeY, parentY);
-                                                    if (getBetweenElements(children[0].baseElement, children[children.length - 1].baseElement).filter(element => isLineBreak(element)).length === 0) {
+                                                    if (getBetweenElements(children[0].element, children[children.length - 1].element).filter(element => isLineBreak(element)).length === 0) {
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                     }
                                                 }
@@ -1763,9 +1765,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         if (documentRoot.dataset.layoutName && (!hasValue(documentRoot.dataset.target) || documentRoot.renderExtension.size === 0)) {
             this.addLayoutFile(
-                trimString(trimNull(documentRoot.dataset.pathname), '/'),
                 documentRoot.dataset.layoutName,
                 !empty ? baseTemplate : '',
+                trimString(trimNull(documentRoot.dataset.pathname), '/'),
                 documentRoot.renderExtension.size > 0 && Array.from(documentRoot.renderExtension).some(item => item.documentRoot)
             );
         }
@@ -1784,7 +1786,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             else {
                 if (!a.domElement) {
-                    const nodeA = Node.getNodeFromElement(a.baseElement);
+                    const nodeA = Node.getNodeFromElement(a.element);
                     if (nodeA) {
                         a = nodeA as T;
                     }
@@ -1793,7 +1795,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
                 if (!b.domElement) {
-                    const nodeB = Node.getNodeFromElement(a.baseElement);
+                    const nodeB = Node.getNodeFromElement(a.element);
                     if (nodeB) {
                         b = nodeB as T;
                     }

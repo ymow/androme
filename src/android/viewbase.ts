@@ -348,7 +348,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             Object.assign(node.localSettings, this.localSettings);
             node.nodeId = this.nodeId;
             node.nodeType = this.nodeType;
-            node.baseElement = this.baseElement;
             node.controlName = this.controlName;
             node.alignmentType = this.alignmentType;
             node.depth = this.depth;
@@ -803,7 +802,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (this.pageflow) {
                 const renderParent = this.renderParent;
                 if (this.documentParent === renderParent && !renderParent.documentBody && renderParent.blockStatic) {
-                    const elements = renderParent.map(item => item.baseElement);
+                    const elements = renderParent.map(item => item.element);
                     const applyMarginCollapse = (direction: string, element: Element | null) => {
                         const node = $dom.getNodeFromElement<View>(element);
                         if (node && !node.lineBreak && (node === this || node === this.renderChildren[direction === 'Top' ? 0 : this.renderChildren.length - 1])) {
@@ -925,10 +924,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     if (!(renderParent.tableElement || this.css('boxSizing') === 'border-box')) {
                         const paddedWidth = $Node.getContentBoxWidth(this);
                         const paddedHeight = $Node.getContentBoxHeight(this);
-                        if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', 0, true) > 0) {
+                        if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', true) > 0) {
                             this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                         }
-                        if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', 0, true) > 0 && (this.lineHeight === 0 || this.lineHeight < this.box.height || this.lineHeight === this.toInt('height'))) {
+                        if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', true) > 0 && (this.lineHeight === 0 || this.lineHeight < this.box.height || this.lineHeight === this.toInt('height'))) {
                             this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
                         }
                     }
@@ -979,7 +978,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             while (current && !this.initial.children.includes(current));
                             return current;
                         })();
-                        const elements = $dom.getBetweenElements(previous ? (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.baseElement)) : previous.baseElement) : null, node.baseElement).filter(element => {
+                        const elements = $dom.getBetweenElements(previous ? (previous.groupElement ? $dom.getLastElementChild(previous.map(item => item.element)) : previous.element) : null, node.element).filter(element => {
                             const item = $dom.getNodeFromElement<View>(element);
                             return item && (item.lineBreak || (item.excluded && item.blockStatic));
                         });

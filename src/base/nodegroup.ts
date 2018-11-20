@@ -5,12 +5,11 @@ import NodeList from './nodelist';
 
 import { assignBounds, newClientRect } from '../lib/dom';
 
-export default abstract class NodeGroup<T extends Node> extends Node {
+export default abstract class NodeGroup extends Node {
     public init() {
         super.init();
         if (this.length > 0) {
             for (const item of this.children) {
-                this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
                 item.parent = this;
             }
             this.parent.sort(NodeList.siblingIndex);
@@ -102,14 +101,14 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.FLOAT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
     }
 
-    get baseElement() {
-        function cascade(nodes: T[]): Element | null {
-            for (const node of nodes) {
+    get element() {
+        function cascade<T extends Node>(nodes: T[]): Element | null {
+            for (const node of nodes.slice().sort(NodeList.siblingIndex)) {
                 if (node.domElement) {
                     return node.element;
                 }
                 else if (node.length > 0) {
-                    const element = cascade(node.nodes as T[]);
+                    const element = cascade(node.children);
                     if (element) {
                         return element;
                     }
@@ -117,6 +116,9 @@ export default abstract class NodeGroup<T extends Node> extends Node {
             }
             return null;
         }
-        return cascade(this.nodes as T[]) || super.baseElement;
+        if (this.domElement) {
+            return super.element;
+        }
+        return cascade(this.children) || super.element;
     }
 }

@@ -59,7 +59,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     protected _linear: BoxDimensions;
 
     private _element: Element;
-    private _baseElement: Element;
     private _parent: T;
     private _nodeName: string;
     private _tagName: string;
@@ -336,7 +335,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public alignedVertically(previous: T | null, cleared?: Map<T, string>, floatSize = 2, firstNode = false) {
-        if (previous && this.documentParent.baseElement === previous.documentParent.baseElement) {
+        if (previous && this.documentParent.element === previous.documentParent.element) {
             const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
             return (
                 this.lineBreak ||
@@ -434,8 +433,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
-        if (this.baseElement) {
-            let current = startChild ? this : Node.getNodeFromElement(this.baseElement.parentElement);
+        if (this.element) {
+            let current = startChild ? this : Node.getNodeFromElement(this.element.parentElement);
             while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
@@ -444,7 +443,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     }
                     break;
                 }
-                current = Node.getNodeFromElement(current.baseElement.parentElement);
+                current = Node.getNodeFromElement(current.element.parentElement);
             }
         }
         return result;
@@ -474,6 +473,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
         }
         return false;
+    }
+
+    public toInt(attr: string, initial = false, defaultValue = 0) {
+        const value = (initial ? this.initial.styleMap : this.styleMap)[attr];
+        return parseInt(value) || defaultValue;
     }
 
     public convertPX(value: string) {
@@ -553,11 +557,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return hasBit(this[attr], value);
         }
         return false;
-    }
-
-    public toInt(attr: string, defaultValue = 0, initial = false) {
-        const value = (initial ? this.initial.styleMap : this.styleMap)[attr];
-        return parseInt(value) || defaultValue;
     }
 
     public hasAlign(value: number) {
@@ -666,7 +665,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
         }
         if (append) {
-            withNode.siblingIndex = withNode.length;
+            let currentIndex = -1;
+            this.each(item => {
+                if (item.siblingIndex !== Number.MAX_VALUE) {
+                    currentIndex = Math.max(item.siblingIndex, currentIndex);
+                }
+            });
+            withNode.siblingIndex = currentIndex + 1;
             withNode.parent = this;
             return true;
         }
@@ -707,19 +712,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 }
             }
         });
-    }
-
-    public removeElement() {
-        if (this._element) {
-            if (this._nodeName === undefined) {
-                this._nodeName = this.nodeName;
-            }
-            if (this._tagName === undefined) {
-                this._tagName = this.tagName;
-            }
-            this._baseElement = this._element;
-            this._element = undefined as any;
-        }
     }
 
     public getParentElementAsNode(negative = false) {
@@ -879,8 +871,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (value) {
             if (!value.contains(this)) {
                 value.append(this);
-                if (!value.styleElement && this.siblingIndex !== -1) {
-                    value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
+                if (this.groupElement && value.siblingIndex !== Number.MAX_VALUE) {
+                    this.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                 }
             }
             if (this.initial.depth === -1) {
@@ -916,18 +908,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         this._element = value;
     }
     get element() {
-        return this._element || { dataset: {}, style: {} };
-    }
-
-    set baseElement(value) {
-        this._baseElement = value;
-    }
-    get baseElement() {
-        return this._baseElement || this.element;
+        return this._element || { __node: this, __style: this.style, __styleMap: this.styleMap, dataset: {}, style: {} };
     }
 
     get htmlElement() {
         return this._element instanceof HTMLElement;
+    }
+
+    get svgElement() {
+        return this._element instanceof SVGSVGElement;
     }
 
     get styleElement() {
@@ -948,10 +937,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get gridElement() {
         return this.display === 'grid';
-    }
-
-    get svgElement() {
-        return this.tagName === 'SVG';
     }
 
     get textElement() {
@@ -1327,7 +1312,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get previousElementSibling() {
-        let element = <Element> this.baseElement.previousSibling;
+        let element = <Element> this.element.previousSibling;
         while (element) {
             if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
                 return element;
@@ -1337,7 +1322,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return null;
     }
     get nextElementSibling() {
-        let element = <Element> this.baseElement.nextSibling;
+        let element = <Element> this.element.nextSibling;
         while (element) {
             if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
                 return element;

@@ -298,7 +298,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
-        return this.cleared(Array.from(parent.baseElement.children).map(element => Node.getNodeFromElement(element) as T).filter(node => node));
+        return this.cleared(Array.from(parent.element.children).map(element => Node.getNodeFromElement(element) as T).filter(node => node));
     }
 
     public delegateAppend?: (node: T) => void;

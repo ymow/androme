@@ -65,7 +65,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
                 return undefined;
             }
             else {
-                return NodeList.cleared(Array.from(documentParent[0].baseElement.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item));
+                return NodeList.cleared(Array.from(documentParent[0].element.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item));
             }
         }
         return new Map<T, string>();

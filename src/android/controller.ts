@@ -287,7 +287,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     if (node.layoutRelative) {
                         let boxWidth = node.box.width;
                         if (node.renderParent.overflowX) {
-                            boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, true);
+                            boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', true);
                         }
                         else if (node.renderParent.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
                             const minLeft: number = Math.min.apply(null, children.map(item => item.linear.left));
@@ -345,7 +345,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             }
                             else {
                                 const rowItems = rows[rows.length - 1];
-                                const siblings = $dom.getBetweenElements(previous.baseElement, current.baseElement, false, true);
+                                const siblings = $dom.getBetweenElements(previous.element, current.element, false, true);
                                 const viewGroup = current.groupElement && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
                                 const previousSibling = current.previousSibling();
                                 const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
@@ -981,7 +981,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (previous) {
                                 let bottom = previous.linear.bottom;
                                 if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
-                                    const elements = $dom.getBetweenElements(previous.groupElement ? (previous.item() as T).baseElement : previous.baseElement, item.baseElement).filter(element => element.tagName === 'BR');
+                                    const elements = $dom.getBetweenElements(previous.groupElement ? (previous.item() as T).element : previous.element, item.element).filter(element => element.tagName === 'BR');
                                     if (elements.length > 0) {
                                         bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
                                     }
@@ -1040,7 +1040,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     overflow.push(NODE_ANDROID.SCROLL_VERTICAL);
                 }
             }
-            let previous: T;
+            let previous: T | undefined;
             const scrollView = overflow.map((value, index) => {
                 const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
                 container.nodeName = node.nodeName;
@@ -1108,10 +1108,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     node.android('layout_height', 'wrap_content');
                 }
             }
-            node.removeElement();
-            node.resetBox($enum.BOX_STANDARD.MARGIN);
-            node.parent = scrollView[scrollView.length - 1];
-            node.render(node.parent);
+            if (previous) {
+                node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE;
+                node.parent = previous;
+                node.resetBox($enum.BOX_STANDARD.MARGIN);
+                node.render(previous);
+            }
         }
         else {
             node.render(target ? node : parent);

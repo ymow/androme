@@ -125,7 +125,6 @@ declare global {
             nodeName: string;
             controlName: string;
             element: Element;
-            baseElement: Element;
             renderAs: Node | undefined;
             renderDepth: number;
             pageflow: boolean;
@@ -167,11 +166,11 @@ declare global {
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
             cssTry(attr: string, value: string): boolean;
             cssFinally(attr: string): boolean;
+            toInt(attr: string, initial?: boolean, defaultValue?: number): number;
             convertPX(value: string): string;
             convertPercent(value: string, horizontal: boolean, parentBounds?: boolean): string;
             has(attr: string, checkType?: number, options?: {}): boolean;
             hasBit(attr: string, value: number): boolean;
-            toInt(attr: string, defaultValue?: number, initial?: boolean): number;
             hasAlign(value: number): boolean;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
@@ -180,7 +179,6 @@ declare global {
             appendRendered(node: Node): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
-            removeElement(): void;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
             getParentElementAsNode(negative?: boolean): Node | null;
@@ -194,7 +192,7 @@ declare global {
             public static getNodeFromElement<T>(element: UndefNull<Element>): T | null;
         }
 
-        export class NodeGroup<T extends Node> extends Node {}
+        export class NodeGroup extends Node {}
     }
 }
 

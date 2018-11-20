@@ -33,7 +33,7 @@ declare global {
             writeNode(node: T, parent: T, nodeName: number | string): string;
             writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
             writeFrameLayoutVertical(group: T | undefined, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            addLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
+            addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);
             addRenderQueue(id: string, templates: string[]): void;
