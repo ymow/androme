@@ -143,8 +143,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.nodeType === nodeType && alignmentType.some(value => this.hasAlign(value));
     }
 
+    public unsafe(obj: string): any {
+        const name = `_${obj}`;
+        return this[name] || undefined;
+    }
+
     public attr(obj: string, attr: string, value = '', overwrite = true): string {
-        const name = `_${obj || '_'}`;
+        const name = `__${obj}`;
         if (hasValue(value)) {
             if (this[name] === undefined) {
                 this._namespaces.add(obj);
@@ -158,13 +163,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this[name][attr] || '';
     }
 
-    public unsafe(obj: string): ObjectMap<any> {
-        const name = `_${obj || '_'}`;
+    public namespace(obj: string): StringMap {
+        const name = `__${obj}`;
         return this[name] || {};
     }
 
     public delete(obj: string, ...attrs: string[]) {
-        const name = `_${obj || '_'}`;
+        const name = `__${obj}`;
         if (this[name]) {
             for (const attr of attrs) {
                 if (attr.indexOf('*') !== -1) {

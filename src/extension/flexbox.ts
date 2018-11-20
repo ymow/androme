@@ -46,7 +46,9 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                     const group = controller.createGroup(node, segment[0], segment);
                     group.siblingIndex = index;
                     const box = group.unsafe('box');
-                    box.right = node.box.right;
+                    if (box) {
+                        box.right = node.box.right;
+                    }
                     group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                 });
                 node.sort(NodeList.siblingIndex);

@@ -58,8 +58,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
         protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
-        private _android: StringMap = {};
-        private _app: StringMap = {};
+        private __android: StringMap = {};
+        private __app: StringMap = {};
         private _localSettings: LocalSettings & ObjectMap<any> = {
             targetAPI: 0,
             resolutionDPI: 160,
@@ -101,12 +101,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public android(attr: string, value = '', overwrite = true) {
             this.attr('android', attr, value, overwrite);
-            return this._android[attr] || '';
+            return this.__android[attr] || '';
         }
 
         public app(attr: string, value = '', overwrite = true) {
             this.attr('app', attr, value, overwrite);
-            return this._app[attr] || '';
+            return this.__app[attr] || '';
         }
 
         public apply(options: {}) {
@@ -311,7 +311,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         public combine(...objs: string[]) {
             const result: string[] = [];
             for (const value of this._namespaces.values()) {
-                const obj: StringMap = this[`_${value}`];
+                const obj: StringMap = this[`__${value}`];
                 if (objs.length === 0 || objs.includes(value)) {
                     for (const attr in obj) {
                         if (value !== '_') {
@@ -1307,24 +1307,24 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         get linearHorizontal() {
-            return this._android.orientation === AXIS_ANDROID.HORIZONTAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
+            return this.__android.orientation === AXIS_ANDROID.HORIZONTAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
         }
         get linearVertical() {
-            return this._android.orientation === AXIS_ANDROID.VERTICAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
+            return this.__android.orientation === AXIS_ANDROID.VERTICAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
         }
 
         get inlineWidth() {
-            return this._android.layout_width === 'wrap_content';
+            return this.__android.layout_width === 'wrap_content';
         }
         get inlineHeight() {
-            return this._android.layout_height === 'wrap_content';
+            return this.__android.layout_height === 'wrap_content';
         }
 
         get blockWidth() {
-            return this._android.layout_width === 'match_parent';
+            return this.__android.layout_width === 'match_parent';
         }
         get blockHeight() {
-            return this._android.layout_height === 'match_parent';
+            return this.__android.layout_height === 'match_parent';
         }
 
         get dpi() {
