@@ -1,4 +1,4 @@
-import { NODE_ANDROID } from '../lib/constant';
+import { CONTAINER_ANDROID } from '../lib/constant';
 
 import Resource from '../resource';
 import View from '../view';
@@ -15,19 +15,18 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
         const mainData = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'mainData');
         if (mainData && mainData.uri && mainData.position) {
             container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
-            container.nodeName = node.nodeName;
             container.excludeProcedure |= $enum.NODE_PROCEDURE.CUSTOMIZATION;
             container.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             container.inherit(node, 'initial', 'base', 'style', 'styleMap');
-            container.setNodeType(NODE_ANDROID.FRAME);
+            container.setControlType(CONTAINER_ANDROID.FRAME);
             parent.replaceNode(node, container);
             this.application.processing.cache.append(container, false);
-            output = $xml.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+            output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             container.render(parent);
             node.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT;
             node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE;
             node.parent = container;
-            node.setNodeType(NODE_ANDROID.IMAGE, $enum.NODE_STANDARD.IMAGE);
+            node.setControlType(CONTAINER_ANDROID.IMAGE, $enum.NODE_CONTAINER.IMAGE);
             node.css({
                 position: 'static',
                 top: 'auto',

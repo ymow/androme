@@ -6,11 +6,11 @@ declare global {
             cache: NodeList<T>;
             readonly localSettings: ControllerSettings;
             readonly delegateNodeInit: SelfWrapped<T, void>;
-            createGroup(parent: T, node: T, children: T[]): T;
-            renderGroup(node: T, parent: T, nodeType: number, options?: ExternalData): string;
-            renderNode(node: T, parent: T, nodeType: number, options?: ExternalData): string;
-            renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             setConstraints(): void;
+            createNodeGroup(node: T, parent: T, children: T[]): T;
+            renderNode(data: LayoutData<T>);
+            renderNodeGroup(data: LayoutData<T>);
+            renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             replaceRenderQueue(output: string): string;
@@ -20,9 +20,9 @@ declare global {
         }
 
         export class Controller<T extends Node> implements Controller<T> {
+            public static getContainerType(tagName: string): number;
             public static partitionRows<T extends Node>(list: T[], parent?: T): T[][];
             public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
-            public static clearedAll<T extends Node>(parent: T): Map<T, string> | undefined;
         }
     }
 }

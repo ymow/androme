@@ -19,7 +19,7 @@ declare global {
             export import NODE_ALIGNMENT = $enum.NODE_ALIGNMENT;
             export import NODE_PROCEDURE = $enum.NODE_PROCEDURE;
             export import NODE_RESOURCE = $enum.NODE_RESOURCE;
-            export import NODE_STANDARD = $enum.NODE_STANDARD;
+            export import NODE_CONTAINER = $enum.NODE_CONTAINER;
             export import USER_AGENT = $enum.USER_AGENT;
         }
 

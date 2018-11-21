@@ -1,5 +1,5 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
 import Application from '../base/application';
 import Extension from '../base/extension';
@@ -27,15 +27,15 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             rowSpan: 0,
             columnSpan: 0,
             index: -1,
-            cellFirst: false,
-            cellLast: false,
+            cellStart: false,
+            cellEnd: false,
             rowEnd: false,
             rowStart: false
         };
     }
 
     public readonly options = {
-        columnBalance: false
+        columnBalanceEqual: false
     };
 
     public condition(node: T) {
@@ -50,9 +50,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
-        const columnBalance = this.options.columnBalance;
+        const columnBalance = this.options.columnBalanceEqual;
         const mainData = Grid.createDataAttribute();
-        let output = '';
         let columns: T[][] = [];
         if (columnBalance) {
             const dimensions: number[][] = [];
@@ -225,14 +224,14 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
             }
-            if (columnEnd.length > 0) {
+            if (columnEnd) {
                 mainData.columnEnd = columnEnd;
                 mainData.columnEnd[mainData.columnEnd.length - 1] = node.box.right;
             }
         }
+        let output = '';
         if (columns.length > 1 && columns[0].length === node.length) {
             mainData.columnCount = columnBalance ? columns[0].length : columns.length;
-            output = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.duplicate().forEach(item => node.remove(item) && item.hide());
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
@@ -244,8 +243,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         if (columnBalance) {
                             data.rowStart = m === 0;
                             data.rowEnd = m === columns[l].length - 1;
-                            data.cellFirst = l === 0 && m === 0;
-                            data.cellLast = l === columns.length - 1 && data.rowEnd;
+                            data.cellStart = l === 0 && m === 0;
+                            data.cellEnd = l === columns.length - 1 && data.rowEnd;
                             data.index = m;
                         }
                         else {
@@ -275,8 +274,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             data.columnSpan = columnSpan;
                             data.rowStart = start++ === 0;
                             data.rowEnd = columnSpan + l === columns.length;
-                            data.cellFirst = count++ === 0;
-                            data.cellLast = data.rowEnd && m === columns[l].length - 1;
+                            data.cellStart = count++ === 0;
+                            data.cellEnd = data.rowEnd && m === columns[l].length - 1;
                             data.index = l;
                             spacer = 0;
                         }
@@ -296,6 +295,16 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
+            const layoutData = Application.createLayoutData(
+                node,
+                parent,
+                NODE_CONTAINER.GRID,
+                NODE_ALIGNMENT.AUTO_LAYOUT,
+                node.length,
+                node.children as T[]
+            );
+            layoutData.columnCount = mainData.columnCount;
+            output = this.application.renderNode(layoutData);
         }
         return { output };
     }
@@ -305,7 +314,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         const cellData: GridCellData<T> = node.data(EXT_NAME.GRID, 'cellData');
         if (mainData && cellData) {
             let siblings: T[];
-            if (this.options.columnBalance) {
+            if (this.options.columnBalanceEqual) {
                 siblings = cellData.siblings ? cellData.siblings : [];
             }
             else {
@@ -324,24 +333,31 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 .filter(item => item) as T[];
             }
             if (siblings.length > 0) {
-                let output = '';
                 siblings.unshift(node);
-                const group = this.application.viewController.createGroup(parent, node, siblings);
+                const group = this.application.viewController.createNodeGroup(node, parent, siblings);
                 siblings.forEach(item => item.inherit(group, 'data'));
+                const layoutData = Application.createLayoutData(
+                    group,
+                    parent,
+                    0,
+                    NODE_ALIGNMENT.SEGMENTED,
+                    siblings.length,
+                    siblings
+                );
                 const linearX = NodeList.linearX(siblings);
-                if (linearX && Application.isRelativeHorizontal(siblings)) {
-                    output = this.application.writeRelativeLayout(group, parent);
-                    group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                if (Application.relativeHorizontal(siblings)) {
+                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
+                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                }
+                else if (linearX || NodeList.linearY(siblings)) {
+                    layoutData.containerType = NODE_CONTAINER.LINEAR;
+                    layoutData.alignmentType |= linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL;
                 }
                 else {
-                    if (linearX || NodeList.linearY(siblings)) {
-                        output = this.application.writeLinearLayout(group, parent, linearX);
-                    }
-                    else {
-                        output = this.application.writeConstraintLayout(group, parent);
-                    }
-                    group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                    layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
+                    layoutData.alignmentType |= NODE_ALIGNMENT.UNKNOWN;
                 }
+                const output = this.application.renderNode(layoutData);
                 return { output, parent: group, complete: true };
             }
         }

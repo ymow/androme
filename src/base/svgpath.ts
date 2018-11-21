@@ -22,7 +22,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         else {
             data.push(...points);
         }
-        return data.length > 0 ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
+        return data.length ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
     }
 
     public static getPolygon(points: Point[] | DOMPoint[] | SVGPointList) {

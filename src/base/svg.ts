@@ -79,7 +79,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                 switch (item.tagName) {
                     case 'clipPath': {
                         const clipPath = Svg.createClipPath(<SVGClipPathElement> item);
-                        if (clipPath.length > 0) {
+                        if (clipPath.length) {
                             this.defs.clipPath.set(`${item.id}`, clipPath);
                         }
                         break;

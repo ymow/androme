@@ -1,6 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, CSS_STANDARD, USER_AGENT } from '../lib/enumeration';
+import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 
+import Application from '../base/application';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
@@ -22,18 +23,18 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const tfoot = node.filter(item => item.tagName === 'TFOOT');
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
-        if (thead.length > 0) {
+        if (thead.length) {
             thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...thead[0].children as T[]);
             thead.forEach(item => item.hide());
         }
-        if (tbody.length > 0) {
+        if (tbody.length) {
             tbody.forEach(item => {
                 table.push(...item.children as T[]);
                 item.hide();
             });
         }
-        if (tfoot.length > 0) {
+        if (tfoot.length) {
             tfoot[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
             table.push(...tfoot[0].children as T[]);
             tfoot.forEach(item => item.hide());
@@ -137,7 +138,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 if (!multiLine) {
                     multiLine = td.multiLine;
                 }
-                if (td.length > 0 || td.inlineText) {
+                if (td.length || td.inlineText) {
                     rowWidth[i] += td.bounds.width + horizontal;
                 }
                 columnIndex[i] += element.colSpan;
@@ -412,7 +413,17 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 borderLeftWidth: '0px'
             });
         }
-        const output = this.application.writeGridLayout(node, parent, columnCount, rowCount);
+        const layoutData = Application.createLayoutData(
+            node,
+            parent,
+            NODE_CONTAINER.GRID,
+            NODE_ALIGNMENT.AUTO_LAYOUT,
+            node.length,
+            node.children as T[]
+        );
+        layoutData.rowCount = rowCount;
+        layoutData.columnCount = columnCount;
+        const output = this.application.renderNode(layoutData);
         return { output, complete: true };
     }
 }

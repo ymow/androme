@@ -22,7 +22,7 @@ export default class <T extends View> extends androme.lib.base.Extension<T> {
         const data = $dom.getDataSet(node.element, this.name);
         let output = '';
         if (data.tag) {
-            node.setNodeType(data.tag, node.blockStatic ? $enum.NODE_STANDARD.BLOCK : $enum.NODE_STANDARD.INLINE);
+            node.setControlType(data.tag, node.blockStatic ? $enum.NODE_CONTAINER.BLOCK : $enum.NODE_CONTAINER.INLINE);
             node.render(parent);
             output = this.application.viewController.renderNodeStatic(data.tag, node.renderDepth, {}, '', '', node, node.length > 0);
         }

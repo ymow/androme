@@ -14,10 +14,10 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         const controller = this.application.viewController;
         const options = $android_util.createAttribute(this.options[node.element.id]);
         node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-        node.setNodeType($android_const.VIEW_SUPPORT.COORDINATOR, $enum.NODE_STANDARD.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $enum.NODE_CONTAINER.BLOCK);
         node.render(parent);
         const output = controller.renderNodeStatic(
-            $android_const.VIEW_SUPPORT.COORDINATOR,
+            $android_const.SUPPORT_ANDROID.COORDINATOR,
             node.renderDepth,
             $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             '',

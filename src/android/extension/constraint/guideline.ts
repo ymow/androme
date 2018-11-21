@@ -2,6 +2,8 @@ import { AXIS_ANDROID } from '../../lib/constant';
 
 import View from '../../view';
 
+import $Application = androme.lib.base.Application;
+
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
@@ -11,12 +13,20 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
     };
 
     public condition(node: T) {
-        return this.included(<HTMLElement> node.element) && node.children.length > 0;
+        return this.included(<HTMLElement> node.element) && node.length > 0;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const output = this.application.writeConstraintLayout(node, parent);
         node.excludeProcedure |= $enum.NODE_PROCEDURE.CONSTRAINT;
+        const layoutData = $Application.createLayoutData(
+            node,
+            parent,
+            $enum.NODE_CONTAINER.CONSTRAINT,
+            $enum.NODE_ALIGNMENT.ABSOLUTE,
+            node.length,
+            node.children as T[]
+        );
+        const output = this.application.renderNode(layoutData);
         return { output };
     }
 

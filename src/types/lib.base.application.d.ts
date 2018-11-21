@@ -25,14 +25,7 @@ declare global {
             saveAllToDisk(): void;
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
-            writeFrameLayout(node: T, parent: T, children?: boolean): string;
-            writeLinearLayout(node: T, parent: T, horizontal: boolean): string;
-            writeGridLayout(node: T, parent: T, columnCount: number, rowCount?: number): string;
-            writeRelativeLayout(node: T, parent: T): string;
-            writeConstraintLayout(node: T, parent: T): string;
-            writeNode(node: T, parent: T, nodeName: number | string): string;
-            writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            writeFrameLayoutVertical(group: T | undefined, parent: T, nodes: T[], cleared: Map<T, string>): string;
+            renderNode(data: LayoutData<T>): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);
@@ -49,9 +42,10 @@ declare global {
         }
 
         export class Application<T extends Node> implements Application<T> {
-            public static isConstraintFloat<T extends Node>(nodes: T[], floated: Set<string>, linearX?: boolean): boolean;
-            public static isFrameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak?: boolean): boolean;
-            public static isRelativeHorizontal<T extends Node>(nodes: T[], cleared?: Map<T, string>): boolean;
+            public static createLayoutData<T extends Node>(node: T, parent: T, containerType?: number, alignmentType?: number, itemCount?: number, items?: T[]): LayoutData<T>;
+            public static constraintFloat<T extends Node>(nodes: T[], floated: Set<string>, linearX?: boolean): boolean;
+            public static frameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak?: boolean): boolean;
+            public static relativeHorizontal<T extends Node>(nodes: T[], cleared?: Map<T, string>): boolean;
             constructor(framework: number);
         }
     }

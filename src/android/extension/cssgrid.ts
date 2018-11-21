@@ -1,4 +1,4 @@
-import { NODE_ANDROID } from '../lib/constant';
+import { CONTAINER_ANDROID } from '../lib/constant';
 
 import View from '../view';
 
@@ -111,14 +111,14 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
             if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
                 container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
-                container.nodeName = node.nodeName;
+                container.tagName = node.tagName;
                 container.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION;
                 container.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
                 container.inherit(node, 'initial', 'base');
-                container.setNodeType(NODE_ANDROID.FRAME, $enum.NODE_STANDARD.FRAME);
+                container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
                 parent.replaceNode(node, container);
                 this.application.processing.cache.append(container, false);
-                output = $xml.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+                output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
                 container.render(parent);
                 applyLayout(container, 'column', 'width');
                 applyLayout(container, 'row', 'height');

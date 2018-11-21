@@ -13,8 +13,7 @@ declare global {
             id: number;
             style: CSSStyleDeclaration;
             styleMap: StringMap;
-            nodeId: string;
-            nodeType: number;
+            containerType: number;
             alignmentType: number;
             depth: number;
             siblingIndex: number;
@@ -29,10 +28,10 @@ declare global {
             visible: boolean;
             excluded: boolean;
             rendered: boolean;
+            controlId: string;
             companion: Node | undefined;
             readonly localSettings: EnvironmentSettings;
             readonly initial: InitialData<Node>;
-            readonly controlType: number;
             readonly renderChildren: Node[];
             readonly documentParent: Node;
             readonly box: BoxDimensions;
@@ -46,7 +45,6 @@ declare global {
             readonly inlineHeight: boolean;
             readonly blockWidth: boolean;
             readonly blockHeight: boolean;
-            readonly tagName: string;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
             readonly domElement: boolean;
@@ -108,7 +106,6 @@ declare global {
             readonly overflowX: boolean;
             readonly overflowY: boolean;
             readonly baseline: boolean;
-            readonly baselineInside: boolean;
             readonly preserveWhiteSpace: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
@@ -122,15 +119,15 @@ declare global {
             readonly center: Point;
             parent: Node;
             renderParent: Node;
-            nodeName: string;
-            controlName: string;
             element: Element;
+            tagName: string;
+            controlName: string;
             renderAs: Node | undefined;
             renderDepth: number;
             pageflow: boolean;
             multiLine: boolean;
-            setNodeType(controlName: string, nodeType?: number): void;
-            setBaseLayout(): void;
+            setControlType(controlName: string, containerType?: number): void;
+            setLayout(): void;
             setAlignment(settings: Settings): void;
             applyOptimizations(settings: Settings): void;
             applyCustomizations(settings: Settings): void;
@@ -139,8 +136,8 @@ declare global {
             localizeString(value: string): string;
             clone(id?: number, children?: boolean): Node;
             init(): void;
-            is(...views: number[]): boolean;
-            of(nodeType: number, ...alignmentType: number[]): boolean;
+            is(...containers: number[]): boolean;
+            of(containerType: number, ...alignmentType: number[]): boolean;
             unsafe(obj: string): any;
             attr(obj: string, attr: string, value?: string, overwrite?: boolean): string;
             namespace(obj: string): StringMap;

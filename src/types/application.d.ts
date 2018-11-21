@@ -78,6 +78,23 @@ interface AppProcessing<T, U> {
     layout: FileAsset | null;
 }
 
+interface ViewData<T> {
+    cache: T;
+    views: FileAsset[];
+    includes: FileAsset[];
+}
+
+interface LayoutData<T> {
+    node: T;
+    parent: T;
+    containerType: number;
+    alignmentType: number;
+    itemCount: number;
+    items?: T[];
+    rowCount?: number;
+    columnCount?: number;
+}
+
 interface ExtensionDependency {
     name: string;
     preload: boolean;
@@ -91,10 +108,4 @@ interface ExtensionResult<T> {
     renderAs?: androme.lib.base.Node;
     renderOutput?: string;
     include?: boolean;
-}
-
-interface ViewData<T> {
-    cache: T;
-    views: FileAsset[];
-    includes: FileAsset[];
 }

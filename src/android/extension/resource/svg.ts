@@ -40,7 +40,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
                 let result = '';
                 let vectorName = '';
-                if (stored.length > 0) {
+                if (stored.length) {
                     const namespace = new Set<string>();
                     const groups: StringMap[] = [];
                     for (const group of stored) {
@@ -134,11 +134,11 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     });
                     vectorName = Resource.getStoredName('drawables', xml);
                     if (vectorName === '') {
-                        vectorName = `${node.nodeName.toLowerCase()}_${node.nodeId + (stored.defs.image.length > 0 ? '_vector' : '')}`;
+                        vectorName = `${node.tagName.toLowerCase()}_${node.controlId + (stored.defs.image.length ? '_vector' : '')}`;
                         Resource.STORED.drawables.set(vectorName, xml);
                     }
                 }
-                if (stored.defs.image.length > 0) {
+                if (stored.defs.image.length) {
                     const images: TemplateData = [];
                     const rotate: TemplateData = [];
                     for (const item of stored.defs.image) {
@@ -192,7 +192,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     });
                     result = Resource.getStoredName('drawables', xml);
                     if (result === '') {
-                        result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                        result = `${node.tagName.toLowerCase()}_${node.controlId}`;
                         Resource.STORED.drawables.set(result, xml);
                     }
                 }

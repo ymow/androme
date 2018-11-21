@@ -10,7 +10,7 @@ export const EXT_ANDROID = {
     RESOURCE_STYLES: 'android.resource.styles'
 };
 
-export const NODE_ANDROID = {
+export const CONTAINER_ANDROID = {
     CHECKBOX: 'CheckBox',
     RADIO: 'RadioButton',
     EDIT: 'EditText',
@@ -36,7 +36,7 @@ export const NODE_ANDROID = {
     GUIDELINE: 'android.support.constraint.Guideline'
 };
 
-export const VIEW_SUPPORT = {
+export const SUPPORT_ANDROID = {
     DRAWER: 'android.support.v4.widget.DrawerLayout',
     NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
     COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
@@ -137,6 +137,11 @@ export const WEBVIEW_ANDROID = [
     'PLAINTEXT'
 ];
 
+export const PREFIX_ANDROID = {
+    MENU: 'ic_menu_',
+    DIALOG: 'ic_dialog_'
+};
+
 export const RESERVED_JAVA = [
     'abstract',
     'assert',
@@ -192,8 +197,3 @@ export const RESERVED_JAVA = [
     'volatile',
     'while'
 ];
-
-export const DRAWABLE_PREFIX = {
-    MENU: 'ic_menu_',
-    DIALOG: 'ic_dialog_'
-};

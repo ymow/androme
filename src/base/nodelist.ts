@@ -1,4 +1,4 @@
-import { NODE_ALIGNMENT, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
+import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 
 import Container from './container';
 import Node from './node';
@@ -89,19 +89,28 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return result;
     }
 
+    public static clearedAll<T extends Node>(parent: T) {
+        if (parent.groupElement) {
+            return NodeList.cleared(parent.children as T[]);
+        }
+        else {
+            return NodeList.cleared(Array.from(parent.element.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item && item.siblingflow));
+        }
+    }
+
     public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
         if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
             baseline = list.filter(node => node.baseline).sort((a, b) => {
-                let nodeTypeA = a.nodeType;
-                let nodeTypeB = b.nodeType;
+                let containerTypeA = a.containerType;
+                let containerTypeB = b.containerType;
                 if (a.layoutHorizontal) {
-                    nodeTypeA = Math.min.apply(null, a.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                    containerTypeA = Math.min.apply(null, a.map(item => item.containerType > 0 ? item.containerType : NODE_CONTAINER.INLINE));
                 }
                 if (b.layoutHorizontal) {
-                    nodeTypeB = Math.min.apply(null, b.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                    containerTypeB = Math.min.apply(null, b.map(item => item.containerType > 0 ? item.containerType : NODE_CONTAINER.INLINE));
                 }
-                return nodeTypeA === nodeTypeB ? (a.id < b.id ? -1 : 1) : (nodeTypeA < nodeTypeB ? -1 : 1);
+                return containerTypeA === containerTypeB ? (a.id < b.id ? -1 : 1) : (containerTypeA < containerTypeB ? -1 : 1);
             });
         }
         else {
@@ -111,7 +120,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 const result = list.filter(node => node.lineHeight === lineHeight);
                 return (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
             }
-            baseline = list.filter(node => node.baselineInside).sort((a, b) => {
+            baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let heightA = a.bounds.height;
                 let heightB = b.bounds.height;
                 if (isUserAgent(USER_AGENT.EDGE)) {
@@ -133,14 +142,14 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return a.htmlElement || !b.htmlElement ? -1 : 1;
                         }
                     }
-                    if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
+                    if (a.containerType !== b.containerType && (a.containerType < NODE_CONTAINER.TEXT || b.containerType < NODE_CONTAINER.TEXT)) {
                         if (a.textElement || a.imageElement) {
                             return -1;
                         }
                         else if (b.textElement || b.imageElement) {
                             return 1;
                         }
-                        return a.nodeType < b.nodeType ? -1 : 1;
+                        return a.containerType < b.containerType ? -1 : 1;
                     }
                     else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
                         return -1;
@@ -183,7 +192,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     node.css('fontFamily') === fontFamily &&
                     node.css('fontSize') === fontSize &&
                     node.css('fontWeight') === fontWeight &&
-                    node.nodeName === baseline[0].nodeName && (
+                    node.tagName === baseline[0].tagName && (
                         (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
                         node.bounds.height === baseline[0].bounds.height
                     )
@@ -193,7 +202,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearX<T extends Node>(list: T[], traverse = true) {
-        const nodes = list.filter(node => node.pageflow);
+        const nodes = list.filter(node => node.siblingflow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -203,8 +212,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 const parent = getDocumentParent(nodes);
                 let horizontal = false;
                 if (traverse) {
-                    if (nodes.every(node => node.documentParent === parent || (!!node.companion && node.companion.documentParent === parent))) {
-                        const result = NodeList.clearedSiblings(parent);
+                    if (nodes.every(node => node.documentParent === parent || (node.companion !== undefined && node.companion.documentParent === parent))) {
+                        const result = this.clearedAll(parent);
                         horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                             if (index > 0) {
                                 if (node.companion && node.companion.documentParent === parent) {
@@ -224,7 +233,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow);
+        const nodes = list.filter(node => node.siblingflow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -232,11 +241,11 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 return true;
             default:
                 const parent = getDocumentParent(nodes);
-                if (nodes.every(node => node.documentParent === parent || (!!node.companion && node.companion.documentParent === parent))) {
-                    const result = NodeList.clearedSiblings(parent);
+                if (nodes.every(node => node.documentParent === parent || (node.companion !== undefined && node.companion.documentParent === parent))) {
+                    const result = this.clearedAll(parent);
                     return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                         if (index > 0 && !node.lineBreak) {
-                            if (node.companion && node.companion.documentParent === parent) {
+                            if (node.companion && node.companion.documentParent.documentParent === parent) {
                                 node = node.companion as T;
                             }
                             return node.alignedVertically(node.previousSibling(), result);
@@ -248,9 +257,9 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         }
     }
 
-    public static sortByAlignment<T extends Node>(list: T[], alignmentType = NODE_ALIGNMENT.NONE, parent?: T) {
+    public static sortByAlignment<T extends Node>(list: T[], alignmentType = 0, parent?: T) {
         let sorted = false;
-        if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
+        if (parent && alignmentType === 0) {
             if (parent.linearHorizontal) {
                 alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
             }
@@ -295,10 +304,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static siblingIndex<T extends Node>(a: T, b: T) {
         return a.siblingIndex >= b.siblingIndex ? 1 : -1;
-    }
-
-    private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
-        return this.cleared(Array.from(parent.element.children).map(element => Node.getNodeFromElement(element) as T).filter(node => node));
     }
 
     public delegateAppend?: (node: T) => void;

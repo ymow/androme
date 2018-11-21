@@ -288,7 +288,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         gradients.push(gradient);
                                     }
                                 }
-                                if (gradients.length > 0) {
+                                if (gradients.length) {
                                     boxStyle.backgroundGradient = gradients;
                                 }
                                 else {
@@ -300,7 +300,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                             images.push(match[0]);
                                         }
                                     }
-                                    if (images.length > 0) {
+                                    if (images.length) {
                                         boxStyle.backgroundImage = images;
                                     }
                                 }
@@ -329,7 +329,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache) {
             if (this.checkPermissions(node, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
-                if (!(node.renderChildren.length > 0 || !node.domElement || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
+                if (!(node.renderChildren.length || !node.domElement || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity);
                     let backgroundColor: ColorHexAlpha | null = null;
@@ -411,7 +411,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache.elements) {
             if (this.checkPermissions(node, 'boxSpacing')) {
                 const boxSpacing = getBoxSpacing(node.element);
-                if (Object.keys(boxSpacing).length > 0) {
+                if (Object.keys(boxSpacing).length) {
                     const result: StringMap = {};
                     for (const attr in boxSpacing) {
                         if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
@@ -493,7 +493,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     else if (node.inlineText) {
                         name = node.textContent.trim();
-                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
+                        value = replaceEntity(element.children.length || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
                         [value, inlineTrim] = replaceWhiteSpace(node, value);
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
@@ -542,7 +542,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 );
                                 value = value.replace(/\s+$/, node.css('display') === 'table-cell' || (nextSibling && nextSibling.lineBreak) ? '' : '&#160;');
                             }
-                            else if (value.length > 0) {
+                            else if (value.length) {
                                 value = '&#160;' + value.substring(1);
                             }
                         }
@@ -576,7 +576,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             numberArray.push(value);
                         }
                         else {
-                            if (numberArray && numberArray.length > 0) {
+                            if (numberArray && numberArray.length) {
                                 i = -1;
                                 numberArray = null;
                                 continue;
@@ -588,8 +588,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                 }
                 node.data(Resource.KEY_NAME, 'optionArray', {
-                    stringArray: stringArray.length > 0 ? stringArray : null,
-                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                    stringArray: stringArray.length ? stringArray : null,
+                    numberArray: numberArray && numberArray.length ? numberArray : null
                 });
             }
         }
@@ -599,7 +599,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache.visible) {
             if (node.svgElement && this.checkPermissions(node, 'imageSource')) {
                 const element = <SVGSVGElement> node.element;
-                if (element.children.length > 0) {
+                if (element.children.length) {
                     const result = new Svg(element);
                     result.dpi = node.dpi;
                     result.fontSize = node.fontSize;
@@ -614,7 +614,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                         }
                     });
-                    if (result.length > 0 || result.defs.image.length > 0) {
+                    if (result.length || result.defs.image.length) {
                         node.data(Resource.KEY_NAME, 'imageSource', result);
                     }
                 }

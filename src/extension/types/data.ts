@@ -52,8 +52,8 @@ interface GridCellData<T> extends Inheritable {
     rowSpan: number;
     columnSpan: number;
     index: number;
-    cellFirst: boolean;
-    cellLast: boolean;
+    cellStart: boolean;
+    cellEnd: boolean;
     rowEnd: boolean;
     rowStart: boolean;
 }

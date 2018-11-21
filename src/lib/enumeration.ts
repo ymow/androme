@@ -11,36 +11,35 @@ export enum APP_SECTION {
     ALL = 14
 }
 
-export enum BOX_STANDARD {
-    MARGIN_TOP = 2,
-    MARGIN_RIGHT = 4,
-    MARGIN_BOTTOM = 8,
-    MARGIN_LEFT = 16,
-    PADDING_TOP = 32,
-    PADDING_RIGHT = 64,
-    PADDING_BOTTOM = 128,
-    PADDING_LEFT = 256,
-    MARGIN = 2 | 4 | 8 | 16,
-    MARGIN_VERTICAL = 2 | 8,
-    MARGIN_HORIZONTAL = 4 | 16,
-    PADDING = 32 | 64 | 128 | 256,
-    PADDING_VERTICAL = 32 | 128,
-    PADDING_HORIZONTAL = 64 | 256
-}
-
-export enum CSS_STANDARD {
+export enum NODE_CONTAINER {
     NONE = 0,
-    UNIT = 2,
-    AUTO = 4,
-    LEFT = 8,
-    BASELINE = 16,
-    PERCENT = 32,
-    ZERO = 64
+    CHECKBOX,
+    RADIO,
+    EDIT,
+    SELECT,
+    RANGE,
+    SVG,
+    TEXT,
+    IMAGE,
+    BUTTON,
+    INLINE,
+    LINE,
+    SPACE,
+    BLOCK,
+    WEB_VIEW,
+    FRAME,
+    LINEAR,
+    RADIO_GROUP,
+    GRID,
+    RELATIVE,
+    CONSTRAINT,
+    SCROLL_HORIZONTAL,
+    SCROLL_VERTICAL
 }
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
-    EXCLUDE = 2,
+    UNKNOWN = 2,
     AUTO_LAYOUT = 4,
     HORIZONTAL = 8,
     VERTICAL = 16,
@@ -81,30 +80,31 @@ export enum NODE_PROCEDURE {
     ALL = 510
 }
 
-export enum NODE_STANDARD {
+export enum CSS_STANDARD {
     NONE = 0,
-    CHECKBOX,
-    RADIO,
-    EDIT,
-    SELECT,
-    RANGE,
-    SVG,
-    TEXT,
-    IMAGE,
-    BUTTON,
-    INLINE,
-    LINE,
-    SPACE,
-    BLOCK,
-    WEB_VIEW,
-    FRAME,
-    LINEAR,
-    RADIO_GROUP,
-    GRID,
-    RELATIVE,
-    CONSTRAINT,
-    SCROLL_HORIZONTAL,
-    SCROLL_VERTICAL
+    UNIT = 2,
+    AUTO = 4,
+    LEFT = 8,
+    BASELINE = 16,
+    PERCENT = 32,
+    ZERO = 64
+}
+
+export enum BOX_STANDARD {
+    MARGIN_TOP = 2,
+    MARGIN_RIGHT = 4,
+    MARGIN_BOTTOM = 8,
+    MARGIN_LEFT = 16,
+    PADDING_TOP = 32,
+    PADDING_RIGHT = 64,
+    PADDING_BOTTOM = 128,
+    PADDING_LEFT = 256,
+    MARGIN = 2 | 4 | 8 | 16,
+    MARGIN_VERTICAL = 2 | 8,
+    MARGIN_HORIZONTAL = 4 | 16,
+    PADDING = 32 | 64 | 128 | 256,
+    PADDING_VERTICAL = 32 | 128,
+    PADDING_HORIZONTAL = 64 | 256
 }
 
 export enum USER_AGENT {

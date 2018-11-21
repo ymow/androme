@@ -34,7 +34,7 @@ export default (Base: Constructor<Container<SvgPath>>) => {
 
         public setTransformOrigin(dpi: number, fontSize: number) {
             const element = this._element;
-            if (element && this.transform && this.transform.length > 0) {
+            if (element && this.transform && this.transform.length) {
                 this.transform.origin = createTransformOrigin(element, dpi, fontSize);
             }
         }

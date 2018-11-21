@@ -34,7 +34,7 @@
             androme = result;
             System.import('/build/android/main.js').then(result => {
                 androme.setFramework(result['default']);
-                androme.ext('androme.grid', { columnBalance: true });
+                androme.ext('androme.grid', { columnBalanceEqual: true });
                 androme.parseDocument('androme_ui');
                 androme.close();
 

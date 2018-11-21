@@ -1,9 +1,11 @@
-import { BOX_ANDROID, NODE_ANDROID } from '../lib/constant';
+import { BOX_ANDROID, CONTAINER_ANDROID } from '../lib/constant';
 
 import Resource from '../resource';
 import View from '../view';
 
 import { createAttribute } from '../lib/util';
+
+import $Application = androme.lib.base.Application;
 
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -19,7 +21,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             let columnCount = 0;
             let paddingLeft = node.marginLeft;
             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-            if (parent.is($enum.NODE_STANDARD.GRID)) {
+            if (parent.is($enum.NODE_CONTAINER.GRID)) {
                 columnCount = $util.convertInt(parent.android('columnCount'));
                 paddingLeft += parentLeft;
             }
@@ -28,18 +30,24 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             }
             const ordinal = node.find(item => item.float === 'left' && $util.convertInt(item.cssInitial('marginLeft', true)) < 0 && Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
-                let output = '';
                 ordinal.parent = parent;
+                const layoutData = $Application.createLayoutData(ordinal, parent);
                 if (ordinal.inlineText || ordinal.length === 0) {
-                    output = controller.renderNode(ordinal, parent, $enum.NODE_STANDARD.TEXT);
-                }
-                else if (ordinal.every(item => item.pageflow)) {
-                    output = controller.renderGroup(ordinal, parent, $enum.NODE_STANDARD.RELATIVE);
+                    layoutData.containerType = $enum.NODE_CONTAINER.TEXT;
                 }
                 else {
-                    output = controller.renderGroup(ordinal, parent, $enum.NODE_STANDARD.CONSTRAINT);
+                    layoutData.items = ordinal.children as T[];
+                    layoutData.itemCount = ordinal.length;
+                    if ($Application.relativeHorizontal(ordinal.children)) {
+                        layoutData.containerType = $enum.NODE_CONTAINER.RELATIVE;
+                        layoutData.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL;
+                    }
+                    else {
+                        layoutData.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
+                        layoutData.alignmentType |= $enum.NODE_ALIGNMENT.UNKNOWN;
+                    }
                 }
-                controller.prependBefore(node.id, output);
+                controller.prependBefore(node.id, this.application.renderNode(layoutData));
                 if (columnCount === 3) {
                     node.android('layout_columnSpan', '2');
                 }
@@ -97,7 +105,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                             [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: marginLeft
                         }
                     });
-                    const xml = controller.renderNodeStatic(NODE_ANDROID.SPACE, parent.renderDepth + 1, insideOptions, 'wrap_content', 'wrap_content');
+                    const xml = controller.renderNodeStatic(CONTAINER_ANDROID.SPACE, parent.renderDepth + 1, insideOptions, 'wrap_content', 'wrap_content');
                     controller.prependBefore(node.id, xml);
                     options.android.minWidth = $util.formatPX('24');
                 }
@@ -132,14 +140,21 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     }
                     const companion = new View(this.application.processing.cache.nextId, document.createElement('SPAN'), this.application.viewController.delegateNodeInit) as T;
                     companion.alignmentType = $enum.NODE_ALIGNMENT.SPACE;
-                    companion.nodeName = `${node.nodeName}_ORDINAL`;
+                    companion.tagName = `${node.tagName}_ORDINAL`;
                     companion.inherit(node, 'style');
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                         companion.css('fontSize', '12px');
                     }
                     node.companion = companion;
                     this.application.processing.cache.append(companion, false);
-                    const xml = controller.renderNodeStatic(image !== '' ? NODE_ANDROID.IMAGE : (mainData.ordinal !== '' ? NODE_ANDROID.TEXT : NODE_ANDROID.SPACE), parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion);
+                    const xml = controller.renderNodeStatic(
+                        image !== '' ? CONTAINER_ANDROID.IMAGE : (mainData.ordinal !== '' ? CONTAINER_ANDROID.TEXT : CONTAINER_ANDROID.SPACE),
+                        parent.renderDepth + 1,
+                        options,
+                        'wrap_content',
+                        'wrap_content',
+                        companion
+                    );
                     controller.prependBefore(node.id, xml);
                 }
             }
@@ -178,7 +193,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         layout_columnSpan: columnCount.toString()
                     }
                 });
-                const xml = this.application.viewController.renderNodeStatic(NODE_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
+                const xml = this.application.viewController.renderNodeStatic(CONTAINER_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
                 this.application.viewController.prependBefore(current.id, xml, 0);
             }
         }

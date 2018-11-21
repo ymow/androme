@@ -68,7 +68,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 if ($util.hasValue(element.dataset.navigationIcon)) {
-                    const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.MENU);
+                    const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.PREFIX_ANDROID.MENU);
                     if (result !== '') {
                         $util.defaultWhenNull(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
@@ -77,7 +77,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                     }
                 }
                 if ($util.hasValue(element.dataset.collapseIcon)) {
-                    const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.MENU);
+                    const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.PREFIX_ANDROID.MENU);
                     if (result !== '') {
                         $util.defaultWhenNull(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
@@ -105,8 +105,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 }
             }
         });
-        const hasCollapsingToolbar = options.hasOwnProperty('collapsingToolbar') || collapsingToolbarChildren.length > 0;
-        const hasAppBar = options.hasOwnProperty('appBar') || appBarChildren.length > 0 || hasCollapsingToolbar;
+        const hasCollapsingToolbar = options.hasOwnProperty('collapsingToolbar') || collapsingToolbarChildren.length;
+        const hasAppBar = options.hasOwnProperty('appBar') || appBarChildren.length || hasCollapsingToolbar;
         let appBarOverlay = '';
         let popupOverlay = '';
         if (hasCollapsingToolbar) {
@@ -118,14 +118,14 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             }
             $util.defaultWhenNull(toolbarOptions, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage) {
-                $util.defaultWhenNull(appBarChildren.length > 0 ? appBarOptions : toolbarOptions, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
+                $util.defaultWhenNull(appBarChildren.length ? appBarOptions : toolbarOptions, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
                 node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
                 $util.defaultWhenNull(toolbarOptions, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
             }
         }
-        if (appBarChildren.length > 0) {
+        if (appBarChildren.length) {
             $util.defaultWhenNull(appBarOptions, 'android', 'layout_height', '?android:attr/actionBarSize');
         }
         else {
@@ -142,9 +142,9 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
         const useNumberAlias = application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias');
-        node.setNodeType($android_const.VIEW_SUPPORT.TOOLBAR, $enum.NODE_STANDARD.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.TOOLBAR, $enum.NODE_CONTAINER.BLOCK);
         output = controller.renderNodeStatic(
-            $android_const.VIEW_SUPPORT.TOOLBAR,
+            $android_const.SUPPORT_ANDROID.TOOLBAR,
             innerDepth,
             $Resource.formatOptions(toolbarOptions, useNumberAlias),
             'match_parent',
@@ -176,7 +176,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 $util.defaultWhenNull(backgroundImageOptions, 'android', 'fitsSystemWindows', 'true');
                 $util.defaultWhenNull(backgroundImageOptions, 'app', 'layout_collapseMode', 'parallax');
                 output = controller.renderNodeStatic(
-                    $android_const.NODE_ANDROID.IMAGE,
+                    $android_const.CONTAINER_ANDROID.IMAGE,
                     innerDepth,
                     $Resource.formatOptions(backgroundImageOptions, useNumberAlias),
                     'match_parent',
@@ -208,11 +208,11 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             }
             appBarNode = this.createPlaceholder(application.processing.cache.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
-            appBarNode.nodeId = $android_util.stripId(appBarOptions['android'].id);
-            appBarNode.setNodeType($android_const.VIEW_SUPPORT.APPBAR, $enum.NODE_STANDARD.BLOCK);
+            appBarNode.controlId = $android_util.stripId(appBarOptions['android'].id);
+            appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $enum.NODE_CONTAINER.BLOCK);
             application.processing.cache.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
-                $android_const.VIEW_SUPPORT.APPBAR,
+                $android_const.SUPPORT_ANDROID.APPBAR,
                 target ? -1 : depth,
                 $Resource.formatOptions(appBarOptions, useNumberAlias),
                 'match_parent',
@@ -232,11 +232,11 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 collapsingToolbarNode = this.createPlaceholder(application.processing.cache.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
-                    collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
-                    collapsingToolbarNode.setNodeType($android_const.VIEW_SUPPORT.COLLAPSING_TOOLBAR, $enum.NODE_STANDARD.BLOCK);
+                    collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).controlId);
+                    collapsingToolbarNode.setControlType($android_const.SUPPORT_ANDROID.COLLAPSING_TOOLBAR, $enum.NODE_CONTAINER.BLOCK);
                     application.processing.cache.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                     const content = controller.renderNodeStatic(
-                        $android_const.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
+                        $android_const.SUPPORT_ANDROID.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,
                         $Resource.formatOptions(collapsingToolbarOptions, useNumberAlias),
                         'match_parent',
@@ -270,7 +270,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         else {
             node.render(target ? node : parent);
         }
-        node.nodeType = $enum.NODE_STANDARD.BLOCK;
+        node.containerType = $enum.NODE_CONTAINER.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
         return { output };
     }

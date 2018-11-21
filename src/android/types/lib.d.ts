@@ -13,15 +13,15 @@ declare global {
 
             namespace constant {
                 export import EXT_ANDROID = $const.EXT_ANDROID;
-                export import NODE_ANDROID = $const.NODE_ANDROID;
-                export import VIEW_SUPPORT = $const.VIEW_SUPPORT;
+                export import CONTAINER_ANDROID = $const.CONTAINER_ANDROID;
+                export import SUPPORT_ANDROID = $const.SUPPORT_ANDROID;
                 export import BOX_ANDROID = $const.BOX_ANDROID;
                 export import AXIS_ANDROID = $const.AXIS_ANDROID;
                 export import LAYOUT_ANDROID = $const.LAYOUT_ANDROID;
                 export import XMLNS_ANDROID = $const.XMLNS_ANDROID;
                 export import WEBVIEW_ANDROID = $const.WEBVIEW_ANDROID;
                 export import RESERVED_JAVA = $const.RESERVED_JAVA;
-                export import DRAWABLE_PREFIX = $const.DRAWABLE_PREFIX;
+                export import PREFIX_ANDROID = $const.PREFIX_ANDROID;
             }
 
             namespace util {

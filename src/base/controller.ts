@@ -1,10 +1,16 @@
+import { ELEMENT_MAP } from '../lib/constant';
+
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
+    public static getContainerType(tagName: string) {
+        return ELEMENT_MAP[tagName] || 0;
+    }
+
     public static partitionRows<T extends Node>(list: T[], parent?: T) {
-        const cleared = parent && this.clearedAll(parent) && NodeList.cleared(list);
+        const cleared = parent ? NodeList.clearedAll(parent) : NodeList.cleared(list);
         const result: T[][] = [];
         let row: T[] = [];
         for (let i = 0; i < list.length; i++) {
@@ -55,20 +61,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
                 }
             }
         }
-        return preferred.length > 0 ? preferred : result;
-    }
-
-    public static clearedAll<T extends Node>(parent: T) {
-        const documentParent = parent.filter(item => item.siblingflow).map(item => item.documentParent);
-        if (documentParent.length > 0) {
-            if (new Set(documentParent).size !== 1) {
-                return undefined;
-            }
-            else {
-                return NodeList.cleared(Array.from(documentParent[0].element.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item));
-            }
-        }
-        return new Map<T, string>();
+        return preferred.length ? preferred : result;
     }
 
     public cache: NodeList<T>;
@@ -79,15 +72,13 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
-    public abstract createGroup(parent: T, node: T, children: T[]): T;
-    public abstract renderGroup(node: T, parent: T, nodeType: number, options?: {}): string;
-    public abstract renderNode(node: T, parent: T, nodeType: number, options?: {}): string;
+    public abstract setConstraints(): void;
+    public abstract createNodeGroup(node: T, parent: T, children: T[]): T;
+    public abstract renderNode(data: LayoutData<T>): string;
+    public abstract renderNodeGroup(data: LayoutData<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
-    public abstract renderMerge(name: string, content: string[]): string;
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
-    public abstract baseRenderDepth(name: string): number;
-    public abstract setConstraints(): void;
     public abstract finalize(viewData: ViewData<NodeList<T>>);
     public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 

@@ -28,7 +28,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element) && element.children.length > 0) {
+        if (this.included(element) && element.children.length) {
             Array.from(element.children).forEach((item: HTMLElement) => {
                 if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
                     item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
@@ -56,9 +56,9 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         }
         node.documentRoot = true;
         node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
-        node.setNodeType($android_const.VIEW_SUPPORT.DRAWER, $enum.NODE_STANDARD.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $enum.NODE_CONTAINER.BLOCK);
         const output = this.application.viewController.renderNodeStatic(
-            $android_const.VIEW_SUPPORT.DRAWER,
+            $android_const.SUPPORT_ANDROID.DRAWER,
             0,
             $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'match_parent',
@@ -85,7 +85,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
             $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
             const output = application.viewController.renderNodeStatic(
-                $android_const.VIEW_SUPPORT.NAVIGATION_VIEW,
+                $android_const.SUPPORT_ANDROID.NAVIGATION_VIEW,
                 1,
                 $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
                 'wrap_content',

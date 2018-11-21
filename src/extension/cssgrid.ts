@@ -1,6 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD } from '../lib/enumeration';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
+import Application from '../base/application';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
@@ -44,7 +45,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
     }
 
     public condition(node: T) {
-        return node.length > 0 && node.gridElement;
+        return node.gridElement && node.length > 0;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -357,7 +358,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                     span = 0;
                                 }
                             }
-                            if (range.length > 0) {
+                            if (range.length) {
                                 available.push(range);
                             }
                             else {
@@ -430,7 +431,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
             }
         }
-        if (mainData.rowData.length > 0) {
+        if (mainData.rowData.length) {
             for (const row of mainData.rowData) {
                 mainData.column.count = Math.max(row.length, mainData.column.count);
                 for (const column of row) {
@@ -465,7 +466,17 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
                 node.replace(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
-                output = this.application.writeGridLayout(node, parent, mainData.column.count, mainData.row.count);
+                const layoutData = Application.createLayoutData(
+                    node,
+                    parent,
+                    NODE_CONTAINER.GRID,
+                    NODE_ALIGNMENT.AUTO_LAYOUT,
+                    node.length,
+                    node.children as T[]
+                );
+                layoutData.rowCount = mainData.row.count;
+                layoutData.columnCount = mainData.column.count;
+                output = this.application.renderNode(layoutData);
             }
         }
         return { output, complete: true };

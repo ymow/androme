@@ -35,27 +35,27 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.DRAWABLE_PREFIX.DIALOG);
+                src = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.PREFIX_ANDROID.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = $Resource.addImage({ mdpi: (<HTMLInputElement> element).src }, $android_const.DRAWABLE_PREFIX.DIALOG);
+                    src = $Resource.addImage({ mdpi: (<HTMLInputElement> element).src }, $android_const.PREFIX_ANDROID.DIALOG);
                 }
                 else {
-                    src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
+                    src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.PREFIX_ANDROID.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.DRAWABLE_PREFIX.DIALOG);
+                src = $Resource.addImageUrl(node.css('backgroundImage'), $android_const.PREFIX_ANDROID.DIALOG);
                 break;
         }
         if (src !== '') {
             $util.defaultWhenNull(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
-        node.setNodeType($android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON, $enum.NODE_STANDARD.BUTTON);
+        node.setControlType($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, $enum.NODE_CONTAINER.BUTTON);
         const output = this.application.viewController.renderNodeStatic(
-            $android_const.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
+            $android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
             $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'wrap_content',
@@ -105,7 +105,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             }
             if (target) {
                 let anchor = parent.stringId;
-                if (parent.controlName === $android_const.VIEW_SUPPORT.TOOLBAR) {
+                if (parent.controlName === $android_const.SUPPORT_ANDROID.TOOLBAR) {
                     const outerParent: string = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                     if (outerParent) {
                         anchor = outerParent;

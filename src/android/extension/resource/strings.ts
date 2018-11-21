@@ -34,7 +34,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                             .filter(name => name)
                         );
                     }
-                    if (result.length > 0) {
+                    if (result.length) {
                         const arrayValue = result.join('-');
                         let arrayName = '';
                         for (const [storedName, storedResult] of Resource.STORED.arrays.entries()) {
@@ -44,7 +44,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                             }
                         }
                         if (arrayName === '') {
-                            arrayName = `${node.nodeId}_array`;
+                            arrayName = `${node.controlId}_array`;
                             Resource.STORED.arrays.set(arrayName, result);
                         }
                         node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);

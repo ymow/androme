@@ -78,7 +78,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
     public init(element: HTMLElement) {
         if (this.included(element)) {
             let valid = false;
-            if (element.children.length > 0) {
+            if (element.children.length) {
                 const tagName = element.children[0].tagName;
                 valid = Array.from(element.children).every(item => item.tagName === tagName);
                 let current = element.parentElement;
@@ -108,10 +108,11 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        node.documentRoot = true;
+        node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
         node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-        node.setNodeType(VIEW_NAVIGATION.MENU, $enum.NODE_STANDARD.INLINE);
+        node.documentRoot = true;
+        node.setControlType(VIEW_NAVIGATION.MENU, $enum.NODE_CONTAINER.INLINE);
         const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { output, complete: true };
@@ -183,14 +184,14 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
                     const style = $dom.getStyle(element);
-                    let src = $Resource.addImageUrl((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.DRAWABLE_PREFIX.MENU);
+                    let src = $Resource.addImageUrl((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.PREFIX_ANDROID.MENU);
                     if (src !== '') {
                         options['android'].icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.find(item => item.imageElement);
                         if (image) {
-                            src = $Resource.addImageSrcSet(<HTMLImageElement> image.element, $android_const.DRAWABLE_PREFIX.MENU);
+                            src = $Resource.addImageSrcSet(<HTMLImageElement> image.element, $android_const.PREFIX_ANDROID.MENU);
                             if (src !== '') {
                                 options['android'].icon = `@drawable/${src}`;
                             }
@@ -199,6 +200,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 }
                 break;
             case VIEW_NAVIGATION.GROUP:
+                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
                 parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }
@@ -211,7 +213,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 options['android'].title = title;
             }
         }
-        node.setNodeType(controlName, $enum.NODE_STANDARD.INLINE);
+        node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
         node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
         const output = this.application.viewController.renderNodeStatic(controlName, parent.renderDepth + 1, options, '', '', node, layout);

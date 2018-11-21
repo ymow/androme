@@ -3,6 +3,7 @@ import { AXIS_ANDROID } from '../lib/constant';
 import Controller from '../controller';
 import View from '../view';
 
+import $Application = androme.lib.base.Application;
 import $NodeList = androme.lib.base.NodeList;
 
 import $const = androme.lib.constant;
@@ -22,7 +23,15 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
     public processChild(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         if (node.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) {
-            output = this.application.writeConstraintLayout(node, parent);
+            const layoutData = $Application.createLayoutData(
+                node,
+                parent,
+                $enum.NODE_CONTAINER.CONSTRAINT,
+                $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
+                node.length,
+                node.children as T[]
+            );
+            output = this.application.renderNode(layoutData);
         }
         return { output, complete: output !== '' };
     }
@@ -36,7 +45,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             const basicVertical: T[] = [];
             if (mainData.wrap) {
                 let previousSegment: T[] | undefined;
-                const segments = node.children.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) as T[];
+                const segments = node.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) as T[];
                 for (let i = 0; i < segments.length; i++) {
                     const item = segments[i];
                     const pageflow = item.renderChildren.filter(child => child.pageflow) as T[];
@@ -66,16 +75,16 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                         previousSegment = pageflow;
                     }
                 }
-                if (node.is($enum.NODE_STANDARD.LINEAR)) {
+                if (node.is($enum.NODE_CONTAINER.LINEAR)) {
                     if (mainData.columnDirection && mainData.wrapReverse) {
                         node.mergeGravity('gravity', 'right');
                     }
                 }
                 else {
-                    if (basicVertical.length > 0) {
+                    if (basicVertical.length) {
                         chainVertical.push(basicVertical);
                     }
-                    if (basicHorizontal.length > 0) {
+                    if (basicHorizontal.length) {
                         chainHorizontal.push(basicHorizontal);
                     }
                 }

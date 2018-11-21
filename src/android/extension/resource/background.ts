@@ -220,7 +220,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                 }
                 else if (stored.backgroundGradient) {
                     const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true);
-                    if (gradients.length > 0) {
+                    if (gradients.length) {
                         backgroundGradient.push(gradients[0]);
                     }
                 }
@@ -239,8 +239,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     Resource.isBorderVisible(stored.borderLeft) ||
                     stored.borderRadius
                 );
-                const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
-                if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
+                const hasBackgroundImage = backgroundImage.filter(value => value).length;
+                if (hasBorder || hasBackgroundImage || backgroundGradient.length) {
                     const borders: BorderAttribute[] = [
                         stored.borderTop,
                         stored.borderRight,
@@ -361,7 +361,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }
                             }
                             if (hasBackgroundImage) {
-                                if (node.of($enum.NODE_STANDARD.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                                if (node.of($enum.NODE_CONTAINER.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
                                     node.android('src', `@drawable/${backgroundImage[0]}`);
                                     if (boxPosition.left > 0) {
                                         node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, boxPosition.left);
@@ -470,7 +470,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     });
                     const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                     const borderRadius = getShapeAttribute(stored, 'radius');
-                    const vectorGradient = backgroundGradient.length > 0 && backgroundGradient.some(gradient => gradient.colorStop.length > 0);
+                    const vectorGradient = backgroundGradient.length && backgroundGradient.some(gradient => gradient.colorStop.length > 0);
                     if (vectorGradient) {
                         const width = node.bounds.width;
                         const height = node.bounds.height;
@@ -491,7 +491,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         });
                         let vector = Resource.getStoredName('drawables', xml);
                         if (vector === '') {
-                            vector = `${node.nodeName.toLowerCase()}_${node.nodeId}_gradient`;
+                            vector = `${node.tagName.toLowerCase()}_${node.controlId}_gradient`;
                             Resource.STORED.drawables.set(vector, xml);
                         }
                         backgroundVector.push({ vector });
@@ -507,18 +507,18 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 '1': getShapeAttribute(stored, 'stroke'),
                                 '2': backgroundColor,
                                 '3': borderRadius,
-                                '4': backgroundGradient.length > 0 ? backgroundGradient : false
+                                '4': backgroundGradient.length ? backgroundGradient : false
                             };
                         }
                         else {
                             template = $xml.parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '1': backgroundColor,
-                                '2': !vectorGradient && backgroundGradient.length > 0 ? backgroundGradient : false,
+                                '2': !vectorGradient && backgroundGradient.length ? backgroundGradient : false,
                                 '3': backgroundVector,
                                 '4': false,
-                                '5': images5.length > 0 ? images5 : false,
-                                '6': images6.length > 0 ? images6 : false,
+                                '5': images5.length ? images5 : false,
+                                '6': images6.length ? images6 : false,
                                 '7': Resource.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
                             };
                         }
@@ -527,11 +527,11 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         template = $xml.parseTemplate(LAYERLIST_TMPL);
                         data = {
                             '1': backgroundColor,
-                            '2': !vectorGradient && backgroundGradient.length > 0 ? backgroundGradient : false,
+                            '2': !vectorGradient && backgroundGradient.length ? backgroundGradient : false,
                             '3': backgroundVector,
                             '4': false,
-                            '5': images5.length > 0 ? images5 : false,
-                            '6': images6.length > 0 ? images6 : false,
+                            '5': images5.length ? images5 : false,
+                            '6': images6.length ? images6 : false,
                             '7': []
                         };
                         const borderWidth = new Set(borderFiltered.map(item => item.width));
@@ -610,7 +610,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         const xml = $xml.createTemplate(template, data);
                         resourceName = Resource.getStoredName('drawables', xml);
                         if (resourceName === '') {
-                            resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                            resourceName = `${node.tagName.toLowerCase()}_${node.controlId}`;
                             Resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
@@ -647,13 +647,13 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }
                             }
                             if (!node.has('width', $enum.CSS_STANDARD.UNIT)) {
-                                const width = node.bounds.width + (!node.is($enum.NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                                const width = node.bounds.width + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
                                     node.css('width', $util.formatPX(width));
                                 }
                             }
                             if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
-                                const height = node.actualHeight + (!node.is($enum.NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                                const height = node.actualHeight + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
                                     node.css('height', $util.formatPX(height));
                                     if (node.marginTop < 0) {

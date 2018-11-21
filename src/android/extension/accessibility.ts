@@ -1,4 +1,4 @@
-import { NODE_ANDROID } from '../lib/constant';
+import { CONTAINER_ANDROID } from '../lib/constant';
 
 import View from '../view';
 
@@ -14,7 +14,7 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 switch (node.controlName) {
-                    case NODE_ANDROID.EDIT:
+                    case CONTAINER_ANDROID.EDIT:
                         if (!node.companion) {
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                 const label = $dom.getNodeFromElement<T>(sibling);
@@ -32,10 +32,10 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
                                 return false;
                             });
                         }
-                    case NODE_ANDROID.SELECT:
-                    case NODE_ANDROID.CHECKBOX:
-                    case NODE_ANDROID.RADIO:
-                    case NODE_ANDROID.BUTTON:
+                    case CONTAINER_ANDROID.SELECT:
+                    case CONTAINER_ANDROID.CHECKBOX:
+                    case CONTAINER_ANDROID.RADIO:
+                    case CONTAINER_ANDROID.BUTTON:
                         if ((<HTMLInputElement> element).disabled) {
                             node.android('focusable', 'false');
                         }

@@ -128,16 +128,16 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
         const groupMap: ObjectMap<StyleList[]> = {};
         for (const node of this.application.session.cache) {
             if (node.visible && node.data(Resource.KEY_NAME, 'fontStyle') && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
-                if (nameMap[node.nodeName] === undefined) {
-                    nameMap[node.nodeName] = [];
+                if (nameMap[node.tagName] === undefined) {
+                    nameMap[node.tagName] = [];
                 }
-                nameMap[node.nodeName].push(node);
+                nameMap[node.tagName].push(node);
             }
         }
         for (const tag in nameMap) {
             const sorted: StyleList[] = [];
             for (let node of nameMap[tag]) {
-                const nodeId = node.id;
+                const controlId = node.id;
                 const companion = node.companion;
                 if (companion && !companion.visible && companion.tagName === 'LABEL') {
                     node = companion as T;
@@ -188,7 +188,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                         if (sorted[i][attr] === undefined) {
                             sorted[i][attr] = [];
                         }
-                        sorted[i][attr].push(nodeId);
+                        sorted[i][attr].push(controlId);
                     }
                 }
             }
@@ -200,7 +200,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
             style[tag] = {};
             layout[tag] = {};
             const count = nameMap[tag].length;
-            let sorted = groupMap[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+            let sorted = groupMap[tag].filter(item => Object.keys(item).length).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -269,13 +269,13 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                                     if (i !== j && sorted[j]) {
                                         for (const attr in sorted[j]) {
                                             const compare = sorted[j][attr];
-                                            if (compare.length > 0) {
-                                                for (const nodeId of ids) {
-                                                    if (compare.includes(nodeId)) {
+                                            if (compare.length) {
+                                                for (const controlId of ids) {
+                                                    if (compare.includes(controlId)) {
                                                         if (found[attr] === undefined) {
                                                             found[attr] = [];
                                                         }
-                                                        found[attr].push(nodeId);
+                                                        found[attr].push(controlId);
                                                     }
                                                 }
                                             }
@@ -320,7 +320,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                         }
                     }
                     const shared = Object.keys(styleKey);
-                    if (shared.length > 0) {
+                    if (shared.length) {
                         if (shared.length > 1 || styleKey[shared[0]].length > 1) {
                             style[tag][shared.join(';')] = styleKey[shared[0]];
                         }
@@ -339,7 +339,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     sorted = sorted.filter(item => {
                         if (item) {
                             for (const attr in item) {
-                                if (item[attr] && item[attr].length > 0) {
+                                if (item[attr] && item[attr].length) {
                                     return true;
                                 }
                             }
@@ -348,7 +348,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     });
                 }
             }
-            while (sorted.length > 0);
+            while (sorted.length);
         }
         const resource: TagNameMap = {};
         const nodeMap: NodeStyleMap = {};
@@ -398,7 +398,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
             const node = this.application.session.cache.find('id', parseInt(id));
             if (node) {
                 const styles = nodeMap[id].styles;
-                if (styles.length > 0) {
+                if (styles.length) {
                     parentStyle.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);
                 }

@@ -73,7 +73,7 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
     let bounds: BoxDimensions = newClientRect();
     let multiLine = false;
-    if (domRect.length > 0) {
+    if (domRect.length) {
         bounds = assignBounds(domRect[0]);
         const top = new Set([bounds.top]);
         const bottom = new Set([bounds.bottom]);
@@ -325,7 +325,7 @@ export function getBackgroundPosition(value: string, dimension: BoxDimensions, d
 }
 
 export function getFirstElementChild(elements: Element[]) {
-    if (elements.length > 0) {
+    if (elements.length) {
         const parentElement = elements[0].parentElement;
         if (parentElement) {
             for (let i = 0; i < parentElement.childNodes.length; i++) {
@@ -340,7 +340,7 @@ export function getFirstElementChild(elements: Element[]) {
 }
 
 export function getLastElementChild(elements: Element[]) {
-    if (elements.length > 0) {
+    if (elements.length) {
         const parentElement = elements[0].parentElement;
         if (parentElement) {
             for (let i = parentElement.childNodes.length - 1; i >= 0; i--) {
@@ -360,13 +360,13 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
         if (depth++ === maxDepth) {
             return false;
         }
-        return elements.some((item: Element) => {
-            if (item.nodeName === '#text') {
-                if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
+        return elements.some((sibling: Element) => {
+            if (sibling.nodeName === '#text') {
+                if (isPlainText(sibling, whiteSpace) || (cssParent(sibling, 'whiteSpace', 'pre', 'pre-wrap') && sibling.textContent && sibling.textContent !== '')) {
                     return true;
                 }
             }
-            else if (item instanceof HTMLElement && item.childNodes.length > 0 && findFreeForm(Array.from(item.childNodes))) {
+            else if (sibling instanceof HTMLElement && sibling.childNodes.length && findFreeForm(Array.from(sibling.childNodes))) {
                 return true;
             }
             return false;
@@ -413,7 +413,7 @@ export function hasLineBreak(element: Element) {
         const fromParent = element.nodeName === '#text';
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
-            (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) ||
+            (element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR')) ||
             (/\n/.test(element.textContent || '') && (
                 ['pre', 'pre-wrap'].includes(whiteSpace) ||
                 (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
@@ -487,7 +487,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
                         current = current.parentElement;
                     }
                     if (valid) {
-                        if (element.children.length > 0) {
+                        if (element.children.length) {
                             return Array.from(element.children).some((item: Element) => {
                                 const style = getStyle(item);
                                 const float = style.cssFloat;

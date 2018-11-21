@@ -1,6 +1,6 @@
 import { SettingsAndroid } from './types/module';
 
-import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
+import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
 import BASE_TMPL from './template/base';
 
@@ -22,18 +22,18 @@ import $xml = androme.lib.xml;
 function adjustBaseline<T extends View>(nodes: T[]) {
     if (nodes.length > 1) {
         const textBaseline = $NodeList.textBaseline(nodes.filter(item => item.baseline && item.toInt('top') === 0 && item.toInt('bottom') === 0));
-        if (textBaseline.length > 0) {
+        if (textBaseline.length) {
             const alignWith = textBaseline[0];
             const images: T[] = [];
             let exclude: T | undefined;
             for (const node of nodes) {
                 if (node !== alignWith) {
-                    if (node.baseline && (node.nodeType <= $enum.NODE_STANDARD.INLINE || (node.linearHorizontal && node.renderChildren.some(item => item.baseline && item.nodeType <= $enum.NODE_STANDARD.INLINE)))) {
+                    if (node.baseline && (node.containerType <= $enum.NODE_CONTAINER.INLINE || (node.linearHorizontal && node.renderChildren.some(item => item.baseline && item.containerType <= $enum.NODE_CONTAINER.INLINE)))) {
                         if (!alignWith.imageElement && node.imageElement) {
                             images.push(node);
                         }
                         else if (node.alignOrigin) {
-                            node.anchor(node.imageElement || node.is($enum.NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline', alignWith.stringId);
+                            node.anchor(node.imageElement || node.is($enum.NODE_CONTAINER.BUTTON) ? 'bottom' : 'baseline', alignWith.stringId);
                         }
                         else if (alignWith.position === 'relative' && node.bounds.height < alignWith.bounds.height && node.lineHeight === 0) {
                             node.anchor(alignWith.top ? 'top' : 'bottom', alignWith.stringId);
@@ -44,7 +44,7 @@ function adjustBaseline<T extends View>(nodes: T[]) {
                     }
                 }
             }
-            if (images.length > 0) {
+            if (images.length) {
                 images.sort((a, b) => a.bounds.height <= b.bounds.height ? 1 : -1);
                 for (let i = 0; i < images.length; i++) {
                     if (i === 0) {
@@ -245,10 +245,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             function parseAttributes(node: T) {
                 if (node.dir === 'rtl') {
-                    if (node.nodeType < $enum.NODE_STANDARD.INLINE) {
+                    if (node.containerType < $enum.NODE_CONTAINER.INLINE) {
                         node.android('textDirection', 'rtl');
                     }
-                    else if (node.renderChildren.length > 0) {
+                    else if (node.renderChildren.length) {
                         node.android('layoutDirection', 'rtl');
                     }
                 }
@@ -283,7 +283,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         for (const node of this.cache.visible) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.CONSTRAINT)) {
                 const children = node.renderChildren.filter(item => !item.positioned) as T[];
-                if (children.length > 0) {
+                if (children.length) {
                     if (node.layoutRelative) {
                         let boxWidth = node.box.width;
                         if (node.renderParent.overflowX) {
@@ -366,7 +366,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         viewGroup ||
                                         cleared.has(current) ||
                                         rangeMultiLine.has(previous) ||
-                                        (siblings.length > 0 && siblings.some(element => $dom.isLineBreak(element))) ||
+                                        (siblings.length && siblings.some(element => $dom.isLineBreak(element))) ||
                                         (current.floating && (
                                             (current.float === 'left' && $util.withinFraction(current.linear.left, node.box.left)) ||
                                             (current.float === 'right' && $util.withinFraction(current.linear.right, node.box.right)) ||
@@ -452,7 +452,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                         if (this.settings.ellipsisOnTextOverflow) {
                             const widthParent = !node.ascend().some(parent => parent.hasWidth);
-                            if (!node.ascend(true).some(item => item.is($enum.NODE_STANDARD.GRID)) && (rows.length === 1 || node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL))) {
+                            if (!node.ascend(true).some(item => item.is($enum.NODE_CONTAINER.GRID)) && (rows.length === 1 || node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL))) {
                                 for (let i = 1; i < children.length; i++) {
                                     const item = children[i];
                                     if (!item.multiLine && !item.floating && !item.alignParent('left')) {
@@ -518,7 +518,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             const optimal = $NodeList.textBaseline(children)[0];
                             const baseline = children.filter(item => item.textElement && item.baseline).sort(boundsHeight);
                             const images = children.filter(item => item.imageElement && item.baseline).sort(boundsHeight);
-                            if (images.length > 0) {
+                            if (images.length) {
                                 const tallest = images.shift() as T;
                                 for (const image of images) {
                                     image.anchor('baseline', tallest.stringId);
@@ -557,7 +557,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         return false;
                                     });
                                     if (!alignWith) {
-                                        children.slice().sort((a, b) => a.nodeType >= b.nodeType ? 1 : -1).some(item => {
+                                        children.slice().sort((a, b) => a.containerType >= b.containerType ? 1 : -1).some(item => {
                                             if (item !== current) {
                                                 alignWith = item;
                                                 return true;
@@ -635,15 +635,15 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             chainHorizontal.push(columnStart);
                             [chainHorizontal, chainVertical].forEach((connected, index) => {
                                 const horizontal = index === 0;
-                                connected.forEach(chainable => {
-                                    const first = chainable[0];
-                                    const last = chainable[chainable.length - 1];
+                                connected.forEach(segment => {
+                                    const first = segment[0];
+                                    const last = segment[segment.length - 1];
                                     first.anchor(horizontal ? 'left' : 'top', 'parent');
                                     last.anchor(horizontal ? 'right' : 'bottom', 'parent');
-                                    for (let i = 0; i < chainable.length; i++) {
-                                        const chain = chainable[i];
-                                        const previous: T | undefined = chainable[i - 1];
-                                        const next: T | undefined = chainable[i + 1];
+                                    for (let i = 0; i < segment.length; i++) {
+                                        const chain = segment[i];
+                                        const previous: T | undefined = segment[i - 1];
+                                        const next: T | undefined = segment[i + 1];
                                         if (horizontal) {
                                             chain.app('layout_constraintVertical_bias', '0');
                                         }
@@ -690,12 +690,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             }
                             if (node.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
                                 const right = node.hasAlign($enum.NODE_ALIGNMENT.RIGHT);
-                                chainHorizontal.forEach((chainable, index) => {
-                                    const first = chainable[0];
+                                chainHorizontal.forEach((segment, index) => {
+                                    const first = segment[0];
                                     if (right) {
-                                        chainable.reverse();
+                                        segment.reverse();
                                     }
-                                    if (index > 0 && (chainable.length === 1 || !chainable.some(item => item.alignParent('left') || item.alignParent('right')))) {
+                                    if (index > 0 && (segment.length === 1 || !segment.some(item => item.alignParent('left') || item.alignParent('right')))) {
                                         const rowPrevious = chainHorizontal[index - 1];
                                         let chained = true;
                                         for (let i = 0; i < rowPrevious.length; i++) {
@@ -718,9 +718,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     node.android('layout_width', 'match_parent');
                                 }
                             }
-                            chainHorizontal.forEach((chainable, level) => {
-                                const first = chainable[0];
-                                const last = chainable.length > 1 ? chainable[chainable.length - 1] : null;
+                            chainHorizontal.forEach((segment, level) => {
+                                const first = segment[0];
+                                const last = segment.length > 1 ? segment[segment.length - 1] : null;
                                 const chained = !!last && first.alignSibling('left') === '' && first.alignSibling('right') === '';
                                 if (chained) {
                                     first.app('layout_constraintHorizontal_chainStyle', 'packed');
@@ -730,14 +730,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         last.anchor('right', 'parent');
                                     }
                                 }
-                                for (let i = 0; i < chainable.length; i++) {
-                                    const chain = chainable[i];
+                                for (let i = 0; i < segment.length; i++) {
+                                    const chain = segment[i];
                                     if (chain.autoMarginHorizontal) {
                                         chain.anchorParent(AXIS_ANDROID.HORIZONTAL);
                                     }
                                     else {
-                                        const previous = chainable[i - 1];
-                                        const next = chainable[i + 1];
+                                        const previous = segment[i - 1];
+                                        const next = segment[i + 1];
                                         if (previous) {
                                             chain.anchor('leftRight', previous.stringId);
                                             chain.constraint.marginHorizontal = previous.stringId;
@@ -751,13 +751,13 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         const rowPrevious = chainHorizontal[level - 1];
                                         if (rowPrevious) {
                                             const abovePrevious = Controller.partitionAboveBottom(rowPrevious, chain);
-                                            if (abovePrevious.length > 0) {
+                                            if (abovePrevious.length) {
                                                 const stringId = abovePrevious[0].stringId;
                                                 chain.anchor('topBottom', stringId);
                                                 chain.constraint.marginVertical = stringId;
                                             }
                                             else {
-                                                for (const item of chainable) {
+                                                for (const item of segment) {
                                                     if (item !== chain && $util.withinFraction(chain.linear.top, item.linear.top)) {
                                                         chain.anchor('top', item.stringId);
                                                         break;
@@ -849,7 +849,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         item.anchorDelete(item.float === 'right' ? 'left' : 'right');
                                     }
                                     else if (item.inlineElement) {
-                                        if (item.nodeType <= $enum.NODE_STANDARD.IMAGE) {
+                                        if (item.containerType <= $enum.NODE_CONTAINER.IMAGE) {
                                             switch (item.css('textAlign')) {
                                                 case 'center':
                                                     break;
@@ -906,7 +906,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         bottom = false;
                                     }
                                     if (left) {
-                                        if (item.is($enum.NODE_STANDARD.TEXT) && item.cssParent('textAlign', true) === 'center') {
+                                        if (item.is($enum.NODE_CONTAINER.TEXT) && item.cssParent('textAlign', true) === 'center') {
                                             item.anchor('right', 'parent');
                                         }
                                         if (item.textElement &&
@@ -982,7 +982,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 let bottom = previous.linear.bottom;
                                 if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
                                     const elements = $dom.getBetweenElements(previous.groupElement ? (previous.item() as T).element : previous.element, item.element).filter(element => element.tagName === 'BR');
-                                    if (elements.length > 0) {
+                                    if (elements.length) {
                                         bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
                                     }
                                 }
@@ -998,137 +998,162 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     }
 
-    public createGroup(parent: T, node: T, children: T[]) {
+    public createNodeGroup(node: T, parent: T, children: T[]) {
         const group = new ViewGroup(this.cache.nextId, node, parent, children, this.delegateNodeInit) as T;
         this.cache.append(group);
         return group;
     }
 
-    public renderGroup(node: T, parent: T, nodeType: number, options: ExternalData = {}) {
-        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-        const controlName = View.getControlName(nodeType);
-        node.setNodeType(controlName, nodeType);
-        switch (controlName) {
-            case NODE_ANDROID.LINEAR:
-                options = {
-                    android: {
-                        orientation: options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL
-                    }
-                };
-                break;
-            case NODE_ANDROID.GRID:
-                options = {
-                    android: {
-                        columnCount: options.columnCount > 0 ? options.columnCount.toString() : '2',
-                        rowCount: options.rowCount > 0 ? options.rowCount.toString() : ''
-                    }
-                };
-                break;
+    public renderNodeGroup(data: LayoutData<T>) {
+        const [node, parent, containerType, alignmentType, itemCount] = [data.node, data.parent, data.containerType, data.alignmentType, data.itemCount];
+        if (itemCount === 0) {
+            return '';
         }
-        let preXml = '';
-        let postXml = '';
-        if (node.overflowX || node.overflowY) {
-            const overflow: string[] = [];
-            if (node.overflowX && node.overflowY) {
-                overflow.push(NODE_ANDROID.SCROLL_HORIZONTAL, NODE_ANDROID.SCROLL_VERTICAL);
+        const CONTAINER = $enum.NODE_CONTAINER;
+        const options = createAttribute();
+        let valid = false;
+        switch (containerType) {
+            case CONTAINER.FRAME: {
+                valid = true;
+                break;
             }
-            else {
-                if (node.overflowX) {
-                    overflow.push(NODE_ANDROID.SCROLL_HORIZONTAL);
+            case CONTAINER.RADIO_GROUP:
+            case CONTAINER.LINEAR: {
+                if ($util.hasBit(data.alignmentType, $enum.NODE_ALIGNMENT.VERTICAL)) {
+                    options.android.orientation = AXIS_ANDROID.VERTICAL;
+                    valid = true;
                 }
-                if (node.overflowY) {
-                    overflow.push(NODE_ANDROID.SCROLL_VERTICAL);
+                else if ($util.hasBit(data.alignmentType, $enum.NODE_ALIGNMENT.HORIZONTAL)) {
+                    options.android.orientation = AXIS_ANDROID.HORIZONTAL;
+                    valid = true;
                 }
+                break;
             }
-            let previous: T | undefined;
-            const scrollView = overflow.map((value, index) => {
-                const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
-                container.nodeName = node.nodeName;
-                container.setNodeType(value);
-                if (index === 0) {
-                    container.inherit(node, 'initial', 'base', 'style', 'styleMap');
-                    parent.replaceNode(node, container);
-                    container.render(parent);
+            case CONTAINER.GRID: {
+                options.android.rowCount = data.rowCount ? data.rowCount.toString() : '';
+                options.android.columnCount = data.columnCount ? data.columnCount.toString() : '2',
+                valid = true;
+                break;
+            }
+            case CONTAINER.RELATIVE:
+            case CONTAINER.CONSTRAINT: {
+                valid = true;
+                break;
+            }
+        }
+        if (valid) {
+            node.alignmentType |= alignmentType;
+            const controlName = View.getControlName(containerType);
+            node.setControlType(controlName, containerType);
+            const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
+            let preXml = '';
+            let postXml = '';
+            if (node.overflowX || node.overflowY) {
+                const overflow: string[] = [];
+                if (node.overflowX && node.overflowY) {
+                    overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL, CONTAINER_ANDROID.SCROLL_VERTICAL);
                 }
                 else {
-                    container.init();
-                    container.documentParent = node.documentParent;
-                    container.inherit(node, 'dimensions');
-                    container.inherit(node, 'initial', 'style', 'styleMap');
-                    if (previous) {
-                        previous.css('overflow', 'visible scroll');
-                        previous.css('overflowX', 'scroll');
-                        previous.css('overflowY', 'visible');
-                        container.parent = previous;
-                        container.render(previous);
+                    if (node.overflowX) {
+                        overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL);
                     }
-                    container.css('overflow', 'scroll visible');
-                    container.css('overflowX', 'visible');
-                    container.css('overflowY', 'scroll');
-                    if (node.has('height', $enum.CSS_STANDARD.UNIT)) {
-                        container.css('height', $util.formatPX(node.toInt('height') + node.paddingTop + node.paddingBottom));
+                    if (node.overflowY) {
+                        overflow.push(CONTAINER_ANDROID.SCROLL_VERTICAL);
                     }
                 }
-                container.resetBox($enum.BOX_STANDARD.PADDING);
-                const indent = $util.repeat(container.renderDepth);
-                preXml += `{<${container.id}}${indent}<${value}{@${container.id}}>\n` +
-                          $xml.formatPlaceholder(container.id);
-                postXml = `${indent}</${value}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
-                previous = container;
-                this.cache.append(container);
-                return container;
-            });
-            if (scrollView.length === 2) {
-                for (const item of scrollView) {
-                    if (item.hasWidth) {
-                        const value = item.css('width');
-                        if ($util.isPercent(value)) {
-                            item.android('layout_width', item.convertPercent(value, true, true));
-                        }
-                        else {
-                            item.android('layout_width', value);
-                        }
+                let previous: T | undefined;
+                const scrollView = overflow.map((value, index) => {
+                    const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
+                    container.tagName = node.tagName;
+                    container.setControlType(value);
+                    if (index === 0) {
+                        container.inherit(node, 'initial', 'base', 'style', 'styleMap');
+                        parent.replaceNode(node, container);
+                        container.render(parent);
                     }
                     else {
-                        item.android('layout_width', 'wrap_content');
+                        container.init();
+                        container.documentParent = node.documentParent;
+                        container.inherit(node, 'dimensions');
+                        container.inherit(node, 'initial', 'style', 'styleMap');
+                        if (previous) {
+                            previous.css('overflow', 'visible scroll');
+                            previous.css('overflowX', 'scroll');
+                            previous.css('overflowY', 'visible');
+                            container.parent = previous;
+                            container.render(previous);
+                        }
+                        container.css('overflow', 'scroll visible');
+                        container.css('overflowX', 'visible');
+                        container.css('overflowY', 'scroll');
+                        if (node.has('height', $enum.CSS_STANDARD.UNIT)) {
+                            container.css('height', $util.formatPX(node.toInt('height') + node.paddingTop + node.paddingBottom));
+                        }
                     }
+                    container.resetBox($enum.BOX_STANDARD.PADDING);
+                    const indent = $util.repeat(container.renderDepth);
+                    preXml += `{<${container.id}}${indent}<${value}{@${container.id}}>\n` +
+                              $xml.formatPlaceholder(container.id);
+                    postXml = `${indent}</${value}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
+                    previous = container;
+                    this.cache.append(container);
+                    return container;
+                });
+                if (scrollView.length === 2) {
+                    for (const item of scrollView) {
+                        if (item.hasWidth) {
+                            const value = item.css('width');
+                            if ($util.isPercent(value)) {
+                                item.android('layout_width', item.convertPercent(value, true, true));
+                            }
+                            else {
+                                item.android('layout_width', value);
+                            }
+                        }
+                        else {
+                            item.android('layout_width', 'wrap_content');
+                        }
 
-                    item.android('layout_height', item.has('height', $enum.CSS_STANDARD.UNIT) ? item.css('height') : 'wrap_content');
-                }
-                node.android('layout_width', 'wrap_content');
-                node.android('layout_height', 'wrap_content');
-            }
-            else {
-                if (node.overflowX) {
+                        item.android('layout_height', item.has('height', $enum.CSS_STANDARD.UNIT) ? item.css('height') : 'wrap_content');
+                    }
                     node.android('layout_width', 'wrap_content');
-                    node.android('layout_height', 'match_parent');
-                }
-                else {
-                    node.android('layout_width', 'match_parent');
                     node.android('layout_height', 'wrap_content');
                 }
+                else {
+                    if (node.overflowX) {
+                        node.android('layout_width', 'wrap_content');
+                        node.android('layout_height', 'match_parent');
+                    }
+                    else {
+                        node.android('layout_width', 'match_parent');
+                        node.android('layout_height', 'wrap_content');
+                    }
+                }
+                if (previous) {
+                    node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE;
+                    node.parent = previous;
+                    node.resetBox($enum.BOX_STANDARD.MARGIN);
+                    node.render(previous);
+                }
             }
-            if (previous) {
-                node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE;
-                node.parent = previous;
-                node.resetBox($enum.BOX_STANDARD.MARGIN);
-                node.render(previous);
+            else {
+                node.render(target ? node : parent);
             }
+            node.apply(options);
+            return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id), preXml, postXml);
         }
-        else {
-            node.render(target ? node : parent);
-        }
-        node.apply(options);
-        return $xml.getEnclosingTag(controlName, node.id, target || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id), preXml, postXml);
+        return '';
     }
 
-    public renderNode(node: T, parent: T, nodeType: number, options: ExternalData = {}, recursive = false): string {
+    public renderNode(data: LayoutData<T>) {
+        const [node, parent, containerType, alignmentType] = [data.node, data.parent, data.containerType, data.alignmentType];
+        node.alignmentType |= alignmentType;
+        const controlName = View.getControlName(containerType);
+        node.setControlType(controlName, containerType);
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-        const controlName = View.getControlName(nodeType);
-        node.setNodeType(controlName, nodeType);
-        switch (node.tagName) {
+        switch (node.element.tagName) {
             case 'IMG': {
-                if (!recursive && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+                if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
                     const element = <HTMLImageElement> node.element;
                     const widthPercent = node.has('width', $enum.CSS_STANDARD.PERCENT);
                     const heightPercent = node.has('height', $enum.CSS_STANDARD.PERCENT);
@@ -1186,11 +1211,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             const container = new View(this.cache.nextId, undefined, this.delegateNodeInit) as T;
                             container.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
                             container.excludeResource |= $enum.NODE_RESOURCE.ALL;
-                            container.setNodeType(NODE_ANDROID.FRAME, $enum.NODE_STANDARD.FRAME);
+                            container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
                             container.init();
                             container.inherit(node, 'base');
                             parent.replaceNode(node, container);
-                            container.render(parent);
                             this.cache.append(container);
                             if (width > 0) {
                                 container.android('layout_width', width < parent.box.width ? $util.formatPX(width) : 'match_parent');
@@ -1198,7 +1222,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (height > 0) {
                                 container.android('layout_height', height < parent.box.height ? $util.formatPX(height) : 'match_parent');
                             }
-                            return $xml.getEnclosingTag(NODE_ANDROID.FRAME, container.id, container.renderDepth, this.renderNode(node, container, nodeType, options, true));
+                            container.render(target ? container : parent);
+                            node.render(container);
+                            return $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, target ? -1 : container.renderDepth, $xml.getEnclosingTag(controlName, node.id, target ? 0 : node.renderDepth));
                         }
                     }
                     else {
@@ -1235,38 +1261,37 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 const element = <HTMLInputElement> node.element;
                 switch (element.type) {
                     case 'radio':
-                        if (!recursive) {
-                            const radiogroup = parent.map(item => {
-                                if (item.renderAs) {
-                                    item = item.renderAs;
-                                }
-                                const input = <HTMLInputElement> item.element;
-                                if (item.visible && !item.rendered && input.type === 'radio' && input.name === element.name) {
-                                    return item;
-                                }
-                                return null;
-                            })
-                            .filter(item => item) as T[];
-                            if (radiogroup.length > 1) {
-                                const group = this.createGroup(parent, node, radiogroup);
-                                group.setNodeType(NODE_ANDROID.RADIO_GROUP, $enum.NODE_STANDARD.RADIO_GROUP);
-                                group.inherit(node, 'alignment');
-                                group.render(parent);
-                                let xml = '';
-                                let checked = '';
-                                group.each((item: T) => {
-                                    if ((<HTMLInputElement> item.element).checked) {
-                                        checked = item.stringId;
-                                    }
-                                    xml += this.renderNode(item, group, $enum.NODE_STANDARD.RADIO, options, true);
-                                });
-                                group.android('orientation', $NodeList.linearX(radiogroup, radiogroup.every(item => item.documentParent === radiogroup[0].documentParent)) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
-                                group.alignmentType |= $enum.NODE_ALIGNMENT.SEGMENTED;
-                                if (checked !== '') {
-                                    group.android('checkedButton', checked);
-                                }
-                                return $xml.getEnclosingTag(NODE_ANDROID.RADIO_GROUP, group.id, group.renderDepth, xml);
+                        const children = parent.map(item => {
+                            if (item.renderAs) {
+                                item = item.renderAs;
                             }
+                            const input = <HTMLInputElement> item.element;
+                            if (item.visible && !item.rendered && input.type === 'radio' && input.name === element.name) {
+                                return item;
+                            }
+                            return null;
+                        })
+                        .filter(item => item) as T[];
+                        if (children.length > 1) {
+                            const container = this.createNodeGroup(node, parent, children);
+                            container.alignmentType |= $enum.NODE_ALIGNMENT.SEGMENTED;
+                            container.setControlType(CONTAINER_ANDROID.RADIO_GROUP, $enum.NODE_CONTAINER.RADIO_GROUP);
+                            container.inherit(node, 'alignment');
+                            container.render(target ? container : parent);
+                            let xml = '';
+                            container.each((item: T) => {
+                                if (item !== node) {
+                                    item.alignmentType |= alignmentType;
+                                    item.setControlType(controlName, containerType);
+                                }
+                                if ((<HTMLInputElement> item.element).checked) {
+                                    container.android('checkedButton', item.stringId);
+                                }
+                                item.render(container);
+                                xml += $xml.getEnclosingTag(controlName, item.id, target ? 0 : item.renderDepth);
+                            });
+                            container.android('orientation', $NodeList.linearX(children, children.every(item => item.documentParent === children[0].documentParent)) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
+                            return $xml.getEnclosingTag(CONTAINER_ANDROID.RADIO_GROUP, container.id, target ? -1 : container.renderDepth, xml);
                         }
                         break;
                     case 'password':
@@ -1311,7 +1336,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
         }
         switch (node.controlName) {
-            case NODE_ANDROID.TEXT:
+            case CONTAINER_ANDROID.TEXT:
                 const scrollbars: string[] = [];
                 if (node.overflowX) {
                     scrollbars.push(AXIS_ANDROID.HORIZONTAL);
@@ -1319,7 +1344,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (node.overflowY) {
                     scrollbars.push(AXIS_ANDROID.VERTICAL);
                 }
-                if (scrollbars.length > 0) {
+                if (scrollbars.length) {
                     node.android('scrollbars', scrollbars.join('|'));
                 }
                 if (node.css('whiteSpace') === 'nowrap') {
@@ -1346,14 +1371,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     });
                 }
                 break;
-            case NODE_ANDROID.LINE:
+            case CONTAINER_ANDROID.LINE:
                 if (!node.hasHeight) {
                     node.android('layout_height', $util.formatPX($Node.getContentBoxHeight(node) || 1));
                 }
                 break;
         }
         node.render(target ? node : parent);
-        return $xml.getEnclosingTag(controlName, node.id, target || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth);
+        return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth);
     }
 
     public renderNodeStatic(controlName: string, depth: number, options: ExternalData = {}, width = '', height = '', node?: T, children?: boolean) {
@@ -1372,8 +1397,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         if ($util.hasValue(height)) {
             node.android('layout_height', height, false);
         }
-        if (node.nodeType === 0 || !node.controlName) {
-            node.setNodeType(controlName);
+        if (node.containerType === 0 || !node.controlName) {
+            node.setControlType(controlName);
         }
         let output = $xml.getEnclosingTag(controlName, node.id, !node.documentRoot && depth === 0 ? -1 : depth, children ? $xml.formatPlaceholder(node.id) : '');
         if (this.settings.showAttributes && node.id === 0) {
@@ -1397,7 +1422,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 layout_columnSpan: columnSpan.toString()
             }
         });
-        return this.renderNodeStatic(NODE_ANDROID.SPACE, depth, options, width, $util.hasValue(height) ? height : 'wrap_content');
+        return this.renderNodeStatic(CONTAINER_ANDROID.SPACE, depth, options, width, $util.hasValue(height) ? height : 'wrap_content');
     }
 
     public addGuideline(node: T, orientation = '', percent = false, opposite = false) {
@@ -1512,7 +1537,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             this.appendAfter(
                                 node.id,
                                 this.renderNodeStatic(
-                                    NODE_ANDROID.GUIDELINE,
+                                    CONTAINER_ANDROID.GUIDELINE,
                                     node.renderDepth,
                                     options,
                                     'wrap_content',

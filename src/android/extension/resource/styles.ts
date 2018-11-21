@@ -10,7 +10,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
         const styles: ObjectMap<string[]> = {};
         for (const node of this.application.session.cache.visible) {
             const children = node.renderChildren;
-            if (children.length > 1) {
+            if (node.controlId && children.length > 1) {
                 const attrMap = new Map<string, number>();
                 let style = '';
                 let valid = true;
@@ -66,7 +66,7 @@ export default class ResourceStyles<T extends View> extends androme.lib.base.Ext
                             }
                         }
                         if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                            name = $util.convertCamelCase((style !== '' ? `${style}.` : '') + $util.capitalize(node.nodeId), '_');
+                            name = $util.convertCamelCase((style !== '' ? `${style}.` : '') + $util.capitalize(node.controlId), '_');
                             styles[name] = common;
                         }
                         children.forEach(item => item.attr('_', 'style', `@style/${name}`));

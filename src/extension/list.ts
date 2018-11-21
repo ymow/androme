@@ -1,6 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_RESOURCE } from '../lib/enumeration';
 
+import Application from '../base/application';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -33,13 +34,6 @@ export default abstract class List<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        let output = '';
-        if (NodeList.linearY(node.children)) {
-            output = this.application.writeGridLayout(node, parent, node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
-        }
-        else {
-            output = this.application.writeLinearLayout(node, parent, true);
-        }
         let i = 0;
         for (const item of node) {
             const mainData: ListData = List.createDataAttribute();
@@ -99,7 +93,31 @@ export default abstract class List<T extends Node> extends Extension<T> {
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
         }
-        return { output };
+        const layoutData = Application.createLayoutData(
+            node,
+            parent,
+            0,
+            0,
+            node.length,
+            node.children as T[]
+        );
+        let complete = false;
+        if (NodeList.linearY(node.children)) {
+            layoutData.containerType = NODE_CONTAINER.GRID;
+            layoutData.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
+            layoutData.rowCount = node.length;
+            layoutData.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
+            complete = true;
+        }
+        else if (Application.relativeHorizontal(node.children)) {
+            layoutData.containerType = NODE_CONTAINER.RELATIVE;
+            layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+            layoutData.rowCount = 1;
+            layoutData.columnCount = node.length;
+            complete = true;
+        }
+        const output = complete ? this.application.renderNode(layoutData) : '';
+        return { output, complete };
     }
 
     public postBaseLayout(node: T) {

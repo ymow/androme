@@ -10,12 +10,11 @@ export default class ViewGroup<T extends View> extends ViewBase(androme.lib.base
         afterInit?: SelfWrapped<T, void>)
     {
         super(id, undefined, afterInit);
-        this.parent = parent;
-        this.depth = node.depth;
-        this.nodeName = `${node.nodeName}_GROUP`;
+        parent.replaceNode(node, this);
+        this.tagName = `${node.tagName}_GROUP`;
         this.documentParent = node.documentParent;
         this.replace(children);
-        if (children.length > 0) {
+        if (children.length) {
             this.init();
         }
     }

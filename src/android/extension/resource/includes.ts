@@ -37,7 +37,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                     }
                 }
             }, true);
-            if (open.length > 0 && close.length > 0) {
+            if (open.length && close.length) {
                 open.length = Math.min(open.length, close.length);
                 for (let i = open.length; i < close.length; i++) {
                     close.shift();

@@ -1,14 +1,14 @@
-import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
+import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, newClientRect } from '../lib/dom';
+import { assignBounds, newClientRect, isStyleElement } from '../lib/dom';
 
 export default abstract class NodeGroup extends Node {
     public init() {
         super.init();
-        if (this.length > 0) {
+        if (this.length) {
             for (const item of this.children) {
                 item.parent = this;
             }
@@ -21,7 +21,7 @@ export default abstract class NodeGroup extends Node {
 
     public setBounds(calibrate = false) {
         if (!calibrate) {
-            if (this.length > 0) {
+            if (this.length) {
                 const nodes = NodeList.outerRegion(this.children);
                 this._bounds = {
                     top: nodes.top[0].linear.top,
@@ -98,7 +98,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     get display() {
-        return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.FLOAT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
+        return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.FLOAT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
     }
 
     get element() {
@@ -107,7 +107,7 @@ export default abstract class NodeGroup extends Node {
                 if (node.domElement) {
                     return node.element;
                 }
-                else if (node.length > 0) {
+                else if (node.length) {
                     const element = cascade(node.children);
                     if (element) {
                         return element;
@@ -116,7 +116,7 @@ export default abstract class NodeGroup extends Node {
             }
             return null;
         }
-        if (this.domElement) {
+        if (isStyleElement(super.element)) {
             return super.element;
         }
         return cascade(this.children) || super.element;

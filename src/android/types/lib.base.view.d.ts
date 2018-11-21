@@ -25,7 +25,7 @@ declare global {
         export class View implements View {
             public static documentBody(): View;
             public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string): string;
-            public static getControlName(nodeType: number): string;
+            public static getControlName(containerType: number): string;
             constructor(id: number, element?: Element, afterInit?: SelfWrapped<View, void>);
         }
 

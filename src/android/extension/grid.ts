@@ -30,16 +30,16 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                     const cellData: GridCellData<T> = item.data($const.EXT_NAME.GRID, 'cellData');
                     if (cellData) {
                         const dimensions = $dom.getBoxSpacing(item.documentParent.element, true);
-                        if (cellData.cellFirst) {
+                        if (cellData.cellStart) {
                             mainData.paddingTop = dimensions.paddingTop + dimensions.marginTop;
                         }
                         if (cellData.rowStart) {
                             mainData.paddingLeft = Math.max(dimensions.marginLeft + dimensions.paddingLeft, mainData.paddingLeft);
                         }
                         if (cellData.rowEnd) {
-                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
+                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellEnd ? dimensions.marginTop + dimensions.paddingTop : 0);
                             if (heightBottom > 0) {
-                                if (cellData.cellLast) {
+                                if (cellData.cellEnd) {
                                     mainData.paddingBottom = heightBottom;
                                 }
                                 else {

@@ -1,6 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { NODE_ALIGNMENT } from '../lib/enumeration';
+import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
+import Application from '../base/application';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -23,7 +24,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
     }
 
     public condition(node: T) {
-        return node.length > 0 && node.flexElement;
+        return node.flexElement && node.length > 0;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -65,7 +66,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                 if (map.size > 0) {
                     let maxCount = 0;
                     Array.from(map.values()).forEach((segment, index) => {
-                        const group = controller.createGroup(node, segment[0], segment);
+                        const group = controller.createNodeGroup(segment[0], node, segment);
                         group.siblingIndex = index;
                         const box = group.unsafe('box');
                         if (box) {
@@ -103,22 +104,32 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             }
             if (mainData.rowDirection) {
                 mainData.rowCount = 1;
-                mainData.columnCount = node.children.length;
+                mainData.columnCount = node.length;
             }
             else {
-                mainData.rowCount = node.children.length;
+                mainData.rowCount = node.length;
                 mainData.columnCount = 1;
             }
         }
-        let output = '';
-        if (absolute.length > 0 || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
-            output = this.application.writeConstraintLayout(node, parent);
+        node.data(EXT_NAME.FLEXBOX, 'mainData', mainData);
+        const layoutData = Application.createLayoutData(
+            node,
+            parent,
+            0,
+            NODE_ALIGNMENT.AUTO_LAYOUT,
+            pageflow.length,
+            pageflow as T[]
+        );
+        layoutData.rowCount = mainData.rowCount;
+        layoutData.columnCount = mainData.columnCount;
+        if (absolute.length || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
+            layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
         }
         else {
-            output = this.application.writeLinearLayout(node, parent, mainData.columnDirection);
+            layoutData.containerType = NODE_CONTAINER.LINEAR;
+            layoutData.alignmentType |= (mainData.columnDirection ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
         }
-        node.data(EXT_NAME.FLEXBOX, 'mainData', mainData);
-        node.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
+        const output = this.application.renderNode(layoutData);
         return { output, complete: true };
     }
 }
