@@ -20,6 +20,29 @@ const CHAIN_MAP = {
 };
 
 export default class <T extends View> extends androme.lib.extensions.Flexbox<T> {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        super.processNode(node, parent);
+        const mainData: FlexboxData<T> = node.data($const.EXT_NAME.FLEXBOX, 'mainData');
+        const layoutData = $Application.createLayoutData(
+            node,
+            parent,
+            0,
+            $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
+            node.length
+        );
+        layoutData.rowCount = mainData.rowCount;
+        layoutData.columnCount = mainData.columnCount;
+        if (node.filter(item => !item.pageflow).length > 0 || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
+            layoutData.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
+        }
+        else {
+            layoutData.containerType = $enum.NODE_CONTAINER.LINEAR;
+            layoutData.alignmentType |= mainData.columnDirection ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL;
+        }
+        const output = this.application.renderNode(layoutData);
+        return { output, complete: true };
+    }
+
     public processChild(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         if (node.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) {
@@ -44,37 +67,35 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             const basicHorizontal: T[] = [];
             const basicVertical: T[] = [];
             if (mainData.wrap) {
-                let previousSegment: T[] | undefined;
-                const segments = node.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) as T[];
-                for (let i = 0; i < segments.length; i++) {
-                    const item = segments[i];
-                    const pageflow = item.renderChildren.filter(child => child.pageflow) as T[];
+                let previous: T[] | undefined;
+                node.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)).forEach((segment: T) => {
+                    const pageflow = segment.renderChildren.filter(item => item.pageflow) as T[];
                     if (mainData.rowDirection) {
-                        item.android('layout_width', 'match_parent');
+                        segment.android('layout_width', 'match_parent');
                         if (node.hasHeight) {
-                            item.android('layout_height', '0px');
-                            item.app('layout_constraintVertical_weight', '1');
+                            segment.android('layout_height', '0px');
+                            segment.app('layout_constraintVertical_weight', '1');
                         }
                         chainHorizontal.push(pageflow);
-                        basicVertical.push(item);
+                        basicVertical.push(segment);
                     }
                     else {
-                        item.android('layout_height', 'match_parent');
+                        segment.android('layout_height', 'match_parent');
                         chainVertical.push(pageflow);
-                        if (previousSegment) {
-                            let largest = previousSegment[0];
-                            for (let j = 1; j < previousSegment.length; j++) {
-                                if (previousSegment[j].linear.right > largest.linear.right) {
-                                    largest = previousSegment[j];
+                        if (previous) {
+                            let largest = previous[0];
+                            for (let j = 1; j < previous.length; j++) {
+                                if (previous[j].linear.right > largest.linear.right) {
+                                    largest = previous[j];
                                 }
                             }
-                            item.constraint.horizontal = true;
-                            item.constraint.marginHorizontal = largest.stringId;
+                            segment.constraint.horizontal = true;
+                            segment.constraint.marginHorizontal = largest.stringId;
                         }
-                        basicHorizontal.push(item);
-                        previousSegment = pageflow;
+                        basicHorizontal.push(segment);
+                        previous = pageflow;
                     }
-                }
+                });
                 if (node.is($enum.NODE_CONTAINER.LINEAR)) {
                     if (mainData.columnDirection && mainData.wrapReverse) {
                         node.mergeGravity('gravity', 'right');

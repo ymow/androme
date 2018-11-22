@@ -1,5 +1,5 @@
 import { REGEX_PATTERN } from '../lib/constant';
-import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE, USER_AGENT, CSS_STANDARD } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
 import Controller from './controller';
 import Extension from './extension';
@@ -7,9 +7,13 @@ import Node from './node';
 import NodeList from './nodelist';
 import Resource from './resource';
 
-import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getBetweenElements, getStyle, hasFreeFormText, isElementVisible, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
-import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, isUnit, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getStyle, hasFreeFormText, isElementVisible, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
+import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
+
+function getAlignmentFloat(right: boolean) {
+    return NODE_ALIGNMENT.FLOAT | (right ? NODE_ALIGNMENT.RIGHT : 0);
+}
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
     const tagged: string[] = [];
@@ -52,61 +56,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         };
     }
 
-    public static constraintFloat<T extends Node>(nodes: T[], floated: Set<string>, linearX?: boolean) {
-        if (floated === undefined) {
-            floated = NodeList.floated(nodes);
-        }
-        if (linearX === undefined) {
-            linearX = NodeList.linearX(nodes);
-        }
-        return floated.size === 1 && nodes.every(node => node.floating) && (!linearX || nodes.some(node => node.has('width', CSS_STANDARD.PERCENT)));
-    }
-
-    public static frameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak = false) {
-        const margin = nodes.filter(node => node.autoMargin);
-        const br = lineBreak ? getBetweenElements(nodes[0].element, nodes[nodes.length - 1].element).filter(element => element.tagName === 'BR').length : 0;
-        return (
-            br === 0 && (
-                floated.has('right') ||
-                cleared.size > 0 ||
-                margin.length ||
-                !NodeList.linearX(nodes)
-            )
-        );
-    }
-
-    public static relativeHorizontal<T extends Node>(nodes: T[], cleared?: Map<T, string>) {
-        const visible = nodes.filter(node => node.visible);
-        const floated = NodeList.floated(nodes);
-        const [floating, pageflow] = new NodeList(nodes).partition(node => node.floating);
-        const flowIndex = pageflow.length ? Math.min.apply(null, pageflow.map(node => node.siblingIndex)) : Number.MAX_VALUE;
-        const floatIndex = floating.length ? Math.max.apply(null, floating.map(node => node.siblingIndex)) : -1;
-        const linearX = NodeList.linearX(nodes);
-        if (visible.some(node => node.autoMarginHorizontal)) {
-            return false;
-        }
-        if (floated.size === 1 && floating.length === nodes.length) {
-            return !(linearX && (cleared === undefined || cleared.size === 0));
-        }
-        return (
-            (cleared === undefined || cleared.size === 0) &&
-            !floated.has('right') &&
-            (pageflow.length === 0 || floating.length === 0 || floatIndex < flowIndex) &&
-            visible.every(node => {
-                const verticalAlign = node.css('verticalAlign');
-                return (
-                    node.toInt('top') >= 0 && (
-                        ['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) ||
-                        (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0)
-                    )
-                );
-            }) && (
-                visible.some(node => (node.baseline && (node.textElement || node.imageElement || node.svgElement)) || (node.plainText && node.multiLine)) ||
-                (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
-            )
-        );
-    }
-
     public viewController: Controller<T>;
     public resourceHandler: Resource<T>;
     public nodeObject: Constructor<T>;
@@ -114,18 +63,20 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public closed = false;
     public readonly builtInExtensions: ObjectMap<Extension<T>> = {};
     public readonly extensions = new Set<Extension<T>>();
+    public readonly parseElements = new Set<HTMLElement>();
+
     public readonly session: AppSession<NodeList<T>> = {
         cache: new NodeList<T>(),
         image: new Map<string, ImageAsset>(),
         renderQueue: new Map<string, string[]>()
     };
+
     public readonly processing: AppProcessing<T, NodeList<T>> = {
         cache: new NodeList<T>(),
         depthMap: new Map<string, Map<number, string>>(),
         node: null,
         layout: null
     };
-    public readonly parseElements = new Set<HTMLElement>();
 
     private _settings: Settings;
     private _cacheRoot = new Set<Element>();
@@ -321,21 +272,19 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        const images = Array.from(this.parseElements).map(element => {
-            const incomplete: HTMLImageElement[] = [];
+        const images: HTMLImageElement[] = [];
+        for (const element of this.parseElements) {
             Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
                 if (!(image instanceof SVGImageElement)) {
                     if (image.complete) {
                         this.addPreloadImage(image);
                     }
                     else {
-                        incomplete.push(image);
+                        images.push(image);
                     }
                 }
             });
-            return incomplete;
-        })
-        .reduce((a, b) => a.concat(b), []);
+        }
         if (images.length === 0) {
             parseResume();
         }
@@ -483,7 +432,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return Array.from(this.extensions).find(item => item.name === name) || null;
     }
 
-    public getExtensionOptionsValue(name: string, attr: string) {
+    public getExtensionOptionValue(name: string, attr: string) {
         const ext = this.getExtension(name);
         if (ext && typeof ext.options === 'object') {
             return ext.options[attr];
@@ -491,26 +440,26 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return undefined;
     }
 
-    public getExtensionOptionsValueAsObject(name: string, attr: string) {
-        const value = this.getExtensionOptionsValue(name, attr);
+    public getExtensionOptionValueAsObject(name: string, attr: string) {
+        const value = this.getExtensionOptionValue(name, attr);
         if (typeof value === 'object') {
             return value as object;
         }
         return null;
     }
 
-    public getExtensionOptionsValueAsString(name: string, attr: string) {
-        const value = this.getExtensionOptionsValue(name, attr);
+    public getExtensionOptionValueAsString(name: string, attr: string) {
+        const value = this.getExtensionOptionValue(name, attr);
         return typeof value === 'string' ? value : '';
     }
 
-    public getExtensionOptionsValueAsNumber(name: string, attr: string) {
-        const value = this.getExtensionOptionsValue(name, attr);
+    public getExtensionOptionValueAsNumber(name: string, attr: string) {
+        const value = this.getExtensionOptionValue(name, attr);
         return typeof value === 'number' ? value : 0;
     }
 
-    public getExtensionOptionsValueAsBoolean(name: string, attr: string) {
-        const value = this.getExtensionOptionsValue(name, attr);
+    public getExtensionOptionValueAsBoolean(name: string, attr: string) {
+        const value = this.getExtensionOptionValue(name, attr);
         return typeof value === 'boolean' ? value : false;
     }
 
@@ -700,7 +649,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
                         const item = Node.getNodeFromElement(element);
-                        if (item && !item.excluded && item.pageflow) {
+                        if (item && !item.excluded && (item.pageflow || (item.left && item.left < 0))) {
                             item.siblingIndex = i++;
                         }
                     });
@@ -782,8 +731,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         middle.push(node);
                     }
                     else {
-                        if (node.toInt('zIndex') >= 0 || node.parent.element !== node.element.parentElement) {
+                        const zIndex = node.toInt('zIndex');
+                        if (zIndex > 0 || (!parent.documentBody && parent.element !== node.element.parentElement)) {
                             above.push(node);
+                        }
+                        else if (zIndex === 0) {
+                            middle.push(node);
                         }
                         else {
                             below.push(node);
@@ -939,17 +892,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 layoutData.itemCount = horizontal.length;
                                 const floated = NodeList.floated(horizontal);
                                 const clearedPartial = NodeList.cleared(horizontal);
-                                if (Application.constraintFloat(horizontal, floated)) {
+                                const linearX = NodeList.linearX(horizontal);
+                                if (this.viewController.checkConstraintFloat(parentY, horizontal, floated, clearedPartial, linearX)) {
                                     layoutData.node = this.viewController.createNodeGroup(nodeY, parentY, horizontal);
                                     layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
-                                    layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT | (floated.has('right') ? NODE_ALIGNMENT.RIGHT : 0);
+                                    layoutData.alignmentType |= getAlignmentFloat(floated.has('right'));
                                 }
-                                else if (Application.frameHorizontal(horizontal, floated, clearedPartial)) {
+                                else if (this.viewController.checkFrameHorizontal(parentY, horizontal, floated, clearedPartial, linearX)) {
                                     layoutData.node = this.viewController.createNodeGroup(nodeY, parentY, horizontal);
-                                    output = this.processLayoutHorizontal(layoutData.node, parentY, horizontal, clearedPartial);
+                                    output = this.processLayoutHorizontal(layoutData.node, parentY, horizontal, floated, clearedPartial, linearX);
                                 }
                                 else if (horizontal.length !== axisY.length) {
-                                    if (Application.relativeHorizontal(horizontal, clearedPartial)) {
+                                    if (this.viewController.checkRelativeHorizontal(parentY, horizontal, floated, clearedPartial, linearX)) {
                                         layoutData.node = this.viewController.createNodeGroup(nodeY, parentY, horizontal);
                                         layoutData.containerType = NODE_CONTAINER.RELATIVE;
                                         layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
@@ -959,9 +913,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         layoutData.containerType = NODE_CONTAINER.LINEAR;
                                         layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                         if (floated.size > 0) {
-                                            layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT | (floated.has('right') ? NODE_ALIGNMENT.RIGHT : 0);
+                                            layoutData.alignmentType |= getAlignmentFloat(floated.has('right'));
                                         }
                                     }
+                                }
+                                else {
+                                    parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                    parentY.alignmentType ^= NODE_ALIGNMENT.UNKNOWN;
                                 }
                             }
                             else if (vertical.length > 1) {
@@ -989,6 +947,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     if (!segmentEnd.blockStatic && segmentEnd !== axisY[axisY.length - 1]) {
                                         segmentEnd.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
                                     }
+                                }
+                                else {
+                                    parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                    parentY.alignmentType ^= NODE_ALIGNMENT.UNKNOWN;
                                 }
                             }
                             if (layoutData.node) {
@@ -1054,7 +1016,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
                         const layoutData = Application.createLayoutData(nodeY, parentY);
-                        const containerType = Controller.getContainerType(nodeY.tagName);
+                        const containerType = nodeY.containerType || Controller.getContainerType(nodeY.tagName);
                         let output = '';
                         if (containerType === 0) {
                             const borderVisible = nodeY.borderVisible;
@@ -1145,53 +1107,51 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
                                         const floated = NodeList.floated(children);
                                         const clearedInside = NodeList.clearedAll(nodeY);
-                                        const relativeWrap = children.every(node => node.pageflow && node.inlineElement);
-                                        if (Application.constraintFloat(children, floated, linearX)) {
+                                        if (this.viewController.checkConstraintFloat(nodeY, children, floated, clearedInside, linearX)) {
                                             layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
-                                            layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT | (floated.has('right') ? NODE_ALIGNMENT.RIGHT : 0);
+                                            layoutData.alignmentType |= getAlignmentFloat(floated.has('right'));
                                         }
-                                        else if (linearX && clearedInside.size === 0) {
-                                            if (floated.size === 0 && children.every(node => node.toInt('verticalAlign') === 0)) {
-                                                if (children.some(node => ['text-top', 'text-bottom'].includes(node.css('verticalAlign')))) {
-                                                    layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
-                                                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                }
-                                                else if (Application.relativeHorizontal(children)) {
-                                                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                                                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                }
+                                        else if (linearX) {
+                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floated, clearedInside, linearX);
                                             }
-                                            if (layoutData.containerType === 0 && (floated.size === 0 || !floated.has('right'))) {
-                                                if (Application.relativeHorizontal(children)) {
-                                                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                                                }
-                                                else {
-                                                    layoutData.containerType = NODE_CONTAINER.LINEAR;
-                                                }
-                                                layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                            else if (this.viewController.checkConstraintHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                                layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
                                             }
-                                        }
-                                        else if (linearY || (!relativeWrap && children.some(node => node.alignedVertically(node.previousSibling(), clearedInside, floated.size)))) {
-                                            layoutData.containerType = NODE_CONTAINER.LINEAR;
-                                            layoutData.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                                            if (!linearY || nodeY.documentRoot) {
-                                                layoutData.alignmentType |= NODE_ALIGNMENT.UNKNOWN;
-                                            }
-                                        }
-                                        if (layoutData.containerType === 0) {
-                                            if (relativeWrap) {
-                                                if (Application.frameHorizontal(children, floated, clearedInside, true)) {
-                                                    output = this.processLayoutHorizontal(nodeY, parentY, children, clearedInside);
-                                                }
-                                                else {
-                                                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                                                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN;
-                                                }
+                                            else if (this.viewController.checkRelativeHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                                layoutData.containerType = NODE_CONTAINER.RELATIVE;
                                             }
                                             else {
-                                                layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
+                                                layoutData.containerType = NODE_CONTAINER.LINEAR;
+                                            }
+                                            layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                            if (floated.size > 0) {
+                                                layoutData.alignmentType |= getAlignmentFloat(floated.has('right'));
+                                            }
+                                        }
+                                        else if (linearY) {
+                                            layoutData.containerType = NODE_CONTAINER.LINEAR;
+                                            layoutData.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                            if (nodeY.documentRoot) {
                                                 layoutData.alignmentType |= NODE_ALIGNMENT.UNKNOWN;
                                             }
+                                        }
+                                        else if (children.every(node => node.pageflow && node.inlineElement)) {
+                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floated, clearedInside, linearX);
+                                            }
+                                            else {
+                                                layoutData.containerType = NODE_CONTAINER.RELATIVE;
+                                                layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN;
+                                            }
+                                        }
+                                        else if (children.some(node => node.alignedVertically(node.previousSibling(), clearedInside, floated.size))) {
+                                            layoutData.containerType = NODE_CONTAINER.LINEAR;
+                                            layoutData.alignmentType |= NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN;
+                                        }
+                                        else {
+                                            layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
+                                            layoutData.alignmentType |= NODE_ALIGNMENT.UNKNOWN;
                                         }
                                     }
                                 }
@@ -1199,6 +1159,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         else {
                             layoutData.containerType = containerType;
+                            layoutData.alignmentType = nodeY.alignmentType;
+                            layoutData.itemCount = nodeY.length;
+                            layoutData.items = nodeY.children as T[];
                         }
                         if (output === '' && layoutData.containerType !== 0) {
                             output = this.renderNode(layoutData);
@@ -1359,7 +1322,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return node;
     }
 
-    protected processLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
+    protected processLayoutHorizontal(group: T, parent: T, nodes: T[], floated: Set<string>, cleared: Map<T, string>, linearX: boolean) {
         let layerIndex: Array<T[] | T[][]> = [];
         let output = '';
         if (cleared.size === 0 && nodes.every(node => !node.autoMargin)) {
@@ -1377,15 +1340,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     inline.push(node);
                 }
             }
-            const layoutData = Application.createLayoutData(group, parent);
+            const layoutData = Application.createLayoutData(group, parent, 0, 0, nodes.length);
             if (inline.length === nodes.length || left.length === nodes.length || right.length === nodes.length) {
                 layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 layoutData.items = nodes;
-                layoutData.itemCount = nodes.length;
                 if (inline.length === 0) {
-                    layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT + (right.length ? NODE_ALIGNMENT.RIGHT : 0);
+                    layoutData.alignmentType |= getAlignmentFloat(right.length > 0);
                 }
-                if (Application.relativeHorizontal(nodes, cleared)) {
+                if (this.viewController.checkConstraintFloat(group, nodes)) {
+                    layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
+                    return this.renderNode(layoutData);
+                }
+                else if (this.viewController.checkRelativeHorizontal(group, nodes, floated, cleared, linearX)) {
                     layoutData.containerType = NODE_CONTAINER.RELATIVE;
                     return this.renderNode(layoutData);
                 }
@@ -1395,31 +1361,33 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
             else if (left.length === 0 || right.length === 0) {
-                layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                const subgroup: T[] = [];
-                if (right.length === 0) {
-                    subgroup.push(...left, ...inline);
-                }
-                else {
-                    layoutData.alignmentType |= NODE_ALIGNMENT.RIGHT;
-                    subgroup.push(...inline, ...right);
-                }
-                layoutData.items = subgroup;
-                layoutData.itemCount = subgroup.length;
-                if (NodeList.linearY(subgroup)) {
+                if (NodeList.linearY(nodes)) {
                     layoutData.containerType = NODE_CONTAINER.LINEAR;
                     layoutData.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                    layoutData.items = nodes;
                     return this.renderNode(layoutData);
                 }
-                else if (Application.relativeHorizontal(subgroup, cleared)) {
-                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                    return this.renderNode(layoutData);
-                }
-                else if (!this.settings.floatOverlapDisabled && right.length === 0) {
-                    layoutData.containerType = NODE_CONTAINER.LINEAR;
-                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                    output = this.renderNode(layoutData);
-                    layerIndex.push(left, inline);
+                else {
+                    const subgroup: T[] = [];
+                    if (right.length === 0) {
+                        subgroup.push(...left, ...inline);
+                    }
+                    else {
+                        layoutData.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                        subgroup.push(...inline, ...right);
+                    }
+                    layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                    layoutData.items = subgroup;
+                    if (this.viewController.checkRelativeHorizontal(group, nodes, floated, cleared, linearX)) {
+                        layoutData.containerType = NODE_CONTAINER.RELATIVE;
+                        return this.renderNode(layoutData);
+                    }
+                    else if (!this.settings.floatOverlapDisabled && right.length === 0) {
+                        layoutData.containerType = NODE_CONTAINER.LINEAR;
+                        layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                        output = this.renderNode(layoutData);
+                        layerIndex.push(left, inline);
+                    }
                 }
             }
         }
@@ -1590,7 +1558,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             else if (rightBelow.length) {
                 rightSub = rightBelow;
             }
-            const alignmentType = NODE_ALIGNMENT.FLOAT | (rightSub.length ? NODE_ALIGNMENT.RIGHT : 0);
+            const alignmentType = getAlignmentFloat(floated.size === 1 && floated.has('right'));
             const layoutData = Application.createLayoutData(group, parent, 0, alignmentType);
             if (this.settings.floatOverlapDisabled) {
                 layerIndex.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
@@ -1601,9 +1569,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     group.renderDepth--;
                 }
                 else {
-                    layoutData.itemCount = (inlineAbove.length ? 1 : 0) + (leftAbove.length + rightAbove.length ? 1 : 0) + (inlineBelow.length ? 1 : 0);
                     layoutData.containerType = NODE_CONTAINER.LINEAR;
                     layoutData.containerType = NODE_ALIGNMENT.VERTICAL;
+                    layoutData.itemCount = (inlineAbove.length ? 1 : 0) + (leftAbove.length + rightAbove.length ? 1 : 0) + (inlineBelow.length ? 1 : 0);
                     output = this.renderNode(layoutData);
                 }
             }
@@ -1699,63 +1667,32 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             segment.length,
                             segment
                         );
-                        const floated = NodeList.floated(segment);
-                        if (floated.size > 0) {
-                            layoutData.alignmentType |= NODE_ALIGNMENT.FLOAT | (floated.has('right') ? NODE_ALIGNMENT.RIGHT : 0);
+                        const floatedSegment = NodeList.floated(segment);
+                        const linearSegmentX = NodeList.linearX(segment);
+                        if (floatedSegment.size > 0) {
+                            layoutData.alignmentType |= getAlignmentFloat(floatedSegment.has('right'));
                         }
-                        if (Application.relativeHorizontal(segment, cleared)) {
+                        if (this.viewController.checkRelativeHorizontal(subgroup, segment, floatedSegment, cleared, linearSegmentX)) {
                             layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                            if (floated.size === 0) {
+                            if (floatedSegment.size === 0) {
                                 layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                             }
                         }
                         else {
                             layoutData.containerType = NODE_CONTAINER.LINEAR;
-                            layoutData.alignmentType |= NodeList.linearX(segment) ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL;
-                            if (floated.has('right') && subgroup.some(node => node.marginLeft < 0)) {
-                                const sorted: T[] = [];
-                                let marginRight = 0;
-                                subgroup.duplicate().forEach((node: T) => {
-                                    let prepend = false;
-                                    if (marginRight < 0) {
-                                        if (Math.abs(marginRight) > node.bounds.width) {
-                                            marginRight += node.bounds.width;
-                                            node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.bounds.width * -1, true);
-                                            prepend = true;
-                                        }
-                                        else {
-                                            if (Math.abs(marginRight) >= node.marginRight) {
-                                                node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, Math.ceil(Math.abs(marginRight) - node.marginRight));
-                                                node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                                            }
-                                            else {
-                                                node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, marginRight, true);
-                                            }
-                                        }
-                                    }
-                                    if (node.marginLeft < 0) {
-                                        marginRight += Math.max(node.marginLeft, node.bounds.width * -1);
-                                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-                                    }
-                                    if (prepend) {
-                                        sorted.splice(sorted.length - 1, 0, node);
-                                    }
-                                    else {
-                                        sorted.push(node);
-                                    }
-                                });
-                                subgroup.replace(sorted.reverse());
-                                this.preserveRenderPosition(subgroup);
-                            }
+                            layoutData.alignmentType |= linearSegmentX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL;
                         }
                         output = replacePlaceholder(output, basegroup.id, this.renderNode(layoutData));
                         basegroup.appendRendered(subgroup);
                     }
                     else if (segment.length) {
                         const single = segment[0];
-                        single.alignmentType |= NODE_ALIGNMENT.SINGLE | (single.float === 'right' ? NODE_ALIGNMENT.RIGHT : 0);
+                        single.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                        if (single.floating) {
+                            single.alignmentType |= getAlignmentFloat(single.float === 'right');
+                        }
                         single.renderPosition = index;
-                        output = replacePlaceholder(output, basegroup.id, `{:${basegroup.id}:${index}}`);
+                        output = replacePlaceholder(output, basegroup.id, formatPlaceholder(`${basegroup.id}:${index}`));
                         basegroup.appendRendered(single);
                     }
                 });
@@ -1865,8 +1802,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         group,
                         NODE_CONTAINER.FRAME,
                         NODE_ALIGNMENT.VERTICAL | alignmentType,
-                        children.length,
-                        children
+                        children.length
                     );
                     content += this.renderNode(layoutData);
                     children.forEach((node, index) => {

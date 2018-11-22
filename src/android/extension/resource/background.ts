@@ -172,7 +172,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
     public afterResources() {
         const application = this.application;
         const settings = <SettingsAndroid> application.settings;
-        const useColorAlias = application.getExtensionOptionsValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
+        const useColorAlias = application.getExtensionOptionValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
         application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
@@ -563,6 +563,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             }
                         }
                         else {
+                            const visibleAll = borderVisible.every(value => value);
                             for (let i = 0; i < borders.length; i++) {
                                 if (borderVisible[i]) {
                                     const border = borders[i];
@@ -584,8 +585,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                         let hideWidth = `-${$util.formatPX(getHideWidth(outsetWidth))}`;
                                         data['7'].push({
                                             top:  i === 0 ? '' : hideWidth,
-                                            right: i === 1 ? (border.width === '1px' ? border.width : '') : hideWidth,
-                                            bottom: i === 2 ? (border.width === '1px' ? border.width : '') : hideWidth,
+                                            right: i === 1 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
+                                            bottom: i === 2 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                             left: i === 3 ? '' : hideWidth,
                                             'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             'corners': borderRadius
@@ -594,8 +595,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                             hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
                                             data['7'].unshift({
                                                 top:  i === 0 ? '' : hideWidth,
-                                                right: i === 1 ? (border.width === '1px' ? border.width : '') : hideWidth,
-                                                bottom: i === 2 ? (border.width === '1px' ? border.width : '') : hideWidth,
+                                                right: i === 1 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
+                                                bottom: i === 2 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                                 left: i === 3 ? '' : hideWidth,
                                                 'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
                                                 'corners': false

@@ -60,7 +60,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const output = this.application.viewController.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.DRAWER,
             0,
-            $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             'match_parent',
             'match_parent',
             node,
@@ -87,7 +87,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             const output = application.viewController.renderNodeStatic(
                 $android_const.SUPPORT_ANDROID.NAVIGATION_VIEW,
                 1,
-                $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+                $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
                 'wrap_content',
                 'match_parent'
             );

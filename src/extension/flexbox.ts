@@ -1,12 +1,11 @@
 import { EXT_NAME } from '../lib/constant';
-import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
+import { NODE_ALIGNMENT } from '../lib/enumeration';
 
-import Application from '../base/application';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { partition, sortAsc, sortDesc } from '../lib/util';
+import { sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class Flexbox<T extends Node> extends Extension<T> {
     public static createDataAttribute<T extends Node>(children: T[]): FlexboxData<T> {
@@ -27,9 +26,9 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         return node.flexElement && node.length > 0;
     }
 
-    public processNode(node: T, parent: T): ExtensionResult<T> {
+    public processNode(node: T): ExtensionResult<T> {
         const controller = this.application.viewController;
-        const [pageflow, absolute] = partition(node.children as T[], item => item.pageflow);
+        const pageflow = node.children.filter(item => item.pageflow) as T[];
         const flex = node.flexbox;
         const mainData = Object.assign(Flexbox.createDataAttribute(pageflow), {
             wrap: flex.wrap.startsWith('wrap'),
@@ -112,24 +111,6 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             }
         }
         node.data(EXT_NAME.FLEXBOX, 'mainData', mainData);
-        const layoutData = Application.createLayoutData(
-            node,
-            parent,
-            0,
-            NODE_ALIGNMENT.AUTO_LAYOUT,
-            pageflow.length,
-            pageflow as T[]
-        );
-        layoutData.rowCount = mainData.rowCount;
-        layoutData.columnCount = mainData.columnCount;
-        if (absolute.length || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
-            layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
-        }
-        else {
-            layoutData.containerType = NODE_CONTAINER.LINEAR;
-            layoutData.alignmentType |= (mainData.columnDirection ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-        }
-        const output = this.application.renderNode(layoutData);
-        return { output, complete: true };
+        return { output: '' };
     }
 }

@@ -105,10 +105,16 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 let containerTypeA = a.containerType;
                 let containerTypeB = b.containerType;
                 if (a.layoutHorizontal) {
-                    containerTypeA = Math.min.apply(null, a.map(item => item.containerType > 0 ? item.containerType : NODE_CONTAINER.INLINE));
+                    containerTypeA = Math.min.apply(null, a.map(item => item.containerType));
+                }
+                else if (a.length > 0) {
+                    containerTypeA = Number.MAX_VALUE;
                 }
                 if (b.layoutHorizontal) {
-                    containerTypeB = Math.min.apply(null, b.map(item => item.containerType > 0 ? item.containerType : NODE_CONTAINER.INLINE));
+                    containerTypeB = Math.min.apply(null, b.map(item => item.containerType));
+                }
+                else if (b.length > 0) {
+                    containerTypeB = Number.MAX_VALUE;
                 }
                 return containerTypeA === containerTypeB ? (a.id < b.id ? -1 : 1) : (containerTypeA < containerTypeB ? -1 : 1);
             });
@@ -181,6 +187,19 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         let fontSize: string;
         let fontWeight: string;
         return baseline.filter((node, index) => {
+            if (node.length) {
+                node = node.nodes.slice().sort((a, b) => {
+                    if (a.textElement && !b.textElement) {
+                        return -1;
+                    }
+                    else if (!a.textElement && b.textElement) {
+                        return 1;
+                    }
+                    else {
+                        return a.bounds.height <= b.bounds.height ? 1 : -1;
+                    }
+                })[0] as T;
+            }
             if (index === 0) {
                 fontFamily = node.css('fontFamily');
                 fontSize = node.css('fontSize');
@@ -202,7 +221,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearX<T extends Node>(list: T[], traverse = true) {
-        const nodes = list.filter(node => node.siblingflow).sort(NodeList.siblingIndex);
+        const nodes = list.filter(node => node.pageflow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -233,7 +252,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.siblingflow).sort(NodeList.siblingIndex);
+        const nodes = list.filter(node => node.pageflow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -267,37 +286,33 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
             }
         }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
-            if (list.some(node => node.floating)) {
-                list.sort((a, b) => {
-                    if (a.floating && !b.floating) {
+        if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL) && list.some(node => node.floating)) {
+            list.sort((a, b) => {
+                if (a.floating && !b.floating) {
+                    return a.float === 'left' ? -1 : 1;
+                }
+                else if (!a.floating && b.floating) {
+                    return b.float === 'left' ? 1 : -1;
+                }
+                else if (a.floating && b.floating) {
+                    if (a.float !== b.float) {
                         return a.float === 'left' ? -1 : 1;
                     }
-                    else if (!a.floating && b.floating) {
-                        return b.float === 'left' ? 1 : -1;
-                    }
-                    else if (a.floating && b.floating) {
-                        if (a.float !== b.float) {
-                            return a.float === 'left' ? -1 : 1;
-                        }
-                    }
-                    return a.linear.left >= b.linear.left ? 1 : -1;
-                });
-                sorted = true;
-            }
+                }
+                return a.linear.left >= b.linear.left ? 1 : -1;
+            });
+            sorted = true;
         }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-            if (list.some(node => node.toInt('zIndex') !== 0)) {
-                list.sort((a, b) => {
-                    const indexA = a.toInt('zIndex');
-                    const indexB = b.toInt('zIndex');
-                    if (indexA === 0 && indexB === 0) {
-                        return a.siblingIndex >= b.siblingIndex ? 1 : -1;
-                    }
-                    return indexA >= indexB ? 1 : -1;
-                });
-                sorted = true;
-            }
+        if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE) && list.some(node => node.toInt('zIndex') !== 0)) {
+            list.sort((a, b) => {
+                const indexA = a.toInt('zIndex');
+                const indexB = b.toInt('zIndex');
+                if (indexA === 0 && indexB === 0) {
+                    return a.siblingIndex >= b.siblingIndex ? 1 : -1;
+                }
+                return indexA >= indexB ? 1 : -1;
+            });
+            sorted = true;
         }
         return sorted;
     }

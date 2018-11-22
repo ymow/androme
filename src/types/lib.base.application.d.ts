@@ -11,9 +11,9 @@ declare global {
             readonly framework: number;
             readonly builtInExtensions: ObjectMap<Extension<T>>;
             readonly session: AppSession<NodeList<T>>;
+            readonly parseElements: Set<Element>;
             readonly processing: AppProcessing<T, NodeList<T>>;
             readonly extensions: Set<Extension<T>>;
-            readonly parseElements: Set<Element>;
             readonly layouts: FileAsset[];
             readonly viewData: ViewData<NodeList<T>>;
             readonly size: number;
@@ -33,19 +33,16 @@ declare global {
             addPreloadImage(element: HTMLImageElement): void;
             preserveRenderPosition(node: T): void;
             getExtension(name: string): Extension<T> | null;
-            getExtensionOptionsValue(name: string, attr: string): any;
-            getExtensionOptionsValueAsObject(name: string, attr: string): object | null;
-            getExtensionOptionsValueAsString(name: string, attr: string): string;
-            getExtensionOptionsValueAsNumber(name: string, attr: string): number;
-            getExtensionOptionsValueAsBoolean(name: string, attr: string): boolean;
+            getExtensionOptionValue(name: string, attr: string): any;
+            getExtensionOptionValueAsObject(name: string, attr: string): {} | null;
+            getExtensionOptionValueAsString(name: string, attr: string): string;
+            getExtensionOptionValueAsNumber(name: string, attr: string): number;
+            getExtensionOptionValueAsBoolean(name: string, attr: string): boolean;
             toString(): string;
         }
 
         export class Application<T extends Node> implements Application<T> {
             public static createLayoutData<T extends Node>(node: T, parent: T, containerType?: number, alignmentType?: number, itemCount?: number, items?: T[]): LayoutData<T>;
-            public static constraintFloat<T extends Node>(nodes: T[], floated: Set<string>, linearX?: boolean): boolean;
-            public static frameHorizontal<T extends Node>(nodes: T[], floated: Set<string>, cleared: Map<T, string>, lineBreak?: boolean): boolean;
-            public static relativeHorizontal<T extends Node>(nodes: T[], cleared?: Map<T, string>): boolean;
             constructor(framework: number);
         }
     }

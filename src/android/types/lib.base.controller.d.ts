@@ -1,7 +1,7 @@
 declare global {
     namespace android.lib.base {
         export interface Controller<T extends View> extends androme.lib.base.Controller<T> {
-            renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
+            renderSpace(depth: number, width: string, height?: string, columnSpan?: number, rowSpan?: number): string;
             addGuideline(node: T, orientation?: string, percent?: boolean, opposite?: boolean): void;
         }
 

@@ -14,10 +14,12 @@ import { replaceEntity } from '../lib/xml';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static KEY_NAME = 'androme.resource';
+
     public static ASSETS: ResourceAssetMap = {
         ids: new Map(),
         images: new Map()
     };
+
     public static STORED: ResourceStoredMap = {
         strings: new Map(),
         arrays: new Map(),

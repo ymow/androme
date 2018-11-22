@@ -67,6 +67,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _multiLine: boolean;
     private _lineHeight: number;
     private _overflow: number;
+    private _supSubscript: boolean;
     private _inlineText: boolean;
     private _flexbox: Flexbox;
     private _data = {};
@@ -602,12 +603,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 height: 0
             };
             this.setDimensions('linear');
-            const absolute = this.every(node => !node.siblingflow);
             this._box = {
-                top: this.bounds.top + ((absolute ? 0 : this.paddingTop) + this.borderTopWidth),
-                right: this.bounds.right - ((absolute ? 0 : this.paddingRight) + this.borderRightWidth),
-                bottom: this.bounds.bottom - ((absolute ? 0 : this.paddingBottom) + this.borderBottomWidth),
-                left: this.bounds.left + ((absolute ? 0 : this.paddingLeft) + this.borderLeftWidth),
+                top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
+                right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
+                bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
+                left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
                 width: 0,
                 height: 0
             };
@@ -721,18 +721,17 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 let relativeParent: T | null = null;
                 let outside = false;
                 while (parent && parent.id !== 0) {
-                    if (!relativeParent && this.position === 'absolute') {
-                        if (!['static', 'initial'].includes(parent.position)) {
+                    if (relativeParent === null && this.position === 'absolute') {
+                        if (!parent.positionStatic) {
                             const top = this.top || 0;
                             const left = this.left || 0;
-                            if ((top >= 0 && left >= 0) || !negative || (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) || this.imageElement) {
+                            if ((top >= 0 && left >= 0) || !negative || (negative && (Math.abs(top) <= parent.marginTop || Math.abs(left) <= parent.marginLeft)) || this.imageElement) {
                                 if (negative &&
                                     !parent.documentRoot &&
                                     top !== 0 &&
                                     left !== 0 &&
                                     this.bottom === null &&
-                                    this.right === null &&
-                                    (this.outsideX(parent.linear) || this.outsideY(parent.linear)))
+                                    this.right === null)
                                 {
                                     outside = true;
                                 }
@@ -1019,7 +1018,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get rightAligned() {
-        return this.hasAlign(NODE_ALIGNMENT.RIGHT) || this.float === 'right' || this.autoMarginLeft || this.css('textAlign') === 'right';
+        return this.float === 'right' || this.autoMarginLeft || this.css('textAlign') === 'right' || this.hasAlign(NODE_ALIGNMENT.RIGHT) || (!this.siblingflow && this.right !== null && this.right >= 0);
+    }
+
+    get bottomAligned() {
+        return !this.siblingflow && this.bottom !== null && this.bottom >= 0;
     }
 
     get viewWidth() {
@@ -1061,6 +1064,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get position() {
         return this.css('position');
+    }
+
+    get positionStatic() {
+        const position = this.position;
+        return position === 'static' || position === 'initial' || position === 'unset';
     }
 
     get top() {
@@ -1127,8 +1135,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
     get pageflow() {
         if (this._pageflow === undefined) {
-            const value = this.position;
-            return value === 'static' || value === 'initial' || value === 'relative' || this.alignOrigin;
+            return this.positionStatic || this.position === 'relative' || this.alignOrigin;
         }
         return this._pageflow;
     }
@@ -1249,8 +1256,21 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get baseline() {
-        const value = this.css('verticalAlign');
+        const value = this.verticalAlign;
         return this.siblingflow && (value === 'baseline' || value === 'initial');
+    }
+
+    get verticalAlign() {
+        return this.css('verticalAlign');
+    }
+
+    get supSubscript() {
+        if (this._supSubscript === undefined) {
+            const tagName = this.tagName;
+            const verticalAlign = this.verticalAlign;
+            this._supSubscript = tagName === 'SUP' || tagName === 'SUB' || verticalAlign === 'super' || verticalAlign === 'sub';
+        }
+        return this._supSubscript;
     }
 
     set multiLine(value) {
@@ -1273,6 +1293,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
     get layoutConstraint() {
         return this.is(NODE_CONTAINER.CONSTRAINT);
+    }
+
+    get actualParent() {
+        return getNodeFromElement(this.element.parentElement) as T || this.documentParent;
     }
 
     get actualHeight() {

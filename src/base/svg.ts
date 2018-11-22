@@ -24,6 +24,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     public name: string;
     public dpi: number;
     public fontSize: number;
+
     public readonly defs: SvgDefs<SvgImage, SvgPath> = {
         image: [],
         clipPath: new Map<string, SvgPath[]>(),

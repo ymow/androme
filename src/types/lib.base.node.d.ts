@@ -60,6 +60,7 @@ declare global {
             readonly extension: string;
             readonly flexbox: Flexbox;
             readonly rightAligned: boolean;
+            readonly bottomAligned: boolean;
             readonly viewWidth: number;
             readonly viewHeight: number;
             readonly hasWidth: boolean;
@@ -67,6 +68,7 @@ declare global {
             readonly lineHeight: number;
             readonly display: string;
             readonly position: string;
+            readonly positionStatic: boolean;
             readonly top: number | null;
             readonly right: number | null;
             readonly bottom: number | null;
@@ -106,9 +108,12 @@ declare global {
             readonly overflowX: boolean;
             readonly overflowY: boolean;
             readonly baseline: boolean;
+            readonly verticalAlign: string;
+            readonly supSubscript: boolean;
             readonly preserveWhiteSpace: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
+            readonly actualParent: Node;
             readonly actualHeight: number;
             readonly singleChild: boolean;
             readonly dir: string;

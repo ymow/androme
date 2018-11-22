@@ -19,7 +19,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         const output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.COORDINATOR,
             node.renderDepth,
-            $Resource.formatOptions(options, this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
             '',
             '',
             node,
@@ -36,5 +36,28 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
             }
         }
         return { output };
+    }
+
+    public postProcedure(node: T) {
+        if (node.documentRoot) {
+            if (node.inlineWidth) {
+                node.some((item: T) => {
+                    if (item.rightAligned) {
+                        node.android('layout_width', 'match_parent', true);
+                        return true;
+                    }
+                    return false;
+                });
+            }
+            if (node.inlineHeight) {
+                node.some((item: T) => {
+                    if (item.bottomAligned) {
+                        node.android('layout_height', 'match_parent', true);
+                        return true;
+                    }
+                    return false;
+                });
+            }
+        }
     }
 }

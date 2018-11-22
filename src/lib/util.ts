@@ -186,13 +186,13 @@ export function convertEnum(value: number, base: {}, derived: {}): string {
     return '';
 }
 
-export function formatPX(value: any) {
-    value = parseFloat(value);
+export function formatPX(value: string | number) {
+    value = parseFloat(value as string);
     return `${!isNaN(value) ? Math.round(value) : 0}px`;
 }
 
-export function formatPercent(value: any) {
-    value = parseFloat(value);
+export function formatPercent(value: string | number) {
+    value = parseFloat(value as string);
     if (!isNaN(value)) {
         return value < 1 ? convertPercent(value) : `${Math.round(value)}%`;
     }

@@ -7,6 +7,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
         return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
     }
+
     public static getRect(width: number, height: number, x = 0, y = 0) {
         return width > 0 && height > 0 ? `M${x},${y} H${x + width} V${y + height} H${x} Z` : '';
     }

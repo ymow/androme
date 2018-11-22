@@ -424,7 +424,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol53710"
+                    android:text="@string/__symbol6969"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -574,7 +574,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol53710"
+                    android:text="@string/__symbol6969"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1011,7 +1011,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol53710"
+                    android:text="@string/__symbol6969"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1068,7 +1068,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_7"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -1082,16 +1082,15 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
-                <LinearLayout
-                    android:id="@+id/linearlayout_11"
-                    android:baselineAlignedChildIndex="1"
+                <RelativeLayout
+                    android:id="@+id/relativelayout_5"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/div_margin_start"
-                    android:layout_width="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_width="wrap_content">
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
                         android:checkedButton="@+id/c2"
+                        android:layout_alignParentStart="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:orientation="horizontal">
@@ -1112,10 +1111,11 @@ The attributes "include" and "include-end" can only be applied to elements which
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
                         android:layout_marginVertical="@dimen/checkbox_margin_vertical"
+                        android:layout_toEndOf="@+id/radiogroup_1"
                         android:layout_width="wrap_content"
                         android:text="@string/none"
                         style="@style/Checkbox" />
-                </LinearLayout>
+                </RelativeLayout>
                 <Button
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
@@ -1142,7 +1142,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol53710">):</string>
+    <string name="__symbol6969">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1462,7 +1462,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_start_1">8dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
-    <dimen name="select_group_margin_top">13dp</dimen>
+    <dimen name="select_group_margin_top">26dp</dimen>
     <dimen name="select_margin_start">3dp</dimen>
     <dimen name="select_min_width">37dp</dimen>
     <dimen name="select_padding_horizontal">1dp</dimen>

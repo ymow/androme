@@ -156,6 +156,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
             }
             else if (node.tagName === 'NAV') {
                 controlName = VIEW_NAVIGATION.MENU;
+                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
                 next = true;
             }
             else {
@@ -204,14 +205,12 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }
-        if (node.android('title') === '') {
-            if (title !== '') {
-                const name = $Resource.addString(title, '', this.application.getExtensionOptionsValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
-                if (name !== '') {
-                    title = `@string/${name}`;
-                }
-                options['android'].title = title;
+        if (title !== '' && node.android('title') === '') {
+            const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+            if (name !== '') {
+                title = `@string/${name}`;
             }
+            options['android'].title = title;
         }
         node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;

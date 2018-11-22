@@ -62,5 +62,5 @@ export function replaceRTL(value: string, { supportRTL = true, targetAPI = BUILD
 }
 
 export function getXmlNs(...values: string[]) {
-    return values.map(name => XMLNS_ANDROID[name] ? `xmlns:${name}="${XMLNS_ANDROID[name]}"` : '').filter(result => result).join(' ');
+    return values.map(name => XMLNS_ANDROID[name] ? `xmlns:${name}="${XMLNS_ANDROID[name]}"` : '').filter(value => value).join(' ');
 }

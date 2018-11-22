@@ -15,6 +15,7 @@ import $util = androme.lib.util;
 export default class <T extends View> extends androme.lib.extensions.List<T> {
     public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');
+        let output = '';
         if (mainData) {
             const controller = this.application.viewController;
             const parentLeft = $util.convertInt(parent.css('paddingLeft')) + $util.convertInt(parent.cssInitial('marginLeft', true));
@@ -38,7 +39,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 else {
                     layoutData.items = ordinal.children as T[];
                     layoutData.itemCount = ordinal.length;
-                    if ($Application.relativeHorizontal(ordinal.children)) {
+                    if (this.application.viewController.checkRelativeHorizontal(ordinal as T, ordinal.children as T[])) {
                         layoutData.containerType = $enum.NODE_CONTAINER.RELATIVE;
                         layoutData.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL;
                     }
@@ -162,8 +163,13 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 node.android('layout_width', '0px');
                 node.android('layout_columnWeight', '1');
             }
+            if (node.length === 1 && node.children[0].textElement && node.children[0].baseline) {
+                const layoutData = $Application.createLayoutData(node, parent, $enum.NODE_CONTAINER.LINEAR, $enum.NODE_ALIGNMENT.HORIZONTAL, 1, node.children as T[]);
+                node.android('baselineAlignedChildIndex', '0');
+                output = this.application.renderNode(layoutData);
+            }
         }
-        return { output: '' };
+        return { output };
     }
 
     public postBaseLayout(node: T) {

@@ -109,7 +109,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             layoutData.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
             complete = true;
         }
-        else if (Application.relativeHorizontal(node.children)) {
+        else if (this.application.viewController.checkRelativeHorizontal(node, node.children as T[])) {
             layoutData.containerType = NODE_CONTAINER.RELATIVE;
             layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
             layoutData.rowCount = 1;

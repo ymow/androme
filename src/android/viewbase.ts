@@ -42,12 +42,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private static _documentBody: View;
 
+        public readonly renderChildren: View[] = [];
+
         public readonly constraint: Constraint = {
             horizontal: false,
             vertical: false,
             current: {}
         };
-        public readonly renderChildren: View[] = [];
 
         protected _namespaces = new Set(['android', 'app']);
         protected _controlName: string;
@@ -57,13 +58,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
         protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
-        private __android: StringMap = {};
-        private __app: StringMap = {};
         private _localSettings: LocalSettings & ObjectMap<any> = {
             targetAPI: 0,
             resolutionDPI: 160,
             supportRTL: false
         };
+
+        private __android: StringMap = {};
+        private __app: StringMap = {};
 
         constructor(
             id = 0,
@@ -255,7 +257,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return 0.5;
         }
 
-        public modifyBox(region: number | string, offset: number | null, negative = false) {
+        public modifyBox(region: number | string, offset: number | null, negative = true) {
             const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
             if (offset !== 0 && (name !== '' || $util.isString(region))) {
                 const attr = $util.isString(region) ? region : name.replace('layout_', '');
@@ -265,8 +267,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     else {
                         this._boxAdjustment[attr] += offset;
-                        if (!negative) {
-                            this._boxAdjustment[attr] = Math.max(0, this._boxAdjustment[attr]);
+                        if (!negative && this._boxAdjustment[attr] < 0) {
+                            this._boxAdjustment[attr] = 0;
                         }
                     }
                 }
@@ -451,7 +453,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (this.is($enum.NODE_CONTAINER.GRID) && $util.withinFraction(this.box.right, Math.max.apply(null, renderChildren.filter(node => node.inlineElement || !node.blockStatic).map(node => node.linear.right)))) {
                             this.android('layout_width', 'wrap_content');
                         }
-                        else if ((this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) || (!this.documentRoot && renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) && !node.has('width')))) {
+                        else if ((this.blockStatic && this.layoutVertical) || (!this.documentRoot && renderChildren.some(node => node.layoutVertical && !node.has('width')))) {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
@@ -647,7 +649,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (verticalAlign === '' && this.lineHeight > 0 && !this.blockHeight) {
                 verticalAlign = 'center_vertical';
             }
-            if (renderParent.linearVertical || (this.documentRoot && this.linearVertical)) {
+            if (!this.blockWidth && (renderParent.linearVertical || (this.documentRoot && this.linearVertical))) {
                 if (this.float === 'right') {
                     this.mergeGravity('layout_gravity', right);
                 }
@@ -655,7 +657,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     setAutoMargin(this);
                 }
             }
-            if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.RIGHT)))) {
+            if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || (this.nodes.length > 0 && this.nodes.every(node => node.rightAligned)))) {
                 floating = right;
             }
             if (renderParent.tableElement) {
@@ -669,7 +671,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             if (renderParent.is($enum.NODE_CONTAINER.FRAME)) {
                 if (!setAutoMargin(this)) {
-                    floating = floating || this.float;
+                    floating = this.floating ? this.float : floating;
                     if (floating !== 'none') {
                         if (renderParent.inlineWidth || (this.singleChild && !renderParent.documentRoot)) {
                             renderParent.mergeGravity('layout_gravity', floating);
@@ -694,7 +696,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.mergeGravity('layout_gravity', floating);
                     }
                 }
-                else if (renderParent.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) {
+                else if (renderParent.layoutVertical) {
                     textAlign = setTextAlign(floating);
                 }
             }
@@ -772,7 +774,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             this.setBlockSpacing();
             this.bindWhiteSpace();
             this.autoSizeBoxModel();
-            this.alignLinearLayout();
+            this.alignHorizontalLayout();
             this.alignBoxPosition();
             this.setBoxSpacing();
             switch (this.cssParent('visibility', true)) {
@@ -841,10 +843,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                     const offset = Math.min(adjacent.marginTop, adjacent.marginBottom);
                                     if (offset < 0) {
                                         if (index === 0) {
-                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset, true);
+                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset);
                                         }
                                         else {
-                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, offset, true);
+                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, offset);
                                         }
                                     }
                                 }
@@ -946,18 +948,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private bindWhiteSpace() {
             if (!this.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
-                if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (
-                    this.linearHorizontal ||
-                    this.of($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
-                    this.of($enum.NODE_CONTAINER.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL)
-                   ))
-                {
+                if (this.layoutHorizontal) {
                     const textAlign = this.css('textAlign');
                     const textIndent = this.toInt('textIndent');
                     const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
                     let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                     this.each((node: View, index) => {
-                        if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                        if (!(node.floating || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)))) {
                             const width = Math.round(node.actualLeft() - right);
                             if (width >= 1) {
                                 node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
@@ -966,7 +963,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         right = node.actualRight();
                     }, true);
                 }
-                else if (this.linearVertical) {
+                if (this.layoutVertical) {
                     function getPreviousBottom(list: View[]) {
                         return list.sort((a, b) => a.linear.bottom <= b.linear.bottom ? 1 : -1)[0].linear.bottom;
                     }
@@ -1013,8 +1010,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        private alignLinearLayout() {
-            if (this.linearHorizontal) {
+        private alignHorizontalLayout() {
+            if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
                 const lineHeight: number = Math.max.apply(null, renderChildren.map(item => item.toInt('lineHeight')));
@@ -1038,80 +1035,71 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
                     }
                 }
-                const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
-                if (pageflow.length &&
-                    pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
-                        (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0)) ||
-                        pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0)
-                   ))
-                {
-                    const tallest: View[] = [];
-                    const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
-                    let offsetTop = 0;
-                    if (marginTop > 0) {
-                        pageflow.forEach(node => {
-                            const offset = node.toInt('verticalAlign');
-                            const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
-                            if (offsetHeight >= offsetTop) {
-                                if (offsetHeight > offsetTop) {
-                                    tallest.length = 0;
-                                }
-                                tallest.push(node);
-                                offsetTop = offsetHeight;
-                            }
-                        });
-                        tallest.sort(a => a.imageElement ? -1 : 1);
-                        pageflow.forEach(node => {
-                            if (!tallest.includes(node)) {
-                                const offset = node.toInt('verticalAlign');
-                                if (marginTop > 0) {
-                                    let offsetHeight = 0;
-                                    if (tallest[0].imageElement) {
-                                        if ($dom.isUserAgent($enum.USER_AGENT.EDGE) && node.plainText) {
-                                            offsetHeight = node.bounds.height - offsetTop;
-                                        }
-                                        else {
-                                            offsetHeight = node.bounds.height;
-                                        }
+                if (this.linearHorizontal) {
+                    if (renderChildren.length && (renderChildren.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) || renderChildren.some(node => node.imageElement && node.toInt('verticalAlign') !== 0))) {
+                        const alignMap = renderChildren.map(node => node.toInt('verticalAlign'));
+                        const marginTop: number = Math.max.apply(null, alignMap);
+                        if (marginTop > 0 && alignMap.some(value => value < 0) && alignMap.some(value => value > 0)) {
+                            const tallest: View[] = [];
+                            let offsetTop = 0;
+                            renderChildren.forEach((node, index) => {
+                                const offset = alignMap[index];
+                                const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
+                                if (offsetHeight >= offsetTop) {
+                                    if (offsetHeight > offsetTop) {
+                                        tallest.length = 0;
                                     }
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - offsetHeight);
+                                    tallest.push(node);
+                                    offsetTop = offsetHeight;
                                 }
-                                if (offset !== 0) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                                    node.css('verticalAlign', '0px');
+                            });
+                            tallest.sort(a => a.imageElement ? -1 : 1);
+                            renderChildren.forEach((node, index) => {
+                                if (!tallest.includes(node)) {
+                                    const offset = alignMap[index];
+                                    if (marginTop > 0) {
+                                        let offsetHeight = 0;
+                                        if (tallest[0].imageElement) {
+                                            if ($dom.isUserAgent($enum.USER_AGENT.EDGE) && node.plainText) {
+                                                offsetHeight = node.bounds.height - offsetTop;
+                                            }
+                                            else {
+                                                offsetHeight = node.bounds.height;
+                                            }
+                                        }
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - offsetHeight, false);
+                                    }
+                                    if (offset !== 0) {
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1);
+                                        node.css('verticalAlign', '0px');
+                                    }
                                 }
-                            }
-                        });
-                        tallest.forEach(node => node.css('verticalAlign', '0px'));
-                    }
-                }
-                if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
-                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.localSettings.targetAPI, 'SUB', 'android', BOX_ANDROID.MARGIN_TOP));
-                    if (offsetHeight > 0) {
-                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + $Node.getContentBoxHeight(this)));
-                    }
-                }
-                if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) || renderChildren.some(node => node.floating || !node.siblingflow))) {
-                    this.android('baselineAligned', 'false');
-                }
-                else {
-                    const childIndex = renderParent.android('baselineAlignedChildIndex');
-                    if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
-                        (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
-                        renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
-                        (renderChildren.some(node => node.containerType < $enum.NODE_CONTAINER.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
-                        (renderParent.is($enum.NODE_CONTAINER.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
-                    {
-                        const baseline = $NodeList.textBaseline(renderChildren);
-                        if (baseline.length) {
-                            this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                            });
+                            tallest.forEach(node => node.css('verticalAlign', '0px'));
                         }
                     }
-                }
-                if (this.localSettings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
-                    const node = renderChildren[renderChildren.length - 1];
-                    if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
-                        node.android('singleLine', 'true');
+                    if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) || renderChildren.some(node => node.floating || !node.siblingflow))) {
+                        this.android('baselineAligned', 'false');
+                    }
+                    else {
+                        const childIndex = renderParent.android('baselineAlignedChildIndex');
+                        if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
+                            (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
+                            renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
+                            (renderChildren.some(node => node.containerType < $enum.NODE_CONTAINER.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
+                            (renderParent.is($enum.NODE_CONTAINER.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
+                        {
+                            const baseline = $NodeList.textBaseline(renderChildren.filter(node => !node.layoutRelative && !node.layoutConstraint));
+                            if (baseline.length) {
+                                this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                            }
+                        }
+                    }
+                    if (this.localSettings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
+                        const node = renderChildren[renderChildren.length - 1];
+                        if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
+                            node.android('singleLine', 'true');
+                        }
                     }
                 }
             }
@@ -1122,7 +1110,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if ((this.inline || ((this.imageElement || this.svgElement) && this.display === 'inline-block')) && !this.floating) {
                 const offset = this.toInt('verticalAlign');
                 if (offset !== 0) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1);
                     if (offset < 0 && this.display !== 'inline-block' && renderParent.layoutHorizontal && renderParent.inlineHeight) {
                         renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + $Node.getContentBoxHeight(renderParent)));
                     }
@@ -1133,7 +1121,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const bottom = this.toInt('bottom');
                 const left = this.toInt('left');
                 if (top !== 0) {
-                    if (top < 0 && this.floating && this.data('RESOURCE', 'backgroundImage') && renderParent.is($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_CONTAINER.LINEAR)) {
+                    if (top < 0 && this.floating && renderParent.is($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_CONTAINER.LINEAR) && this.data('RESOURCE', 'backgroundImage')) {
                         let found = false;
                         renderParent.renderChildren.some((node: View) => {
                             if (node === this) {
@@ -1151,18 +1139,18 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         });
                     }
                     else {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top);
                     }
                 }
                 else if (bottom !== 0) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, bottom * -1);
                 }
                 if (left !== 0) {
                     if (this.float === 'right' || (this.position === 'relative' && this.autoMarginLeft)) {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, left * -1);
                     }
                     else {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left);
                     }
                 }
             }
@@ -1281,45 +1269,31 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         get layoutHorizontal() {
-            return !this.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT) && (
-                this.linearHorizontal ||
-                this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && (
-                    $NodeList.linearX(this.nodes) ||
-                    (this.is($enum.NODE_CONTAINER.FRAME) && this.nodes.every(node => node.domElement)))
-                )
-            );
+            return this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL);
         }
         get layoutVertical() {
-            return !this.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT) && (
-                this.linearVertical ||
-                this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && (
-                    $NodeList.linearY(this.nodes)) ||
-                    (this.is($enum.NODE_CONTAINER.FRAME) && this.nodes.some(node => node.linearVertical))
-                )
-            );
+            return this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL);
         }
 
         get linearHorizontal() {
-            return this.__android.orientation === AXIS_ANDROID.HORIZONTAL && this.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.RADIO_GROUP);
+            return this.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.RADIO_GROUP) && this.layoutHorizontal;
         }
         get linearVertical() {
-            return this.__android.orientation === AXIS_ANDROID.VERTICAL && this.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.RADIO_GROUP);
+            return this.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.RADIO_GROUP) && this.layoutVertical;
         }
 
         get inlineWidth() {
-            return this.__android.layout_width === 'wrap_content';
+            return this.android('layout_width') === 'wrap_content';
         }
         get inlineHeight() {
-            return this.__android.layout_height === 'wrap_content';
+            return this.android('layout_height') === 'wrap_content';
         }
 
         get blockWidth() {
-            return this.__android.layout_width === 'match_parent';
+            return this.android('layout_width') === 'match_parent';
         }
         get blockHeight() {
-            return this.__android.layout_height === 'match_parent';
+            return this.android('layout_height') === 'match_parent';
         }
 
         get dpi() {

@@ -72,13 +72,15 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
+    public abstract checkConstraintFloat(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
+    public abstract checkConstraintHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
+    public abstract checkRelativeHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
+    public abstract checkFrameHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
     public abstract setConstraints(): void;
     public abstract createNodeGroup(node: T, parent: T, children: T[]): T;
     public abstract renderNode(data: LayoutData<T>): string;
     public abstract renderNodeGroup(data: LayoutData<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
-    public abstract renderInclude(node: T, parent: T, name: string): string;
-    public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(viewData: ViewData<NodeList<T>>);
     public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 

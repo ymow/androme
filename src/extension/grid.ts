@@ -306,7 +306,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             layoutData.columnCount = mainData.columnCount;
             output = this.application.renderNode(layoutData);
         }
-        return { output };
+        return { output, complete: output !== '' };
     }
 
     public processChild(node: T, parent: T): ExtensionResult<T> {
@@ -345,7 +345,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     siblings
                 );
                 const linearX = NodeList.linearX(siblings);
-                if (Application.relativeHorizontal(siblings)) {
+                if (this.application.viewController.checkRelativeHorizontal(group, siblings, undefined, undefined, linearX)) {
                     layoutData.containerType = NODE_CONTAINER.RELATIVE;
                     layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 }

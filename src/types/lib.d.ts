@@ -87,8 +87,8 @@ declare global {
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
             export function convertEnum(value: number, base: {}, derived: {}): string;
-            export function formatPX(value: any): string;
-            export function formatPercent(value: any): string;
+            export function formatPX(value: string | number): string;
+            export function formatPercent(value: string | number): string;
             export function hasBit(value: number, type: number): boolean;
             export function isNumber(value: string | number): value is number;
             export function isString(value: any): value is string;

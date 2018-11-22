@@ -28,10 +28,10 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                     if (stored.stringArray) {
                         result.push(
                             ...stored.stringArray.map(value => {
-                                const name = Resource.addString($xml.replaceCharacter(value), '', this.options.useNumberAlias);
-                                return name !== '' ? `@string/${name}` : '';
+                                value = Resource.addString($xml.replaceCharacter(value), '', this.options.useNumberAlias);
+                                return value !== '' ? `@string/${value}` : '';
                             })
-                            .filter(name => name)
+                            .filter(value => value)
                         );
                     }
                     if (result.length) {

@@ -80,7 +80,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
         if (spaceSpan > 0) {
             this.application.viewController.appendAfter(
                 node.id,
-                (<android.lib.base.Controller<T>> this.application.viewController).renderColumnSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
+                (<android.lib.base.Controller<T>> this.application.viewController).renderSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
             );
         }
         return { output: '' };

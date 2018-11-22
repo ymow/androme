@@ -53,8 +53,8 @@ let application: androme.lib.base.Application<T>;
 let viewController: Controller<T>;
 let resourceHandler: Resource<T>;
 let fileHandler: File<T>;
-
 let settings: SettingsAndroid;
+
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const lib = {

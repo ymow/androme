@@ -45,7 +45,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                                 else {
                                     this.application.viewController.appendAfter(
                                         item.id,
-                                        (<android.lib.base.Controller<T>> this.application.viewController).renderColumnSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
+                                        (<android.lib.base.Controller<T>> this.application.viewController).renderSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
                                     );
                                 }
                             }
