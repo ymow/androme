@@ -1,4 +1,4 @@
-import { BackgroundImage, BackgroundGradient, SettingsAndroid } from '../../types/module';
+import { BackgroundImage, BackgroundGradient, UserSettingsAndroid } from '../../types/module';
 
 import { EXT_ANDROID } from '../../lib/constant';
 
@@ -167,12 +167,13 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
     public readonly options = {
         autoSizeBackgroundImage: true
     };
+
     public readonly eventOnly = true;
 
     public afterResources() {
         const application = this.application;
-        const settings = <SettingsAndroid> application.settings;
-        const useColorAlias = application.getExtensionOptionValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
+        const settings = <UserSettingsAndroid> application.userSettings;
+        const colorAlias = application.getExtensionOptionValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
         application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
@@ -219,7 +220,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof useColorAlias === 'boolean' ? useColorAlias : true);
+                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof colorAlias === 'boolean' ? colorAlias : true);
                     if (gradients.length) {
                         backgroundGradient.push(gradients[0]);
                     }

@@ -107,9 +107,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         );
     }
 
-    public abstract settings: Settings;
-    public cache: NodeList<T>;
     public application: Application<T>;
+    public cache: NodeList<T>;
+    public abstract userSettings: UserSettings;
 
     protected constructor(public fileHandler: File<T>) {
         fileHandler.stored = Resource.STORED;
@@ -625,6 +625,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     private checkPermissions(node: T, storedName: string) {
-        return !node.data(Resource.KEY_NAME, storedName) || this.settings.alwaysReevaluateResources;
+        return !node.data(Resource.KEY_NAME, storedName) || this.userSettings.alwaysReevaluateResources;
     }
 }

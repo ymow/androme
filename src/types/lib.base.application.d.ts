@@ -1,10 +1,10 @@
 declare global {
     namespace androme.lib.base {
         export interface Application<T extends Node> {
-            settings: Settings;
             viewController: Controller<T>;
             resourceHandler: Resource<T>;
             nodeObject: Constructor<T>;
+            userSettings: UserSettings;
             loading: boolean;
             closed: boolean;
             appName: string;

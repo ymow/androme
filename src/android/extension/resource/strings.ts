@@ -9,6 +9,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
     public readonly options = {
         useNumberAlias: false
     };
+
     public readonly eventOnly = true;
 
     public afterResources() {

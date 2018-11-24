@@ -1,4 +1,4 @@
-export interface SettingsAndroid extends Settings {
+export interface UserSettingsAndroid extends UserSettings {
     targetAPI: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;

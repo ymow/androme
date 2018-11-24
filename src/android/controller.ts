@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/module';
+import { UserSettingsAndroid } from './types/module';
 
 import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
@@ -219,7 +219,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         constraintMinMax(node, 'Height');
     }
 
-    public settings: SettingsAndroid;
+    public userSettings: UserSettingsAndroid;
 
     public readonly localSettings: ControllerSettings = {
         baseTemplate: BASE_TMPL,
@@ -245,7 +245,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     };
 
     public finalize(viewData: ViewData<$NodeList<T>>) {
-        if (this.settings.showAttributes) {
+        const settings = this.userSettings;
+        if (settings.showAttributes) {
             function getRootNamespace(content: string) {
                 let output = '';
                 for (const namespace in XMLNS_ANDROID) {
@@ -285,8 +286,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
         }
         for (const value of [...viewData.views, ...viewData.includes]) {
-            value.content = replaceUnit(value.content, this.settings);
-            value.content = replaceTab(value.content, this.settings);
+            value.content = replaceUnit(value.content, settings.resolutionDPI, settings.convertPixels);
+            value.content = replaceTab(value.content, settings.insertSpaces);
             value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
         }
     }
@@ -350,6 +351,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public setConstraints() {
+        const settings = this.userSettings;
         for (const node of this.cache.visible) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.CONSTRAINT)) {
                 const children = node.renderChildren.filter(item => !item.positioned) as T[];
@@ -502,11 +504,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         item.anchor(alignParent, 'true');
                                         rowPreviousLeft = undefined;
                                     }
-                                    if (this.settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
+                                    if (settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
                                         checkSingleLine(previous.item() as T, true);
                                     }
                                     if (rowPaddingLeft > 0) {
-                                        if (this.settings.ellipsisOnTextOverflow && rows.length === 1 && rows[0].length === 1 && rows[0][0].textElement) {
+                                        if (settings.ellipsisOnTextOverflow && rows.length === 1 && rows[0].length === 1 && rows[0][0].textElement) {
                                             checkSingleLine(rows[0][0], true);
                                         }
                                         item.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
@@ -536,7 +538,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                             previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace &&
                                             previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
                                             !item.floating && !item.plainText && !item.preserveWhiteSpace &&
-                                            item.textContent.trim() !== '' && !/^\s+/.test(item.textContent) ? this.settings.whitespaceHorizontalOffset : 0
+                                            item.textContent.trim() !== '' && !/^\s+/.test(item.textContent) ? settings.whitespaceHorizontalOffset : 0
                                         );
                         }
                         const rowParent: Undefined<T>[] = [];
@@ -648,7 +650,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 }
                             }
                         });
-                        if (this.settings.ellipsisOnTextOverflow) {
+                        if (settings.ellipsisOnTextOverflow) {
                             const widthParent = !node.ascend().some(parent => parent.hasWidth);
                             if (!node.ascend(true).some(item => item.is($enum.NODE_CONTAINER.GRID)) && (rows.length === 1 || node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL | $enum.NODE_ALIGNMENT.FLOAT))) {
                                 for (let i = 1; i < children.length; i++) {
@@ -1076,7 +1078,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 if ($dom.isUserAgent($enum.USER_AGENT.EDGE)) {
                                     const elements = $dom.getBetweenElements(previous.groupElement ? (previous.item() as T).element : previous.element, item.element).filter(element => element.tagName === 'BR');
                                     if (elements.length) {
-                                        bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + this.settings.whitespaceVerticalOffset);
+                                        bottom = Math.min(bottom, elements[0].getBoundingClientRect().top + settings.whitespaceVerticalOffset);
                                     }
                                 }
                                 const offset = item.linear.top - bottom;
@@ -1494,7 +1496,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             node.setControlType(controlName);
         }
         let output = $xml.getEnclosingTag(controlName, node.id, !node.documentRoot && depth === 0 ? -1 : depth, children ? $xml.formatPlaceholder(node.id) : '');
-        if (this.settings.showAttributes && node.id === 0) {
+        if (this.userSettings.showAttributes && node.id === 0) {
             const indent = $util.repeat(renderDepth + 1);
             const attrs = node.combine().map(value => `\n${indent + value}`).join('');
             output = output.replace($xml.formatPlaceholder(node.id, '@'), attrs);
@@ -1686,7 +1688,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public get delegateNodeInit(): SelfWrapped<T, void> {
-        const settings = this.settings;
+        const settings = this.userSettings;
         return (self: T) => {
             self.localSettings = {
                 targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : 26,

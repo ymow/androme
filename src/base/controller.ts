@@ -12,7 +12,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
 
     public cache: NodeList<T>;
     public application: Application<T>;
-    public abstract settings: Settings;
+    public abstract userSettings: UserSettings;
     public abstract readonly localSettings: ControllerSettings;
 
     private _before: ObjectIndex<string[]> = {};

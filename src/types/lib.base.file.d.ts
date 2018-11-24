@@ -1,7 +1,7 @@
 declare global {
     namespace androme.lib.base {
         export interface File<T extends Node> {
-            settings: Settings;
+            userSettings: UserSettings;
             appName: string;
             stored: ResourceStoredMap;
             readonly assets: FileAsset[];

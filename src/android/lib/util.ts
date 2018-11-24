@@ -29,15 +29,15 @@ export function convertUnit(value: string, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function replaceUnit(value: string, { resolutionDPI = 160, convertPixels = 'dp' }, font = false) {
-    if (convertPixels === 'dp' || font) {
-        return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], resolutionDPI, font) + capture[3]);
+export function replaceUnit(value: string, dpi = 160, format = 'dp', font = false) {
+    if (format === 'dp' || font) {
+        return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], dpi, font) + capture[3]);
     }
     return value;
 }
 
-export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
-    return $xml.replaceTab(value, insertSpaces, preserve);
+export function replaceTab(value: string, spaces = 4, preserve = false) {
+    return $xml.replaceTab(value, spaces, preserve);
 }
 
 export function calculateBias(start: number, end: number, accuracy = 4) {
@@ -52,9 +52,9 @@ export function calculateBias(start: number, end: number, accuracy = 4) {
     }
 }
 
-export function replaceRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {
+export function replaceRTL(value: string, rtl = true, api: BUILD_ANDROID.OREO) {
     value = value ? value.trim() : '';
-    if (supportRTL && targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
+    if (rtl && api >= BUILD_ANDROID.JELLYBEAN_1) {
         value = value.replace(/left/g, 'start').replace(/right/g, 'end');
         value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
     }

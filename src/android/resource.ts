@@ -1,4 +1,4 @@
-import { BackgroundGradient, SettingsAndroid } from './types/module';
+import { BackgroundGradient, UserSettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
@@ -25,7 +25,7 @@ function getHexARGB(value: ColorHexAlpha | null) {
 }
 
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
-    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], useColorAlias = true) {
+    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], colorAlias = true) {
         const result: BackgroundGradient[] = [];
         const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
         for (const item of gradients) {
@@ -95,7 +95,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
             if (hasStop) {
                 for (let i = 0; i < item.colorStop.length; i++) {
                     const stop = item.colorStop[i];
-                    const color = useColorAlias ? `@color/${Resource.addColor(stop.color)}` : getHexARGB($color.parseRGBA(stop.color));
+                    const color = colorAlias ? `@color/${Resource.addColor(stop.color)}` : getHexARGB($color.parseRGBA(stop.color));
                     let offset = parseInt(stop.offset);
                     if (i === 0) {
                         if (!node.svgElement && offset !== 0) {
@@ -126,7 +126,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return result;
     }
 
-    public static formatOptions(options: ExternalData, useNumberAlias = false) {
+    public static formatOptions(options: ExternalData, numberAlias = false) {
         for (const namespace in options) {
             if (options.hasOwnProperty(namespace)) {
                 const obj: ExternalData = options[namespace];
@@ -137,7 +137,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                             switch (attr) {
                                 case 'text':
                                     if (!value.startsWith('@string/')) {
-                                        value = this.addString(value, '', useNumberAlias);
+                                        value = this.addString(value, '', numberAlias);
                                         if (value !== '') {
                                             obj[attr] = `@string/${value}`;
                                             continue;
@@ -170,13 +170,13 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return options;
     }
 
-    public static addString(value: string, name = '', useNumberAlias = false) {
+    public static addString(value: string, name = '', numberAlias = false) {
         if (value !== '') {
             if (name === '') {
                 name = value.trim();
             }
             const numeric = $util.isNumber(value);
-            if (!numeric || useNumberAlias) {
+            if (!numeric || numberAlias) {
                 for (const [resourceName, resourceValue] of Resource.STORED.strings.entries()) {
                     if (resourceValue === value) {
                         return resourceName;
@@ -302,7 +302,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return '';
     }
 
-    public settings: SettingsAndroid;
+    public userSettings: UserSettingsAndroid;
     public fileHandler: File<T>;
 
     public finalize() {}

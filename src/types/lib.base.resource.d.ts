@@ -2,9 +2,9 @@ declare global {
     namespace androme.lib.base {
         export interface Resource<T extends Node> extends AppCurrent<T> {
             application: Application<T>;
-            settings: Settings;
             cache: NodeList<T>;
             fileHandler: File<T>;
+            userSettings: UserSettings;
             finalize(viewData: ViewData<NodeList<T>>): void;
             reset(): void;
             setBoxSpacing(): void;

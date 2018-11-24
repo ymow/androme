@@ -129,9 +129,9 @@ declare global {
             overflow: number;
             setControlType(controlName: string, containerType?: number): void;
             setLayout(): void;
-            setAlignment(settings: Settings): void;
-            applyOptimizations(settings: Settings): void;
-            applyCustomizations(settings: Settings): void;
+            setAlignment(settings: UserSettings): void;
+            applyOptimizations(settings: UserSettings): void;
+            applyCustomizations(settings: UserSettings): void;
             modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
             valueBox(region: number): [number, number];
             localizeString(value: string): string;

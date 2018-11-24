@@ -37,7 +37,7 @@ type T = Node;
 
 let main: androme.lib.base.Application<T>;
 let framework: AppFramework<T>;
-let settings: Settings = {} as any;
+let settings: UserSettings = {} as any;
 let system: FunctionMap<any> = {};
 
 const extensionsAsync = new Set<Extension<T>>();
@@ -47,13 +47,13 @@ export function setFramework(value: AppFramework<T>, cached = false) {
     if (framework !== value) {
         const appBase: AppBase<T> = cached ? value.cached() : value.create();
         if (main || Object.keys(settings).length === 0) {
-            settings = appBase.settings;
+            settings = appBase.userSettings;
         }
         else {
-            settings = Object.assign(appBase.settings, settings);
+            settings = Object.assign(appBase.userSettings, settings);
         }
         main = appBase.application;
-        main.settings = settings;
+        main.userSettings = settings;
         if (Array.isArray(settings.builtInExtensions)) {
             const register = new Set<androme.lib.base.Extension<T>>();
             for (let namespace of settings.builtInExtensions) {

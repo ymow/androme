@@ -28,6 +28,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     public readonly options = {
         useColorAlias: true
     };
+
     public readonly eventOnly = true;
 
     public beforeInit() {

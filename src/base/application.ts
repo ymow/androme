@@ -67,7 +67,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         layout: null
     };
 
-    private _settings: Settings;
+    private _userSettings: UserSettings;
     private _cacheRoot = new Set<Element>();
     private _renderPosition = new Map<number, T[]>();
     private _renderPositionReverseMap = new Map<number, T>();
@@ -193,7 +193,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const documentRoot = this.parseElements.values().next().value;
         const parseResume = () => {
             this.loading = false;
-            if (this.settings.preloadImages) {
+            if (this.userSettings.preloadImages) {
                 Array.from(documentRoot.getElementsByClassName('androme.preload')).forEach(element => documentRoot.removeChild(element));
             }
             for (const [uri, image] of this.session.image.entries()) {
@@ -232,7 +232,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 __THEN.call(this);
             }
         };
-        if (this.settings.preloadImages) {
+        if (this.userSettings.preloadImages) {
             Array.from(this.parseElements).forEach(element => {
                 element.querySelectorAll('svg image').forEach((image: SVGImageElement) => {
                     if (image.href) {
@@ -474,9 +474,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     protected createCache(documentRoot: HTMLElement) {
+        const settings = this.userSettings;
         let nodeTotal = 0;
         if (documentRoot === document.body) {
-            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
+            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, settings.hideOffScreenElements) && ++nodeTotal > 1);
         }
         const elements = documentRoot !== document.body ? documentRoot.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
         this.processing.node = null;
@@ -496,7 +497,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         const localSettings = this.viewController.localSettings;
         const inlineAlways = localSettings.inline.always;
-        const inlineSupport = this.settings.renderInlineText ? new Set<string>() : localSettings.inline.tagName;
+        const inlineSupport = settings.renderInlineText ? new Set<string>() : localSettings.inline.tagName;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (
@@ -630,11 +631,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const node of this.processing.cache) {
                 if (!node.documentRoot) {
-                    let parent = node.getParentElementAsNode(this.settings.supportNegativeLeftTop) as T | null;
+                    let parent = node.getParentElementAsNode(settings.supportNegativeLeftTop) as T | null;
                     if (!parent && !node.pageflow) {
                         parent = this.processing.node;
                     }
-                    if (!parent || (!this.settings.supportNegativeLeftTop && node.pageflow && node.toInt('verticalAlign') !== 0 && parent && node.outsideX(parent.linear) && node.outsideX(parent.linear))) {
+                    if (!parent || (!settings.supportNegativeLeftTop && node.pageflow && node.toInt('verticalAlign') !== 0 && parent && node.outsideX(parent.linear) && node.outsideX(parent.linear))) {
                         node.hide();
                     }
                     else {
@@ -668,6 +669,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     protected setBaseLayout() {
+        const settings = this.userSettings;
         const localSettings = this.viewController.localSettings;
         const documentRoot = this.processing.node as T;
         const mapX: LayoutMapX<T> = [];
@@ -828,9 +830,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                     clearedPrevious.set(previousSibling, previousSibling.css('clear'));
                                                 }
                                                 const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious, floated.size);
-                                                if (verticalAlign || clearedPartial.has(adjacent) || (this.settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatAvailable.size === 2)) {
+                                                if (verticalAlign || clearedPartial.has(adjacent) || (settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatAvailable.size === 2)) {
                                                     if (horizontal.length) {
-                                                        if (!this.settings.floatOverlapDisabled) {
+                                                        if (!settings.floatOverlapDisabled) {
                                                             if (floatAvailable.size > 0 && !pending.map(node => clearedPartial.get(node)).includes('both') && (
                                                                     floated.size === 0 ||
                                                                     adjacent.bounds.top < Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
@@ -1050,7 +1052,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             continue;
                                         }
                                         else if (
-                                            this.settings.collapseUnattributedElements &&
+                                            settings.collapseUnattributedElements &&
                                             !hasValue(nodeY.element.id) &&
                                             !hasValue(nodeY.dataset.ext) &&
                                             !hasValue(nodeY.dataset.target) &&
@@ -1133,7 +1135,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                             else {
                                 const boxStyle = nodeY.boxStyle;
-                                const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
+                                const freeFormText = hasFreeFormText(nodeY.element, settings.renderInlineText ? 0 : 1);
                                 if (freeFormText || (boxStyle.hasBorder && nodeY.textContent.length)) {
                                     containerType = NODE_CONTAINER.TEXT;
                                 }
@@ -1146,7 +1148,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     containerType = NODE_CONTAINER.LINE;
                                 }
                                 else if (!nodeY.documentRoot) {
-                                    if (this.settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !boxStyle.hasBackground) {
+                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !boxStyle.hasBackground) {
                                         parentY.remove(nodeY);
                                         nodeY.hide();
                                     }
@@ -1289,7 +1291,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         else if (isStyleElement(element)) {
             const elementNode = new this.nodeObject(this.processing.cache.nextId, element, this.viewController.delegateNodeInit);
-            if (isElementVisible(element, this.settings.hideOffScreenElements)) {
+            if (isElementVisible(element, this.userSettings.hideOffScreenElements)) {
                 node = elementNode;
                 node.setExclusions();
             }
@@ -1305,6 +1307,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     protected processLayoutHorizontal(group: T, parent: T, nodes: T[], floated: Set<string>, cleared: Map<T, string>, linearX: boolean) {
+        const settings = this.userSettings;
         let layerIndex: Array<T[] | T[][]> = [];
         let output = '';
         if (cleared.size === 0 && nodes.every(node => !node.autoMargin)) {
@@ -1364,7 +1367,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         layout.setType(NODE_CONTAINER.LINEAR, NODE_CONTAINER.RELATIVE | NODE_ALIGNMENT.FLOAT);
                         return this.renderNode(layout);
                     }
-                    else if (!this.settings.floatOverlapDisabled && right.length === 0) {
+                    else if (!settings.floatOverlapDisabled && right.length === 0) {
                         layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT);
                         output = this.renderNode(layout);
                         layerIndex.push(left, inline);
@@ -1470,7 +1473,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (rightBelow.length === 0) {
                                 pendingFloat |= 4;
                             }
-                            if (!this.settings.floatOverlapDisabled && current !== 'right' && rightAbove.length) {
+                            if (!settings.floatOverlapDisabled && current !== 'right' && rightAbove.length) {
                                 rightAbove.push(node);
                             }
                             else {
@@ -1481,7 +1484,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (leftBelow.length === 0) {
                                 pendingFloat |= 2;
                             }
-                            if (!this.settings.floatOverlapDisabled && current !== 'left' && leftAbove.length) {
+                            if (!settings.floatOverlapDisabled && current !== 'left' && leftAbove.length) {
                                 leftAbove.push(node);
                             }
                             else {
@@ -1541,7 +1544,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             const alignmentType = getAlignmentFloat(floated.size === 1 && floated.has('right'));
             const layout = new Layout(group, parent, 0, alignmentType);
-            if (this.settings.floatOverlapDisabled) {
+            if (settings.floatOverlapDisabled) {
                 layerIndex.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
                 if (parent.linearVertical) {
                     group.alignmentType |= alignmentType;
@@ -1613,7 +1616,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         NODE_ALIGNMENT.FLOAT | ((item as T[][]).some(segment => segment === rightSub || segment === rightAbove) ? NODE_ALIGNMENT.RIGHT : 0),
                         item.length
                     );
-                    if (this.settings.floatOverlapDisabled) {
+                    if (settings.floatOverlapDisabled) {
                         layout.setType(NODE_CONTAINER.FRAME);
                     }
                     else {
@@ -1867,9 +1870,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     private setStyleMap() {
-        let warning = false;
-        const dpi = this.settings.resolutionDPI;
+        const settings = this.userSettings;
+        const dpi = settings.resolutionDPI;
         const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
+        let warning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
             const styleSheet = <CSSStyleSheet> document.styleSheets[i];
             if (styleSheet.cssRules) {
@@ -1941,7 +1945,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                     }
                                 }
-                                if (this.settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
+                                if (settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
                                     styleMap.backgroundImage.split(',')
                                         .map((value: string) => value.trim())
                                         .forEach(value => {
@@ -1995,20 +1999,20 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return this.resourceHandler ? this.resourceHandler.fileHandler.appName : '';
     }
 
-    set settings(value) {
+    set userSettings(value) {
         if (typeof value !== 'object') {
-            value = {} as Settings;
+            value = {} as UserSettings;
         }
-        this._settings = value;
+        this._userSettings = value;
         if (this.viewController) {
-            this.viewController.settings = value;
+            this.viewController.userSettings = value;
         }
         if (this.resourceHandler) {
-            this.resourceHandler.settings = value;
+            this.resourceHandler.userSettings = value;
         }
     }
-    get settings() {
-        return this._settings;
+    get userSettings() {
+        return this._userSettings;
     }
 
     get layouts() {

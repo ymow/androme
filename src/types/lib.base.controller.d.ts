@@ -2,8 +2,8 @@ declare global {
     namespace androme.lib.base {
         export interface Controller<T extends Node> extends AppCurrent<T> {
             application: Application<T>;
-            settings: Settings;
             cache: NodeList<T>;
+            userSettings: UserSettings;
             readonly localSettings: ControllerSettings;
             readonly delegateNodeInit: SelfWrapped<T, void>;
             finalize(viewData: ViewData<NodeList<T>>): void;

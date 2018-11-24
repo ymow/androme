@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/module';
+import { UserSettingsAndroid } from './types/module';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 
@@ -61,7 +61,7 @@ function caseInsensitive(a: string | string[], b: string | string[]) {
 }
 
 export default class File<T extends View> extends androme.lib.base.File<T> implements android.lib.base.File<T> {
-    constructor(public settings: SettingsAndroid) {
+    constructor(public userSettings: UserSettingsAndroid) {
         super();
     }
 
@@ -70,7 +70,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(createFileAsset(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+            files.push(createFileAsset(view.pathname, i === 0 ? this.userSettings.outputMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...parseFileDetails(this.resourceStringToXml()));
@@ -91,7 +91,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(createFileAsset(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                files.push(createFileAsset(view.pathname, i === 0 ? this.userSettings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -144,7 +144,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
             });
         }
         let xml = $xml.createTemplate($xml.parseTemplate(STRING_TMPL), data);
-        xml = replaceTab(xml, this.settings, true);
+        xml = replaceTab(xml, this.userSettings.insertSpaces, true);
         if (saveToDisk) {
             this.saveToDisk(parseFileDetails(xml));
         }
@@ -163,7 +163,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STRINGARRAY_TMPL), data);
-            xml = replaceTab(xml, this.settings, true);
+            xml = replaceTab(xml, this.userSettings.insertSpaces, true);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -174,8 +174,9 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceFontToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.fonts.size > 0) {
+            const settings = this.userSettings;
             this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
-            const namespace = this.settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
+            const namespace = settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
             for (const [name, font] of this.stored.fonts.entries()) {
                 const data: TemplateData = {
                     name,
@@ -192,10 +193,10 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                 }
                 xml += '\n\n' + $xml.createTemplate($xml.parseTemplate(FONT_TMPL), data);
             }
-            if (this.settings.targetAPI < BUILD_ANDROID.OREO) {
+            if (settings.targetAPI < BUILD_ANDROID.OREO) {
                 xml = xml.replace(/android/g, 'app');
             }
-            xml = replaceTab(xml, this.settings);
+            xml = replaceTab(xml, settings.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -215,7 +216,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(COLOR_TMPL), data);
-            xml = replaceTab(xml, this.settings);
+            xml = replaceTab(xml, this.userSettings.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -226,6 +227,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.styles.size > 0) {
+            const settings = this.userSettings;
             const data: TemplateData = { '1': [] };
             const styles = (Array.from(this.stored.styles.values()) as Array<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
@@ -244,8 +246,8 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STYLE_TMPL), data);
-            xml = replaceUnit(xml, this.settings, true);
-            xml = replaceTab(xml, this.settings);
+            xml = replaceUnit(xml.trim(), settings.resolutionDPI, settings.convertPixels, true);
+            xml = replaceTab(xml, settings.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -256,6 +258,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceDimenToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.dimens.size > 0) {
+            const settings = this.userSettings;
             const data: TemplateData = { '1': [] };
             this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
             for (const [name, value] of this.stored.dimens.entries()) {
@@ -265,8 +268,8 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(DIMEN_TMPL), data);
-            xml = replaceUnit(xml, this.settings);
-            xml = replaceTab(xml, this.settings);
+            xml = replaceUnit(xml.trim(), settings.resolutionDPI, settings.convertPixels);
+            xml = replaceTab(xml, settings.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
             }
@@ -277,6 +280,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
+            const settings = this.userSettings;
             const template = $xml.parseTemplate(DRAWABLE_TMPL);
             for (const [name, value] of this.stored.drawables.entries()) {
                 xml += '\n\n' + $xml.createTemplate(template, {
@@ -300,8 +304,8 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
                     });
                 }
             }
-            xml = replaceUnit(xml.trim(), this.settings);
-            xml = replaceTab(xml, this.settings);
+            xml = replaceUnit(xml.trim(), settings.resolutionDPI, settings.convertPixels);
+            xml = replaceTab(xml, settings.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk([...parseImageDetails(xml), ...parseFileDetails(xml)]);
             }

@@ -341,7 +341,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public localizeString(value: string) {
             if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
-                return replaceRTL(value, this.localSettings);
+                return replaceRTL(value, this.localSettings.supportRTL, this.localSettings.targetAPI);
             }
             return value;
         }

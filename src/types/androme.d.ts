@@ -13,7 +13,7 @@ declare global {
         export function reset(): void;
         export function saveAllToDisk(): void;
         export function toString(): string;
-        export const settings: Settings;
+        export const settings: UserSettings;
         export const system: FunctionMap<any>;
     }
 }

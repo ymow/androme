@@ -3,6 +3,12 @@ import NodeList from './nodelist';
 
 import { lastIndexOf, trimString } from '../lib/util';
 
+type ExpressResult = {
+    zipname: string;
+    application: string;
+    system: string;
+};
+
 export default abstract class File<T extends Node> implements androme.lib.base.File<T> {
     public static downloadToDisk(data: Blob, filename: string, mime = '') {
         const blob = new Blob([data], { type: mime || 'application/octet-stream' });
@@ -24,7 +30,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         setTimeout(() => window.URL.revokeObjectURL(url), 1);
     }
 
-    public abstract settings: Settings;
+    public abstract userSettings: UserSettings;
     public appName = '';
     public stored: ResourceStoredMap;
     public readonly assets: FileAsset[] = [];
@@ -54,11 +60,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     }
 
     public saveToDisk(files: FileAsset[]) {
-        type ExpressResult = {
-            zipname: string;
-            application: string;
-            system: string;
-        };
+        const settings = this.userSettings;
         if (!location.protocol.startsWith('http')) {
             alert('SERVER (required): See README for instructions');
             return;
@@ -66,10 +68,10 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         if (files.length) {
             files.push(...this.assets);
             fetch(`/api/savetodisk` +
-                `?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}` +
+                `?directory=${encodeURIComponent(trimString(settings.outputDirectory, '/'))}` +
                 `&appname=${encodeURIComponent(this.appName.trim())}` +
-                `&filetype=${this.settings.outputArchiveFileType.toLowerCase()}` +
-                `&processingtime=${this.settings.outputMaxProcessingTime.toString().trim()}`,
+                `&filetype=${settings.outputArchiveFileType.toLowerCase()}` +
+                `&processingtime=${settings.outputMaxProcessingTime.toString().trim()}`,
                 {
                     method: 'POST',
                     body: JSON.stringify(files),

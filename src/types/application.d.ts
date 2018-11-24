@@ -9,7 +9,7 @@ interface EnvironmentSettings {
     resolutionDPI: number;
 }
 
-interface Settings extends EnvironmentSettings {
+interface UserSettings extends EnvironmentSettings {
     builtInExtensions: string[];
     renderInlineText: boolean;
     preloadImages: boolean;
@@ -60,13 +60,13 @@ interface AppFramework<T extends androme.lib.base.Node> {
 interface AppBase<T extends androme.lib.base.Node> {
     application: androme.lib.base.Application<T>;
     framework: number;
-    settings: Settings;
+    userSettings: UserSettings;
 }
 
 interface AppCurrent<T extends androme.lib.base.Node> {
     application: androme.lib.base.Application<T>;
-    settings: Settings;
     cache: androme.lib.base.NodeList<T>;
+    userSettings: UserSettings;
 }
 
 interface AppSession<T> {

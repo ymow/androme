@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/module';
+import { UserSettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, XMLNS_ANDROID } from './lib/constant';
 import { API_ANDROID } from './customizations';
@@ -40,7 +40,7 @@ type T = View;
 
 function autoClose() {
     const main = viewController.application;
-    if (main.settings.autoCloseOnWrite && !main.loading && !main.closed) {
+    if (main.userSettings.autoCloseOnWrite && !main.loading && !main.closed) {
         main.finalize();
         return true;
     }
@@ -53,7 +53,7 @@ let application: androme.lib.base.Application<T>;
 let viewController: Controller<T>;
 let resourceHandler: Resource<T>;
 let fileHandler: File<T>;
-let settings: SettingsAndroid;
+let userSettings: UserSettingsAndroid;
 
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
@@ -195,8 +195,8 @@ const appBase: AppFramework<T> = {
     },
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
-        settings = Object.assign({}, SETTINGS);
-        fileHandler = new File<T>(settings);
+        userSettings = Object.assign({}, SETTINGS);
+        fileHandler = new File<T>(userSettings);
         application = new androme.lib.base.Application(framework);
         viewController = new Controller<T>();
         resourceHandler = new Resource<T>(fileHandler);
@@ -228,7 +228,7 @@ const appBase: AppFramework<T> = {
         return {
             application,
             framework,
-            settings
+            userSettings
         };
     },
     cached() {
@@ -236,7 +236,7 @@ const appBase: AppFramework<T> = {
             return {
                 application,
                 framework,
-                settings
+                userSettings
             };
         }
         return appBase.create();

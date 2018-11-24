@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../types/module';
+import { UserSettingsAndroid } from '../../types/module';
 
 import { BUILD_ANDROID } from '../../lib/enumeration';
 
@@ -120,10 +120,11 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
     public readonly options = {
         useFontAlias: true
     };
+
     public readonly eventOnly = true;
 
     public afterParseDocument() {
-        const settings = <SettingsAndroid> this.application.settings;
+        const settings = <UserSettingsAndroid> this.application.userSettings;
         const nameMap: ObjectMap<T[]> = {};
         const groupMap: ObjectMap<StyleList[]> = {};
         for (const node of this.application.session.cache) {
@@ -402,7 +403,7 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     parentStyle.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);
                 }
-                nodeMap[id].attrs.sort().forEach(value => node.formatted(replaceUnit(value, settings, true), false));
+                nodeMap[id].attrs.sort().forEach(value => node.formatted(replaceUnit(value, settings.resolutionDPI, settings.convertPixels, true), false));
             }
         }
         for (const value of parentStyle) {

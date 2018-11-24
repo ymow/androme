@@ -1,6 +1,6 @@
-import { SettingsAndroid } from './types/module';
+import { UserSettingsAndroid } from './types/module';
 
-const settings: SettingsAndroid = {
+const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
