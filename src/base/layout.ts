@@ -21,16 +21,16 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
     public setType(containerType: number, alignmentType?: number) {
         this.containerType = containerType;
         if (alignmentType) {
-            this.or(alignmentType);
+            this.add(alignmentType);
         }
     }
 
-    public or(value: number) {
+    public add(value: number) {
         this.alignmentType |= value;
         return this.alignmentType;
     }
 
-    public xor(value: number) {
+    public delete(value: number) {
         this.alignmentType ^= value;
         return this.alignmentType;
     }

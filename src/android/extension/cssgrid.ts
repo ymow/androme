@@ -112,17 +112,17 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
                 container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
                 container.tagName = node.tagName;
-                container.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION;
-                container.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
-                container.inherit(node, 'initial', 'base');
                 container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
+                container.inherit(node, 'initial', 'base');
+                container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
+                container.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
                 parent.replaceNode(node, container);
-                this.application.processing.cache.append(container, false);
-                output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
                 container.render(parent);
+                this.application.processing.cache.append(container, false);
                 applyLayout(container, 'column', 'width');
                 applyLayout(container, 'row', 'height');
-                container.mergeGravity('layout_gravity', 'fill_vertical');
+                node.parent = container;
+                node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
                 let inlineWidth = false;
                 if (justifyItems.endsWith('start') || justifyItems.endsWith('left') || justifyItems.endsWith('baseline')) {
                     node.mergeGravity('layout_gravity', 'left');
@@ -151,9 +151,8 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 else if (!node.hasHeight) {
                     node.mergeGravity('layout_height', 'match_parent');
                 }
-                container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
-                node.parent = container;
-                node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
+                container.mergeGravity('layout_gravity', 'fill_vertical');
+                output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             }
             const target = container || node;
             applyLayout(target, 'column', 'width');

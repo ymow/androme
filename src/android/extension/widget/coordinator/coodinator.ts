@@ -13,8 +13,8 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = this.application.viewController;
         const options = $android_util.createAttribute(this.options[node.element.id]);
-        node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
         node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $enum.NODE_CONTAINER.BLOCK);
+        node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
         node.render(parent);
         const output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.COORDINATOR,

@@ -17,7 +17,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        node.excludeProcedure |= $enum.NODE_PROCEDURE.CONSTRAINT;
+        node.exclude({ procedure: $enum.NODE_PROCEDURE.CONSTRAINT });
         const layout = new $Layout(
             node,
             parent,

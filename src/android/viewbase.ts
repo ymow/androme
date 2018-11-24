@@ -548,7 +548,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     })();
                     const heightParent = (() => {
                         if (parent.hasHeight) {
-                            return parent.box && parent.box.height > 0 ? parent.box.height : (parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - $Node.getContentBoxHeight(parent) : 0);
+                            return parent.box.height > 0 ? parent.box.height : (parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - $Node.getContentBoxHeight(parent) : 0);
                         }
                         return Number.MAX_VALUE;
                     })();
@@ -556,23 +556,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.android('layout_height', 'match_parent');
                     }
                     else {
-                        if (this.lineHeight > 0 && !renderParent.layoutRelative) {
-                            const control = this.length === 0;
-                            if (this.boxStyle.hasBackground) {
-                                const offset = this.lineHeight - this.actualHeight;
-                                if (offset > 0) {
-                                    this.modifyBox($enum.BOX_STANDARD[control ? 'MARGIN_TOP' : 'PADDING_TOP'], Math.floor(offset / 2) - (this.inlineVertical ? this.toInt('verticalAlign') : 0));
-                                    this.modifyBox($enum.BOX_STANDARD[control ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM'], Math.ceil(offset / 2));
-                                }
-                            }
-                            else {
-                                const lineHeight = this.lineHeight - (control ? (this.paddingTop + this.paddingBottom) + this.borderTopWidth + this.borderBottomWidth : 0);
-                                if (lineHeight > 0) {
-                                    this.android('minHeight', $util.formatPX(lineHeight));
-                                }
-                                this.mergeGravity('gravity', 'center_vertical');
-                            }
-                        }
                         this.android('layout_height', 'wrap_content');
                     }
                 }
@@ -779,6 +762,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             this.bindWhiteSpace();
             this.autoSizeBoxModel();
             this.alignHorizontalLayout();
+            this.alignVerticalLayout();
             this.alignBoxPosition();
             this.setBoxSpacing();
             switch (this.cssParent('visibility', true)) {
@@ -929,7 +913,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                 }
                 else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                    if (!(renderParent.tableElement || this.css('boxSizing') === 'border-box')) {
+                    if (!renderParent.tableElement && this.css('boxSizing') !== 'border-box') {
                         const paddedWidth = $Node.getContentBoxWidth(this);
                         const paddedHeight = $Node.getContentBoxHeight(this);
                         if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', true) > 0) {
@@ -1079,6 +1063,37 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (baseline.length) {
                             this.android('baselineAlignedChildIndex', children.indexOf(baseline[0]).toString());
                         }
+                    }
+                }
+            }
+        }
+
+        private alignVerticalLayout() {
+            const lineHeight = this.lineHeight;
+            if (lineHeight > 0) {
+                function setLineHeight(node: View) {
+                    const offset = lineHeight - (node.hasHeight ? node.viewHeight : node.actualHeight);
+                    if (offset > 0) {
+                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? node.toInt('verticalAlign') : 0));
+                        node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
+                    }
+                }
+                if (this.length === 0) {
+                    if (this.inlineStatic && this.boxStyle.hasBackground) {
+                        setLineHeight(this);
+                    }
+                    else {
+                        this.android('minHeight', $util.formatPX(lineHeight));
+                        this.mergeGravity('gravity', 'center_vertical');
+                    }
+                }
+                else {
+                    if (this.layoutVertical) {
+                        this.each((node: View) => setLineHeight(node), true);
+                    }
+                    else if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
+                        this.android('minHeight', $util.formatPX(lineHeight));
+                        this.mergeGravity('gravity', 'center_vertical');
                     }
                 }
             }

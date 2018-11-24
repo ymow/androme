@@ -3,13 +3,13 @@ import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 import Container from './container';
 import Node from './node';
 
-import { isUserAgent } from '../lib/dom';
+import { getElementAsNode, isUserAgent } from '../lib/dom';
 import { convertInt, hasBit, partition, withinFraction } from '../lib/util';
 
 function getDocumentParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {
         if (node.domElement && node.actualParent) {
-            return node.actualParent;
+            return node.actualParent as T;
         }
     }
     return null;
@@ -243,26 +243,45 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         }
     }
 
-    public static partitionRows<T extends Node>(list: T[], parent?: T) {
-        const cleared = parent ? this.clearedAll(parent) : this.cleared(list);
-        const result: T[][] = [];
-        let row: T[] = [];
-        for (let i = 0; i < list.length; i++) {
-            const node = list[i];
-            const previous = node.previousSibling() as T;
-            if (i === 0 || previous === null) {
-                row.push(node);
+    public static partitionRows<T extends Node>(list: T[]) {
+        const [children, cleared] = ((): [T[], Map<T, string>] => {
+            const parent = getDocumentParent(list);
+            if (parent) {
+                return [Array.from(parent.element.children).map(element => getElementAsNode(element) as T).filter(node => node), this.clearedAll(parent)];
             }
             else {
-                if (node.alignedVertically(previous, cleared)) {
-                    result.push(row);
-                    row = [node];
-                }
-                else {
+                return [list, this.cleared(list)];
+            }
+        })();
+        const result: T[][] = [];
+        let row: T[] = [];
+        for (let i = 0; i < children.length; i++) {
+            const node = children[i];
+            const previous = node.previousSibling() as T;
+            if (i === 0 || previous === null) {
+                if (list.includes(node)) {
                     row.push(node);
                 }
             }
-            if (i === list.length - 1) {
+            else {
+                if (node.alignedVertically(previous, cleared)) {
+                    if (row.length > 0) {
+                        result.push(row);
+                    }
+                    if (list.includes(node)) {
+                        row = [node];
+                    }
+                    else {
+                        row = [];
+                    }
+                }
+                else {
+                    if (list.includes(node)) {
+                        row.push(node);
+                    }
+                }
+            }
+            if (i === children.length - 1 && row.length > 0) {
                 result.push(row);
             }
         }

@@ -13,9 +13,6 @@ declare global {
             renderIndex: number;
             renderPosition: number;
             renderExtension: Set<Extension<Node>>;
-            excludeSection: number;
-            excludeProcedure: number;
-            excludeResource: number;
             documentRoot: boolean;
             positioned: boolean;
             visible: boolean;
@@ -24,6 +21,9 @@ declare global {
             controlId: string;
             companion: Node | undefined;
             readonly localSettings: EnvironmentSettings;
+            readonly excludeSection: number;
+            readonly excludeProcedure: number;
+            readonly excludeResource: number;
             readonly initial: InitialData<Node>;
             readonly renderChildren: Node[];
             readonly documentParent: Node;
@@ -171,6 +171,7 @@ declare global {
             has(attr: string, checkType?: number, options?: {}): boolean;
             hasBit(attr: string, value: number): boolean;
             hasAlign(value: number): boolean;
+            exclude(options: { section?: number, procedure?: number, resource?: number }): void;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
             replaceNode(node: Node, withNode: Node, append?: boolean): void;

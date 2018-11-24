@@ -45,7 +45,7 @@ interface ControllerSettings {
         subscriptFontScale: number;
     };
     constraint: {
-        alignParentBottomOffset: number;
+        withinParentBottomOffset: number;
         percentAccuracy: number;
     };
 }

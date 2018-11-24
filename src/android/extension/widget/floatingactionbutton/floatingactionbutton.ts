@@ -52,16 +52,8 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         if (src !== '') {
             $util.defaultWhenNull(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
         node.setControlType($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, $enum.NODE_CONTAINER.BUTTON);
-        const output = this.application.viewController.renderNodeStatic(
-            $android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON,
-            target ? -1 : parent.renderDepth + 1,
-            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
-            'wrap_content',
-            'wrap_content',
-            node
-        );
+        node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
         if (!node.pageflow || target) {
             const horizontalBias = node.horizontalBias();
             const verticalBias = node.verticalBias();
@@ -116,7 +108,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
                     node.app('layout_anchorGravity', layoutGravity);
                     node.delete('android', 'layout_gravity');
                 }
-                node.excludeProcedure |= $enum.NODE_PROCEDURE.ALIGNMENT;
+                node.exclude({ procedure: $enum.NODE_PROCEDURE.ALIGNMENT });
                 node.render(node);
             }
             else {
@@ -127,6 +119,14 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         else {
             node.render(parent);
         }
+        const output = this.application.viewController.renderNodeStatic(
+            $android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON,
+            target ? -1 : node.renderDepth,
+            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            'wrap_content',
+            'wrap_content',
+            node
+        );
         return { output, complete: true };
     }
 }

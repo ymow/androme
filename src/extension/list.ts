@@ -81,7 +81,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
                             if (src && src !== 'none') {
                                 mainData.imageSrc = src;
                                 mainData.imagePosition = position;
-                                item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
+                                item.exclude({ resource: NODE_RESOURCE.IMAGE_SOURCE });
                             }
                             break;
                         default:

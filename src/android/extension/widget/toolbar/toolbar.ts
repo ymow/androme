@@ -119,7 +119,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             $util.defaultWhenNull(toolbarOptions, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage) {
                 $util.defaultWhenNull(appBarChildren.length ? appBarOptions : toolbarOptions, 'android', 'background', `@drawable/${$Resource.addImageUrl(node.css('backgroundImage'))}`);
-                node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
+                node.exclude({ resource: $enum.NODE_RESOURCE.IMAGE_SOURCE });
+
             }
             else {
                 $util.defaultWhenNull(toolbarOptions, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
@@ -130,7 +131,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
         else {
             $util.defaultWhenNull(toolbarOptions, 'android', 'layout_height', '?android:attr/actionBarSize');
-            node.excludeProcedure |= $enum.NODE_PROCEDURE.LAYOUT;
+            node.exclude({ procedure: $enum.NODE_PROCEDURE.LAYOUT });
         }
         if (hasMenu) {
             if (hasAppBar) {
@@ -182,7 +183,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                     'match_parent',
                     'match_parent'
                 ) + output;
-                node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
+                node.exclude({ resource: $enum.NODE_RESOURCE.IMAGE_SOURCE });
             }
         }
         let outer = '';
@@ -271,7 +272,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             node.render(target ? node : parent);
         }
         node.containerType = $enum.NODE_CONTAINER.BLOCK;
-        node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
+        node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
         return { output };
     }
 
@@ -326,10 +327,10 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     private createPlaceholder(nextId: number, container: T, nodes: T[]) {
         const placeholder = new $View(nextId, undefined, this.application.viewController.delegateNodeInit);
         placeholder.init();
-        nodes.forEach(item => item.parent = placeholder);
         placeholder.inherit(container, 'dimensions');
         placeholder.positioned = true;
-        placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
+        placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
+        nodes.forEach(item => item.parent = placeholder);
         return placeholder;
     }
 }

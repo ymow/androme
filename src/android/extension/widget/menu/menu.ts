@@ -65,6 +65,20 @@ function parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, option
     }
 }
 
+function getTitle(element: HTMLElement) {
+    if (element.title !== '') {
+        return element.title;
+    }
+    else {
+        for (const node of Array.from(element.childNodes).map((item: Element) => $dom.getElementAsNode<$View>(item) as $View)) {
+            if (node && node.textElement) {
+                return node.textContent.trim();
+            }
+        }
+    }
+    return '';
+}
+
 export default class Menu<T extends $View> extends androme.lib.base.Extension<T> {
     constructor(
         name: string,
@@ -109,11 +123,10 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
-        node.excludeResource |= $enum.NODE_RESOURCE.ALL;
-        node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
         node.documentRoot = true;
+        node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
         node.setControlType(VIEW_NAVIGATION.MENU, $enum.NODE_CONTAINER.INLINE);
+        node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
         const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { output, complete: true };
@@ -124,38 +137,20 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
             node.hide();
             return { output: '', next: true };
         }
-        const element = <HTMLElement> node.element;
         const options = $android_util.createAttribute();
-        let controlName = VIEW_NAVIGATION.ITEM;
+        const element = <HTMLElement> node.element;
+        let controlName: string;
         let title = '';
-        let next = false;
         let layout = false;
-        if (node.some(item => item.length > 0)) {
-            if (element.title !== '') {
-                title = element.title;
-            }
-            else {
-                Array.from(node.element.childNodes).some((item: HTMLElement) => {
-                    if (item.nodeName === '#text') {
-                        if (item.textContent) {
-                            title = item.textContent.trim();
-                            if (title !== '') {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                    else if (item.tagName !== 'NAV') {
-                        title = item.innerText.trim();
-                        return true;
-                    }
-                    return false;
-                });
-            }
-            if (node.element.tagName === 'NAV') {
-                controlName = VIEW_NAVIGATION.MENU;
-                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
-                next = true;
+        if (node.tagName === 'NAV') {
+            controlName = VIEW_NAVIGATION.MENU;
+            title = getTitle(element);
+            layout = true;
+        }
+        else if (node.some(item => item.length > 0)) {
+            if (node.some(item => item.tagName === 'NAV')) {
+                controlName = VIEW_NAVIGATION.ITEM;
+                node.each(item => item.tagName !== 'NAV' && item.hide());
             }
             else {
                 controlName = VIEW_NAVIGATION.GROUP;
@@ -166,16 +161,24 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                     options.android.checkableBehavior = 'all';
                 }
             }
-            node.each(item => item.element.tagName !== 'NAV' && item.hide());
+            title = getTitle(element);
             layout = true;
         }
         else {
-            if (parent.android('checkableBehavior') === '' && hasInputType(node, 'checkbox')) {
+            controlName = VIEW_NAVIGATION.ITEM;
+            title = (element.title || element.innerText).trim();
+            if (hasInputType(node, 'checkbox') && parent.android('checkableBehavior') === '') {
                 options.android.checkable = 'true';
             }
-            title = (element.title || element.innerText).trim();
         }
         switch (controlName) {
+            case VIEW_NAVIGATION.MENU:
+                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
+                break;
+            case VIEW_NAVIGATION.GROUP:
+                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
+                parseDataSet(VALIDATE_GROUP, element, options);
+                break;
             case VIEW_NAVIGATION.ITEM:
                 parseDataSet(VALIDATE_ITEM, element, options);
                 if (!$util.hasValue(options.android.icon)) {
@@ -195,22 +198,18 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                     }
                 }
                 break;
-            case VIEW_NAVIGATION.GROUP:
-                node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
-                parseDataSet(VALIDATE_GROUP, element, options);
-                break;
         }
-        if (title !== '' && !$util.hasValue(options.android.title === '')) {
+        if (title !== '' && !$util.hasValue(options.android.title)) {
             title = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             if (title !== '') {
                 options.android.title = `@string/${title}`;
             }
         }
         node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
-        node.excludeResource |= $enum.NODE_RESOURCE.ALL;
-        node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-        const output = this.application.viewController.renderNodeStatic(controlName, parent.renderDepth + 1, options, '', '', node, layout);
-        return { output, complete: true, next };
+        node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
+        node.render(parent);
+        const output = this.application.viewController.renderNodeStatic(controlName, node.renderDepth, options, '', '', node, layout);
+        return { output, complete: true, next: controlName === VIEW_NAVIGATION.MENU };
     }
 
     public postBaseLayout(node: T) {

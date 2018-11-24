@@ -55,8 +55,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             navView.positioned = true;
         }
         node.documentRoot = true;
-        node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
         node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $enum.NODE_CONTAINER.BLOCK);
+        node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
         const output = this.application.viewController.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.DRAWER,
             0,

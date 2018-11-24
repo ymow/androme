@@ -74,7 +74,7 @@ export const LAYOUT_ANDROID = {
         left: 'layout_alignParentLeft',
         top: 'layout_alignParentTop',
         right: 'layout_alignParentRight',
-        bottom: 'layout_alignParentBottom',
+        bottom: 'layout_withinParentBottom',
         centerHorizontal: 'layout_centerHorizontal',
         centerVertical: 'layout_centerVertical',
     },

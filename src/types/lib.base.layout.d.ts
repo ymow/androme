@@ -10,8 +10,8 @@ declare global {
             columnCount: number;
             items: T[] | undefined;
             setType(containerType: number, alignmentType?: number): void;
-            or(value: number): number;
-            xor(value: number): number;
+            add(value: number): number;
+            delete(value: number): number;
         }
 
         export class Layout<T extends Node> implements Layout<T> {

@@ -404,6 +404,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_17"
+                    android:layout_alignBaseline="@+id/textview_18"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -418,10 +419,11 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_19"
+                    android:layout_alignBaseline="@+id/textview_18"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol99291"
+                    android:text="@string/__symbol46916"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -552,6 +554,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_20"
+                    android:layout_alignBaseline="@+id/textview_21"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -566,10 +569,11 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_22"
+                    android:layout_alignBaseline="@+id/textview_21"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol99291"
+                    android:text="@string/__symbol46916"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -987,6 +991,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_23"
+                    android:layout_alignBaseline="@+id/textview_24"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -1001,10 +1006,11 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_25"
+                    android:layout_alignBaseline="@+id/textview_24"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol99291"
+                    android:text="@string/__symbol46916"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout

@@ -71,9 +71,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public siblingIndex = Number.MAX_VALUE;
     public renderIndex = Number.MAX_VALUE;
     public renderPosition = -1;
-    public excludeSection = 0;
-    public excludeProcedure = 0;
-    public excludeResource = 0;
     public documentRoot = false;
     public positioned = false;
     public visible = true;
@@ -100,6 +97,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _renderAs: T;
     private _renderDepth: number;
     private _data = {};
+    private _excludeSection = 0;
+    private _excludeProcedure = 0;
+    private _excludeResource = 0;
     private _initialized = false;
 
     protected constructor(
@@ -597,20 +597,36 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return hasBit(this.alignmentType, value);
     }
 
+    public exclude({ section = 0, procedure = 0, resource = 0 }) {
+        if (section) {
+            this._excludeSection |= section;
+        }
+        if (procedure) {
+            this._excludeProcedure |= procedure;
+        }
+        if (resource) {
+            this._excludeResource |= resource;
+        }
+    }
+
     public setExclusions() {
         if (this.styleElement) {
             const applyExclusions = (attr: string, enumeration: {}) => {
                 const actualParent = this.actualParent;
-                const exclude = [trimNull(this.dataset[attr]), actualParent ? trimNull(actualParent.dataset[`${attr}Child`]) : ''].filter(value => value).join('|');
+                const exclude = [trimNull(this.dataset[`exclude${attr}`]), actualParent ? trimNull(actualParent.dataset[`exclude${attr}Child`]) : ''].filter(value => value).join('|');
+                let result = 0;
                 exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
                     if (enumeration[value] !== undefined) {
-                        this[attr] |= enumeration[value];
+                        result |= enumeration[value];
                     }
                 });
+                if (result > 0) {
+                    this.exclude({ [attr.toLowerCase()]: result });
+                }
             };
-            applyExclusions('excludeSection', APP_SECTION);
-            applyExclusions('excludeProcedure', NODE_PROCEDURE);
-            applyExclusions('excludeResource', NODE_RESOURCE);
+            applyExclusions('Section', APP_SECTION);
+            applyExclusions('Procedure', NODE_PROCEDURE);
+            applyExclusions('Resource', NODE_RESOURCE);
         }
     }
 
@@ -989,6 +1005,18 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._element instanceof HTMLElement ? this._element.dataset : {};
     }
 
+    get excludeSection() {
+        return this._excludeSection;
+    }
+
+    get excludeProcedure() {
+        return this._excludeProcedure;
+    }
+
+    get excludeResource() {
+        return this._excludeResource;
+    }
+
     get extension() {
         return this.dataset.ext ? this.dataset.ext.split(',')[0].trim() : '';
     }
@@ -1010,10 +1038,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get viewWidth() {
-        return this.inlineStatic || this.has('width', CSS_STANDARD.PERCENT) ? 0 : this.toInt('width') || this.toInt('minWidth');
+        return this.inlineStatic || this.has('width', CSS_STANDARD.PERCENT) ? 0 : (this.toInt('width') || this.toInt('minWidth'));
     }
     get viewHeight() {
-        return this.inlineStatic || this.has('height', CSS_STANDARD.PERCENT) ? 0 : this.toInt('height') || this.toInt('minHeight');
+        return this.inlineStatic || this.has('height', CSS_STANDARD.PERCENT) ? 0 : (this.toInt('height') || this.toInt('minHeight'));
     }
 
     get hasWidth() {

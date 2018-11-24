@@ -919,7 +919,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                 }
                                 if (floated.size > 0 && output === '') {
-                                    layout.or(getAlignmentFloat(floated.has('right')));
+                                    layout.add(getAlignmentFloat(floated.has('right')));
                                     NodeList.sortByAlignment(horizontal, NODE_ALIGNMENT.FLOAT);
                                 }
                                 if (segmentEnd === axisY[axisY.length - 1]) {
@@ -1030,11 +1030,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 if (nodeY.has('columnCount')) {
                                     layout.columnCount = nodeY.toInt('columnCount');
                                     containerType = NODE_CONTAINER.CONSTRAINT;
-                                    layout.or(NODE_ALIGNMENT.COLUMN | NODE_ALIGNMENT.AUTO_LAYOUT);
+                                    layout.add(NODE_ALIGNMENT.COLUMN | NODE_ALIGNMENT.AUTO_LAYOUT);
                                 }
                                 else if (nodeY.some(node => !node.pageflow)) {
                                     containerType = NODE_CONTAINER.CONSTRAINT;
-                                    layout.or(NODE_ALIGNMENT.ABSOLUTE | NODE_ALIGNMENT.UNKNOWN);
+                                    layout.add(NODE_ALIGNMENT.ABSOLUTE | NODE_ALIGNMENT.UNKNOWN);
                                     NodeList.sortByAlignment(layout.items, NODE_ALIGNMENT.ABSOLUTE);
                                 }
                                 else {
@@ -1076,7 +1076,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                         else {
                                             containerType = NODE_CONTAINER.FRAME;
-                                            layout.or(NODE_ALIGNMENT.SINGLE);
+                                            layout.add(NODE_ALIGNMENT.SINGLE);
                                         }
                                     }
                                     else {
@@ -1086,7 +1086,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const clearedInside = NodeList.clearedAll(nodeY);
                                         if (this.viewController.checkConstraintFloat(nodeY, children, floated, clearedInside, linearX)) {
                                             containerType = NODE_CONTAINER.CONSTRAINT;
-                                            layout.or(getAlignmentFloat(floated.has('right')));
+                                            layout.add(getAlignmentFloat(floated.has('right')));
                                         }
                                         else if (linearX) {
                                             if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
@@ -1101,9 +1101,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             else {
                                                 containerType = NODE_CONTAINER.LINEAR;
                                             }
-                                            layout.or(NODE_ALIGNMENT.HORIZONTAL);
+                                            layout.add(NODE_ALIGNMENT.HORIZONTAL);
                                             if (floated.size > 0) {
-                                                layout.or(getAlignmentFloat(floated.has('right')));
+                                                layout.add(getAlignmentFloat(floated.has('right')));
                                                 if (output === '') {
                                                     NodeList.sortByAlignment(children, NODE_ALIGNMENT.HORIZONTAL);
                                                 }
@@ -1111,7 +1111,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                         else if (linearY) {
                                             containerType = NODE_CONTAINER.LINEAR;
-                                            layout.or(NODE_ALIGNMENT.VERTICAL | (nodeY.documentRoot ? NODE_ALIGNMENT.UNKNOWN : 0));
+                                            layout.add(NODE_ALIGNMENT.VERTICAL | (nodeY.documentRoot ? NODE_ALIGNMENT.UNKNOWN : 0));
                                         }
                                         else if (children.every(node => node.inlineflow)) {
                                             if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
@@ -1119,16 +1119,16 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             }
                                             else {
                                                 containerType = NODE_CONTAINER.RELATIVE;
-                                                layout.or(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN);
+                                                layout.add(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN);
                                             }
                                         }
                                         else if (children.some(node => node.alignedVertically(node.previousSibling(), clearedInside, floated.size))) {
                                             containerType = NODE_CONTAINER.LINEAR;
-                                            layout.or(NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN);
+                                            layout.add(NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN);
                                         }
                                         else {
                                             containerType = NODE_CONTAINER.CONSTRAINT;
-                                            layout.or(NODE_ALIGNMENT.UNKNOWN);
+                                            layout.add(NODE_ALIGNMENT.UNKNOWN);
                                         }
                                     }
                                 }
@@ -1141,8 +1141,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                                 else if (boxStyle.hasBackgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat' && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
                                     containerType = NODE_CONTAINER.IMAGE;
-                                    layout.or(NODE_ALIGNMENT.SINGLE);
-                                    nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
+                                    layout.add(NODE_ALIGNMENT.SINGLE);
+                                    nodeY.exclude({ resource: NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING });
                                 }
                                 else if (nodeY.block && (boxStyle.hasBorder || boxStyle.hasBackgroundImage) && (boxStyle.hasBorder || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft > 0)) {
                                     containerType = NODE_CONTAINER.LINE;
@@ -1328,9 +1328,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
             const layout = new Layout(group, parent, 0, 0, nodes.length);
             if (inline.length === nodes.length || left.length === nodes.length || right.length === nodes.length) {
                 layout.items = nodes;
-                layout.or(NODE_ALIGNMENT.HORIZONTAL);
+                layout.add(NODE_ALIGNMENT.HORIZONTAL);
                 if (inline.length === 0) {
-                    layout.or(getAlignmentFloat(right.length > 0));
+                    layout.add(getAlignmentFloat(right.length > 0));
                     NodeList.sortByAlignment(nodes, NODE_ALIGNMENT.HORIZONTAL);
                 }
                 if (this.viewController.checkConstraintFloat(group, nodes)) {
@@ -1358,7 +1358,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         subgroup.push(...left, ...inline);
                     }
                     else {
-                        layout.or(NODE_ALIGNMENT.RIGHT);
+                        layout.add(NODE_ALIGNMENT.RIGHT);
                         subgroup.push(...inline, ...right);
                     }
                     layout.items = subgroup;
