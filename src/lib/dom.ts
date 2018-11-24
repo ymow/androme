@@ -110,7 +110,7 @@ export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {
 export function getStyle(element: Element | null, cache = true): CSSStyleDeclaration {
     if (element) {
         if (cache) {
-            const node = getNodeFromElement<T>(element);
+            const node = getElementAsNode<T>(element);
             const style = getElementCache(element, 'style');
             if (style) {
                 return style;
@@ -135,7 +135,7 @@ export function getStyle(element: Element | null, cache = true): CSSStyleDeclara
 
 export function getBoxSpacing(element: Element, complete = false, merge = false) {
     const result = {};
-    const node = getNodeFromElement(element);
+    const node = getElementAsNode(element);
     const style = getStyle(element);
     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
         let total = 0;
@@ -198,7 +198,7 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
 
 export function cssFromParent(element: Element, attr: string) {
     if (isStyleElement(element) && element.parentElement) {
-        const node = getNodeFromElement<T>(element);
+        const node = getElementAsNode<T>(element);
         const style = getStyle(element);
         return style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]);
     }
@@ -324,7 +324,7 @@ export function getBackgroundPosition(value: string, dimension: BoxDimensions, d
     return result;
 }
 
-export function getFirstElementChild(elements: Element[]) {
+export function getFirstChildElement(elements: Element[]) {
     if (elements.length) {
         const parentElement = elements[0].parentElement;
         if (parentElement) {
@@ -339,7 +339,7 @@ export function getFirstElementChild(elements: Element[]) {
     return null;
 }
 
-export function getLastElementChild(elements: Element[]) {
+export function getLastChildElement(elements: Element[]) {
     if (elements.length) {
         const parentElement = elements[0].parentElement;
         if (parentElement) {
@@ -409,7 +409,7 @@ export function isPlainText(element: Element, whiteSpace = false) {
 
 export function hasLineBreak(element: Element) {
     if (element) {
-        const node = getNodeFromElement<T>(element);
+        const node = getElementAsNode<T>(element);
         const fromParent = element.nodeName === '#text';
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
@@ -424,7 +424,7 @@ export function hasLineBreak(element: Element) {
 }
 
 export function isLineBreak(element: Element, excluded = true) {
-    const node = getNodeFromElement<T>(element);
+    const node = getElementAsNode<T>(element);
     if (node) {
         return node.tagName === 'BR' || (excluded && node.block && (node.excluded || node.textContent.trim() === ''));
     }
@@ -452,7 +452,7 @@ export function getBetweenElements(firstElement: Element | null, secondElement: 
                     result = result.filter(element => element.nodeName !== '#comment');
                 }
                 if (cacheNode) {
-                    result = result.filter(element => getNodeFromElement(element));
+                    result = result.filter(element => getElementAsNode(element));
                 }
                 return result;
             }
@@ -532,6 +532,6 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T>(element?: Element | null): T | null {
+export function getElementAsNode<T>(element?: Element | null): T | null {
     return element ? getElementCache(element, 'node') || null : null;
 }

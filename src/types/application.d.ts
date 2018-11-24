@@ -40,6 +40,10 @@ interface ControllerSettings {
     unsupported: {
         tagName: Set<string>
     };
+    relative: {
+        superscriptFontScale: number;
+        subscriptFontScale: number;
+    };
     constraint: {
         alignParentBottomOffset: number;
         percentAccuracy: number;
@@ -82,17 +86,6 @@ interface ViewData<T> {
     cache: T;
     views: FileAsset[];
     includes: FileAsset[];
-}
-
-interface LayoutData<T> {
-    node: T;
-    parent: T;
-    containerType: number;
-    alignmentType: number;
-    itemCount: number;
-    items?: T[];
-    rowCount?: number;
-    columnCount?: number;
 }
 
 interface ExtensionDependency {

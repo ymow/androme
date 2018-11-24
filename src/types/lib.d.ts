@@ -49,8 +49,8 @@ declare global {
             export function cssFromParent(element: Element, attr: string): boolean;
             export function cssAttribute(element: Element, attr: string): string;
             export function getBackgroundPosition(value: string, dimension: BoxDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): BoxPosition;
-            export function getFirstElementChild(elements: Element[]): Element | null;
-            export function getLastElementChild(elements: Element[]): Element | null;
+            export function getFirstChildElement(elements: Element[]): Element | null;
+            export function getLastChildElement(elements: Element[]): Element | null;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Element): boolean;
@@ -62,7 +62,7 @@ declare global {
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: UndefNull<Element>): T | null;
+            export function getElementAsNode<T>(element: UndefNull<Element>): T | null;
         }
 
         namespace svg {

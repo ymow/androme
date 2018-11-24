@@ -1,6 +1,6 @@
 import View from '../view';
 
-import $Application = androme.lib.base.Application;
+import $Layout = androme.lib.base.Layout;
 
 import $enum = androme.lib.enumeration;
 
@@ -10,7 +10,7 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
         const group = controller.createNodeGroup(node, parent, [node]);
         group.android('layout_width', 'match_parent');
         controller[node.float === 'right' || node.autoMarginLeft ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
-        const layoutData = $Application.createLayoutData(
+        const layout = new $Layout(
             group,
             parent,
             $enum.NODE_CONTAINER.GRID,
@@ -18,9 +18,9 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
             1,
             group.children as T[]
         );
-        layoutData.rowCount = 1;
-        layoutData.columnCount = 2;
-        const renderOutput = this.application.renderNode(layoutData);
+        layout.rowCount = 1;
+        layout.columnCount = 2;
+        const renderOutput = this.application.renderNode(layout);
         return { output: '', complete: true, parent: group, renderAs: group, renderOutput, include: true };
     }
 

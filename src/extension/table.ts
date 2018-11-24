@@ -1,8 +1,8 @@
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 
-import Application from '../base/application';
 import Extension from '../base/extension';
+import Layout from '../base/layout';
 import Node from '../base/node';
 
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
@@ -413,7 +413,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 borderLeftWidth: '0px'
             });
         }
-        const layoutData = Application.createLayoutData(
+        const layout = new Layout(
             node,
             parent,
             NODE_CONTAINER.GRID,
@@ -421,9 +421,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             node.length,
             node.children as T[]
         );
-        layoutData.rowCount = rowCount;
-        layoutData.columnCount = columnCount;
-        const output = this.application.renderNode(layoutData);
+        layout.rowCount = rowCount;
+        layout.columnCount = columnCount;
+        const output = this.application.renderNode(layout);
         return { output, complete: true };
     }
 }

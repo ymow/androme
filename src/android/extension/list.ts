@@ -5,7 +5,8 @@ import View from '../view';
 
 import { createAttribute } from '../lib/util';
 
-import $Application = androme.lib.base.Application;
+import $Layout = androme.lib.base.Layout;
+import $NodeList = androme.lib.base.NodeList;
 
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -32,23 +33,21 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             const ordinal = node.find(item => item.float === 'left' && $util.convertInt(item.cssInitial('marginLeft', true)) < 0 && Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
                 ordinal.parent = parent;
-                const layoutData = $Application.createLayoutData(ordinal, parent);
+                const layout = new $Layout(ordinal, parent);
                 if (ordinal.inlineText || ordinal.length === 0) {
-                    layoutData.containerType = $enum.NODE_CONTAINER.TEXT;
+                    layout.containerType = $enum.NODE_CONTAINER.TEXT;
                 }
                 else {
-                    layoutData.items = ordinal.children as T[];
-                    layoutData.itemCount = ordinal.length;
+                    layout.items = ordinal.children as T[];
+                    layout.itemCount = ordinal.length;
                     if (this.application.viewController.checkRelativeHorizontal(ordinal as T, ordinal.children as T[])) {
-                        layoutData.containerType = $enum.NODE_CONTAINER.RELATIVE;
-                        layoutData.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL;
+                        layout.setType($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
                     }
                     else {
-                        layoutData.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
-                        layoutData.alignmentType |= $enum.NODE_ALIGNMENT.UNKNOWN;
+                        layout.setType($enum.NODE_CONTAINER.CONSTRAINT, $enum.NODE_ALIGNMENT.UNKNOWN);
                     }
                 }
-                controller.prependBefore(node.id, this.application.renderNode(layoutData));
+                controller.prependBefore(node.id, this.application.renderNode(layout));
                 if (columnCount === 3) {
                     node.android('layout_columnSpan', '2');
                 }
@@ -163,10 +162,17 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 node.android('layout_width', '0px');
                 node.android('layout_columnWeight', '1');
             }
-            if (node.length === 1 && node.children[0].textElement && node.children[0].baseline) {
-                const layoutData = $Application.createLayoutData(node, parent, $enum.NODE_CONTAINER.LINEAR, $enum.NODE_ALIGNMENT.HORIZONTAL, 1, node.children as T[]);
-                node.android('baselineAlignedChildIndex', '0');
-                output = this.application.renderNode(layoutData);
+            const [linearX, linearY] = [$NodeList.linearX(node.children), $NodeList.linearY(node.children)];
+            if (linearX || linearY) {
+                const layout = new $Layout(
+                    node,
+                    parent,
+                    $enum.NODE_CONTAINER.LINEAR,
+                    linearX ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL,
+                    node.length,
+                    node.children as T[]
+                );
+                output = this.application.renderNode(layout);
             }
         }
         return { output };

@@ -3,6 +3,7 @@ import { ViewAttribute } from '../../../types/module';
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
 
 import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
@@ -129,72 +130,66 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         let title = '';
         let next = false;
         let layout = false;
-        if (node.some(item => (!item.inlineElement || !item.blockStatic) && item.length > 0)) {
-            if (node.some(item => item.tagName === 'NAV')) {
-                if (element.title !== '') {
-                    title = element.title;
-                }
-                else {
-                    Array.from(node.element.childNodes).some((item: HTMLElement) => {
-                        if (item.nodeName === '#text') {
-                            if (item.textContent) {
-                                title = item.textContent.trim();
-                                if (title !== '') {
-                                    return true;
-                                }
+        if (node.some(item => item.length > 0)) {
+            if (element.title !== '') {
+                title = element.title;
+            }
+            else {
+                Array.from(node.element.childNodes).some((item: HTMLElement) => {
+                    if (item.nodeName === '#text') {
+                        if (item.textContent) {
+                            title = item.textContent.trim();
+                            if (title !== '') {
+                                return true;
                             }
-                            return false;
-                        }
-                        else if (item.tagName !== 'NAV') {
-                            title = item.innerText.trim();
-                            return true;
                         }
                         return false;
-                    });
-                }
-                node.each(item => item.tagName !== 'NAV' && item.hide());
+                    }
+                    else if (item.tagName !== 'NAV') {
+                        title = item.innerText.trim();
+                        return true;
+                    }
+                    return false;
+                });
             }
-            else if (node.tagName === 'NAV') {
+            if (node.element.tagName === 'NAV') {
                 controlName = VIEW_NAVIGATION.MENU;
                 node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
                 next = true;
             }
             else {
                 controlName = VIEW_NAVIGATION.GROUP;
-                let checkable = '';
                 if (node.every((item: T) => hasInputType(item, 'radio'))) {
-                    checkable = 'single';
+                    options.android.checkableBehavior = 'single';
                 }
                 else if (node.every((item: T) => hasInputType(item, 'checkbox'))) {
-                    checkable = 'all';
+                    options.android.checkableBehavior = 'all';
                 }
-                options['android'].checkableBehavior = checkable;
             }
+            node.each(item => item.element.tagName !== 'NAV' && item.hide());
             layout = true;
         }
         else {
-            if (parent.android('checkableBehavior') === '') {
-                if (hasInputType(node, 'checkbox')) {
-                    options['android'].checkable = 'true';
-                }
+            if (parent.android('checkableBehavior') === '' && hasInputType(node, 'checkbox')) {
+                options.android.checkable = 'true';
             }
             title = (element.title || element.innerText).trim();
         }
         switch (controlName) {
             case VIEW_NAVIGATION.ITEM:
                 parseDataSet(VALIDATE_ITEM, element, options);
-                if (node.android('icon') === '') {
+                if (!$util.hasValue(options.android.icon)) {
                     const style = $dom.getStyle(element);
                     let src = $Resource.addImageUrl((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $android_const.PREFIX_ANDROID.MENU);
                     if (src !== '') {
-                        options['android'].icon = `@drawable/${src}`;
+                        options.android.icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.find(item => item.imageElement);
                         if (image) {
                             src = $Resource.addImageSrcSet(<HTMLImageElement> image.element, $android_const.PREFIX_ANDROID.MENU);
                             if (src !== '') {
-                                options['android'].icon = `@drawable/${src}`;
+                                options.android.icon = `@drawable/${src}`;
                             }
                         }
                     }
@@ -205,12 +200,11 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }
-        if (title !== '' && node.android('title') === '') {
-            const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
-            if (name !== '') {
-                title = `@string/${name}`;
+        if (title !== '' && !$util.hasValue(options.android.title === '')) {
+            title = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+            if (title !== '') {
+                options.android.title = `@string/${title}`;
             }
-            options['android'].title = title;
         }
         node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;

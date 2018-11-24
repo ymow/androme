@@ -4,63 +4,18 @@ import Container from './container';
 import Node from './node';
 
 import { isUserAgent } from '../lib/dom';
-import { convertInt, hasBit, partition } from '../lib/util';
+import { convertInt, hasBit, partition, withinFraction } from '../lib/util';
 
 function getDocumentParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {
-        if (!node.companion && node.domElement) {
-            return node.documentParent;
+        if (node.domElement && node.actualParent) {
+            return node.actualParent;
         }
     }
-    return nodes[0].documentParent;
+    return null;
 }
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
-    public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
-        let top: T[] = [];
-        let right: T[] = [];
-        let bottom: T[] = [];
-        let left: T[] = [];
-        const nodes = list.slice();
-        list.forEach(node => node.companion && nodes.push(node.companion as T));
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            if (i === 0) {
-                top.push(node);
-                right.push(node);
-                bottom.push(node);
-                left.push(node);
-            }
-            else {
-                if (top[0][dimension].top === node[dimension].top) {
-                    top.push(node);
-                }
-                else if (node[dimension].top < top[0][dimension].top) {
-                    top = [node];
-                }
-                if (right[0][dimension].right === node[dimension].right) {
-                    right.push(node);
-                }
-                else if (node[dimension].right > right[0][dimension].right) {
-                    right = [node];
-                }
-                if (bottom[0][dimension].bottom === node[dimension].bottom) {
-                    bottom.push(node);
-                }
-                else if (node[dimension].bottom > bottom[0][dimension].bottom) {
-                    bottom = [node];
-                }
-                if (left[0][dimension].left === node[dimension].left) {
-                    left.push(node);
-                }
-                else if (node[dimension].left < left[0][dimension].left) {
-                    left = [node];
-                }
-            }
-        }
-        return { top, right, bottom, left };
-    }
-
     public static floated<T extends Node>(list: T[]) {
         return new Set(list.map(node => node.float).filter(value => value !== 'none'));
     }
@@ -89,15 +44,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return result;
     }
 
-    public static clearedAll<T extends Node>(parent: T) {
-        if (parent.groupElement) {
-            return NodeList.cleared(parent.children as T[]);
-        }
-        else {
-            return NodeList.cleared(Array.from(parent.element.children).map((element: Element) => Node.getNodeFromElement(element) as T).filter(item => item && item.siblingflow));
-        }
-    }
-
     public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
         if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
@@ -124,7 +70,10 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
             if (lineHeight > boundsHeight) {
                 const result = list.filter(node => node.lineHeight === lineHeight);
-                return (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
+                baseline = (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
+                if (baseline.length > 0) {
+                    return baseline;
+                }
             }
             baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let heightA = a.bounds.height;
@@ -220,7 +169,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         });
     }
 
-    public static linearX<T extends Node>(list: T[], traverse = true) {
+    public static linearX<T extends Node>(list: T[]) {
         const nodes = list.filter(node => node.pageflow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
@@ -229,23 +178,44 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 return true;
             default:
                 const parent = getDocumentParent(nodes);
-                let horizontal = false;
-                if (traverse) {
-                    if (nodes.every(node => node.documentParent === parent || (node.companion !== undefined && node.companion.documentParent === parent))) {
-                        const result = this.clearedAll(parent);
-                        horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                            if (index > 0) {
-                                if (node.companion && node.companion.documentParent === parent) {
-                                    node = node.companion as T;
-                                }
-                                return !node.alignedVertically(node.previousSibling(), result);
-                            }
-                            return true;
-                        });
+                if (parent) {
+                    const cleared = this.clearedAll(parent);
+                    for (let i = 1; i < nodes.length; i++) {
+                        if (nodes[i].alignedVertically(nodes[i].previousSibling(), cleared)) {
+                            return false;
+                        }
                     }
-                }
-                if (horizontal || !traverse) {
-                    return nodes.every(node => !nodes.some(sibling => sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)));
+                    for (let i = 1; i < nodes.length; i++) {
+                        const item = nodes[i];
+                        const previous = nodes[i - 1];
+                        if (!item.floating && !previous.floating && (withinFraction(item.linear.left, previous.linear.left) || item.linear.left < previous.linear.left)) {
+                            return false;
+                        }
+                        else if (item.floating) {
+                            const direction = item.float;
+                            for (let j = 0; j < i; j++) {
+                                const sibling = nodes[j];
+                                if (!sibling.floating && item.linear.top >= sibling.linear.bottom) {
+                                    switch (direction) {
+                                        case 'left':
+                                            if (item.linear.left < Math.floor(sibling.linear.right)) {
+                                                return false;
+                                            }
+                                            break;
+                                        case 'right':
+                                            if (item.linear.right > Math.ceil(sibling.linear.left)) {
+                                                return false;
+                                            }
+                                            break;
+                                    }
+                                }
+                                else if (sibling.float === direction && item.linear[direction] <= nodes[j].linear[direction]) {
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    }
                 }
                 return false;
         }
@@ -260,61 +230,137 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 return true;
             default:
                 const parent = getDocumentParent(nodes);
-                if (nodes.every(node => node.documentParent === parent || (node.companion !== undefined && node.companion.documentParent === parent))) {
-                    const result = this.clearedAll(parent);
-                    return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                        if (index > 0 && !node.lineBreak) {
-                            if (node.companion && node.companion.documentParent.documentParent === parent) {
-                                node = node.companion as T;
-                            }
-                            return node.alignedVertically(node.previousSibling(), result);
+                if (parent) {
+                    const cleared = this.clearedAll(parent);
+                    for (let i = 1; i < nodes.length; i++) {
+                        if (!nodes[i].alignedVertically(nodes[i].previousSibling(), cleared)) {
+                            return false;
                         }
-                        return true;
-                    });
+                    }
+                    return true;
                 }
                 return false;
         }
     }
 
-    public static sortByAlignment<T extends Node>(list: T[], alignmentType = 0, parent?: T) {
-        let sorted = false;
-        if (parent && alignmentType === 0) {
-            if (parent.linearHorizontal) {
-                alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+    public static partitionRows<T extends Node>(list: T[], parent?: T) {
+        const cleared = parent ? this.clearedAll(parent) : this.cleared(list);
+        const result: T[][] = [];
+        let row: T[] = [];
+        for (let i = 0; i < list.length; i++) {
+            const node = list[i];
+            const previous = node.previousSibling() as T;
+            if (i === 0 || previous === null) {
+                row.push(node);
             }
-            else if (parent.layoutConstraint && list.some(node => !node.pageflow)) {
-                alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
+            else {
+                if (node.alignedVertically(previous, cleared)) {
+                    result.push(row);
+                    row = [node];
+                }
+                else {
+                    row.push(node);
+                }
+            }
+            if (i === list.length - 1) {
+                result.push(row);
             }
         }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL) && list.some(node => node.floating)) {
-            list.sort((a, b) => {
-                if (a.floating && !b.floating) {
-                    return a.float === 'left' ? -1 : 1;
-                }
-                else if (!a.floating && b.floating) {
-                    return b.float === 'left' ? 1 : -1;
-                }
-                else if (a.floating && b.floating) {
-                    if (a.float !== b.float) {
-                        return a.float === 'left' ? -1 : 1;
+        return result;
+    }
+
+    public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number) {
+        const result: T[] = [];
+        const preferred: T[] = [];
+        if (maxBottom) {
+            list = list.filter(item => item.linear.bottom === maxBottom);
+        }
+        for (let i = 0; i < list.length; i++) {
+            const above = list[i];
+            if (node.intersectY(above.linear)) {
+                if (maxBottom === undefined) {
+                    if (node.linear.top >= above.linear.bottom) {
+                        result.push(above);
                     }
                 }
-                return a.linear.left >= b.linear.left ? 1 : -1;
-            });
+                else {
+                    if (maxBottom === above.linear.bottom) {
+                        preferred.push(above);
+                    }
+                }
+            }
+            else {
+                if (maxBottom === above.linear.bottom) {
+                    result.push(above);
+                }
+            }
+        }
+        return preferred.length ? preferred : result;
+    }
+
+    public static sortByAlignment<T extends Node>(list: T[], alignmentType: number) {
+        let sorted = false;
+        if (hasBit(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.ABSOLUTE, alignmentType)) {
+            function sortHorizontal(nodes: T[]) {
+                if (nodes.some(node => node.floating) && !nodes.every(node => node.float === 'right')) {
+                    nodes.sort((a, b) => {
+                        if (a.floating && !b.floating) {
+                            return a.float === 'left' ? -1 : 1;
+                        }
+                        else if (!a.floating && b.floating) {
+                            return b.float === 'left' ? 1 : -1;
+                        }
+                        else if (a.floating && b.floating) {
+                            if (a.float !== b.float) {
+                                return a.float === 'left' ? -1 : 1;
+                            }
+                            else if (a.float === 'right' && b.float === 'right') {
+                                return -1;
+                            }
+                        }
+                        return 0;
+                    });
+                }
+                else {
+                    nodes.sort(NodeList.siblingIndex);
+                }
+                return nodes;
+            }
+            if (hasBit(NODE_ALIGNMENT.MULTILINE, alignmentType)) {
+                const rows = this.partitionRows(list);
+                const result: T[] = [];
+                for (const row of rows) {
+                    result.push(...sortHorizontal(row));
+                }
+                list.length = 0;
+                list.push(...result);
+            }
+            else {
+                sortHorizontal(list);
+            }
             sorted = true;
         }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE) && list.some(node => node.toInt('zIndex') !== 0)) {
+        if (hasBit(NODE_ALIGNMENT.ABSOLUTE, alignmentType) && list.some(node => node.toInt('zIndex') !== 0)) {
             list.sort((a, b) => {
                 const indexA = a.toInt('zIndex');
                 const indexB = b.toInt('zIndex');
                 if (indexA === 0 && indexB === 0) {
-                    return a.siblingIndex >= b.siblingIndex ? 1 : -1;
+                    return 0;
                 }
                 return indexA >= indexB ? 1 : -1;
             });
             sorted = true;
         }
         return sorted;
+    }
+
+    public static clearedAll<T extends Node>(parent: T) {
+        if (parent.groupElement) {
+            return NodeList.cleared(parent.children as T[]);
+        }
+        else {
+            return NodeList.cleared(Array.from(parent.element.children).map((element: Element) => Node.getElementAsNode(element) as T).filter(item => item && item.siblingflow));
+        }
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {

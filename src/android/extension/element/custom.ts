@@ -27,12 +27,12 @@ export default class <T extends View> extends androme.lib.base.Extension<T> {
             output = this.application.viewController.renderNodeStatic(data.tag, node.renderDepth, {}, '', '', node, node.length > 0);
         }
         if (data.tagChild) {
-            for (const item of node) {
+            node.each(item => {
                 if (item.styleElement) {
                     item.dataset.ext = this.name;
                     item.dataset.androidElementCustomTag = data.tagChild;
                 }
-            }
+            });
         }
         return { output };
     }

@@ -100,7 +100,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
     }
 
     public some(predicate: IteratorPredicate<T, boolean>) {
-        return this.length > 0 && this._children.some(predicate);
+        return this._children.some(predicate);
     }
 
     get children() {

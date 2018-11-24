@@ -3,6 +3,7 @@ import Container from './base/container';
 import Controller from './base/controller';
 import Extension from './base/extension';
 import File from './base/file';
+import Layout from './base/layout';
 import Node from './base/node';
 import NodeGroup from './base/nodegroup';
 import NodeList from './base/nodelist';
@@ -237,6 +238,7 @@ const lib = {
         Controller,
         Extension,
         File,
+        Layout,
         Node,
         NodeGroup,
         NodeList,

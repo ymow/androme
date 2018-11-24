@@ -48,7 +48,7 @@ export enum NODE_ALIGNMENT {
     SEGMENTED = 128,
     COLUMN = 256,
     RIGHT = 512,
-    LEFT = 1024,
+    NOWRAP = 1024,
     SINGLE = 2048,
     MULTILINE = 4096,
     EXTENDABLE = 8192,

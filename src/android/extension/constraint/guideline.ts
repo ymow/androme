@@ -2,7 +2,7 @@ import { AXIS_ANDROID } from '../../lib/constant';
 
 import View from '../../view';
 
-import $Application = androme.lib.base.Application;
+import $Layout = androme.lib.base.Layout;
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -18,7 +18,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         node.excludeProcedure |= $enum.NODE_PROCEDURE.CONSTRAINT;
-        const layoutData = $Application.createLayoutData(
+        const layout = new $Layout(
             node,
             parent,
             $enum.NODE_CONTAINER.CONSTRAINT,
@@ -26,7 +26,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
             node.length,
             node.children as T[]
         );
-        const output = this.application.renderNode(layoutData);
+        const output = this.application.renderNode(layout);
         return { output };
     }
 
@@ -60,12 +60,12 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                         if (alignment.length === 1) {
                             if (alignment.includes('left')) {
                                 item.anchor('left', 'parent');
-                                controller.addGuideline(item, AXIS_ANDROID.VERTICAL);
+                                controller.addGuideline(item, node, AXIS_ANDROID.VERTICAL);
                                 anchor = item;
                             }
                             else {
                                 item.anchor('top', 'parent');
-                                controller.addGuideline(item, AXIS_ANDROID.HORIZONTAL);
+                                controller.addGuideline(item, node, AXIS_ANDROID.HORIZONTAL);
                                 anchor = item;
                             }
                             break;
@@ -74,7 +74,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                 }
                 if (anchor === undefined) {
                     anchor = node.item(0) as T;
-                    controller.addGuideline(anchor);
+                    controller.addGuideline(anchor, node);
                 }
                 node.each((item: T) => {
                     if (anchor && item !== anchor) {
@@ -135,7 +135,7 @@ export default class ConstraintGuideline<T extends View> extends androme.lib.bas
                         item.anchor('top', 'parent');
                     }
                     if (alignment.length < 2) {
-                        controller.addGuideline(item);
+                        controller.addGuideline(item, node);
                     }
                 }
             }

@@ -518,11 +518,6 @@ export const API_ANDROID: Customizations = {
         android: {},
         app: {},
         customizations: {
-            SUP: {
-                android: {
-                    'layout_marginTop': '-4px'
-                }
-            },
             Button: {
                 android: {
                     'textAllCaps': 'false'

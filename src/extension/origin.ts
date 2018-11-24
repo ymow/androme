@@ -2,6 +2,7 @@ import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 import Extension from '../base/extension';
 import Node from '../base/node';
+import NodeList from '../base/nodelist';
 
 import { formatPX, partition } from '../lib/util';
 
@@ -14,48 +15,48 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
             node.setBounds(true);
         }
         for (const node of this.application.processing.cache.elements) {
-            const outside = node.some(current => {
-                if (current.pageflow) {
+            const outside = node.some((item, index) => {
+                if (item.pageflow) {
                     return (
-                        current.float !== 'right' &&
-                        current.marginLeft < 0 &&
-                        node.marginLeft >= Math.abs(current.marginLeft) &&
-                        (Math.abs(current.marginLeft) >= current.bounds.width || node.documentRoot)
+                        item.float !== 'right' &&
+                        item.marginLeft < 0 &&
+                        node.marginLeft >= Math.abs(item.marginLeft) &&
+                        (Math.abs(item.marginLeft) >= item.bounds.width || node.documentRoot)
                     );
                 }
                 else {
-                    const left = current.toInt('left');
-                    const right = current.toInt('right');
-                    return (left < 0 && node.marginLeft >= Math.abs(left)) || (right < 0 && Math.abs(right) >= current.bounds.width);
+                    const left = item.toInt('left');
+                    const right = item.toInt('right');
+                    return (left < 0 && ((index === 0 && node.marginLeft > 0) || node.marginLeft >= Math.abs(left))) || (right < 0 && Math.abs(right) >= item.bounds.width);
                 }
             });
             if (outside) {
                 const marginLeft: number[] = [];
                 const marginRight: T[] = [];
-                for (const current of node) {
+                node.each((item: T, index) => {
                     let leftType = 0;
-                    if (current.pageflow) {
-                        const left = current.marginLeft;
+                    if (item.pageflow) {
+                        const left = item.marginLeft;
                         if (left < 0 && node.marginLeft >= Math.abs(left)) {
                             leftType = 1;
                         }
                     }
                     else {
-                        const left = (current.left || 0) + current.marginLeft;
-                        const right = current.right || 0;
+                        const left = (item.left || 0) + item.marginLeft;
+                        const right = item.right || 0;
                         if (left < 0) {
-                            if (node.marginLeft >= Math.abs(left)) {
+                            if (index === 0 || node.marginLeft >= Math.abs(left)) {
                                 leftType = 2;
                             }
                         }
                         else if (right < 0) {
-                            if (Math.abs(right) >= current.bounds.width) {
-                                marginRight.push(current as T);
+                            if (Math.abs(right) >= item.bounds.width) {
+                                marginRight.push(item);
                             }
                         }
                     }
                     marginLeft.push(leftType);
-                }
+                });
                 if (marginRight.length) {
                     const [sectionLeft, sectionRight] = partition(node.children, (item: T) => !marginRight.includes(item));
                     if (sectionLeft.length && sectionRight.length) {
@@ -71,17 +72,21 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 }
                 const marginLeftType: number = Math.max.apply(null, marginLeft);
                 if (marginLeftType > 0) {
-                    node.each((current: T, index) => {
-                        if (marginLeft[index] === 2) {
-                            const left = current.toInt('left') + node.marginLeft;
-                            current.css('left', formatPX(Math.max(left, 0)));
-                            if (left < 0) {
-                                current.css('marginLeft', formatPX(current.marginLeft + left));
-                                modifyMarginLeft(current, left);
+                    const rows = NodeList.partitionRows(node.children.filter(item => item.pageflow));
+                    const columnStart = rows.map(item => item[0]);
+                    node.each((item: T, index) => {
+                        if (columnStart.includes(item)) {
+                            if (marginLeft[index] === 2) {
+                                const left = item.toInt('left') + node.marginLeft;
+                                item.css('left', formatPX(Math.max(left, 0)));
+                                if (left < 0) {
+                                    item.css('marginLeft', formatPX(item.marginLeft + left));
+                                    modifyMarginLeft(item, left);
+                                }
                             }
-                        }
-                        else if (marginLeftType === 2 || (current.pageflow && !current.plainText && marginLeft.includes(1))) {
-                            modifyMarginLeft(current, node.marginLeft);
+                            else if (marginLeftType === 2 || (item.pageflow && !item.plainText && marginLeft.includes(1))) {
+                                modifyMarginLeft(item, node.marginLeft);
+                            }
                         }
                     });
                     if (node.has('width', CSS_STANDARD.UNIT)) {

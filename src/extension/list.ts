@@ -1,8 +1,8 @@
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_RESOURCE } from '../lib/enumeration';
 
-import Application from '../base/application';
 import Extension from '../base/extension';
+import Layout from '../base/layout';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
@@ -24,18 +24,18 @@ export default abstract class List<T extends Node> extends Extension<T> {
     public condition(node: T) {
         return super.condition(node) && node.length > 0 && (
             node.every(item => item.blockStatic) ||
-            node.every(item => item.inlineElement) ||
+            node.every(item => item.inlineVertical) ||
             (node.every(item => item.floating) && NodeList.floated(node.children).size === 1) ||
-            node.every((item, index: number) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineElement && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
+            node.every((item, index) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineflow && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
         ) && (
-            node.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
-            node.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
+            node.some(item => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
+            node.every(item => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
         );
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         let i = 0;
-        for (const item of node) {
+        node.each(item => {
             const mainData: ListData = List.createDataAttribute();
             if (item.display === 'list-item' || item.has('listStyleType') || hasSingleImage(item)) {
                 let src = item.css('listStyleImage');
@@ -92,8 +92,8 @@ export default abstract class List<T extends Node> extends Extension<T> {
                 i++;
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
-        }
-        const layoutData = Application.createLayoutData(
+        });
+        const layout = new Layout(
             node,
             parent,
             0,
@@ -103,20 +103,18 @@ export default abstract class List<T extends Node> extends Extension<T> {
         );
         let complete = false;
         if (NodeList.linearY(node.children)) {
-            layoutData.containerType = NODE_CONTAINER.GRID;
-            layoutData.alignmentType |= NODE_ALIGNMENT.AUTO_LAYOUT;
-            layoutData.rowCount = node.length;
-            layoutData.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
+            layout.rowCount = node.length;
+            layout.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
+            layout.setType(NODE_CONTAINER.GRID, NODE_ALIGNMENT.AUTO_LAYOUT);
             complete = true;
         }
         else if (this.application.viewController.checkRelativeHorizontal(node, node.children as T[])) {
-            layoutData.containerType = NODE_CONTAINER.RELATIVE;
-            layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-            layoutData.rowCount = 1;
-            layoutData.columnCount = node.length;
+            layout.rowCount = 1;
+            layout.columnCount = node.length;
+            layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
             complete = true;
         }
-        const output = complete ? this.application.renderNode(layoutData) : '';
+        const output = complete ? this.application.renderNode(layout) : '';
         return { output, complete };
     }
 

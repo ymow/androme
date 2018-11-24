@@ -1,14 +1,7 @@
+import { BoxStyle, InitialData } from './lib.base.types.node';
+
 declare global {
     namespace androme.lib.base {
-        export interface InitialData<T> {
-            readonly styleMap: StringMap;
-            readonly depth: number;
-            readonly children: T[];
-            readonly bounds: BoxDimensions;
-            readonly linear?: BoxDimensions;
-            readonly box?: BoxDimensions;
-        }
-
         export interface Node extends Container<Node>, BoxModel {
             id: number;
             style: CSSStyleDeclaration;
@@ -69,6 +62,7 @@ declare global {
             readonly display: string;
             readonly position: string;
             readonly positionStatic: boolean;
+            readonly positionRelative: boolean;
             readonly top: number | null;
             readonly right: number | null;
             readonly bottom: number | null;
@@ -81,15 +75,15 @@ declare global {
             readonly borderRightWidth: number;
             readonly borderBottomWidth: number;
             readonly borderLeftWidth: number;
-            readonly borderVisible: boolean;
             readonly paddingTop: number;
             readonly paddingRight: number;
             readonly paddingBottom: number;
             readonly paddingLeft: number;
             readonly siblingflow: boolean;
+            readonly inlineflow: boolean;
             readonly inline: boolean;
-            readonly inlineElement: boolean;
             readonly inlineStatic: boolean;
+            readonly inlineVertical: boolean;
             readonly inlineText: boolean;
             readonly plainText: boolean;
             readonly lineBreak: boolean;
@@ -101,8 +95,10 @@ declare global {
             readonly autoMarginRight: boolean;
             readonly autoMarginHorizontal: boolean;
             readonly autoMarginVertical: boolean;
+            readonly pageflow: boolean;
             readonly floating: boolean;
             readonly float: string;
+            readonly boxStyle: BoxStyle;
             readonly textContent: string;
             readonly fontSize: number;
             readonly overflowX: boolean;
@@ -113,7 +109,7 @@ declare global {
             readonly preserveWhiteSpace: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
-            readonly actualParent: Node;
+            readonly actualParent: Node | null;
             readonly actualHeight: number;
             readonly singleChild: boolean;
             readonly dir: string;
@@ -129,8 +125,8 @@ declare global {
             controlName: string;
             renderAs: Node | undefined;
             renderDepth: number;
-            pageflow: boolean;
             multiLine: boolean;
+            overflow: number;
             setControlType(controlName: string, containerType?: number): void;
             setLayout(): void;
             setAlignment(settings: Settings): void;
@@ -152,6 +148,7 @@ declare global {
             render(parent: Node): void;
             hide(): void;
             data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
+            unsetCache(attr?: string): void;
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
@@ -176,9 +173,8 @@ declare global {
             hasAlign(value: number): boolean;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
-            setMultiLine(): void;
             replaceNode(node: Node, withNode: Node, append?: boolean): void;
-            appendRendered(node: Node): void;
+            renderChild(node: Node, append?: boolean): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
             actualLeft(dimension?: string): number;
@@ -191,10 +187,12 @@ declare global {
         export class Node implements Node {
             public static getContentBoxWidth<T extends Node>(node: T): number;
             public static getContentBoxHeight<T extends Node>(node: T): number;
-            public static getNodeFromElement<T>(element: UndefNull<Element>): T | null;
+            public static getElementAsNode<T>(element: UndefNull<Element>): T | null;
         }
 
-        export class NodeGroup extends Node {}
+        export class NodeGroup extends Node {
+            public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;
+        }
     }
 }
 

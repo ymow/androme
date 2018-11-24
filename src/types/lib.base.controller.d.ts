@@ -13,8 +13,8 @@ declare global {
             checkFrameHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
             checkRelativeHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
             setConstraints(): void;
-            renderNode(data: LayoutData<T>);
-            renderNodeGroup(data: LayoutData<T>);
+            renderNode(data: Layout<T>);
+            renderNodeGroup(data: Layout<T>);
             renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             createNodeGroup(node: T, parent: T, children: T[]): T;
             replaceRenderQueue(output: string): string;
@@ -25,8 +25,6 @@ declare global {
 
         export class Controller<T extends Node> implements Controller<T> {
             public static getContainerType(tagName: string): number;
-            public static partitionRows<T extends Node>(list: T[], parent?: T): T[][];
-            public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
         }
     }
 }

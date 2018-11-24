@@ -2,7 +2,7 @@ import { CONTAINER_ANDROID } from '../lib/constant';
 
 import View from '../view';
 
-import $dom = androme.lib.dom;
+import $dom = androme.lib.base.Node;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
@@ -17,8 +17,8 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
                     case CONTAINER_ANDROID.EDIT:
                         if (!node.companion) {
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = $dom.getNodeFromElement<T>(sibling);
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getNodeFromElement<T>(sibling.parentElement) : null;
+                                const label = $dom.getElementAsNode<T>(sibling);
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : null;
                                 if (label && label.visible && label.pageflow) {
                                     if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         label.android('labelFor', node.stringId);

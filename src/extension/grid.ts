@@ -1,8 +1,8 @@
 import { EXT_NAME } from '../lib/constant';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
-import Application from '../base/application';
 import Extension from '../base/extension';
+import Layout from '../base/layout';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
@@ -41,7 +41,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition(node: T) {
         return this.included(<HTMLElement> node.element) || (node.length > 1 && (
             (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
-            (node.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+            (node.every(item => item.pageflow && !item.boxStyle.hasBackground && (!item.inlineflow || item.blockStatic)) && (
                 node.css('listStyle') === 'none' ||
                 node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
                 (!hasValue(node.dataset.ext) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
@@ -295,7 +295,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
-            const layoutData = Application.createLayoutData(
+            const layout = new Layout(
                 node,
                 parent,
                 NODE_CONTAINER.GRID,
@@ -303,8 +303,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 node.length,
                 node.children as T[]
             );
-            layoutData.columnCount = mainData.columnCount;
-            output = this.application.renderNode(layoutData);
+            layout.columnCount = mainData.columnCount;
+            output = this.application.renderNode(layout);
         }
         return { output, complete: output !== '' };
     }
@@ -320,7 +320,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings = Array.from(node.documentParent.element.children).map(element => {
-                    const item = Node.getNodeFromElement(element);
+                    const item = Node.getElementAsNode(element);
                     return (
                         item &&
                         item.visible &&
@@ -336,7 +336,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 siblings.unshift(node);
                 const group = this.application.viewController.createNodeGroup(node, parent, siblings);
                 siblings.forEach(item => item.inherit(group, 'data'));
-                const layoutData = Application.createLayoutData(
+                const layout = new Layout(
                     group,
                     parent,
                     0,
@@ -346,18 +346,15 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 );
                 const linearX = NodeList.linearX(siblings);
                 if (this.application.viewController.checkRelativeHorizontal(group, siblings, undefined, undefined, linearX)) {
-                    layoutData.containerType = NODE_CONTAINER.RELATIVE;
-                    layoutData.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                    layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
                 }
                 else if (linearX || NodeList.linearY(siblings)) {
-                    layoutData.containerType = NODE_CONTAINER.LINEAR;
-                    layoutData.alignmentType |= linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL;
+                    layout.setType(NODE_CONTAINER.LINEAR, linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
                 }
                 else {
-                    layoutData.containerType = NODE_CONTAINER.CONSTRAINT;
-                    layoutData.alignmentType |= NODE_ALIGNMENT.UNKNOWN;
+                    layout.setType(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.UNKNOWN);
                 }
-                const output = this.application.renderNode(layoutData);
+                const output = this.application.renderNode(layout);
                 return { output, parent: group, complete: true };
             }
         }

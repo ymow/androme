@@ -6,6 +6,51 @@ import NodeList from './nodelist';
 import { assignBounds, newClientRect, isStyleElement } from '../lib/dom';
 
 export default abstract class NodeGroup extends Node {
+    public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
+        let top: T[] = [];
+        let right: T[] = [];
+        let bottom: T[] = [];
+        let left: T[] = [];
+        const nodes = list.slice();
+        list.forEach(node => node.companion && nodes.push(node.companion as T));
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            if (i === 0) {
+                top.push(node);
+                right.push(node);
+                bottom.push(node);
+                left.push(node);
+            }
+            else {
+                if (top[0][dimension].top === node[dimension].top) {
+                    top.push(node);
+                }
+                else if (node[dimension].top < top[0][dimension].top) {
+                    top = [node];
+                }
+                if (right[0][dimension].right === node[dimension].right) {
+                    right.push(node);
+                }
+                else if (node[dimension].right > right[0][dimension].right) {
+                    right = [node];
+                }
+                if (bottom[0][dimension].bottom === node[dimension].bottom) {
+                    bottom.push(node);
+                }
+                else if (node[dimension].bottom > bottom[0][dimension].bottom) {
+                    bottom = [node];
+                }
+                if (left[0][dimension].left === node[dimension].left) {
+                    left.push(node);
+                }
+                else if (node[dimension].left < left[0][dimension].left) {
+                    left = [node];
+                }
+            }
+        }
+        return { top, right, bottom, left };
+    }
+
     public init() {
         super.init();
         if (this.length) {
@@ -22,7 +67,7 @@ export default abstract class NodeGroup extends Node {
     public setBounds(calibrate = false) {
         if (!calibrate) {
             if (this.length) {
-                const nodes = NodeList.outerRegion(this.children);
+                const nodes = NodeGroup.outerRegion(this.children);
                 this._bounds = {
                     top: nodes.top[0].linear.top,
                     right: nodes.right[0].linear.right,
@@ -66,7 +111,7 @@ export default abstract class NodeGroup extends Node {
         return this.every(node => node.siblingflow);
     }
 
-    get inlineElement() {
+    get inlineflow() {
         return this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
     }
 

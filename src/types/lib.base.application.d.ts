@@ -25,13 +25,13 @@ declare global {
             saveAllToDisk(): void;
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
-            renderNode(data: LayoutData<T>): string;
+            renderNode(data: Layout<T>): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);
             addRenderQueue(id: string, templates: string[]): void;
             addPreloadImage(element: HTMLImageElement): void;
-            preserveRenderPosition(node: T): void;
+            setRenderPosition(parent: T, node?: T): void;
             getExtension(name: string): Extension<T> | null;
             getExtensionOptionValue(name: string, attr: string): any;
             getExtensionOptionValueAsObject(name: string, attr: string): {} | null;
@@ -42,7 +42,6 @@ declare global {
         }
 
         export class Application<T extends Node> implements Application<T> {
-            public static createLayoutData<T extends Node>(node: T, parent: T, containerType?: number, alignmentType?: number, itemCount?: number, items?: T[]): LayoutData<T>;
             constructor(framework: number);
         }
     }

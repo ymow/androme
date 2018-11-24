@@ -3,7 +3,7 @@ import { AXIS_ANDROID } from '../lib/constant';
 import Controller from '../controller';
 import View from '../view';
 
-import $Application = androme.lib.base.Application;
+import $Layout = androme.lib.base.Layout;
 import $NodeList = androme.lib.base.NodeList;
 
 import $const = androme.lib.constant;
@@ -23,30 +23,29 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         super.processNode(node, parent);
         const mainData: FlexboxData<T> = node.data($const.EXT_NAME.FLEXBOX, 'mainData');
-        const layoutData = $Application.createLayoutData(
+        const layout = new $Layout(
             node,
             parent,
             0,
             $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
             node.length
         );
-        layoutData.rowCount = mainData.rowCount;
-        layoutData.columnCount = mainData.columnCount;
+        layout.rowCount = mainData.rowCount;
+        layout.columnCount = mainData.columnCount;
         if (node.filter(item => !item.pageflow).length > 0 || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
-            layoutData.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
+            layout.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
         }
         else {
-            layoutData.containerType = $enum.NODE_CONTAINER.LINEAR;
-            layoutData.alignmentType |= mainData.columnDirection ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL;
+            layout.setType($enum.NODE_CONTAINER.LINEAR, mainData.columnDirection ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL);
         }
-        const output = this.application.renderNode(layoutData);
+        const output = this.application.renderNode(layout);
         return { output, complete: true };
     }
 
     public processChild(node: T, parent: T): ExtensionResult<T> {
         let output = '';
         if (node.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) {
-            const layoutData = $Application.createLayoutData(
+            const layout = new $Layout(
                 node,
                 parent,
                 $enum.NODE_CONTAINER.CONSTRAINT,
@@ -54,7 +53,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                 node.length,
                 node.children as T[]
             );
-            output = this.application.renderNode(layoutData);
+            output = this.application.renderNode(layout);
         }
         return { output, complete: output !== '' };
     }
@@ -231,8 +230,8 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                 chainStart.app(chainStyle, 'spread_inside');
                                 chainStart.constraint[orientation] = false;
                                 chainEnd.constraint[orientation] = false;
-                                controller.addGuideline(chainStart, orientation, true, false);
-                                controller.addGuideline(chainEnd, orientation, true, true);
+                                controller.addGuideline(chainStart, chainStart.parent as T, orientation, true, false);
+                                controller.addGuideline(chainEnd, chainStart.parent as T, orientation, true, true);
                                 break;
                         }
                     }
