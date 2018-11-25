@@ -31,8 +31,10 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     }
 
     public abstract userSettings: UserSettings;
+
     public appName = '';
     public stored: ResourceStoredMap;
+
     public readonly assets: FileAsset[] = [];
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;

@@ -76,10 +76,10 @@ declare global {
 
         namespace util {
             export function formatString(value: string, ...params: string[]): string;
+            export function capitalize(value: string, upper?: boolean): string;
             export function convertUnderscore(value: string): string;
             export function convertCamelCase(value: string, char?: string): string;
             export function convertWord(value: string): string;
-            export function capitalize(value: string, upper?: boolean): string;
             export function convertInt(value: string | null): number;
             export function convertFloat(value: string | null): number;
             export function convertPX(value: string, dpi: number, fontSize: number): string;
@@ -109,6 +109,8 @@ declare global {
             export function repeat(many: number, value?: string): string;
             export function indexOf(value: string, ...terms: string[]): number;
             export function lastIndexOf(value: string, char?: string): string;
+            export function minArray(list: number[]): number;
+            export function maxArray(list: number[]): number;
             export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]): boolean;
             export function searchObject(obj: StringMap, value: string | StringMap): any[][];
             export function hasValue(value: any): boolean;

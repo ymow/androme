@@ -8,7 +8,7 @@ import NodeList from './nodelist';
 import Resource from './resource';
 
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getStyle, hasFreeFormText, isElementVisible, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
-import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, maxArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function getAlignmentFloat(right: boolean) {
@@ -50,6 +50,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public nodeObject: Constructor<T>;
     public loading = false;
     public closed = false;
+
     public readonly builtInExtensions: ObjectMap<Extension<T>> = {};
     public readonly extensions = new Set<Extension<T>>();
     public readonly parseElements = new Set<HTMLElement>();
@@ -59,7 +60,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         image: new Map<string, ImageAsset>(),
         renderQueue: new Map<string, string[]>()
     };
-
     public readonly processing: AppProcessing<T, NodeList<T>> = {
         cache: new NodeList<T>(),
         depthMap: new Map<string, Map<number, string>>(),
@@ -71,6 +71,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     private _cacheRoot = new Set<Element>();
     private _renderPosition = new Map<number, T[]>();
     private _renderPositionReverseMap = new Map<number, T>();
+
     private readonly _views: FileAsset[] = [];
     private readonly _includes: FileAsset[] = [];
 
@@ -838,7 +839,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                         if (!settings.floatOverlapDisabled) {
                                                             if (floatAvailable.size > 0 && !pending.map(node => clearedPartial.get(node)).includes('both') && (
                                                                     floated.size === 0 ||
-                                                                    adjacent.bounds.top < Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
+                                                                    adjacent.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
                                                                ))
                                                             {
                                                                 if (clearedPartial.has(adjacent)) {
@@ -1045,7 +1046,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const targeted = nodeY.filter(node => {
                                             if (node.dataset.target) {
                                                 const element = document.getElementById(node.dataset.target);
-                                                return element !== null && hasValue(element.dataset.ext) && element !== parentY.element;
+                                                return !!element && hasValue(element.dataset.ext) && element !== parentY.element;
                                             }
                                             return false;
                                         });
@@ -1356,6 +1357,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     return this.renderNode(layout);
                 }
                 else {
+                    layout.add(NODE_ALIGNMENT.FLOAT);
                     const subgroup: T[] = [];
                     if (right.length === 0) {
                         subgroup.push(...left, ...inline);
@@ -1367,11 +1369,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     layout.items = subgroup;
                     NodeList.sortByAlignment(subgroup, NODE_ALIGNMENT.FLOAT);
                     if (this.viewController.checkRelativeHorizontal(group, nodes, floated, cleared, linearX)) {
-                        layout.setType(NODE_CONTAINER.LINEAR, NODE_CONTAINER.RELATIVE | NODE_ALIGNMENT.FLOAT);
+                        layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
                         return this.renderNode(layout);
                     }
                     else if (!settings.floatOverlapDisabled && right.length === 0) {
-                        layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT);
+                        layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL);
                         output = this.renderNode(layout);
                         layerIndex.push(left, inline);
                     }

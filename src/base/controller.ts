@@ -10,10 +10,12 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         return ELEMENT_MAP[tagName] || 0;
     }
 
-    public cache: NodeList<T>;
-    public application: Application<T>;
     public abstract userSettings: UserSettings;
+
     public abstract readonly localSettings: ControllerSettings;
+
+    public application: Application<T>;
+    public cache: NodeList<T>;
 
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};

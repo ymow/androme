@@ -452,7 +452,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
-                        if (this.is($enum.NODE_CONTAINER.GRID) && $util.withinFraction(this.box.right, Math.max.apply(null, renderChildren.filter(node => node.inlineflow || !node.blockStatic).map(node => node.linear.right)))) {
+                        if (this.is($enum.NODE_CONTAINER.GRID) && $util.withinFraction(this.box.right, $util.maxArray(renderChildren.filter(node => node.inlineflow || !node.blockStatic).map(node => node.linear.right)))) {
                             this.android('layout_width', 'wrap_content');
                         }
                         else if ((this.blockStatic && this.layoutVertical) || (!this.documentRoot && renderChildren.some(node => node.layoutVertical && !node.has('width')))) {
@@ -938,9 +938,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (!this.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
                 if (this.layoutHorizontal) {
                     const textAlign = this.css('textAlign');
-                    const textIndent = this.toInt('textIndent');
-                    const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
-                    let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
+                    let right = this.box.left;
                     this.each((node: View, index) => {
                         if (!(node.floating || node.constraint.marginHorizontal || (this.layoutRelative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)))) {
                             const width = Math.round(node.actualLeft() - right);
@@ -1004,7 +1002,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         private alignHorizontalLayout() {
             if (this.layoutHorizontal) {
                 if (!this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
-                    const minTop: number = Math.min.apply(null, this.renderChildren.map(node => node.top !== null && node.positionRelative && node.renderIndex > 0 ? node.top : 0));
+                    const minTop = $util.minArray(this.renderChildren.map(node => node.top !== null && node.positionRelative && node.renderIndex > 0 ? node.top : 0));
                     if (minTop < 0) {
                         this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, minTop * -1);
                     }
@@ -1013,7 +1011,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     const children = this.renderChildren;
                     if (children.length && (children.every(node => node.baseline || (node.inlineVertical && node.has('verticalAlign', $enum.CSS_STANDARD.UNIT))) || children.some(node => node.imageElement && node.inlineVertical && node.toInt('verticalAlign') !== 0))) {
                         const alignMap = children.map(node => node.inlineVertical ? node.toInt('verticalAlign') : 0);
-                        const marginTop: number = Math.max.apply(null, alignMap);
+                        const marginTop = $util.maxArray(alignMap);
                         if (marginTop > 0 && alignMap.some(value => value < 0) && alignMap.some(value => value > 0)) {
                             const tallest: View[] = [];
                             let offsetTop = 0;
@@ -1069,36 +1067,41 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         private alignVerticalLayout() {
-            const lineHeight = this.lineHeight;
-            if (lineHeight > 0) {
-                function setLineHeight(node: View) {
-                    const offset = lineHeight - (node.hasHeight ? node.viewHeight : node.actualHeight);
-                    if (offset > 0) {
-                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? node.toInt('verticalAlign') : 0));
-                        node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
+            const renderParent = this.renderParent;
+            if (!(renderParent.layoutRelative || (renderParent.layoutConstraint && renderParent.layoutHorizontal))) {
+                const lineHeight = this.lineHeight;
+                if (lineHeight > 0) {
+                    function setLineHeight(node: View) {
+                        const offset = lineHeight - (node.hasHeight ? node.viewHeight : node.actualHeight);
+                        if (offset > 0) {
+                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? node.toInt('verticalAlign') : 0));
+                            node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
+                        }
                     }
-                }
-                function setMinHeight() {
-                    const minHeight = this.css('minHeight');
-                    if ($util.isUnit(minHeight) && parseInt(minHeight) < lineHeight) {
-                        this.android('minHeight', $util.formatPX(lineHeight));
-                        this.mergeGravity('gravity', 'center_vertical');
-                    }
-                }
-                if (this.length === 0) {
-                    if (this.inlineStatic && this.boxStyle.hasBackground) {
-                        setLineHeight(this);
+                    const setMinHeight = () => {
+                        const minHeight = this.css('minHeight');
+                        if ($util.isUnit(minHeight) && parseInt(minHeight) < lineHeight) {
+                            this.android('minHeight', $util.formatPX(lineHeight));
+                            this.mergeGravity('gravity', 'center_vertical');
+                        }
+                    };
+                    if (this.length === 0) {
+                        if (this.layoutHorizontal) {
+                            if (this.inlineStatic && this.boxStyle.hasBackground) {
+                                setLineHeight(this);
+                            }
+                            else {
+                                setMinHeight();
+                            }
+                        }
                     }
                     else {
-                        setMinHeight();
-                    }
-                }
-                else {
-                    if (this.layoutVertical) {
-                        this.each((node: View) => setLineHeight(node), true);
-                    }
-                    else if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
-                        setMinHeight();
+                        if (this.layoutVertical) {
+                            this.each((node: View) => setLineHeight(node), true);
+                        }
+                        else if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
+                            setMinHeight();
+                        }
                     }
                 }
             }
@@ -1301,13 +1304,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
         get anchored() {
             return this.constraint.horizontal && this.constraint.vertical;
-        }
-
-        get layoutHorizontal() {
-            return this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL);
-        }
-        get layoutVertical() {
-            return this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL);
         }
 
         get linearHorizontal() {

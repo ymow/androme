@@ -58,7 +58,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const toolbarOptions = $android_util.createAttribute(options.self);
         const appBarOptions = $android_util.createAttribute(options.appBar);
         const collapsingToolbarOptions = $android_util.createAttribute(options.collapsingToolbar);
-        const hasMenu = $dom.getNestedExtension(node.element, WIDGET_NAME.MENU) !== null;
+        const hasMenu = !!$dom.getNestedExtension(node.element, WIDGET_NAME.MENU);
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];

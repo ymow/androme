@@ -313,7 +313,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
     }
 
     public addStyleTheme(template: string, data: TemplateData, options: ThemeTemplate) {
-        if (options.items && Array.isArray(data['items'])) {
+        if (options.items && $util.isArray(data['items'])) {
             const items = Resource.formatOptions(options.items, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             for (const name in items) {
                 data['items'].push({

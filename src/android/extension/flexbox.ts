@@ -134,7 +134,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                     const HW = CHAIN_MAP.widthHeight[inverse];
                     const [LT, TL] = [CHAIN_MAP.leftTop[index], CHAIN_MAP.leftTop[inverse]];
                     const [RB, BR] = [CHAIN_MAP.rightBottom[index], CHAIN_MAP.rightBottom[inverse]];
-                    const maxSize = Math.max.apply(null, segment.map(item => item.flexElement ? 0 : item.bounds[HW.toLowerCase()]));
+                    const maxSize = $util.maxArray(segment.map(item => item.flexElement ? 0 : item.bounds[HW.toLowerCase()]));
                     let baseline: T | undefined;
                     for (let i = 0; i < segment.length; i++) {
                         const chain = segment[i];

@@ -3,6 +3,7 @@ import Node from './node';
 export default class Layout<T extends Node> implements androme.lib.base.Layout<T> {
     public rowCount = 0;
     public columnCount = 0;
+
     private _items: T[] | undefined;
 
     constructor(

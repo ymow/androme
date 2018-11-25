@@ -89,6 +89,7 @@ declare global {
             readonly lineBreak: boolean;
             readonly block: boolean;
             readonly blockStatic: boolean;
+            readonly blockDimension: boolean;
             readonly alignOrigin: boolean;
             readonly autoMargin: boolean;
             readonly autoMarginLeft: boolean;
@@ -111,10 +112,10 @@ declare global {
             readonly layoutConstraint: boolean;
             readonly actualParent: Node | null;
             readonly actualHeight: number;
-            readonly singleChild: boolean;
             readonly dir: string;
             readonly nodes: Node[];
-            readonly length: number;
+            readonly firstChild: Node | null;
+            readonly singleChild: boolean;
             readonly previousElementSibling: Element | null;
             readonly nextElementSibling: Element | null;
             readonly center: Point;

@@ -4,7 +4,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { formatPX, partition } from '../lib/util';
+import { formatPX, maxArray, partition } from '../lib/util';
 
 export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
@@ -64,13 +64,13 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                             node.css('marginLeft', node.style.marginLeft);
                         }
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                        const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.map(item => item.bounds.width));
-                        const widthRight: number = Math.max.apply(null, sectionRight.map(item => Math.abs(item.toInt('right'))));
+                        const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : maxArray(sectionRight.map(item => item.bounds.width));
+                        const widthRight = maxArray(sectionRight.map(item => Math.abs(item.toInt('right'))));
                         sectionLeft.forEach(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
                     }
                 }
-                const marginLeftType: number = Math.max.apply(null, marginLeft);
+                const marginLeftType = maxArray(marginLeft);
                 if (marginLeftType > 0) {
                     const rows = NodeList.partitionRows(node.children.filter(item => item.pageflow));
                     const columnStart = rows.map(item => item[0]);

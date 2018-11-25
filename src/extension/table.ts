@@ -6,7 +6,7 @@ import Layout from '../base/layout';
 import Node from '../base/node';
 
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
-import { convertFloat, convertInt, formatPercent, formatPX, isPercent, isUnit } from '../lib/util';
+import { convertFloat, convertInt, formatPercent, formatPX, isPercent, isUnit, maxArray } from '../lib/util';
 
 const enum LAYOUT_TABLE {
     NONE = 0,
@@ -144,7 +144,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 columnIndex[i] += element.colSpan;
             }
         }
-        const columnCount: number = Math.max.apply(null, columnIndex);
+        const columnCount = maxArray(columnIndex);
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
             let percentTotal = 100;
             mapWidth.forEach((value, index) => {
@@ -218,7 +218,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     }
                 }
                 else {
-                    if (caption.bounds.width > Math.max.apply(null, rowWidth)) {
+                    if (caption.bounds.width > maxArray(rowWidth)) {
                         setBoundsWidth(caption);
                     }
                 }

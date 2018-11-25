@@ -10,6 +10,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public documentRoot = false;
     public eventOnly = false;
     public preloaded = false;
+
     public readonly options: ExternalData = {};
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();

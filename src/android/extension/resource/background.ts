@@ -198,24 +198,22 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundPosition: string[] = [];
-                if (Array.isArray(stored.backgroundImage)) {
-                    if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
-                        backgroundImage.push(...stored.backgroundImage);
-                        for (let i = 0; i < backgroundImage.length; i++) {
-                            if (backgroundImage[i] && backgroundImage[i] !== 'none') {
-                                backgroundDimensions.push(Resource.ASSETS.images.get($dom.cssResolveUrl(backgroundImage[i])));
-                                backgroundImage[i] = Resource.addImageUrl(backgroundImage[i]);
-                                const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
-                                const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
-                                const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
-                                const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
-                                backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
-                            }
-                            else {
-                                backgroundImage[i] = '';
-                                backgroundRepeat[i] = '';
-                                backgroundPosition[i] = '';
-                            }
+                if ($util.isArray(stored.backgroundImage) && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+                    backgroundImage.push(...stored.backgroundImage);
+                    for (let i = 0; i < backgroundImage.length; i++) {
+                        if (backgroundImage[i] && backgroundImage[i] !== 'none') {
+                            backgroundDimensions.push(Resource.ASSETS.images.get($dom.cssResolveUrl(backgroundImage[i])));
+                            backgroundImage[i] = Resource.addImageUrl(backgroundImage[i]);
+                            const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
+                            const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
+                            const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
+                            const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
+                            backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
+                        }
+                        else {
+                            backgroundImage[i] = '';
+                            backgroundRepeat[i] = '';
+                            backgroundPosition[i] = '';
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
+import { NODE_ALIGNMENT } from '../lib/enumeration';
 
 import Node from './node';
 import NodeList from './nodelist';
@@ -112,15 +112,23 @@ export default abstract class NodeGroup extends Node {
     }
 
     get inlineflow() {
-        return this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
+        return this.inlineStatic || this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
     }
 
     get inlineStatic() {
         return this.every(node => node.inlineStatic);
     }
 
+    get inlineVertical() {
+        return this.every(node => node.inlineVertical);
+    }
+
     get blockStatic() {
-        return this.every(node => node.blockStatic);
+        return this.some(node => node.blockStatic);
+    }
+
+    get blockDimension() {
+        return this.some(node => node.blockDimension);
     }
 
     get floating() {
@@ -143,7 +151,10 @@ export default abstract class NodeGroup extends Node {
     }
 
     get display() {
-        return this.css('display') || (this.every(node => node.blockStatic) || this.of(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.FLOAT) ? 'block' : this.every(node => node.inline) ? 'inline' : 'inline-block');
+        return this.css('display') || (
+            this.some(node => node.block) ? 'block'
+                                          : this.some(node => node.blockDimension) ? 'inline-block' : 'inline'
+        );
     }
 
     get element() {

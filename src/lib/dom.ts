@@ -1,7 +1,7 @@
 import { REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
-import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, includes, isPercent, maxArray, minArray, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -86,8 +86,8 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
             bounds.height = Math.max(rect.height, bounds.height);
         }
         if (top.size > 1 && bottom.size > 1) {
-            bounds.top = Math.min.apply(null, Array.from(top));
-            bounds.bottom = Math.max.apply(null, Array.from(bottom));
+            bounds.top = minArray(Array.from(top));
+            bounds.bottom = maxArray(Array.from(bottom));
             if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
                 multiLine = true;
             }

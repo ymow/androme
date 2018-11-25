@@ -7,12 +7,12 @@ const NUMERALS = [
     '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
 ];
 
-function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
+function sort<T>(list: T[], asc: 1 | 2, ...attrs: string[]) {
     return list.sort((a, b) => {
         for (const attr of attrs) {
             const result = compareObject(a, b, attr, true);
             if (result && result[0] !== result[1]) {
-                if (asc === 0) {
+                if (asc === 1) {
                     return result[0] > result[1] ? 1 : -1;
                 }
                 else {
@@ -43,12 +43,20 @@ function compareObject(obj1: {}, obj2: {}, attr: string, numeric: boolean) {
             return [0, 1];
         }
     }
-    if (numeric && !isNaN(parseInt(current1)) && !isNaN(parseInt(current2))) {
-        return [parseInt(current1), parseInt(current2)];
+    if (numeric) {
+        const value1 = parseInt(current1);
+        const value2 = parseInt(current2);
+        if (!isNaN(value1) && !isNaN(value2)) {
+            return [value1, value2];
+        }
+        else if (!isNaN(value1)) {
+            return [1, 0];
+        }
+        else if (!isNaN(value2)) {
+            return [0, 1];
+        }
     }
-    else {
-        return [current1, current2];
-    }
+    return [current1, current2];
 }
 
 export function formatString(value: string, ...params: string[]) {
@@ -56,6 +64,10 @@ export function formatString(value: string, ...params: string[]) {
         value = value.replace(`{${i}}`, params[i]);
     }
     return value;
+}
+
+export function capitalize(value: string, upper = true) {
+    return value ? value.charAt(0)[upper ? 'toUpperCase' : 'toLowerCase']() + value.substring(1)[upper ? 'toLowerCase' : 'toString']() : '';
 }
 
 export function convertUnderscore(value: string) {
@@ -78,10 +90,6 @@ export function convertCamelCase(value: string, char = '-') {
 
 export function convertWord(value: string) {
     return value ? value.replace(/[^\w]/g, '_').trim() : '';
-}
-
-export function capitalize(value: string, upper = true) {
-    return value ? value.charAt(0)[upper ? 'toUpperCase' : 'toLowerCase']() + value.substring(1)[upper ? 'toLowerCase' : 'toString']() : '';
 }
 
 export function convertInt(value: string | null) {
@@ -340,14 +348,34 @@ export function lastIndexOf(value: string, char = '/') {
     return value.substring(value.lastIndexOf(char) + 1);
 }
 
+export function minArray(list: number[]) {
+    if (list.length > 0) {
+        return Math.min.apply(null, list) as number;
+    }
+    return Number.MAX_VALUE;
+}
+
+export function maxArray(list: number[]) {
+    if (list.length > 0) {
+        return Math.max.apply(null, list) as number;
+    }
+    return Number.MAX_VALUE * -1;
+}
+
 export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
+    let result = false;
     for (const attr of attrs) {
-        const result = compareObject(obj1, obj2, attr, false);
-        if (!result || result[0] !== result[1]) {
-            return false;
+        const value = compareObject(obj1, obj2, attr, false);
+        if (value && value[0] === value[1]) {
+            result = true;
+            continue;
+        }
+        else {
+            result = false;
+            break;
         }
     }
-    return true;
+    return result;
 }
 
 export function searchObject(obj: StringMap, value: string | StringMap) {
@@ -448,9 +476,9 @@ export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[],
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {
-    return sort<T>(list, 0, ...attrs);
+    return sort<T>(list, 1, ...attrs);
 }
 
 export function sortDesc<T>(list: T[], ...attrs: string[]) {
-    return sort<T>(list, 1, ...attrs);
+    return sort<T>(list, 2, ...attrs);
 }

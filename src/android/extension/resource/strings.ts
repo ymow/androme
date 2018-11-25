@@ -61,43 +61,53 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                             let leadingSpace = 0;
                             for (let i = 0; i < value.length; i++) {
                                 switch (value.charCodeAt(i)) {
-                                    case 32:
-                                        continue;
                                     case 160:
                                         leadingSpace++;
+                                    case 32:
                                         continue;
+                                    default:
+                                        break;
                                 }
-                                break;
                             }
                             if (leadingSpace === 0) {
                                 stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
                             }
                         }
                     }
+                    stored.value = $xml.replaceCharacter(stored.value);
                     if (node.htmlElement) {
-                        if (node.css('fontVariant') === 'small-caps') {
-                            stored.value = stored.value.toUpperCase();
-                        }
                         const match = node.css('textDecoration').match(/(underline|line-through)/);
                         if (match) {
                             switch (match[0]) {
                                 case 'underline':
-                                    stored.value = `<u>${$xml.replaceCharacter(stored.value)}</u>`;
+                                    stored.value = `<u>${stored.value}</u>`;
                                     break;
                                 case 'line-through':
-                                    stored.value = `<strike>${$xml.replaceCharacter(stored.value)}</strike>`;
+                                    stored.value = `<strike>${stored.value}</strike>`;
                                     break;
                             }
                         }
-                        else {
-                            stored.value = $xml.replaceCharacter(stored.value);
+                        if (node.css('fontVariant') === 'small-caps') {
+                            stored.value = stored.value.toUpperCase();
                         }
                     }
-                    else {
-                        stored.value = $xml.replaceCharacter(stored.value);
+                    const actualParent = node.actualParent;
+                    if (actualParent) {
+                        let textIndent = 0;
+                        if (actualParent.blockDimension || node.blockDimension) {
+                            textIndent = node.toInt('textIndent') || actualParent.toInt('textIndent');
+                        }
+                        if (textIndent !== 0 && (node.blockDimension || actualParent.firstChild === node)) {
+                            if (textIndent > 0) {
+                                stored.value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + stored.value;
+                            }
+                            else if (node.toInt('textIndent') + node.bounds.width < 0) {
+                                stored.value = '';
+                            }
+                        }
                     }
                     const name = Resource.addString(stored.value, stored.name, this.options.useNumberAlias);
-                    if (name !== '' && node.toInt('textIndent') + node.bounds.width > 0) {
+                    if (name !== '') {
                         node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, node.renderExtension.size === 0);
                     }
                 }

@@ -26,6 +26,7 @@ interface CachedValue {
     inlineVertical?: boolean;
     block?: boolean;
     blockStatic?: boolean;
+    blockDimension?: boolean;
     floating?: boolean;
     autoMargin?: boolean;
     autoMarginLeft?: boolean;
@@ -63,6 +64,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public abstract readonly localSettings: EnvironmentSettings;
     public abstract readonly renderChildren: T[];
+
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public containerType = 0;
@@ -79,14 +81,17 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public renderExtension = new Set<Extension<T>>();
     public controlId = '';
     public companion: T | undefined;
+
     public readonly initial: InitialData<T>;
 
     protected abstract _namespaces: Set<string>;
     protected abstract _controlName: string;
     protected abstract _renderParent: T;
     protected abstract _documentParent: T;
+
     protected abstract readonly _boxAdjustment: BoxModel;
     protected abstract readonly _boxReset: BoxModel;
+
     protected _cached: CachedValue = {};
     protected _box: BoxDimensions;
     protected _bounds: BoxDimensions;
@@ -136,8 +141,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract get renderParent(): T;
     public abstract get linearHorizontal(): boolean;
     public abstract get linearVertical(): boolean;
-    public abstract get layoutHorizontal(): boolean;
-    public abstract get layoutVertical(): boolean;
     public abstract get inlineWidth(): boolean;
     public abstract get inlineHeight(): boolean;
     public abstract get blockWidth(): boolean;
@@ -1235,6 +1238,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.blockStatic;
     }
 
+    get blockDimension() {
+        if (this._cached.blockDimension === undefined) {
+            const display = this.display;
+            this._cached.blockDimension = this.block || display === 'inline-block' || display === 'table-cell';
+        }
+        return this._cached.blockDimension;
+    }
+
     get alignOrigin() {
         if (this._cached.alignOrigin === undefined) {
             this._cached.alignOrigin = this.top === null && this.right === null && this.bottom === null && this.left === null;
@@ -1423,16 +1434,19 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.is(NODE_CONTAINER.CONSTRAINT);
     }
 
+    get layoutHorizontal() {
+        return this.hasAlign(NODE_ALIGNMENT.HORIZONTAL);
+    }
+    get layoutVertical() {
+        return this.hasAlign(NODE_ALIGNMENT.VERTICAL);
+    }
+
     get actualParent(): T | null {
         return getElementAsNode(this.element.parentElement);
     }
 
     get actualHeight() {
         return this.plainText ? this.bounds.bottom - this.bounds.top : this.bounds.height;
-    }
-
-    get singleChild() {
-        return this.rendered ? this.renderParent.length === 1 : this.parent.length === 1;
     }
 
     get dir() {
@@ -1459,6 +1473,21 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get nodes() {
         return this.rendered ? this.renderChildren : this.children;
+    }
+
+    get firstChild() {
+        const children = this.nodes;
+        for (let i = 0; i < this.element.children.length; i++) {
+            const node = Node.getElementAsNode(<Element> this.element.children[i]);
+            if (node && children.includes(node)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    get singleChild() {
+        return this.nodes.length === 1;
     }
 
     get previousElementSibling() {

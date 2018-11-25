@@ -107,9 +107,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         );
     }
 
+    public abstract userSettings: UserSettings;
+
     public application: Application<T>;
     public cache: NodeList<T>;
-    public abstract userSettings: UserSettings;
 
     protected constructor(public fileHandler: File<T>) {
         fileHandler.stored = Resource.STORED;
@@ -550,12 +551,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                     if (value !== '') {
-                        if (node.renderParent.layoutVertical && node.inlineText) {
-                            const textIndent = node.toInt('textIndent');
-                            if (textIndent > 0) {
-                                value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + value;
-                            }
-                        }
                         node.data(Resource.KEY_NAME, 'valueString', { name, value });
                     }
                 }

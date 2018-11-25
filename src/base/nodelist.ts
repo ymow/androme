@@ -4,9 +4,9 @@ import Container from './container';
 import Node from './node';
 
 import { getElementAsNode, isUserAgent } from '../lib/dom';
-import { convertInt, hasBit, partition, withinFraction } from '../lib/util';
+import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
 
-function getDocumentParent<T extends Node>(nodes: T[]) {
+function getActualParent<T extends Node>(nodes: T[]) {
     for (const node of nodes) {
         if (node.domElement && node.actualParent) {
             return node.actualParent as T;
@@ -46,18 +46,18 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
-        if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
+        if (!list.some(node => node.baseline && (node.textElement || node.imageElement))) {
             baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let containerTypeA = a.containerType;
                 let containerTypeB = b.containerType;
                 if (a.layoutHorizontal) {
-                    containerTypeA = Math.min.apply(null, a.map(item => item.containerType));
+                    containerTypeA = minArray(a.map(item => item.containerType));
                 }
                 else if (a.length > 0) {
                     containerTypeA = Number.MAX_VALUE;
                 }
                 if (b.layoutHorizontal) {
-                    containerTypeB = Math.min.apply(null, b.map(item => item.containerType));
+                    containerTypeB = minArray(b.map(item => item.containerType));
                 }
                 else if (b.length > 0) {
                     containerTypeB = Number.MAX_VALUE;
@@ -66,8 +66,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             });
         }
         else {
-            const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
-            const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
+            const lineHeight = maxArray(list.map(node => node.lineHeight));
+            const boundsHeight = maxArray(list.map(node => node.bounds.height));
             if (lineHeight > boundsHeight) {
                 const result = list.filter(node => node.lineHeight === lineHeight);
                 baseline = (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
@@ -75,7 +75,13 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     return baseline;
                 }
             }
-            baseline = list.filter(node => node.baseline).sort((a, b) => {
+            baseline = list.sort((a, b) => {
+                if (a.groupElement) {
+                    return 1;
+                }
+                else if (b.groupElement) {
+                    return -1;
+                }
                 let heightA = a.bounds.height;
                 let heightB = b.bounds.height;
                 if (isUserAgent(USER_AGENT.EDGE)) {
@@ -177,7 +183,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             case 1:
                 return true;
             default:
-                const parent = getDocumentParent(nodes);
+                const parent = getActualParent(nodes);
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
@@ -229,7 +235,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             case 1:
                 return true;
             default:
-                const parent = getDocumentParent(nodes);
+                const parent = getActualParent(nodes);
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
@@ -245,9 +251,9 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static partitionRows<T extends Node>(list: T[]) {
         const [children, cleared] = ((): [T[], Map<T, string>] => {
-            const parent = getDocumentParent(list);
+            const parent = getActualParent(list);
             if (parent) {
-                return [Array.from(parent.element.children).map(element => getElementAsNode(element) as T).filter(node => node), this.clearedAll(parent)];
+                return [Array.from(parent.element.childNodes).map(element => getElementAsNode(<Element> element) as T).filter(node => node), this.clearedAll(parent)];
             }
             else {
                 return [list, this.cleared(list)];
