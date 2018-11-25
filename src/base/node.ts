@@ -518,11 +518,19 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return convertPX(value, this.dpi, this.fontSize);
     }
 
-    public convertPercent(value: string, horizontal: boolean, parentBounds = false) {
+    public convertPercent(value: string, horizontal: boolean, parent = false) {
         if (isPercent(value)) {
+            const node = parent ? this.documentParent : this;
+            const attr = horizontal ? 'width' : 'height';
+            let dimension: number;
+            if (node.has(attr, CSS_STANDARD.UNIT)) {
+                dimension = node.toInt(attr);
+            }
+            else {
+                dimension = node[parent ? 'box' : 'bounds'][attr];
+            }
             const percent = parseFloat(value) >= 1 ? parseInt(value) / 100 : parseFloat(value);
-            const bounds = parentBounds ? this.documentParent.bounds : this.bounds;
-            return `${Math.round(percent * bounds[horizontal ? 'width' : 'height'])}px`;
+            return `${Math.round(percent * dimension)}px`;
         }
         return '0px';
     }

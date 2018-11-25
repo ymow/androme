@@ -1,5 +1,6 @@
 export const EXT_ANDROID = {
     ELEMENT_CUSTOM: 'android.element.custom',
+    ELEMENT_SCROLLVIEW: 'android.element.scrollview',
     CONSTRAINT_GUIDELINE: 'android.constraint.guideline',
     RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',

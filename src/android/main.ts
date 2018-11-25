@@ -23,6 +23,7 @@ import Table from './extension/table';
 import ConstraintGuideline from './extension/constraint/guideline';
 
 import ElementCustom from './extension/element/custom';
+import ElementScrollView from './extension/element/scrollview';
 
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
@@ -79,7 +80,8 @@ const lib = {
             Guideline: ConstraintGuideline
         },
         element: {
-            Custom: ElementCustom
+            Custom: ElementCustom,
+            ScrollView: ElementScrollView
         },
         resource: {
             Background: ResourceBackground,
@@ -216,6 +218,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
             [EXT_ANDROID.ELEMENT_CUSTOM]: new ElementCustom(EXT_ANDROID.ELEMENT_CUSTOM, framework),
+            [EXT_ANDROID.ELEMENT_SCROLLVIEW]: new ElementScrollView(EXT_ANDROID.ELEMENT_SCROLLVIEW, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

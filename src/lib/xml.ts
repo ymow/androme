@@ -1,9 +1,8 @@
 import { isArray, isString, repeat, trimEnd } from './util';
 
-export function getEnclosingTag(controlName: string, id: number, depth: number, xml = '', preXml = '', postXml = '') {
+export function getEnclosingTag(controlName: string, id: number, depth: number, xml = '') {
     const indent = repeat(Math.max(0, depth));
-    let output = preXml +
-                 `{<${id}}`;
+    let output = `{<${id}}`;
     if (xml !== '') {
         output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
                            xml +
@@ -12,8 +11,7 @@ export function getEnclosingTag(controlName: string, id: number, depth: number, 
     else {
         output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
     }
-    output += `{>${id}}` +
-              postXml;
+    output += `{>${id}}`;
     return output;
 }
 

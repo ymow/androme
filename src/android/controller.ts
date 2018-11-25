@@ -30,8 +30,8 @@ function adjustBaseline<T extends View>(nodes: T[]) {
             const adjustable: number[] = [];
             for (const node of alignable) {
                 if (node !== baseline && (node.domElement || (node.layoutHorizontal && node.renderChildren.some(item => item.textElement)))) {
-                    if (baseline.positionRelative && baseline.renderIndex === 0 && Math.max(node.bounds.height, node.lineHeight) < Math.max(baseline.bounds.height, baseline.lineHeight)) {
-                        node.anchor(baseline.bottom !== null ? 'bottom' : 'top', baseline.stringId);
+                    if (baseline.positionRelative && baseline.renderIndex === 0 && (baseline.top !== null || baseline.bottom !== null) && Math.max(node.bounds.height, node.lineHeight) < Math.max(baseline.bounds.height, baseline.lineHeight)) {
+                        node.anchor(baseline.top !== null ? 'top' : 'bottom', baseline.stringId);
                     }
                     else if (node.toInt('top') === 0 && node.toInt('bottom') === 0) {
                         node.anchor(node.is($enum.NODE_CONTAINER.BUTTON) ? 'bottom' : 'baseline', baseline.stringId);
@@ -1033,8 +1033,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public renderNodeGroup(data: $Layout<T>) {
-        const [node, parent, containerType, alignmentType] = [data.node, data.parent, data.containerType, data.alignmentType];
         const CONTAINER = $enum.NODE_CONTAINER;
+        const [node, parent, containerType, alignmentType] = [data.node, data.parent, data.containerType, data.alignmentType];
         const options = createAttribute();
         let valid = false;
         switch (containerType) {
@@ -1067,106 +1067,13 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
         }
         if (valid) {
-            node.alignmentType |= alignmentType;
-            const controlName = View.getControlName(containerType);
-            node.setControlType(controlName, containerType);
             const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-            let preXml = '';
-            let postXml = '';
-            if (node.overflowX || node.overflowY) {
-                const overflow: string[] = [];
-                if (node.overflowX && node.overflowY) {
-                    overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL, CONTAINER_ANDROID.SCROLL_VERTICAL);
-                }
-                else {
-                    if (node.overflowX) {
-                        overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL);
-                    }
-                    if (node.overflowY) {
-                        overflow.push(CONTAINER_ANDROID.SCROLL_VERTICAL);
-                    }
-                }
-                let previous: T | undefined;
-                const scrollView = overflow.map((value, index) => {
-                    const container = new View(this.cache.nextId, index === 0 ? node.element : undefined, this.delegateNodeInit) as T;
-                    container.tagName = node.tagName;
-                    container.setControlType(value);
-                    if (index === 0) {
-                        container.inherit(node, 'initial', 'base', 'style', 'styleMap');
-                        parent.replaceNode(node, container);
-                        container.render(parent);
-                    }
-                    else {
-                        container.init();
-                        container.documentParent = node.documentParent;
-                        container.inherit(node, 'dimensions');
-                        container.inherit(node, 'initial', 'style', 'styleMap');
-                        if (previous) {
-                            previous.css('overflow', 'visible scroll');
-                            previous.css('overflowX', 'scroll');
-                            previous.css('overflowY', 'visible');
-                            container.parent = previous;
-                            container.render(previous);
-                        }
-                        container.css('overflow', 'scroll visible');
-                        container.css('overflowX', 'visible');
-                        container.css('overflowY', 'scroll');
-                        if (node.has('height', $enum.CSS_STANDARD.UNIT)) {
-                            container.css('height', $util.formatPX(node.toInt('height') + node.paddingTop + node.paddingBottom));
-                        }
-                    }
-                    container.resetBox($enum.BOX_STANDARD.PADDING);
-                    const indent = $util.repeat(container.renderDepth);
-                    preXml += `{<${container.id}}${indent}<${value}{@${container.id}}>\n` +
-                              $xml.formatPlaceholder(container.id);
-                    postXml = `${indent}</${value}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
-                    previous = container;
-                    this.cache.append(container);
-                    return container;
-                });
-                if (scrollView.length === 2) {
-                    for (const item of scrollView) {
-                        if (item.hasWidth) {
-                            const value = item.css('width');
-                            if ($util.isPercent(value)) {
-                                item.android('layout_width', item.convertPercent(value, true, true));
-                            }
-                            else {
-                                item.android('layout_width', value);
-                            }
-                        }
-                        else {
-                            item.android('layout_width', 'wrap_content');
-                        }
-
-                        item.android('layout_height', item.has('height', $enum.CSS_STANDARD.UNIT) ? item.css('height') : 'wrap_content');
-                    }
-                    node.android('layout_width', 'wrap_content');
-                    node.android('layout_height', 'wrap_content');
-                }
-                else {
-                    if (node.overflowX) {
-                        node.android('layout_width', 'wrap_content');
-                        node.android('layout_height', 'match_parent');
-                    }
-                    else {
-                        node.android('layout_width', 'match_parent');
-                        node.android('layout_height', 'wrap_content');
-                    }
-                }
-                if (previous) {
-                    node.overflow = 0;
-                    node.parent = previous;
-                    node.resetBox($enum.BOX_STANDARD.MARGIN);
-                    node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
-                    node.render(previous);
-                }
-            }
-            else {
-                node.render(target ? node : parent);
-            }
+            const controlName = View.getControlName(containerType);
+            node.alignmentType |= alignmentType;
+            node.setControlType(controlName, containerType);
+            node.render(target ? node : parent);
             node.apply(options);
-            return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id), preXml, postXml);
+            return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id));
         }
         return '';
     }

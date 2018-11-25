@@ -7,7 +7,7 @@ import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 
-export default class <T extends View> extends androme.lib.base.Extension<T> {
+export default class Custom<T extends View> extends androme.lib.base.Extension<T> {
     constructor(
         name: string,
         framework: number,

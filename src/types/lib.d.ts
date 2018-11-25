@@ -122,7 +122,7 @@ declare global {
         }
 
         namespace xml {
-            export function getEnclosingTag(controlName: string, id: number, depth: number, xml?: string, preXml?: string, postXml?: string): string;
+            export function getEnclosingTag(controlName: string, id: number, depth: number, xml?: string): string;
             export function formatPlaceholder(id: string | number, symbol?: string): string;
             export function replacePlaceholder(value: string, id: string | number, content: string, before?: boolean): string;
             export function removePlaceholderAll(value: string): string;

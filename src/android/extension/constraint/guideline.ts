@@ -7,7 +7,7 @@ import $Layout = androme.lib.base.Layout;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
-export default class ConstraintGuideline<T extends View> extends androme.lib.base.Extension<T> {
+export default class Guideline<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
         circlePosition: false
     };
