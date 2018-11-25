@@ -99,6 +99,6 @@ interface ExtensionResult<T> {
     next?: boolean;
     parent?: androme.lib.base.Node;
     renderAs?: androme.lib.base.Node;
-    renderOutput?: string;
+    outputAs?: string;
     include?: boolean;
 }

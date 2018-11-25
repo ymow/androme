@@ -232,7 +232,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             tagName: new Set(WEBVIEW_ANDROID),
         },
         unsupported: {
-            tagName: new Set(['OPTION', 'MAP', 'AREA', 'svg'])
+            tagName: new Set(['OPTION', 'MAP', 'AREA', 'IFRAME', 'svg'])
         },
         relative: {
             superscriptFontScale: -4,

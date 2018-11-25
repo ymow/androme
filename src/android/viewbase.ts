@@ -1170,7 +1170,17 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                     }
                 }
-                ['padding', 'margin'].forEach(region => {
+                const boxModel: BoxMargin & BoxPadding = {
+                    marginTop: 0,
+                    marginRight: 0,
+                    marginBottom: 0,
+                    marginLeft: 0,
+                    paddingTop: 0,
+                    paddingRight: 0,
+                    paddingBottom: 0,
+                    paddingLeft: 0
+                };
+                ['margin', 'padding'].forEach((region, index) => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                         const dimension = region + direction;
                         let value = 0;
@@ -1184,36 +1194,66 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             value += this._boxAdjustment[dimension];
                         }
                         if (value !== 0) {
-                            this.android(this.localizeString(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`]), $util.formatPX(value));
+                            boxModel[region + direction] = value;
                         }
                     });
-                });
-                if (this.supported('android', 'layout_marginHorizontal')) {
+                    const prefix = index === 0 ? 'layout_margin' : 'padding';
+                    const top = `${region}Top`;
+                    const right = `${region}Right`;
+                    const bottom = `${region}Bottom`;
+                    const left = `${region}Left`;
                     const localizeLeft = this.localizeString('Left');
                     const localizeRight = this.localizeString('Right');
-                    ['layout_margin', 'padding'].forEach((value, index) => {
-                        const top = $util.convertInt(this.android(`${value}Top`));
-                        const right = $util.convertInt(this.android(value + localizeRight));
-                        const bottom = $util.convertInt(this.android(`${value}Bottom`));
-                        const left = $util.convertInt(this.android(value + localizeLeft));
-                        if (top !== 0 && top === bottom && bottom === left && left === right) {
-                            this.delete('android', `${value}*`);
-                            this.android(value, $util.formatPX(top));
+                    let mergeAll: number | undefined;
+                    let mergeHorizontal: number | undefined;
+                    let mergeVertical: number | undefined;
+                    if (this.supported('android', 'layout_marginHorizontal')) {
+                        if (boxModel[top] === boxModel[right] && boxModel[right] === boxModel[bottom] && boxModel[bottom] === boxModel[left]) {
+                            mergeAll = boxModel[top];
                         }
                         else {
-                            if (!(this.renderParent.is($enum.NODE_CONTAINER.GRID) && index === 0)) {
-                                if (top !== 0 && top === bottom) {
-                                    this.delete('android', `${value}Top`, `${value}Bottom`);
-                                    this.android(`${value}Vertical`, $util.formatPX(top));
-                                }
-                                if (left !== 0 && left === right) {
-                                    this.delete('android', value + localizeLeft, value + localizeRight);
-                                    this.android(`${value}Horizontal`, $util.formatPX(left));
-                                }
+                            if (boxModel[left] === boxModel[right]) {
+                                mergeHorizontal = boxModel[left];
+                            }
+                            if (boxModel[top] === boxModel[bottom]) {
+                                mergeVertical = boxModel[top];
                             }
                         }
-                    });
-                }
+                    }
+                    if (mergeAll !== undefined) {
+                        if (mergeAll !== 0) {
+                            this.android(prefix, $util.formatPX(mergeAll));
+                        }
+                    }
+                    else {
+                        if (mergeHorizontal !== undefined) {
+                            if (mergeHorizontal !== 0) {
+                                this.android(`${prefix}Horizontal`, $util.formatPX(mergeHorizontal));
+                            }
+                        }
+                        else {
+                            if (boxModel[left] !== 0) {
+                                this.android(prefix + localizeLeft, $util.formatPX(boxModel[left]));
+                            }
+                            if (boxModel[right] !== 0) {
+                                this.android(prefix + localizeRight, $util.formatPX(boxModel[right]));
+                            }
+                        }
+                        if (mergeVertical !== undefined) {
+                            if (mergeVertical !== 0) {
+                                this.android(`${prefix}Vertical`, $util.formatPX(mergeVertical));
+                            }
+                        }
+                        else {
+                            if (boxModel[top] !== 0) {
+                                this.android(`${prefix}Top`, $util.formatPX(boxModel[top]));
+                            }
+                            if (boxModel[bottom] !== 0) {
+                                this.android(`${prefix}Bottom`, $util.formatPX(boxModel[bottom]));
+                            }
+                        }
+                    }
+                });
             }
         }
 

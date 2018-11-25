@@ -20,8 +20,8 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
         );
         layout.rowCount = 1;
         layout.columnCount = 2;
-        const renderOutput = this.application.renderNode(layout);
-        return { output: '', complete: true, parent: group, renderAs: group, renderOutput, include: true };
+        const outputAs = this.application.renderNode(layout);
+        return { output: '', complete: true, parent: group, renderAs: group, outputAs, include: true };
     }
 
     public processChild(node: T) {

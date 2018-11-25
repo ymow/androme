@@ -26,15 +26,11 @@ export enum NODE_CONTAINER {
     LINE,
     SPACE,
     BLOCK,
-    WEB_VIEW,
     FRAME,
     LINEAR,
-    RADIO_GROUP,
     GRID,
     RELATIVE,
-    CONSTRAINT,
-    SCROLL_HORIZONTAL,
-    SCROLL_VERTICAL
+    CONSTRAINT
 }
 
 export enum NODE_ALIGNMENT {

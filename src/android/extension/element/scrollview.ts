@@ -1,10 +1,11 @@
-import { CONTAINER_ANDROID } from '../../lib/constant';
-
 import View from '../../view';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
+
+const SCROLL_HORIZONTAL = 'HorizontalScrollView';
+const SCROLL_VERTICAL = 'android.support.v4.widget.NestedScrollView';
 
 export default class ScrollView<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
@@ -15,29 +16,29 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         const overflow: string[] = [];
         if (node.overflowX && node.overflowY) {
-            overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL, CONTAINER_ANDROID.SCROLL_VERTICAL);
+            overflow.push(SCROLL_HORIZONTAL, SCROLL_VERTICAL);
         }
         else if (node.overflowX) {
-            overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL);
+            overflow.push(SCROLL_HORIZONTAL);
         }
         else if (node.overflowY) {
-            overflow.push(CONTAINER_ANDROID.SCROLL_VERTICAL);
+            overflow.push(SCROLL_VERTICAL);
         }
         else {
             let overflowType = 0;
             if (node.hasWidth) {
                 overflowType |= $enum.NODE_ALIGNMENT.HORIZONTAL;
-                overflow.push(CONTAINER_ANDROID.SCROLL_HORIZONTAL);
+                overflow.push(SCROLL_HORIZONTAL);
             }
             if (node.hasHeight) {
                 overflowType |= $enum.NODE_ALIGNMENT.VERTICAL;
-                overflow.push(CONTAINER_ANDROID.SCROLL_VERTICAL);
+                overflow.push(SCROLL_VERTICAL);
             }
             node.overflow = overflowType;
         }
         const scrollView = overflow.map((value, index) => {
             const container = new View(this.application.processing.cache.nextId, index === 0 ? node.element : undefined, this.application.viewController.delegateNodeInit) as T;
-            container.setControlType(value);
+            container.setControlType(value, $enum.NODE_CONTAINER.BLOCK);
             if (index === 0) {
                 container.inherit(node, 'initial', 'base', 'style', 'styleMap');
                 parent.replaceNode(node, container);
@@ -57,7 +58,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             const item = scrollView[i];
             const previous = scrollView[i - 1];
             switch (item.controlName) {
-                case CONTAINER_ANDROID.SCROLL_VERTICAL: {
+                case SCROLL_VERTICAL: {
                     const value = item.css('height');
                     item.android('layout_height', $util.isPercent(value) ? item.convertPercent(value, false, true) : value);
                     item.css({
@@ -68,7 +69,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                     });
                     break;
                 }
-                case CONTAINER_ANDROID.SCROLL_HORIZONTAL: {
+                case SCROLL_HORIZONTAL: {
                     const value = item.css('width');
                     item.android('layout_width', $util.isPercent(value) ? item.convertPercent(value, true, true) : value);
                     item.css({
@@ -108,6 +109,6 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
         node.parent = scrollView[scrollView.length - 1];
         node.resetBox($enum.BOX_STANDARD.MARGIN);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
-        return { output: '', parent: node.parent, renderAs: scrollView[0], renderOutput: output };
+        return { output: '', parent: node.parent, renderAs: scrollView[0], outputAs: output };
     }
 }

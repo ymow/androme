@@ -8,6 +8,8 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
+const RADIO_GROUP = 'RadioGroup';
+
 export default class ScrollView<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         const element = <HTMLInputElement> node.element;
@@ -30,7 +32,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
         if (children.length > 1) {
             const container = this.application.viewController.createNodeGroup(node, parent, children);
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
-            container.setControlType(CONTAINER_ANDROID.RADIO_GROUP, $enum.NODE_CONTAINER.RADIO_GROUP);
+            container.setControlType(RADIO_GROUP, $enum.NODE_CONTAINER.INLINE);
             container.inherit(node, 'alignment');
             container.each((item: T) => {
                 if (item !== node) {
@@ -42,8 +44,8 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
             container.render(target ? container : parent);
             this.subscribers.add(container);
-            const output = $xml.getEnclosingTag(CONTAINER_ANDROID.RADIO_GROUP, container.id, target ? -1 : container.renderDepth, $xml.formatPlaceholder(container.id));
-            return { output: '', parent: container, renderAs: container, renderOutput: output };
+            const output = $xml.getEnclosingTag(RADIO_GROUP, container.id, target ? -1 : container.renderDepth, $xml.formatPlaceholder(container.id));
+            return { output: '', parent: container, renderAs: container, outputAs: output };
         }
         return { output: '' };
     }

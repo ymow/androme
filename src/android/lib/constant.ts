@@ -26,15 +26,11 @@ export const CONTAINER_ANDROID = {
     LINE: 'View',
     SPACE: 'Space',
     BLOCK: 'LinearLayout',
-    WEB_VIEW: 'WebView',
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
-    RADIO_GROUP: 'RadioGroup',
     GRID: 'GridLayout',
     RELATIVE: 'RelativeLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
-    SCROLL_HORIZONTAL: 'HorizontalScrollView',
-    SCROLL_VERTICAL: 'android.support.v4.widget.NestedScrollView',
     GUIDELINE: 'android.support.constraint.Guideline'
 };
 

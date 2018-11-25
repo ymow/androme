@@ -50,7 +50,7 @@ interface BoxPadding {
     paddingLeft: number;
 }
 
-interface BoxModel extends BoxMargin, BoxPadding{
+interface BoxModel extends BoxMargin, BoxPadding {
     borderTopWidth?: number;
     borderRightWidth?: number;
     borderBottomWidth?: number;

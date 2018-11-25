@@ -978,8 +978,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (result.output !== '') {
                                 this.addRenderTemplate(nodeY, parentY, result.output);
                             }
-                            if (result.renderAs && result.renderOutput) {
-                                this.addRenderTemplate(result.renderAs as T, parentY, result.renderOutput);
+                            if (result.renderAs && result.outputAs) {
+                                this.addRenderTemplate(result.renderAs as T, parentY, result.outputAs);
                             }
                             if (result.parent) {
                                 parentY = result.parent as T;
@@ -1000,8 +1000,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     if (result.output !== '') {
                                         this.addRenderTemplate(nodeY, parentY, result.output);
                                     }
-                                    if (result.renderAs && result.renderOutput) {
-                                        this.addRenderTemplate(result.renderAs as T, parentY, result.renderOutput);
+                                    if (result.renderAs && result.outputAs) {
+                                        this.addRenderTemplate(result.renderAs as T, parentY, result.outputAs);
                                     }
                                     if (result.parent) {
                                         parentY = result.parent as T;
