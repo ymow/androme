@@ -305,9 +305,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         if (floated === undefined) {
             floated = $NodeList.floated(nodes);
         }
-        if (linearX === undefined) {
-            linearX = $NodeList.linearX(nodes);
-        }
         return floated.size === 1 && nodes.every(node => node.floating && node.marginLeft >= 0 && node.marginRight >= 0 && node.css('width') !== '100%');
     }
 
@@ -333,9 +330,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public checkRelativeHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean) {
         if (floated === undefined) {
             floated = $NodeList.floated(nodes);
-        }
-        if (cleared === undefined) {
-            cleared = $NodeList.clearedAll(parent);
         }
         if (linearX === undefined) {
             linearX = $NodeList.linearX(nodes);
@@ -605,7 +599,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                                     }
                                                 }
                                                 break;
-                                            case 'text-top':
+                                            case 'text-bottom':
                                                 if (i === 0 && parent) {
                                                     item.anchor('bottom', parent.stringId);
                                                 }
@@ -818,13 +812,13 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 chainVertical.push(column);
                             }
                             chainHorizontal.push(columnStart);
-                            [chainHorizontal, chainVertical].forEach((connected, index) => {
+                            [chainHorizontal, chainVertical].forEach((partition, index) => {
                                 const horizontal = index === 0;
-                                connected.forEach(segment => {
-                                    const first = segment[0];
-                                    const last = segment[segment.length - 1];
-                                    first.anchor(horizontal ? 'left' : 'top', 'parent');
-                                    last.anchor(horizontal ? 'right' : 'bottom', 'parent');
+                                partition.forEach(segment => {
+                                    const rowStart = segment[0];
+                                    const rowEnd = segment[segment.length - 1];
+                                    rowStart.anchor(horizontal ? 'left' : 'top', 'parent');
+                                    rowEnd.anchor(horizontal ? 'right' : 'bottom', 'parent');
                                     for (let i = 0; i < segment.length; i++) {
                                         const chain = segment[i];
                                         const previous: T | undefined = segment[i - 1];
@@ -834,7 +828,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         }
                                         else {
                                             if (i > 0) {
-                                                chain.anchor('left', first.stringId);
+                                                chain.anchor('left', rowStart.stringId);
                                             }
                                         }
                                         if (next) {
@@ -847,10 +841,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                         chain.anchored = true;
                                     }
                                     if (horizontal) {
-                                        first.app('layout_constraintHorizontal_chainStyle', 'spread_inside');
+                                        rowStart.app('layout_constraintHorizontal_chainStyle', 'spread_inside');
                                     }
                                     else {
-                                        first.app('layout_constraintVertical_chainStyle', 'packed');
+                                        rowStart.app('layout_constraintVertical_chainStyle', 'packed');
                                     }
                                 });
                             });
@@ -1038,11 +1032,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         const options = createAttribute();
         let valid = false;
         switch (containerType) {
-            case CONTAINER.FRAME: {
-                valid = true;
-                break;
-            }
-            case CONTAINER.RADIO_GROUP:
             case CONTAINER.LINEAR: {
                 if ($util.hasBit(data.alignmentType, $enum.NODE_ALIGNMENT.VERTICAL)) {
                     options.android.orientation = AXIS_ANDROID.VERTICAL;
@@ -1056,10 +1045,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             case CONTAINER.GRID: {
                 options.android.rowCount = data.rowCount ? data.rowCount.toString() : '';
-                options.android.columnCount = data.columnCount ? data.columnCount.toString() : '2',
+                options.android.columnCount = data.columnCount ? data.columnCount.toString() : '2';
                 valid = true;
                 break;
             }
+            case CONTAINER.FRAME:
             case CONTAINER.RELATIVE:
             case CONTAINER.CONSTRAINT: {
                 valid = true;
@@ -1190,39 +1180,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             case 'INPUT': {
                 const element = <HTMLInputElement> node.element;
                 switch (element.type) {
-                    case 'radio':
-                        const children = parent.map(item => {
-                            if (item.renderAs) {
-                                item = item.renderAs;
-                            }
-                            const input = <HTMLInputElement> item.element;
-                            if (input.type === 'radio' && input.name === element.name && !item.rendered) {
-                                return item;
-                            }
-                            return null;
-                        }).filter(item => item) as T[];
-                        if (children.length > 1) {
-                            const container = this.createNodeGroup(node, parent, children);
-                            container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
-                            container.setControlType(CONTAINER_ANDROID.RADIO_GROUP, $enum.NODE_CONTAINER.RADIO_GROUP);
-                            container.inherit(node, 'alignment');
-                            container.render(target ? container : parent);
-                            let xml = '';
-                            container.each((item: T) => {
-                                if (item !== node) {
-                                    item.alignmentType |= alignmentType;
-                                    item.setControlType(controlName, containerType);
-                                }
-                                if ((<HTMLInputElement> item.element).checked) {
-                                    container.android('checkedButton', item.stringId);
-                                }
-                                item.render(container);
-                                xml += $xml.getEnclosingTag(controlName, item.id, target ? 0 : item.renderDepth);
-                            });
-                            container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
-                            return $xml.getEnclosingTag(CONTAINER_ANDROID.RADIO_GROUP, container.id, target ? -1 : container.renderDepth, xml);
-                        }
-                        break;
                     case 'password':
                         node.android('inputType', 'textPassword');
                         break;
@@ -1363,11 +1320,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
         const options = createAttribute();
         if (columnSpan > 0) {
-            options.android.layout_columnWeight = percentWidth,
+            options.android.layout_columnWeight = percentWidth;
             options.android.layout_columnSpan = columnSpan.toString();
         }
         if (rowSpan > 0) {
-            options.android.layout_rowWeight = percentHeight,
+            options.android.layout_rowWeight = percentHeight;
             options.android.layout_rowSpan = rowSpan.toString();
         }
         return this.renderNodeStatic(CONTAINER_ANDROID.SPACE, depth, options, width, $util.hasValue(height) ? height : 'wrap_content');

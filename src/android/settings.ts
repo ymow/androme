@@ -14,6 +14,7 @@ const settings: UserSettingsAndroid = {
         'androme.accessibility',
         'android.constraint.guideline',
         'android.element.custom',
+        'android.element.radiogroup',
         'android.element.scrollview',
         'android.resource.includes',
         'android.resource.background',

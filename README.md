@@ -95,6 +95,8 @@ androme.settings = {
         'androme.accessibility',
         'android.constraint.guideline',
         'android.element.custom',
+        'android.element.radiogroup',
+        'android.element.scrollview',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',

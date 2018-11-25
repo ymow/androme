@@ -25,7 +25,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 let sizeWeight = 0;
                 if (data.unit.every(value => value === 'auto')) {
                     if (dimension === 'width') {
-                        data.unit = data.unit.map(value => '1fr');
+                        data.unit = data.unit.map(() => '1fr');
                     }
                     else {
                         data.unit.length = 0;

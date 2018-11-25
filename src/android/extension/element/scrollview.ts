@@ -8,7 +8,7 @@ import $xml = androme.lib.xml;
 
 export default class ScrollView<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
-        return (this.included(<HTMLElement> node.element) && (node.hasWidth || node.hasHeight)) || node.overflowX || node.overflowY;
+        return node.length > 0 && ((this.included(<HTMLElement> node.element) && (node.hasWidth || node.hasHeight)) || node.overflowX || node.overflowY);
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -81,7 +81,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                 }
             }
             this.application.processing.cache.append(item);
-            item.render(i === 0 ? parent : previous);
+            item.render(i === 0 ? (target ? item : parent) : previous);
             const xml = $xml.getEnclosingTag(item.controlName, item.id, target ? (i === 0 ? -1 : 0) : item.renderDepth, $xml.formatPlaceholder(item.id));
             if (i === 0) {
                 output = xml;

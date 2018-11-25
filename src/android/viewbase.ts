@@ -1078,13 +1078,19 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
                     }
                 }
+                function setMinHeight() {
+                    const minHeight = this.css('minHeight');
+                    if ($util.isUnit(minHeight) && parseInt(minHeight) < lineHeight) {
+                        this.android('minHeight', $util.formatPX(lineHeight));
+                        this.mergeGravity('gravity', 'center_vertical');
+                    }
+                }
                 if (this.length === 0) {
                     if (this.inlineStatic && this.boxStyle.hasBackground) {
                         setLineHeight(this);
                     }
                     else {
-                        this.android('minHeight', $util.formatPX(lineHeight));
-                        this.mergeGravity('gravity', 'center_vertical');
+                        setMinHeight();
                     }
                 }
                 else {
@@ -1092,8 +1098,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.each((node: View) => setLineHeight(node), true);
                     }
                     else if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
-                        this.android('minHeight', $util.formatPX(lineHeight));
-                        this.mergeGravity('gravity', 'center_vertical');
+                        setMinHeight();
                     }
                 }
             }
@@ -1255,7 +1260,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             this.constraint.vertical = value;
         }
         get anchored() {
-            return this.constraint.horizontal === true && this.constraint.vertical === true;
+            return this.constraint.horizontal && this.constraint.vertical;
         }
 
         get layoutHorizontal() {

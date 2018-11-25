@@ -1,4 +1,4 @@
-import { UserSettingsAndroid, ViewAttribute } from './module';
+import { ViewAttribute } from './module';
 
 import * as $const from '../lib/constant';
 import * as $enum from '../lib/enumeration';

@@ -759,6 +759,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (nodeY.renderAs) {
                         nodeY.hide();
                         nodeY = nodeY.renderAs as T;
+                        if (nodeY.positioned) {
+                            parentY = nodeY.parent as T;
+                        }
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
                         if (nodeY.pageflow && !parentY.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT) && (parentY.alignmentType === NODE_ALIGNMENT.NONE || parentY.hasAlign(NODE_ALIGNMENT.UNKNOWN) || nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE))) {
