@@ -118,7 +118,8 @@ declare global {
             export function withinFraction(lower: number, upper: number): boolean;
             export function assignWhenNull(source: {}, destination: {}): void;
             export function defaultWhenNull(options: {}, ...attrs: string[]): void;
-            export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]];
+            export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>): [T[], T[]];
+            export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[];
             export function sortAsc<T>(list: T[], ...attrs: string[]): T[];
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];
         }

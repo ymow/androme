@@ -70,8 +70,8 @@ function getTitle(element: HTMLElement) {
         return element.title;
     }
     else {
-        for (const node of Array.from(element.childNodes).map((item: Element) => $dom.getElementAsNode<$View>(item) as $View)) {
-            if (node && node.textElement) {
+        for (const node of $util.flatMap(Array.from(element.childNodes), (item: Element) => $dom.getElementAsNode(item) as $View)) {
+            if (node.textElement) {
                 return node.textContent.trim();
             }
         }

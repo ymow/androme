@@ -1950,14 +1950,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     }
                                 }
                                 if (settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
-                                    styleMap.backgroundImage.split(',')
-                                        .map((value: string) => value.trim())
-                                        .forEach(value => {
-                                            const uri = cssResolveUrl(value);
-                                            if (uri !== '' && !this.session.image.has(uri)) {
-                                                this.session.image.set(uri, { width: 0, height: 0, uri });
-                                            }
-                                        });
+                                    styleMap.backgroundImage.split(',').map(value => value.trim()).forEach(value => {
+                                        const uri = cssResolveUrl(value);
+                                        if (uri !== '' && !this.session.image.has(uri)) {
+                                            this.session.image.set(uri, { width: 0, height: 0, uri });
+                                        }
+                                    });
                                 }
                                 if (clientFirefox && styleMap.display === undefined) {
                                     switch (element.tagName) {

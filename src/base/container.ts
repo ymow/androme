@@ -90,6 +90,10 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
         return this._children.map(predicate);
     }
 
+    public flatMap<U>(predicate: IteratorPredicate<T, U>): U[] {
+        return this._children.map(predicate).filter(item => item);
+    }
+
     public sort(predicate: (a: T, b: T) => number) {
         this._children.sort(predicate);
         return this;

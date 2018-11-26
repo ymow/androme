@@ -3,6 +3,7 @@ import { ViewAttribute } from '../types/module';
 import { XMLNS_ANDROID } from './constant';
 import { BUILD_ANDROID } from './enumeration';
 
+const $util = androme.lib.util;
 const $xml = androme.lib.xml;
 
 export function stripId(value: string) {
@@ -62,5 +63,5 @@ export function replaceRTL(value: string, rtl = true, api: BUILD_ANDROID.OREO) {
 }
 
 export function getXmlNs(...values: string[]) {
-    return values.map(name => XMLNS_ANDROID[name] ? `xmlns:${name}="${XMLNS_ANDROID[name]}"` : '').filter(value => value).join(' ');
+    return $util.flatMap(values, namespace => XMLNS_ANDROID[namespace] ? `xmlns:${namespace}="${XMLNS_ANDROID[namespace]}"` : '').join(' ');
 }

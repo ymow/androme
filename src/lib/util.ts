@@ -461,18 +461,23 @@ export function defaultWhenNull(options: {}, ...attrs: string[]) {
     }
 }
 
-export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]] {
+export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>): [T[], T[]] {
     const valid: T[] = [];
     const invalid: T[] = [];
-    for (const node of list) {
-        if (predicate(node)) {
-            valid.push(node);
+    for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (predicate(item, i)) {
+            valid.push(item);
         }
         else {
-            invalid.push(node);
+            invalid.push(item);
         }
     }
     return [valid, invalid];
+}
+
+export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[] {
+    return list.map((item: T, index) => predicate(item, index)).filter((item: U) => hasValue(item));
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {

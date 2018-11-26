@@ -16,6 +16,7 @@ declare global {
                 find(predicate: IteratorPredicate<T, boolean> | string, value?: any): T | undefined;
                 filter(predicate: IteratorPredicate<T, void>): T[];
                 map<U>(predicate: IteratorPredicate<T, U>): U[];
+                flatMap<U>(predicate: IteratorPredicate<T, U>): U[];
                 every(predicate: IteratorPredicate<T, boolean>): boolean;
                 some(predicate: IteratorPredicate<T, boolean>): boolean;
                 sort(predicate: (a: T, b: T) => number): this;

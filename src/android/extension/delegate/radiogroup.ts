@@ -19,7 +19,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         const element = <HTMLInputElement> node.element;
-        const children = parent.map(item => {
+        const children = parent.flatMap(item => {
             if (item.renderAs) {
                 item = item.renderAs;
             }
@@ -28,7 +28,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                 return item;
             }
             return null;
-        }).filter(item => item) as T[];
+        }) as T[];
         if (children.length > 1) {
             const container = this.application.viewController.createNodeGroup(node, parent, children);
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);

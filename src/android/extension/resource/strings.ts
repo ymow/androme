@@ -3,6 +3,7 @@ import View from '../../view';
 
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
 export default class ResourceStrings<T extends View> extends androme.lib.base.Extension<T> {
@@ -28,11 +29,10 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                     }
                     if (stored.stringArray) {
                         result.push(
-                            ...stored.stringArray.map(value => {
+                            ...$util.flatMap(stored.stringArray, value => {
                                 value = Resource.addString($xml.replaceCharacter(value), '', this.options.useNumberAlias);
                                 return value !== '' ? `@string/${value}` : '';
                             })
-                            .filter(value => value)
                         );
                     }
                     if (result.length) {

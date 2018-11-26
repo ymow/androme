@@ -6,16 +6,16 @@ import Node from './node';
 import { getElementAsNode, isUserAgent } from '../lib/dom';
 import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
 
-function getActualParent<T extends Node>(nodes: T[]) {
-    for (const node of nodes) {
-        if (node.domElement && node.actualParent) {
-            return node.actualParent as T;
-        }
-    }
-    return null;
-}
-
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
+    public static actualParent<T extends Node>(list: T[]) {
+        for (const node of list) {
+            if (node.domElement && node.actualParent) {
+                return node.actualParent as T;
+            }
+        }
+        return null;
+    }
+
     public static floated<T extends Node>(list: T[]) {
         return new Set(list.map(node => node.float).filter(value => value !== 'none'));
     }
@@ -183,7 +183,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             case 1:
                 return true;
             default:
-                const parent = getActualParent(nodes);
+                const parent = this.actualParent(nodes);
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
@@ -235,7 +235,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             case 1:
                 return true;
             default:
-                const parent = getActualParent(nodes);
+                const parent = this.actualParent(nodes);
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
@@ -251,7 +251,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static partitionRows<T extends Node>(list: T[]) {
         const [children, cleared] = ((): [T[], Map<T, string>] => {
-            const parent = getActualParent(list);
+            const parent = this.actualParent(list);
             if (parent) {
                 return [Array.from(parent.element.childNodes).map(element => getElementAsNode(<Element> element) as T).filter(node => node), this.clearedAll(parent)];
             }

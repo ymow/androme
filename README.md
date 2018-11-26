@@ -96,7 +96,7 @@ androme.settings = {
         'android.constraint.guideline',
         'android.delegate.element',
         'android.delegate.radiogroup',
-        'android.delegate.scrollview',
+        'android.delegate.scrollbar',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',
