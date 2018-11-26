@@ -75,18 +75,16 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     const rows = NodeList.partitionRows(node.children.filter(item => item.pageflow));
                     const columnStart = rows.map(item => item[0]);
                     node.each((item: T, index) => {
-                        if (columnStart.includes(item)) {
-                            if (marginLeft[index] === 2) {
-                                const left = item.toInt('left') + node.marginLeft;
-                                item.css('left', formatPX(Math.max(left, 0)));
-                                if (left < 0) {
-                                    item.css('marginLeft', formatPX(item.marginLeft + left));
-                                    modifyMarginLeft(item, left);
-                                }
+                        if (marginLeft[index] === 2) {
+                            const left = item.toInt('left') + node.marginLeft;
+                            item.css('left', formatPX(Math.max(left, 0)));
+                            if (left < 0) {
+                                item.css('marginLeft', formatPX(item.marginLeft + left));
+                                modifyMarginLeft(item, left);
                             }
-                            else if (marginLeftType === 2 || (item.pageflow && !item.plainText && marginLeft.includes(1))) {
-                                modifyMarginLeft(item, node.marginLeft);
-                            }
+                        }
+                        else if (columnStart.includes(item) && (marginLeftType === 2 || (item.pageflow && !item.plainText && marginLeft.includes(1)))) {
+                            modifyMarginLeft(item, node.marginLeft);
                         }
                     });
                     if (node.has('width', CSS_STANDARD.UNIT)) {

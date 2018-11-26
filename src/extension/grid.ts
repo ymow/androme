@@ -44,7 +44,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             (node.every(item => item.pageflow && !item.boxStyle.hasBackground && (!item.inlineflow || item.blockStatic)) && (
                 node.css('listStyle') === 'none' ||
                 node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                (!hasValue(node.dataset.ext) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
+                (!hasValue(node.dataset.import) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
             ))
         ));
     }

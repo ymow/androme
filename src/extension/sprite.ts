@@ -35,6 +35,6 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
                 }
             }
         }
-        return valid && (!hasValue(node.dataset.ext) || this.included(<HTMLElement> node.element));
+        return valid && (!hasValue(node.dataset.import) || this.included(<HTMLElement> node.element));
     }
 }

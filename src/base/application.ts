@@ -19,8 +19,8 @@ function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element
     const tagged: string[] = [];
     let current: HTMLElement | null = element;
     do {
-        if (current.dataset.ext) {
-            tagged.push(...current.dataset.ext.split(',').map(value => value.trim()));
+        if (current.dataset.import) {
+            tagged.push(...current.dataset.import.split(',').map(value => value.trim()));
         }
         current = current !== documentRoot ? current.parentElement : null;
     }
@@ -937,7 +937,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 const clearedPartial = NodeList.cleared(vertical);
                                 const segmentEnd = vertical[vertical.length - 1];
                                 if (floated.size > 0 && clearedPartial.size > 0 && !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node)))) {
-                                    if (parentY.linearVertical && !hasValue(nodeY.dataset.ext)) {
+                                    if (parentY.linearVertical && !hasValue(nodeY.dataset.import)) {
                                         layout.node = nodeY;
                                         output = this.processLayoutVertical(undefined, parentY, vertical, clearedPartial);
                                     }
@@ -1046,7 +1046,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const targeted = nodeY.filter(node => {
                                             if (node.dataset.target) {
                                                 const element = document.getElementById(node.dataset.target);
-                                                return !!element && hasValue(element.dataset.ext) && element !== parentY.element;
+                                                return !!element && hasValue(element.dataset.import) && element !== parentY.element;
                                             }
                                             return false;
                                         });
@@ -1058,7 +1058,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         else if (
                                             settings.collapseUnattributedElements &&
                                             !hasValue(nodeY.element.id) &&
-                                            !hasValue(nodeY.dataset.ext) &&
+                                            !hasValue(nodeY.dataset.import) &&
                                             !hasValue(nodeY.dataset.target) &&
                                             nodeY.toInt('width') === 0 &&
                                             nodeY.toInt('height') === 0 &&
@@ -1152,7 +1152,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     containerType = NODE_CONTAINER.LINE;
                                 }
                                 else if (!nodeY.documentRoot) {
-                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !boxStyle.hasBackground) {
+                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !boxStyle.hasBackground) {
                                         parentY.remove(nodeY);
                                         nodeY.hide();
                                     }

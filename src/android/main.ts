@@ -22,9 +22,9 @@ import Table from './extension/table';
 
 import ConstraintGuideline from './extension/constraint/guideline';
 
-import ElementCustom from './extension/element/custom';
-import ElementRadioGroup from './extension/element/radiogroup';
-import ElementScrollView from './extension/element/scrollview';
+import DelegateElement from './extension/delegate/element';
+import DelegateRadioGroup from './extension/delegate/radiogroup';
+import DelegateScrollBar from './extension/delegate/scrollbar';
 
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
@@ -80,10 +80,10 @@ const lib = {
         constraint: {
             Guideline: ConstraintGuideline
         },
-        element: {
-            Custom: ElementCustom,
-            RadioGroup: ElementRadioGroup,
-            ScrollView: ElementScrollView
+        delegate: {
+            Element: DelegateElement,
+            RadioGroup: DelegateRadioGroup,
+            ScrollBar: DelegateScrollBar
         },
         resource: {
             Background: ResourceBackground,
@@ -219,9 +219,9 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
-            [EXT_ANDROID.ELEMENT_CUSTOM]: new ElementCustom(EXT_ANDROID.ELEMENT_CUSTOM, framework),
-            [EXT_ANDROID.ELEMENT_RADIOGROUP]: new ElementRadioGroup(EXT_ANDROID.ELEMENT_RADIOGROUP, framework),
-            [EXT_ANDROID.ELEMENT_SCROLLVIEW]: new ElementScrollView(EXT_ANDROID.ELEMENT_SCROLLVIEW, framework),
+            [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
+            [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),
+            [EXT_ANDROID.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EXT_ANDROID.DELEGATE_SCROLLBAR, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

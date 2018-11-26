@@ -473,7 +473,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
                 if (bounds.width !== 0 && bounds.height !== 0) {
                     return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
                 }
-                else if (hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+                else if (hasValue(element.dataset.import) || getStyle(element).clear !== 'none') {
                     return true;
                 }
                 else {
@@ -509,7 +509,7 @@ export function isElementVisible(element: Element, hideOffScreen: boolean) {
 
 export function getNestedExtension(element: Element, name: string) {
     if (isStyleElement(element)) {
-        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement || null;
+        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.import, name)) as HTMLElement || null;
     }
     return null;
 }

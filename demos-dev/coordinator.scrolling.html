@@ -120,9 +120,9 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui" data-ext="android.widget.coordinator" data-attr-android="layout_width::match_parent;layout_height::match_parent">
-        <div id="toolbar_demo" data-ext="android.widget.toolbar">
-            <nav id="toolbar_menu" data-ext="android.widget.menu">
+    <div id="androme_ui" data-import="android.widget.coordinator" data-attr-android="layout_width::match_parent;layout_height::match_parent">
+        <div id="toolbar_demo" data-import="android.widget.toolbar">
+            <nav id="toolbar_menu" data-import="android.widget.menu">
                 <div
                     data-show-as-action="always"
                     title="Web">
@@ -134,11 +134,11 @@
                     <img src="../demos/images/icons8-browse-page-24.png" />
                 </div>
             </nav>
-            <button id="fab_menu" data-ext="android.widget.floatingactionbutton" data-target="androme_ui"></button>
+            <button id="fab_menu" data-import="android.widget.floatingactionbutton" data-target="androme_ui"></button>
         </div>
         <div
-            data-ext="android.element.custom"
-            data-android-element-custom-tag="android.support.v4.widget.NestedScrollView"
+            data-import="android.delegate.element"
+            data-android-delegate-element-tag="android.support.v4.widget.NestedScrollView"
             data-attr-app="layout_behavior::@string/appbar_scrolling_view_behavior"
             data-include="coordinator_content" data-include-end="true"
             style="padding: 20px;">

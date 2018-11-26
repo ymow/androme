@@ -1029,7 +1029,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get extension() {
-        return this.dataset.ext ? this.dataset.ext.split(',')[0].trim() : '';
+        return this.dataset.import ? this.dataset.import.split(',')[0].trim() : '';
     }
 
     get flexbox(): Flexbox {

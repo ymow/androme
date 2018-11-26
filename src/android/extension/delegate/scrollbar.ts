@@ -7,7 +7,7 @@ import $xml = androme.lib.xml;
 const SCROLL_HORIZONTAL = 'HorizontalScrollView';
 const SCROLL_VERTICAL = 'android.support.v4.widget.NestedScrollView';
 
-export default class ScrollView<T extends View> extends androme.lib.base.Extension<T> {
+export default class ScrollBar<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         return node.length > 0 && ((this.included(<HTMLElement> node.element) && (node.hasWidth || node.hasHeight)) || node.overflowX || node.overflowY);
     }

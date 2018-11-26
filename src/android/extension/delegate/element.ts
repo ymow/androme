@@ -7,7 +7,7 @@ import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 
-export default class Custom<T extends View> extends androme.lib.base.Extension<T> {
+export default class Element<T extends View> extends androme.lib.base.Extension<T> {
     constructor(
         name: string,
         framework: number,
@@ -29,8 +29,8 @@ export default class Custom<T extends View> extends androme.lib.base.Extension<T
         if (data.tagChild) {
             node.each(item => {
                 if (item.styleElement) {
-                    item.dataset.ext = this.name;
-                    item.dataset.androidElementCustomTag = data.tagChild;
+                    item.dataset.import = this.name;
+                    item.dataset.androidDelegateElementTag = data.tagChild;
                 }
             });
         }

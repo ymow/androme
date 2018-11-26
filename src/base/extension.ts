@@ -42,7 +42,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public included(element: HTMLElement) {
-        return includes(element.dataset.ext, this.name);
+        return includes(element.dataset.import, this.name);
     }
 
     public beforeInit(element: HTMLElement, internal = false) {
@@ -75,7 +75,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public condition(node: T, parent?: T) {
         if (isStyleElement(node.element)) {
-            const ext = node.dataset.ext;
+            const ext = node.dataset.import;
             if (!ext) {
                 return this.tagNames.length > 0;
             }

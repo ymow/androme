@@ -1,7 +1,7 @@
 export const EXT_ANDROID = {
-    ELEMENT_CUSTOM: 'android.element.custom',
-    ELEMENT_RADIOGROUP: 'android.element.radiogroup',
-    ELEMENT_SCROLLVIEW: 'android.element.scrollview',
+    DELEGATE_ELEMENT: 'android.delegate.element',
+    DELEGATE_RADIOGROUP: 'android.delegate.radiogroup',
+    DELEGATE_SCROLLBAR: 'android.delegate.scrollbar',
     CONSTRAINT_GUIDELINE: 'android.constraint.guideline',
     RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',
