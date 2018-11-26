@@ -72,7 +72,7 @@ export const LAYOUT_ANDROID = {
         left: 'layout_alignParentLeft',
         top: 'layout_alignParentTop',
         right: 'layout_alignParentRight',
-        bottom: 'layout_withinParentBottom',
+        bottom: 'layout_alignParentBottom',
         centerHorizontal: 'layout_centerHorizontal',
         centerVertical: 'layout_centerVertical',
     },

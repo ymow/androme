@@ -145,6 +145,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                         break;
                                     case 'top':
                                     case 'bottom':
+                                    case 'baseline':
                                         this.constraint.vertical = true;
                                         break;
                                 }
@@ -563,6 +564,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public setAlignment() {
+            const left = this.localizeString('left');
+            const right = this.localizeString('right');
             function setAutoMargin(node: View) {
                 if (!node.blockWidth) {
                     const alignment: string[] = [];
@@ -616,14 +619,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 return textAlign;
             }
             const renderParent = this.renderParent;
-            const textAlignParent = this.cssParent('textAlign');
-            const left = this.localizeString('left');
-            const right = this.localizeString('right');
-            let textAlign = this.styleMap.textAlign || '';
+            let textAlign = this.cssInitial('textAlign') || '';
             let verticalAlign = '';
             let floating = '';
             if (this.inlineVertical && renderParent.is($enum.NODE_CONTAINER.FRAME, $enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.GRID)) {
-                switch (this.styleMap.verticalAlign) {
+                switch (this.cssInitial('verticalAlign')) {
                     case 'top':
                     case 'text-top':
                         verticalAlign = 'top';
@@ -673,6 +673,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             }
                         }
                     }
+                    else {
+
+                    }
                 }
             }
             else if (floating !== '') {
@@ -685,8 +688,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
             }
+            const textAlignParent = this.cssParent('textAlign');
             if (textAlignParent !== '' && this.localizeString(textAlignParent) !== left) {
-                if (renderParent.is($enum.NODE_CONTAINER.FRAME) && this.singleChild && !this.floating && !this.autoMargin) {
+                if (renderParent.is($enum.NODE_CONTAINER.FRAME) && !this.floating && !this.autoMargin && !this.blockWidth) {
                     this.mergeGravity('layout_gravity', convertHorizontal(textAlignParent));
                 }
                 if (textAlign === '') {
@@ -1086,7 +1090,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     };
                     if (this.length === 0) {
-                        if (this.layoutHorizontal) {
+                        if (!this.layoutHorizontal) {
                             if (this.inlineStatic && this.boxStyle.hasBackground) {
                                 setLineHeight(this);
                             }
@@ -1190,7 +1194,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (!(dimension === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
                             value += this._boxReset[dimension] === 0 ? this[dimension] : 0;
                         }
-                        if (value >= 0 && value + this._boxAdjustment[dimension] < 0) {
+                        if (value > 0 && value + this._boxAdjustment[dimension] < 0) {
                             value = 0;
                         }
                         else {
@@ -1210,7 +1214,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     let mergeAll: number | undefined;
                     let mergeHorizontal: number | undefined;
                     let mergeVertical: number | undefined;
-                    if (this.supported('android', 'layout_marginHorizontal')) {
+                    if (this.supported('android', 'layout_marginHorizontal') && !(index === 0 && this.renderParent.is($enum.NODE_CONTAINER.GRID))) {
                         if (boxModel[top] === boxModel[right] && boxModel[right] === boxModel[bottom] && boxModel[bottom] === boxModel[left]) {
                             mergeAll = boxModel[top];
                         }

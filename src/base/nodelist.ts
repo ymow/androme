@@ -75,7 +75,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     return baseline;
                 }
             }
-            baseline = list.sort((a, b) => {
+            baseline = list.slice().sort((a, b) => {
                 if (a.groupElement) {
                     return 1;
                 }
@@ -191,10 +191,11 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return false;
                         }
                     }
+                    const boxLeft = nodes[0].linear.left;
                     for (let i = 1; i < nodes.length; i++) {
                         const item = nodes[i];
                         const previous = nodes[i - 1];
-                        if (!item.floating && !previous.floating && (withinFraction(item.linear.left, previous.linear.left) || item.linear.left < previous.linear.left)) {
+                        if (!item.floating && !previous.floating && (withinFraction(item.linear.left, boxLeft) || item.linear.left < boxLeft || item.linear.left <= previous.linear.left)) {
                             return false;
                         }
                         else if (item.floating) {
@@ -220,8 +221,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                                 }
                             }
                         }
-                        return true;
                     }
+                    return true;
                 }
                 return false;
         }

@@ -1487,7 +1487,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get singleChild() {
-        return this.nodes.length === 1;
+        return this.rendered ? this.renderParent.length === 1 : this.parent.length === 1;
     }
 
     get previousElementSibling() {

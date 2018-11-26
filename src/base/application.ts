@@ -1039,7 +1039,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 else if (nodeY.some(node => !node.pageflow)) {
                                     containerType = NODE_CONTAINER.CONSTRAINT;
                                     layout.add(NODE_ALIGNMENT.ABSOLUTE | NODE_ALIGNMENT.UNKNOWN);
-                                    NodeList.sortByAlignment(layout.items, NODE_ALIGNMENT.ABSOLUTE);
                                 }
                                 else {
                                     if (nodeY.length === 1) {

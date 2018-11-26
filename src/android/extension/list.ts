@@ -131,7 +131,6 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         Object.assign(options.android, {
                             src: `@drawable/${image}`,
                             [BOX_ANDROID.MARGIN_TOP]: top > 0 ? $util.formatPX(top) : '',
-                            baselineAlignBottom: 'true',
                             scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
                         });
                     }
