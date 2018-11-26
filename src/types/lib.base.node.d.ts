@@ -1,4 +1,4 @@
-import { BoxStyle, InitialData } from './lib.base.types.node';
+import { StyleVisible, InitialData } from './lib.base.types.node';
 
 declare global {
     namespace androme.lib.base {
@@ -99,7 +99,7 @@ declare global {
             readonly pageflow: boolean;
             readonly floating: boolean;
             readonly float: string;
-            readonly boxStyle: BoxStyle;
+            readonly boxStyle: StyleVisible;
             readonly textContent: string;
             readonly fontSize: number;
             readonly overflowX: boolean;

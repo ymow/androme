@@ -5,7 +5,7 @@ declare global {
             cache: NodeList<T>;
             fileHandler: File<T>;
             userSettings: UserSettings;
-            finalize(viewData: ViewData<NodeList<T>>): void;
+            finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
             setBoxSpacing(): void;
             setBoxStyle(): void;

@@ -249,7 +249,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     };
 
-    public finalize(viewData: ViewData<$NodeList<T>>) {
+    public finalize(data: SessionData<$NodeList<T>>) {
         const settings = this.userSettings;
         if (settings.showAttributes) {
             function getRootNamespace(content: string) {
@@ -284,13 +284,13 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 const indent = $util.repeat(node.renderDepth + 1);
                 return node.combine().map(value => `\n${indent + value}`).join('');
             }
-            const cache: StringMap[] = viewData.cache.visible.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: parseAttributes(node) }));
-            for (const value of [...viewData.views, ...viewData.includes]) {
+            const cache: StringMap[] = data.cache.visible.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: parseAttributes(node) }));
+            for (const value of [...data.views, ...data.includes]) {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, getRootNamespace(value.content));
             }
         }
-        for (const value of [...viewData.views, ...viewData.includes]) {
+        for (const value of [...data.views, ...data.includes]) {
             value.content = replaceUnit(value.content, settings.resolutionDPI, settings.convertPixels);
             value.content = replaceTab(value.content, settings.insertSpaces);
             value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');

@@ -1,10 +1,9 @@
-import { BackgroundGradient } from './module';
+import { BackgroundGradient } from '../template/resource/types/data';
 
 declare global {
     namespace android.lib.base {
         export interface Resource<T extends View> extends androme.lib.base.Resource<T> {
-            fileHandler: File<T>;
-            addStyleTheme(template: string, data: TemplateData, options: ExternalData): void;
+            addStyleTheme(template: string, data: ExternalData, options: ExternalData): void;
         }
 
         export class Resource<T extends View> implements Resource<T> {

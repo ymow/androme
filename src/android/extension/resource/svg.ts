@@ -13,7 +13,7 @@ import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-function setPivotXY(data: TemplateData, origin: BoxPosition | undefined) {
+function setPivotXY(data: ExternalData, origin: BoxPosition | undefined) {
     if (origin) {
         if (origin.left !== 0) {
             data.pivotX = $util.isPercent(origin.originalX) ? origin.originalX : origin.left.toString();
@@ -45,7 +45,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const namespace = new Set<string>();
                     const groups: StringMap[] = [];
                     for (const group of stored) {
-                        const data: TemplateData = {
+                        const data: ExternalData = {
                             name: group.name,
                             '2': []
                         };
@@ -78,7 +78,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         }
                         for (const item of group) {
                             if (item.visibility) {
-                                const clipPaths: TemplateData[] = [];
+                                const clipPaths: ExternalData[] = [];
                                 if (item.clipPath !== '') {
                                     const clipPath = stored.defs.clipPath.get(item.clipPath);
                                     if (clipPath) {
@@ -140,8 +140,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     }
                 }
                 if (stored.defs.image.length) {
-                    const images: TemplateData = [];
-                    const rotate: TemplateData = [];
+                    const images: ExternalData = [];
+                    const rotate: ExternalData = [];
                     for (const item of stored.defs.image) {
                         if (item.uri) {
                             const transform = item.transform;
@@ -164,7 +164,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 y += parent.y.baseVal.value + attributes.translateY;
                                 parent = parent.parentElement;
                             }
-                            const data: TemplateData = {
+                            const data: ExternalData = {
                                 width: item.width ? $util.formatPX(item.width) : '',
                                 height: item.height ? $util.formatPX(item.height) : '',
                                 left: x !== 0 ? $util.formatPX(x) : '',

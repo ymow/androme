@@ -133,8 +133,8 @@ declare global {
             export function replaceEntity(value: string): string;
             export function replaceCharacter(value: string): string;
             export function parseTemplate(value: string): StringMap;
-            export function createTemplate(value: StringMap, data: TemplateData, index?: string): string;
-            export function getTemplateSection(data: TemplateData, ...levels: string[]): object;
+            export function createTemplate(value: StringMap, data: ExternalData, index?: string): string;
+            export function getTemplateSection(data: ExternalData, ...levels: string[]): object;
         }
     }
 }

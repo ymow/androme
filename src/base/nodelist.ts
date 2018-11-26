@@ -191,32 +191,31 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return false;
                         }
                     }
-                    const boxLeft = nodes[0].linear.left;
-                    for (let i = 1; i < nodes.length; i++) {
+                    const boxLeft = minArray(nodes.map(node => node.linear.left));
+                    const boxRight = maxArray(nodes.map(node => node.linear.right));
+                    for (let i = 0, j = 0, k = 0; i < nodes.length; i++) {
                         const item = nodes[i];
+                        if (Math.floor(item.linear.left) <= boxLeft) {
+                            j++;
+                        }
+                        if (Math.ceil(item.linear.right) >= boxRight) {
+                            k++;
+                        }
+                        if (i === 0) {
+                            continue;
+                        }
+                        if (j === 2 || k === 2) {
+                            return false;
+                        }
                         const previous = nodes[i - 1];
-                        if (!item.floating && !previous.floating && (withinFraction(item.linear.left, boxLeft) || item.linear.left < boxLeft || item.linear.left <= previous.linear.left)) {
+                        if (withinFraction(item.linear.left, previous.linear.left)) {
                             return false;
                         }
                         else if (item.floating) {
                             const direction = item.float;
-                            for (let j = 0; j < i; j++) {
-                                const sibling = nodes[j];
-                                if (!sibling.floating && item.linear.top >= sibling.linear.bottom) {
-                                    switch (direction) {
-                                        case 'left':
-                                            if (item.linear.left < Math.floor(sibling.linear.right)) {
-                                                return false;
-                                            }
-                                            break;
-                                        case 'right':
-                                            if (item.linear.right > Math.ceil(sibling.linear.left)) {
-                                                return false;
-                                            }
-                                            break;
-                                    }
-                                }
-                                else if (sibling.float === direction && item.linear[direction] <= nodes[j].linear[direction]) {
+                            for (let l = 0; l < i; l++) {
+                                const sibling = nodes[l];
+                                if (withinFraction(item.linear[direction], sibling.linear[direction])) {
                                     return false;
                                 }
                             }

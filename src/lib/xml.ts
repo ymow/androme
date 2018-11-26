@@ -134,7 +134,7 @@ export function parseTemplate(value: string) {
     return result;
 }
 
-export function createTemplate(value: StringMap, data: TemplateData, index?: string) {
+export function createTemplate(value: StringMap, data: ExternalData, index?: string) {
     let output = index === undefined ? value['__root'].trim() : value[index];
     for (const attr in data) {
         let result: any = '';
@@ -170,7 +170,7 @@ export function createTemplate(value: StringMap, data: TemplateData, index?: str
     return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
 }
 
-export function getTemplateSection(data: TemplateData, ...levels: string[]) {
+export function getTemplateSection(data: ExternalData, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');

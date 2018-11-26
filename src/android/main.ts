@@ -119,7 +119,7 @@ const appBase: AppFramework<T> = {
             if (initialized) {
                 const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return fileHandler.layoutAllToXml(main.viewData, saveToDisk);
+                    return fileHandler.layoutAllToXml(main.sessionData, saveToDisk);
                 }
             }
             return '';

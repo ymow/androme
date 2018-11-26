@@ -82,7 +82,7 @@ interface AppProcessing<T, U> {
     layout: FileAsset | null;
 }
 
-interface ViewData<T> {
+interface SessionData<T> {
     cache: T;
     views: FileAsset[];
     includes: FileAsset[];

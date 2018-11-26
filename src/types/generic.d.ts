@@ -32,3 +32,5 @@ interface Point {
     x: number;
     y: number;
 }
+
+type ExternalData = ObjectMap<any>;

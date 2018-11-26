@@ -14,8 +14,8 @@ declare global {
             readonly parseElements: Set<Element>;
             readonly processing: AppProcessing<T, NodeList<T>>;
             readonly extensions: Set<Extension<T>>;
-            readonly layouts: FileAsset[];
-            readonly viewData: ViewData<NodeList<T>>;
+            readonly viewData: FileAsset[];
+            readonly sessionData: SessionData<NodeList<T>>;
             readonly size: number;
             registerController(controller: Controller<T>): void;
             registerResource(resource: Resource<T>): void;

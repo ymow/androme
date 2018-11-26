@@ -37,7 +37,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
 
     public readonly assets: FileAsset[] = [];
 
-    public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
+    public abstract saveAllToDisk(data: SessionData<NodeList<T>>): void;
 
     public addAsset(pathname: string, filename: string, content = '', uri: string = '') {
         if (content !== '' || uri !== '') {

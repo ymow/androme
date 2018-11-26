@@ -1,4 +1,5 @@
-import { BackgroundImage, BackgroundGradient, UserSettingsAndroid } from '../../types/module';
+import { UserSettingsAndroid } from '../../types/module';
+import { BackgroundImage, BackgroundGradient } from '../../template/resource/types/data';
 
 import { EXT_ANDROID } from '../../lib/constant';
 
@@ -257,7 +258,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     });
                     const images5: BackgroundImage[] = [];
                     const images6: BackgroundImage[] = [];
-                    let data: TemplateData;
+                    let data: ExternalData;
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '') {

@@ -1,7 +1,7 @@
 declare global {
     namespace android.lib.base {
         export interface File<T extends View> extends androme.lib.base.File<T> {
-            layoutAllToXml(data: ViewData<androme.lib.base.NodeList<T>>, saveToDisk?: boolean);
+            layoutAllToXml(data: SessionData<androme.lib.base.NodeList<T>>, saveToDisk?: boolean);
             resourceAllToXml(saveToDisk?: boolean);
             resourceStringToXml(saveToDisk?: boolean);
             resourceStringArrayToXml(saveToDisk?: boolean);

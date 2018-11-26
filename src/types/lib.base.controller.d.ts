@@ -6,7 +6,7 @@ declare global {
             userSettings: UserSettings;
             readonly localSettings: ControllerSettings;
             readonly delegateNodeInit: SelfWrapped<T, void>;
-            finalize(viewData: ViewData<NodeList<T>>): void;
+            finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
             checkConstraintFloat(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
             checkConstraintHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;

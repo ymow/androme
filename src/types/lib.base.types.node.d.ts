@@ -7,7 +7,7 @@ export interface InitialData<T> {
     readonly box?: BoxDimensions;
 }
 
-export interface BoxStyle {
+export interface StyleVisible {
     hasBackground: boolean;
     hasBorder: boolean;
     hasBackgroundImage: boolean;

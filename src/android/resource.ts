@@ -1,8 +1,8 @@
-import { BackgroundGradient, UserSettingsAndroid } from './types/module';
+import { UserSettingsAndroid } from './types/module';
+import { BackgroundGradient } from './template/resource/types/data';
 
 import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-import File from './file';
 import View from './view';
 
 import $color = androme.lib.color;
@@ -303,16 +303,8 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
     }
 
     public userSettings: UserSettingsAndroid;
-    public fileHandler: File<T>;
 
-    public finalize() {}
-
-    public reset() {
-        super.reset();
-        this.fileHandler.reset();
-    }
-
-    public addStyleTheme(template: string, data: TemplateData, options: ThemeTemplate) {
+    public addStyleTheme(template: string, data: ExternalData, options: ThemeTemplate) {
         if (options.items && $util.isArray(data['items'])) {
             const items = Resource.formatOptions(options.items, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             for (const name in items) {

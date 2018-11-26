@@ -29,7 +29,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract renderNode(data: Layout<T>): string;
     public abstract renderNodeGroup(data: Layout<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
-    public abstract finalize(viewData: ViewData<NodeList<T>>);
+    public abstract finalize(data: SessionData<NodeList<T>>);
     public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 
     public reset() {

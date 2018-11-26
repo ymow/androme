@@ -140,8 +140,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const ext of this.extensions) {
             ext.afterProcedure();
         }
-        this.resourceHandler.finalize(this.viewData);
-        this.viewController.finalize(this.viewData);
+        this.resourceHandler.finalize(this.sessionData);
+        this.viewController.finalize(this.sessionData);
         for (const ext of this.extensions) {
             ext.afterFinalize();
         }
@@ -149,7 +149,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public saveAllToDisk() {
-        this.resourceHandler.fileHandler.saveAllToDisk(this.viewData);
+        this.resourceHandler.fileHandler.saveAllToDisk(this.sessionData);
     }
 
     public reset() {
@@ -1865,11 +1865,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        for (const value of this.layouts) {
+        for (const view of this.viewData) {
             for (const id in template) {
-                value.content = value.content.replace(formatPlaceholder(id), template[id]);
+                view.content = view.content.replace(formatPlaceholder(id), template[id]);
             }
-            value.content = this.viewController.replaceRenderQueue(value.content);
+            view.content = this.viewController.replaceRenderQueue(view.content);
         }
     }
 
@@ -2019,11 +2019,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return this._userSettings;
     }
 
-    get layouts() {
+    get viewData() {
         return [...this._views, ...this._includes];
     }
 
-    get viewData(): ViewData<NodeList<T>> {
+    get sessionData(): SessionData<NodeList<T>> {
         return {
             cache: this.session.cache,
             views: this._views,

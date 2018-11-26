@@ -53,9 +53,8 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
 
     public afterFinalize() {
         const dimens = Resource.STORED.dimens;
-        const layouts = this.application.layouts;
-        for (const value of layouts) {
-            let content = value.content;
+        for (const view of this.application.viewData) {
+            let content = view.content;
             const pattern = /[\s\n]+<[^<]*?(\w+):(\w+)="([\d.]+(?:px|dp|sp))"/g;
             let match: RegExpExecArray | null;
             while ((match = pattern.exec(content)) !== null) {
@@ -66,7 +65,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
                     content = content.replace(match[0], match[0].replace(match[3], `@dimen/${key}`));
                 }
             }
-            value.content = content;
+            view.content = content;
         }
     }
 }

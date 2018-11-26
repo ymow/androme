@@ -65,7 +65,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
         super();
     }
 
-    public saveAllToDisk(data: ViewData<$NodeList<T>>) {
+    public saveAllToDisk(data: SessionData<$NodeList<T>>) {
         const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -83,7 +83,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ViewData<$NodeList<T>>, saveToDisk = false) {
+    public layoutAllToXml(data: SessionData<$NodeList<T>>, saveToDisk = false) {
         const result = {};
         const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
@@ -129,7 +129,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        const data: TemplateData = { '1': [] };
+        const data: ExternalData = { '1': [] };
         this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
         if (this.appName !== '' && !this.stored.strings.has('app_name')) {
             data['1'].push({
@@ -154,7 +154,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceStringArrayToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.arrays.size > 0) {
-            const data: TemplateData = { '1': [] };
+            const data: ExternalData = { '1': [] };
             this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
             for (const [name, values] of this.stored.arrays.entries()) {
                 data['1'].push({
@@ -178,7 +178,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
             this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
             const namespace = settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
             for (const [name, font] of this.stored.fonts.entries()) {
-                const data: TemplateData = {
+                const data: ExternalData = {
                     name,
                     namespace: getXmlNs(namespace),
                     '1': []
@@ -207,7 +207,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
     public resourceColorToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.colors.size > 0) {
-            const data: TemplateData = { '1': [] };
+            const data: ExternalData = { '1': [] };
             this.stored.colors = new Map([...this.stored.colors.entries()].sort());
             for (const [name, value] of this.stored.colors.entries()) {
                 data['1'].push({
@@ -228,7 +228,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
         let xml = '';
         if (this.stored.styles.size > 0) {
             const settings = this.userSettings;
-            const data: TemplateData = { '1': [] };
+            const data: ExternalData = { '1': [] };
             const styles = (Array.from(this.stored.styles.values()) as Array<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
                 const items: StringMap[] = [];
@@ -259,7 +259,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
         let xml = '';
         if (this.stored.dimens.size > 0) {
             const settings = this.userSettings;
-            const data: TemplateData = { '1': [] };
+            const data: ExternalData = { '1': [] };
             this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
             for (const [name, value] of this.stored.dimens.entries()) {
                 data['1'].push({

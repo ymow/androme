@@ -1,4 +1,4 @@
-import { BoxStyle, InitialData } from '../types/lib.base.types.node';
+import { StyleVisible, InitialData } from '../types/lib.base.types.node';
 
 import { ELEMENT_BLOCK, ELEMENT_INLINE, REGEX_PATTERN } from '../lib/constant';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE } from '../lib/enumeration';
@@ -43,7 +43,7 @@ interface CachedValue {
     textContent?: string;
     float?: string;
     flexbox?: Flexbox;
-    boxStyle?: BoxStyle;
+    boxStyle?: StyleVisible;
 }
 
 const BOX_MARGIN = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
