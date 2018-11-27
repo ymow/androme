@@ -25,6 +25,7 @@ import ConstraintGuideline from './extension/constraint/guideline';
 import DelegateElement from './extension/delegate/element';
 import DelegateRadioGroup from './extension/delegate/radiogroup';
 import DelegateScrollBar from './extension/delegate/scrollbar';
+import DelegateVerticalAlign from './extension/delegate/verticalalign';
 
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
@@ -83,7 +84,8 @@ const lib = {
         delegate: {
             Element: DelegateElement,
             RadioGroup: DelegateRadioGroup,
-            ScrollBar: DelegateScrollBar
+            ScrollBar: DelegateScrollBar,
+            VerticalAlign: DelegateVerticalAlign
         },
         resource: {
             Background: ResourceBackground,
@@ -222,6 +224,7 @@ const appBase: AppFramework<T> = {
             [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
             [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),
             [EXT_ANDROID.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EXT_ANDROID.DELEGATE_SCROLLBAR, framework),
+            [EXT_ANDROID.DELEGATE_VERTICALALIGN]: new DelegateVerticalAlign(EXT_ANDROID.DELEGATE_VERTICALALIGN, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

@@ -16,6 +16,7 @@ const settings: UserSettingsAndroid = {
         'android.delegate.element',
         'android.delegate.radiogroup',
         'android.delegate.scrollbar',
+        'android.delegate.verticalalign',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',

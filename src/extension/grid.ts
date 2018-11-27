@@ -41,7 +41,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition(node: T) {
         return this.included(<HTMLElement> node.element) || (node.length > 1 && (
             (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
-            (node.every(item => item.pageflow && !item.boxStyle.hasBackground && (!item.inlineflow || item.blockStatic)) && (
+            (node.every(item => item.pageflow && !item.visibleStyle.background && (!item.inlineflow || item.blockStatic)) && (
                 node.css('listStyle') === 'none' ||
                 node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
                 (!hasValue(node.dataset.import) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))

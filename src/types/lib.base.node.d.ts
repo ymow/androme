@@ -1,4 +1,4 @@
-import { StyleVisible, InitialData } from './lib.base.types.node';
+import { AutoMargin, InitialData, VisibleStyle } from './lib.base.types.node';
 
 declare global {
     namespace androme.lib.base {
@@ -30,10 +30,6 @@ declare global {
             readonly box: BoxDimensions;
             readonly bounds: BoxDimensions;
             readonly linear: BoxDimensions;
-            readonly linearHorizontal: boolean;
-            readonly linearVertical: boolean;
-            readonly layoutHorizontal: boolean;
-            readonly layoutVertical: boolean;
             readonly inlineWidth: boolean;
             readonly inlineHeight: boolean;
             readonly blockWidth: boolean;
@@ -91,15 +87,11 @@ declare global {
             readonly blockStatic: boolean;
             readonly blockDimension: boolean;
             readonly alignOrigin: boolean;
-            readonly autoMargin: boolean;
-            readonly autoMarginLeft: boolean;
-            readonly autoMarginRight: boolean;
-            readonly autoMarginHorizontal: boolean;
-            readonly autoMarginVertical: boolean;
+            readonly autoMargin: AutoMargin;
             readonly pageflow: boolean;
             readonly floating: boolean;
             readonly float: string;
-            readonly boxStyle: StyleVisible;
+            readonly visibleStyle: VisibleStyle;
             readonly textContent: string;
             readonly fontSize: number;
             readonly overflowX: boolean;
@@ -108,9 +100,15 @@ declare global {
             readonly verticalAlign: string;
             readonly supSubscript: boolean;
             readonly preserveWhiteSpace: boolean;
+            readonly layoutHorizontal: boolean;
+            readonly layoutVertical: boolean;
+            readonly layoutFrame: boolean;
+            readonly layoutLinear: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
+            readonly linearVertical: boolean;
             readonly actualParent: Node | null;
+            readonly actualChildren: Node[];
             readonly actualHeight: number;
             readonly dir: string;
             readonly nodes: Node[];
@@ -153,7 +151,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previous: Node | null, cleared?: Map<Node, string>, floatSize?: number, firstNode?: boolean): boolean;
+            alignedVertically(previous: Node | null, siblings?: Node[], cleared?: Map<Node, string>): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
             withinX(rect: BoxDimensions, dimension?: string): boolean;
@@ -161,7 +159,7 @@ declare global {
             inside(rect: BoxDimensions, dimension?: string): boolean;
             outsideX(rect: BoxDimensions, dimension?: string): boolean;
             outsideY(rect: BoxDimensions, dimension?: string): boolean;
-            css(attr: object | string, value?: string): string;
+            css(attr: object | string, value?: string, cache?: boolean): string;
             cssInitial(attr: string, complete?: boolean): string;
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
             cssTry(attr: string, value: string): boolean;

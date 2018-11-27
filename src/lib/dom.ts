@@ -431,13 +431,13 @@ export function isLineBreak(element: Element, excluded = true) {
     return false;
 }
 
-export function getBetweenElements(firstElement: Element | null, secondElement: Element, cacheNode = false, whiteSpace = false) {
-    if (!firstElement || firstElement.parentElement === secondElement.parentElement) {
-        const parentElement = secondElement.parentElement;
+export function getBetweenElements(elementStart: Element | null, elementEnd: Element, cacheNode = false, whiteSpace = false) {
+    if (!elementStart || elementStart.parentElement === elementEnd.parentElement) {
+        const parentElement = elementEnd.parentElement;
         if (parentElement) {
             const elements = <Element[]> Array.from(parentElement.childNodes);
-            const firstIndex = firstElement ? elements.findIndex(element => element === firstElement) : 0;
-            const secondIndex = elements.findIndex(element => element === secondElement);
+            const firstIndex = elementStart ? elements.findIndex(element => element === elementStart) : 0;
+            const secondIndex = elements.findIndex(element => element === elementEnd);
             if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
                 let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
                 if (!whiteSpace) {

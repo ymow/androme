@@ -9,7 +9,7 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
         const controller = <android.lib.base.Controller<T>> this.application.viewController;
         const group = controller.createNodeGroup(node, parent, [node]);
         group.android('layout_width', 'match_parent');
-        controller[node.float === 'right' || node.autoMarginLeft ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
+        controller[node.rightAligned ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
         const layout = new $Layout(
             group,
             parent,

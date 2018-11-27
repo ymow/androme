@@ -2,6 +2,7 @@ export const EXT_ANDROID = {
     DELEGATE_ELEMENT: 'android.delegate.element',
     DELEGATE_RADIOGROUP: 'android.delegate.radiogroup',
     DELEGATE_SCROLLBAR: 'android.delegate.scrollbar',
+    DELEGATE_VERTICALALIGN: 'android.delegate.verticalalign',
     CONSTRAINT_GUIDELINE: 'android.constraint.guideline',
     RESOURCE_INCLUDES: 'android.resource.includes',
     RESOURCE_BACKGROUND: 'android.resource.background',

@@ -320,11 +320,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public renderNode(layout: Layout<T>) {
-        this.setRenderPosition(layout.node);
         if (layout.itemCount === 0) {
             return this.viewController.renderNode(layout);
         }
         else {
+            this.setRenderPosition(layout.node);
             return this.viewController.renderNodeGroup(layout);
         }
     }
@@ -418,21 +418,43 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public setRenderPosition(parent: T, node?: T) {
+        let result: T[];
         const renderMap = this._renderPosition.get(parent.id);
         if (renderMap) {
             const filtered = node ? [node] : parent.duplicate() as T[];
-            const result = renderMap.filter(item => !filtered.includes(item));
+            result = renderMap.filter(item => !filtered.includes(item));
             result.push(...filtered);
-            this._renderPosition.set(parent.id, result);
         }
         else {
             if (node) {
-                this._renderPosition.set(parent.id, [node]);
+                result = [node];
             }
             else {
-                this._renderPosition.set(parent.id, parent.duplicate() as T[]);
+                result = parent.duplicate() as T[];
             }
         }
+        const axisZ: T[] = [];
+        const below: T[] = [];
+        const middle: T[] = [];
+        const above: T[] = [];
+        for (const item of result) {
+            const zIndex = item.toInt('zIndex');
+            if (item.pageflow || item.actualParent !== parent) {
+                middle.push(item);
+            }
+            else {
+                if (zIndex >= 0) {
+                    above.push(item);
+                }
+                else {
+                    below.push(item);
+                }
+            }
+        }
+        axisZ.push(...sortAsc(below, 'style.zIndex', 'id'));
+        axisZ.push(...middle);
+        axisZ.push(...sortAsc(above, 'style.zIndex', 'id'));
+        this._renderPosition.set(parent.id, axisZ);
     }
 
     public getExtension(name: string) {
@@ -650,10 +672,52 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
                         const item = Node.getElementAsNode(element);
-                        if (item && !item.excluded && (item.pageflow || (item.left && item.left < 0))) {
+                        if (item && !item.excluded && (item.pageflow || item.actualParent === node)) {
                             item.siblingIndex = i++;
                         }
                     });
+                    const layer: Array<T[]> = [];
+                    node.each((item: T) => {
+                        if (item.siblingIndex === Number.MAX_VALUE) {
+                            for (const adjacent of node.children) {
+                                if (adjacent.actualChildren.includes(item) || item.ascend().some(child => adjacent.cascade().includes(child))) {
+                                    let index = -1;
+                                    if (item.toInt('zIndex') >= 0 || adjacent !== item.actualParent) {
+                                        index = adjacent.siblingIndex + 1;
+                                    }
+                                    else {
+                                        index = adjacent.siblingIndex - 1;
+                                    }
+                                    if (layer[index] === undefined) {
+                                        layer[index] = [];
+                                    }
+                                    layer[index].push(item);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                    for (let j = 0; j < layer.length; j++) {
+                        const order = layer[j];
+                        if (order) {
+                            order.sort((a, b) => {
+                                const indexA = a.toInt('zIndex');
+                                const indexB = b.toInt('zIndex');
+                                if (indexA === indexB) {
+                                    return a.id < b.id ? -1 : 1;
+                                }
+                                return indexA < indexB ? -1 : 1;
+                            });
+                            node.each((item: T) => {
+                                if (item.siblingIndex !== Number.MAX_VALUE && item.siblingIndex >= j) {
+                                    item.siblingIndex += order.length;
+                                }
+                            });
+                            for (let k = 0 ; k < order.length; k++) {
+                                order[k].siblingIndex = j + k;
+                            }
+                        }
+                    }
                     if (node.length) {
                         node.sort(NodeList.siblingIndex);
                         node.initial.children.push(...node.duplicate());
@@ -724,32 +788,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (parent.length === 0 || parent.every(node => node.rendered)) {
                     continue;
                 }
-                const axisY: T[] = [];
-                const below: T[] = [];
-                const middle: T[] = [];
-                const above: T[] = [];
-                parent.each((node: T) => {
-                    if (node.pageflow || node.alignOrigin) {
-                        middle.push(node);
-                    }
-                    else {
-                        const zIndex = node.toInt('zIndex');
-                        if (zIndex > 0 || (!parent.documentBody && parent.element !== node.element.parentElement)) {
-                            above.push(node);
-                        }
-                        else if (zIndex === 0) {
-                            middle.push(node);
-                        }
-                        else {
-                            below.push(node);
-                        }
-                    }
-                });
-                axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
-                axisY.push(...middle);
-                axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
-                const floatEnabled = axisY.some(node => node.floating);
-                const cleared = floatEnabled ? NodeList.clearedAll(parent) : undefined;
+                const axisY = parent.duplicate() as T[];
+                const hasFloat = axisY.some(node => node.floating);
+                const cleared = hasFloat ? NodeList.clearedAll(parent) : undefined;
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
@@ -798,10 +839,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                             domNested: {
                                 for ( ; l < axisY.length; l++, m++) {
-                                    const adjacent = axisY[l];
-                                    if (adjacent.pageflow) {
-                                        if (floatEnabled) {
-                                            const float = cleared && cleared.get(adjacent);
+                                    const item = axisY[l];
+                                    if (item.pageflow) {
+                                        if (hasFloat) {
+                                            const float = cleared && cleared.get(item);
                                             if (float) {
                                                 if (float === 'both') {
                                                     floatAvailable.clear();
@@ -810,73 +851,69 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                     floatAvailable.delete(float);
                                                 }
                                             }
-                                            if (adjacent.floating) {
-                                                floatAvailable.add(adjacent.float);
+                                            if (item.floating) {
+                                                floatAvailable.add(item.float);
                                             }
                                         }
-                                        const previousSibling = adjacent.previousSibling() as T;
-                                        const nextSibling = adjacent.nextSibling(true);
-                                        if (m === 0 && nextSibling) {
-                                            if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, 0, true)) {
-                                                vertical.push(adjacent);
+                                        const previous = item.previousSibling() as T;
+                                        const next = item.nextSibling(true);
+                                        if (m === 0 && next) {
+                                            if (item.blockStatic || next.alignedVertically(item)) {
+                                                vertical.push(item);
                                             }
                                             else {
-                                                horizontal.push(adjacent);
+                                                horizontal.push(item);
                                             }
                                         }
-                                        else if (previousSibling) {
-                                            if (floatEnabled) {
+                                        else if (previous) {
+                                            if (hasFloat) {
                                                 const floated = NodeList.floated([...horizontal, ...vertical]);
-                                                const pending = [...horizontal, ...vertical, adjacent];
-                                                const clearedPartial = NodeList.cleared(pending);
-                                                const clearedPrevious = new Map<T, string>();
-                                                if (clearedPartial.has(previousSibling) || (previousSibling.lineBreak && cleared && cleared.has(previousSibling))) {
-                                                    clearedPrevious.set(previousSibling, previousSibling.css('clear'));
-                                                }
-                                                const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious, floated.size);
-                                                if (verticalAlign || clearedPartial.has(adjacent) || (settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatAvailable.size === 2)) {
+                                                const pending = [...horizontal, ...vertical, item];
+                                                const startNewRow = item.alignedVertically(previous, undefined, cleared);
+                                                const clearedPending = NodeList.cleared(pending);
+                                                if (startNewRow || clearedPending.has(item) || (settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatAvailable.size === 2)) {
                                                     if (horizontal.length) {
                                                         if (!settings.floatOverlapDisabled) {
-                                                            if (floatAvailable.size > 0 && !pending.map(node => clearedPartial.get(node)).includes('both') && (
+                                                            if (floatAvailable.size > 0 && !pending.map(node => clearedPending.get(node)).includes('both') && (
                                                                     floated.size === 0 ||
-                                                                    adjacent.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
+                                                                    item.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
                                                                ))
                                                             {
-                                                                if (clearedPartial.has(adjacent)) {
-                                                                    if (floatAvailable.size < 2 && floated.size === 2 && !adjacent.floating) {
-                                                                        adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                                                if (clearedPending.has(item)) {
+                                                                    if (floatAvailable.size < 2 && floated.size === 2 && !item.floating) {
+                                                                        item.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
                                                                         verticalExtended = true;
-                                                                        horizontal.push(adjacent);
+                                                                        horizontal.push(item);
                                                                         continue;
                                                                     }
                                                                     break domNested;
                                                                 }
-                                                                else if (!verticalAlign) {
-                                                                    horizontal.push(adjacent);
+                                                                else if (!startNewRow) {
+                                                                    horizontal.push(item);
                                                                     continue;
                                                                 }
-                                                                if (floated.size === 1 && (!adjacent.floating || floatAvailable.has(adjacent.float))) {
-                                                                    horizontal.push(adjacent);
+                                                                if (floated.size === 1 && (!item.floating || floatAvailable.has(item.float))) {
+                                                                    horizontal.push(item);
                                                                     continue;
                                                                 }
                                                             }
                                                         }
                                                         break domNested;
                                                     }
-                                                    checkVertical(adjacent);
+                                                    checkVertical(item);
                                                 }
                                                 else {
-                                                    if (!checkHorizontal(adjacent)) {
+                                                    if (!checkHorizontal(item)) {
                                                         break domNested;
                                                     }
                                                 }
                                             }
                                             else {
-                                                if (adjacent.alignedVertically(previousSibling)) {
-                                                    checkVertical(adjacent);
+                                                if (item.alignedVertically(previous)) {
+                                                    checkVertical(item);
                                                 }
                                                 else {
-                                                    if (!checkHorizontal(adjacent)) {
+                                                    if (!checkHorizontal(item)) {
                                                         break domNested;
                                                     }
                                                 }
@@ -1062,10 +1099,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             nodeY.toInt('width') === 0 &&
                                             nodeY.toInt('height') === 0 &&
                                             nodeY.lineHeight === 0 &&
-                                            !child.hasWidth && !child.boxStyle.hasBorder &&
-                                            !nodeY.boxStyle.hasBackground &&
+                                            !child.hasWidth && !child.visibleStyle.border &&
+                                            !nodeY.visibleStyle.background &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
-                                            nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
+                                            nodeY.float !== 'right' && !nodeY.autoMargin.enabled && nodeY.alignOrigin &&
                                             !this.viewController.hasAppendProcessing(nodeY.id))
                                         {
                                             child.documentRoot = nodeY.documentRoot;
@@ -1085,30 +1122,30 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     else {
                                         const children = nodeY.children as T[];
                                         const [linearX, linearY] = [NodeList.linearX(children), NodeList.linearY(children)];
-                                        const floated = NodeList.floated(children);
+                                        const floatedInside = NodeList.floated(children);
                                         const clearedInside = NodeList.clearedAll(nodeY);
-                                        if (this.viewController.checkConstraintFloat(nodeY, children, floated, clearedInside, linearX)) {
+                                        if (this.viewController.checkConstraintFloat(nodeY, children, floatedInside, clearedInside, linearX)) {
                                             containerType = NODE_CONTAINER.CONSTRAINT;
-                                            layout.add(getAlignmentFloat(floated.has('right')));
+                                            layout.add(getAlignmentFloat(floatedInside.has('right')));
                                         }
                                         else if (linearX) {
-                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
-                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floated, clearedInside, linearX);
+                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floatedInside, clearedInside, linearX)) {
+                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floatedInside, clearedInside, linearX);
                                             }
-                                            else if (this.viewController.checkConstraintHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                            else if (this.viewController.checkConstraintHorizontal(nodeY, children, floatedInside, clearedInside, linearX)) {
                                                 containerType = NODE_CONTAINER.CONSTRAINT;
                                             }
-                                            else if (this.viewController.checkRelativeHorizontal(nodeY, children, floated, clearedInside, linearX)) {
+                                            else if (this.viewController.checkRelativeHorizontal(nodeY, children, floatedInside, clearedInside, linearX)) {
                                                 containerType = NODE_CONTAINER.RELATIVE;
                                             }
                                             else {
                                                 containerType = NODE_CONTAINER.LINEAR;
                                             }
                                             layout.add(NODE_ALIGNMENT.HORIZONTAL);
-                                            if (floated.size > 0) {
-                                                layout.add(getAlignmentFloat(floated.has('right')));
+                                            if (floatedInside.size > 0) {
+                                                layout.add(getAlignmentFloat(floatedInside.has('right')));
                                                 if (output === '') {
-                                                    NodeList.sortByAlignment(children, NODE_ALIGNMENT.HORIZONTAL);
+                                                    NodeList.sortByAlignment(children, NODE_ALIGNMENT.FLOAT);
                                                 }
                                             }
                                         }
@@ -1117,15 +1154,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             layout.add(NODE_ALIGNMENT.VERTICAL | (nodeY.documentRoot ? NODE_ALIGNMENT.UNKNOWN : 0));
                                         }
                                         else if (children.every(node => node.inlineflow)) {
-                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floated, clearedInside, linearX)) {
-                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floated, clearedInside, linearX);
+                                            if (this.viewController.checkFrameHorizontal(nodeY, children, floatedInside, clearedInside, linearX)) {
+                                                output = this.processLayoutHorizontal(nodeY, parentY, children, floatedInside, clearedInside, linearX);
                                             }
                                             else {
                                                 containerType = NODE_CONTAINER.RELATIVE;
                                                 layout.add(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN);
                                             }
                                         }
-                                        else if (children.some(node => node.alignedVertically(node.previousSibling(), clearedInside, floated.size))) {
+                                        else if (children.some(node => node.alignedVertically(node.previousSibling(), children, clearedInside))) {
                                             containerType = NODE_CONTAINER.LINEAR;
                                             layout.add(NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN);
                                         }
@@ -1137,25 +1174,24 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                             else {
-                                const boxStyle = nodeY.boxStyle;
-                                const freeFormText = hasFreeFormText(nodeY.element, settings.renderInlineText ? 0 : 1);
-                                if (freeFormText || (boxStyle.hasBorder && nodeY.textContent.length)) {
+                                const visibleStyle = nodeY.visibleStyle;
+                                if (hasFreeFormText(nodeY.element, settings.renderInlineText ? 0 : 1) || (visibleStyle.border && nodeY.textContent.length)) {
                                     containerType = NODE_CONTAINER.TEXT;
                                 }
-                                else if (boxStyle.hasBackgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat' && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
+                                else if (visibleStyle.backgroundImage && !visibleStyle.backgroundRepeat && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
                                     containerType = NODE_CONTAINER.IMAGE;
                                     layout.add(NODE_ALIGNMENT.SINGLE);
                                     nodeY.exclude({ resource: NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING });
                                 }
-                                else if (nodeY.block && (boxStyle.hasBorder || boxStyle.hasBackgroundImage) && (boxStyle.hasBorder || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft > 0)) {
+                                else if (nodeY.block && (visibleStyle.border || visibleStyle.backgroundImage) && (visibleStyle.border || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingBottom + nodeY.paddingLeft > 0)) {
                                     containerType = NODE_CONTAINER.LINE;
                                 }
                                 else if (!nodeY.documentRoot) {
-                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !boxStyle.hasBackground) {
+                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !visibleStyle.background) {
                                         parentY.remove(nodeY);
                                         nodeY.hide();
                                     }
-                                    else if (boxStyle.hasBackground) {
+                                    else if (visibleStyle.background) {
                                         containerType = NODE_CONTAINER.TEXT;
                                     }
                                     else {
@@ -1313,7 +1349,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const settings = this.userSettings;
         let layerIndex: Array<T[] | T[][]> = [];
         let output = '';
-        if (cleared.size === 0 && nodes.every(node => !node.autoMargin)) {
+        if (cleared.size === 0 && nodes.every(node => !node.autoMargin.enabled)) {
             const inline: T[] = [];
             const left: T[] = [];
             const right: T[] = [];
@@ -1334,7 +1370,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 layout.add(NODE_ALIGNMENT.HORIZONTAL);
                 if (inline.length === 0) {
                     layout.add(getAlignmentFloat(right.length > 0));
-                    NodeList.sortByAlignment(nodes, NODE_ALIGNMENT.HORIZONTAL);
+                    NodeList.sortByAlignment(nodes, NODE_ALIGNMENT.FLOAT);
                 }
                 if (this.viewController.checkConstraintFloat(group, nodes)) {
                     layout.setType(NODE_CONTAINER.CONSTRAINT);
@@ -1436,8 +1472,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    else if (node.autoMargin) {
-                        if (node.autoMarginLeft) {
+                    else if (node.autoMargin.enabled) {
+                        if (node.autoMargin.left) {
                             if (rightAbove.length) {
                                 rightBelow.push(node);
                             }
@@ -1445,7 +1481,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 rightAbove.push(node);
                             }
                         }
-                        else if (node.autoMarginRight) {
+                        else if (node.autoMargin.right) {
                             if (leftAbove.length) {
                                 leftBelow.push(node);
                             }
@@ -1496,11 +1532,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    else if (node.autoMargin) {
-                        if (node.autoMarginLeft && rightBelow.length) {
+                    else if (node.autoMargin.enabled) {
+                        if (node.autoMargin.left && rightBelow.length) {
                             rightBelow.push(node);
                         }
-                        else if (node.autoMarginRight && leftBelow.length) {
+                        else if (node.autoMargin.right && leftBelow.length) {
                             leftBelow.push(node);
                         }
                         else {

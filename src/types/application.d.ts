@@ -41,6 +41,7 @@ interface ControllerSettings {
         tagName: Set<string>
     };
     relative: {
+        ellipsisOverflowWordsMinimum: number;
         superscriptFontScale: number;
         subscriptFontScale: number;
     };

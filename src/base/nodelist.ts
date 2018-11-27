@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 import Container from './container';
 import Node from './node';
 
-import { getElementAsNode, isUserAgent } from '../lib/dom';
+import { isUserAgent } from '../lib/dom';
 import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
@@ -44,6 +44,14 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return result;
     }
 
+    public static floatedAll<T extends Node>(parent: T) {
+        return NodeList.floated(parent.actualChildren.filter(item => item.siblingflow) as T[]);
+    }
+
+    public static clearedAll<T extends Node>(parent: T) {
+        return NodeList.cleared(parent.actualChildren.filter(item => item.siblingflow) as T[]);
+    }
+
     public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
         if (!list.some(node => node.baseline && (node.textElement || node.imageElement))) {
@@ -76,10 +84,10 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 }
             }
             baseline = list.slice().sort((a, b) => {
-                if (a.groupElement) {
+                if (a.groupElement || (!a.baseline && b.baseline)) {
                     return 1;
                 }
-                else if (b.groupElement) {
+                else if (b.groupElement || (a.baseline && !b.baseline)) {
                     return -1;
                 }
                 let heightA = a.bounds.height;
@@ -187,7 +195,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
-                        if (nodes[i].alignedVertically(nodes[i].previousSibling(), cleared)) {
+                        if (nodes[i].alignedVertically(nodes[i].previousSibling(), undefined, cleared)) {
                             return false;
                         }
                     }
@@ -239,7 +247,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
-                        if (!nodes[i].alignedVertically(nodes[i].previousSibling(), cleared)) {
+                        if (!nodes[i].alignedVertically(nodes[i].previousSibling(), nodes, cleared)) {
                             return false;
                         }
                     }
@@ -253,7 +261,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         const [children, cleared] = ((): [T[], Map<T, string>] => {
             const parent = this.actualParent(list);
             if (parent) {
-                return [Array.from(parent.element.childNodes).map(element => getElementAsNode(<Element> element) as T).filter(node => node), this.clearedAll(parent)];
+                return [parent.actualChildren as T[], this.clearedAll(parent)];
             }
             else {
                 return [list, this.cleared(list)];
@@ -270,7 +278,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 }
             }
             else {
-                if (node.alignedVertically(previous, cleared)) {
+                if (node.alignedVertically(previous, row, cleared)) {
                     if (row.length > 0) {
                         result.push(row);
                     }
@@ -324,8 +332,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static sortByAlignment<T extends Node>(list: T[], alignmentType: number) {
-        let sorted = false;
-        if (hasBit(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.ABSOLUTE, alignmentType)) {
+        if (hasBit(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT, alignmentType)) {
             function sortHorizontal(nodes: T[]) {
                 if (nodes.some(node => node.floating) && !nodes.every(node => node.float === 'right')) {
                     nodes.sort((a, b) => {
@@ -363,28 +370,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             else {
                 sortHorizontal(list);
             }
-            sorted = true;
-        }
-        if (hasBit(NODE_ALIGNMENT.ABSOLUTE, alignmentType) && list.some(node => node.toInt('zIndex') !== 0)) {
-            list.sort((a, b) => {
-                const indexA = a.toInt('zIndex');
-                const indexB = b.toInt('zIndex');
-                if (indexA === 0 && indexB === 0) {
-                    return 0;
-                }
-                return indexA >= indexB ? 1 : -1;
-            });
-            sorted = true;
-        }
-        return sorted;
-    }
-
-    public static clearedAll<T extends Node>(parent: T) {
-        if (parent.groupElement) {
-            return NodeList.cleared(parent.children as T[]);
-        }
-        else {
-            return NodeList.cleared(Array.from(parent.element.children).map((element: Element) => Node.getElementAsNode(element) as T).filter(item => item && item.siblingflow));
         }
     }
 

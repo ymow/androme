@@ -9,7 +9,7 @@ import NodeList from '../base/nodelist';
 import { convertAlpha, convertRoman } from '../lib/util';
 
 function hasSingleImage<T extends Node>(node: T) {
-    return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
+    return node.visibleStyle.backgroundImage && !node.visibleStyle.backgroundRepeat;
 }
 
 export default abstract class List<T extends Node> extends Extension<T> {
@@ -73,8 +73,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
                         case 'none':
                             src = '';
                             let position = '';
-                            const repeat = item.css('backgroundRepeat');
-                            if (repeat === 'no-repeat') {
+                            if (!item.visibleStyle.backgroundRepeat) {
                                 src = item.css('backgroundImage');
                                 position = item.css('backgroundPosition');
                             }

@@ -1,4 +1,4 @@
-import { StyleVisible, InitialData } from '../types/lib.base.types.node';
+import { CachedValue, InitialData } from '../types/lib.base.types.node';
 
 import { ELEMENT_BLOCK, ELEMENT_INLINE, REGEX_PATTERN } from '../lib/constant';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE } from '../lib/enumeration';
@@ -7,44 +7,9 @@ import Container from './container';
 import Extension from './extension';
 
 import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newClientRect, setElementCache, deleteElementCache } from '../lib/dom';
-import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
+import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
-
-interface CachedValue {
-    pageflow?: boolean;
-    siblingflow?: boolean;
-    inlineflow?: boolean;
-    baseline?: boolean;
-    multiLine?: boolean;
-    inlineText?: boolean;
-    supSubscript?: boolean;
-    positionStatic?: boolean;
-    alignOrigin?: boolean;
-    inline?: boolean;
-    inlineStatic?: boolean;
-    inlineVertical?: boolean;
-    block?: boolean;
-    blockStatic?: boolean;
-    blockDimension?: boolean;
-    floating?: boolean;
-    autoMargin?: boolean;
-    autoMarginLeft?: boolean;
-    autoMarginRight?: boolean;
-    autoMarginHorizontal?: boolean;
-    autoMarginVertical?: boolean;
-    rightAligned?: boolean;
-    bottomAligned?: boolean;
-    preserveWhiteSpace?: boolean;
-    overflow?: number;
-    lineHeight?: number;
-    dir?: string;
-    tagName?: string;
-    textContent?: string;
-    float?: string;
-    flexbox?: Flexbox;
-    boxStyle?: StyleVisible;
-}
 
 const BOX_MARGIN = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
 const BOX_PADDING = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
@@ -92,7 +57,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     protected abstract readonly _boxAdjustment: BoxModel;
     protected abstract readonly _boxReset: BoxModel;
 
-    protected _cached: CachedValue = {};
+    protected _initialized = false;
+    protected _cached: CachedValue<T> = {};
     protected _box: BoxDimensions;
     protected _bounds: BoxDimensions;
     protected _linear: BoxDimensions;
@@ -105,7 +71,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _excludeSection = 0;
     private _excludeProcedure = 0;
     private _excludeResource = 0;
-    private _initialized = false;
 
     protected constructor(
         public readonly id: number,
@@ -139,8 +104,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract get documentParent(): T;
     public abstract set renderParent(value: T);
     public abstract get renderParent(): T;
-    public abstract get linearHorizontal(): boolean;
-    public abstract get linearVertical(): boolean;
     public abstract get inlineWidth(): boolean;
     public abstract get inlineHeight(): boolean;
     public abstract get blockWidth(): boolean;
@@ -269,8 +232,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public ascend(generated = false, levels = -1) {
         const result: T[] = [];
-        const attr = generated ? 'parent' : 'documentParent';
-        let current: T = this[attr];
+        const attr = generated ? (this.rendered ? 'renderParent' : 'parent') : 'actualParent';
+        let current: T | null = this[attr];
         let i = -1;
         while (current && current.id !== 0 && !result.includes(current)) {
             result.push(current);
@@ -284,8 +247,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public cascade() {
         function cascade(node: T) {
-            const current = [...node.children];
-            node.each(item => current.push(...cascade(item)));
+            const current = [...node.duplicate()];
+            for (const item of node.children) {
+                current.push(...cascade(item));
+            }
             return current;
         }
         return cascade(this);
@@ -372,18 +337,20 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public alignedVertically(previous: T | null, cleared?: Map<T, string>, floatSize = 2, firstNode = false) {
-        if (previous) {
+    public alignedVertically(previous: T | null, siblings?: T[], cleared?: Map<T, string>) {
+        if (previous && this.siblingflow) {
+            const parent = this.parent ? (this.rendered ? this.renderParent : this.parent) : null;
+            const actualParent = this.actualParent;
             return (
                 this.lineBreak ||
                 (previous.lineBreak && !this.floating) ||
                 previous.blockStatic ||
-                (previous.float === 'left' && this.autoMarginRight) ||
-                (previous.float === 'right' && this.autoMarginLeft) ||
-                (previous.plainText && previous.multiLine && (this.parent && !this.parent.layoutRelative)) ||
-                (previous.bounds && previous.bounds.width > (this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width) && (
+                (previous.float === 'left' && this.autoMargin.right) ||
+                (previous.float === 'right' && this.autoMargin.left) ||
+                (previous.plainText && previous.multiLine && parent && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical)) ||
+                (previous.bounds && actualParent !== null && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.toInt('width') : actualParent.box.width) && (
                     !previous.textElement ||
-                    previous.css('whiteSpace') === 'nowrap'
+                    (previous.textElement && previous.css('whiteSpace') === 'nowrap')
                 )) ||
                 (!previous.floating && (
                     (!this.inlineflow && !this.floating) ||
@@ -391,11 +358,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 )) ||
                 (this.blockStatic && (
                     !previous.inlineflow ||
-                    (cleared && cleared.has(previous) && previous.floating)
+                    (cleared && cleared.has(previous))
                 )) ||
-                (!firstNode && previous && previous.linear && (
+                (siblings !== undefined && siblings[0] !== this && (
                     (cleared && cleared.has(this)) ||
-                    (this.linear.top >= previous.linear.bottom && this.floating && previous.floating && floatSize === 2)
+                    (this.floating && actualParent !== null && (
+                        (this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0) ||
+                        (this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0)
+                    ))
                 ))
             );
         }
@@ -451,14 +421,17 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return bounds.right < rect.left || bounds.left > rect.right;
     }
 
-    public css(attr: object | string, value = ''): string {
+    public css(attr: object | string, value = '', cache = false): string {
         if (typeof attr === 'object') {
             Object.assign(this.styleMap, attr);
             return '';
         }
         else {
-            if (arguments.length === 2) {
+            if (arguments.length >= 2) {
                 this.styleMap[attr] = hasValue(value) ? value : '';
+                if (cache) {
+                    this.unsetCache(attr);
+                }
             }
             return this.styleMap[attr] || (this.style && this.style[attr]) || '';
         }
@@ -1034,11 +1007,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get flexbox(): Flexbox {
         if (this._cached.flexbox === undefined) {
+            const actualParent = this.actualParent;
             this._cached.flexbox = {
                 order: convertInt(this.css('order')),
                 wrap: this.css('flexWrap'),
                 direction: this.css('flexDirection'),
-                alignSelf: !this.has('alignSelf') && this.documentParent.has('alignItems') ? this.documentParent.css('alignItems') : this.css('alignSelf'),
+                alignSelf: !this.has('alignSelf') && actualParent && actualParent.has('alignItems') ? actualParent.css('alignItems') : this.css('alignSelf'),
                 justifyContent: this.css('justifyContent'),
                 basis: this.css('flexBasis'),
                 grow: convertInt(this.css('flexGrow')),
@@ -1192,7 +1166,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get inlineVertical() {
         if (this._cached.inlineVertical === undefined) {
-            this._cached.inlineVertical = (this.inline || this.display === 'inline-block') && !this.floating && !this.plainText;
+            this._cached.inlineVertical = this.display.startsWith('inline') && !this.floating && !this.plainText;
         }
         return this._cached.inlineVertical;
     }
@@ -1255,7 +1229,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get rightAligned() {
         if (this._cached.rightAligned === undefined) {
-            this._cached.rightAligned = this.float === 'right' || this.autoMarginLeft || this.css('textAlign') === 'right' || (!this.siblingflow && this.right !== null && this.right >= 0);
+            this._cached.rightAligned = this.float === 'right' || this.autoMargin.left || this.css('textAlign') === 'right' || (!this.siblingflow && this.right !== null && this.right >= 0);
         }
         return this._cached.rightAligned || this.hasAlign(NODE_ALIGNMENT.RIGHT);
     }
@@ -1269,37 +1243,29 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get autoMargin() {
         if (this._cached.autoMargin === undefined) {
-            this._cached.autoMargin = this.blockStatic && (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto');
+            if (this.blockStatic) {
+                const styleMap = this.initial.styleMap;
+                const left = styleMap.marginLeft === 'auto';
+                const right = styleMap.marginRight === 'auto';
+                this._cached.autoMargin = {
+                    enabled: left || right,
+                    left: left && !right,
+                    right: !left && right,
+                    horizontal: left && right,
+                    vertical: styleMap.marginTop === 'auto' && styleMap.marginBottom === 'auto'
+                };
+            }
+            else {
+                this._cached.autoMargin = {
+                    enabled: false,
+                    left: false,
+                    right: false,
+                    horizontal: false,
+                    vertical: false
+                };
+            }
         }
         return this._cached.autoMargin;
-    }
-
-    get autoMarginLeft() {
-        if (this._cached.autoMarginLeft === undefined) {
-            this._cached.autoMarginLeft = this.blockStatic && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto';
-        }
-        return this._cached.autoMarginLeft;
-    }
-
-    get autoMarginRight() {
-        if (this._cached.autoMarginRight === undefined) {
-            this._cached.autoMarginRight = this.blockStatic && this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto';
-        }
-        return this._cached.autoMarginRight;
-    }
-
-    get autoMarginHorizontal() {
-        if (this._cached.autoMarginHorizontal === undefined) {
-            this._cached.autoMarginHorizontal = this.blockStatic && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto';
-        }
-        return this._cached.autoMarginHorizontal;
-    }
-
-    get autoMarginVertical() {
-        if (this._cached.autoMarginVertical === undefined) {
-            this._cached.autoMarginVertical = this.blockStatic && this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto';
-        }
-        return this._cached.autoMarginVertical;
     }
 
     get floating() {
@@ -1404,19 +1370,23 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.multiLine;
     }
 
-    get boxStyle() {
-        if (this._cached.boxStyle === undefined) {
-            const hasBorder = this.borderTopWidth > 0 || this.borderRightWidth > 0 || this.borderBottomWidth > 0 || this.borderLeftWidth > 0;
-            const hasBackgroundImage = REGEX_PATTERN.CSS_URL.test(this.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(this.css('background'));
-            const hasBackgroundColor = this.has('backgroundColor');
-            this._cached.boxStyle = {
-                hasBackground: hasBorder || hasBackgroundImage || hasBackgroundColor,
-                hasBorder,
-                hasBackgroundImage,
-                hasBackgroundColor
+    get visibleStyle() {
+        if (this._cached.visibleStyle === undefined) {
+            const border = this.borderTopWidth > 0 || this.borderRightWidth > 0 || this.borderBottomWidth > 0 || this.borderLeftWidth > 0;
+            const backgroundImage = REGEX_PATTERN.CSS_URL.test(this.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(this.css('background'));
+            const backgroundColor = this.has('backgroundColor');
+            const backgroundRepeat = this.css('backgroundRepeat');
+            this._cached.visibleStyle = {
+                background: border || backgroundImage || backgroundColor,
+                border,
+                backgroundImage,
+                backgroundColor,
+                backgroundRepeat: backgroundRepeat !== 'no-repeat',
+                backgroundRepeatX: backgroundRepeat === 'repeat' || backgroundRepeat === 'repeat-x' || backgroundRepeat.startsWith('repeat '),
+                backgroundRepeatY: backgroundRepeat === 'repeat' || backgroundRepeat === 'repeat-y' || backgroundRepeat.endsWith(' repeat')
             };
         }
-        return this._cached.boxStyle;
+        return this._cached.visibleStyle;
     }
 
     get preserveWhiteSpace() {
@@ -1427,6 +1397,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.preserveWhiteSpace;
     }
 
+    get layoutFrame() {
+        return this.is(NODE_CONTAINER.FRAME);
+    }
+    get layoutLinear() {
+        return this.is(NODE_CONTAINER.LINEAR);
+    }
     get layoutRelative() {
         return this.is(NODE_CONTAINER.RELATIVE);
     }
@@ -1441,8 +1417,27 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.hasAlign(NODE_ALIGNMENT.VERTICAL);
     }
 
+    get linearVertical() {
+        return this.layoutLinear && this.layoutVertical;
+    }
+
     get actualParent(): T | null {
         return getElementAsNode(this.element.parentElement);
+    }
+
+    get actualChildren(): T[] {
+        if (this._cached.actualChildren === undefined) {
+            if (this.htmlElement) {
+                this._cached.actualChildren = Array.from(this.element.childNodes).map((element: Element) => getElementAsNode(element) as T).filter(node => node) as T[];
+            }
+            else if (this.groupElement) {
+                this._cached.actualChildren = this.initial.children.slice() as T[];
+            }
+            else {
+                this._cached.actualChildren = [];
+            }
+        }
+        return this._cached.actualChildren;
     }
 
     get actualHeight() {

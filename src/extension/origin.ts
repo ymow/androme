@@ -60,7 +60,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 if (marginRight.length) {
                     const [sectionLeft, sectionRight] = partition(node.children, (item: T) => !marginRight.includes(item));
                     if (sectionLeft.length && sectionRight.length) {
-                        if (node.style.marginLeft && node.autoMarginLeft) {
+                        if (node.style.marginLeft && node.autoMargin.left) {
                             node.css('marginLeft', node.style.marginLeft);
                         }
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
@@ -73,7 +73,15 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 const marginLeftType = maxArray(marginLeft);
                 if (marginLeftType > 0) {
                     const rows = NodeList.partitionRows(node.children.filter(item => item.pageflow));
-                    const columnStart = rows.map(item => item[0]);
+                    const columnStart: T[] = [];
+                    rows.forEach((list: T[]) => {
+                        columnStart.push(list[0]);
+                        for (let i = 1; i < list.length; i++) {
+                            if (list[i].multiLine) {
+                                columnStart.push(list[i]);
+                            }
+                        }
+                    });
                     node.each((item: T, index) => {
                         if (marginLeft[index] === 2) {
                             const left = item.toInt('left') + node.marginLeft;

@@ -432,7 +432,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setValueString() {
         function replaceWhiteSpace(node: T, value: string): [string, boolean] {
-            if (node.multiLine && !node.renderParent.linearVertical) {
+            if (node.multiLine && !node.linearVertical) {
                 value = value.replace(/^\s*\n/, '');
             }
             switch (node.css('whiteSpace')) {
@@ -441,7 +441,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     break;
                 case 'pre':
                 case 'pre-wrap':
-                    if (!node.renderParent.linearVertical) {
+                    if (!node.linearVertical) {
                         value = value.replace(/^\n/, '');
                     }
                     value = value.replace(/\n/g, '\\n');
