@@ -5,16 +5,20 @@ interface BoxRect {
     left: number;
 }
 
-interface BoxDimensions extends BoxRect {
-    width: number;
-    height: number;
-}
-
-interface BoxPosition extends BoxRect {
+interface RectPosition extends BoxRect {
     horizontal: string;
     vertical: string;
     originalX: string;
     originalY: string;
+}
+
+interface RectDimensions extends BoxRect {
+    width: number;
+    height: number;
+}
+
+interface TextDimensions extends RectDimensions {
+    multiLine: boolean;
 }
 
 interface BoxMargin {

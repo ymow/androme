@@ -13,7 +13,7 @@ import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-function setPivotXY(data: ExternalData, origin: BoxPosition | undefined) {
+function setPivotXY(data: ExternalData, origin: RectPosition | undefined) {
     if (origin) {
         if (origin.left !== 0) {
             data.pivotX = $util.isPercent(origin.originalX) ? origin.originalX : origin.left.toString();

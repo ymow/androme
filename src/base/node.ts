@@ -6,7 +6,7 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER
 import Container from './container';
 import Extension from './extension';
 
-import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newClientRect, setElementCache, deleteElementCache } from '../lib/dom';
+import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newRectDimensions, setElementCache, deleteElementCache } from '../lib/dom';
 import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
@@ -59,9 +59,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     protected _initialized = false;
     protected _cached: CachedValue<T> = {};
-    protected _box: BoxDimensions;
-    protected _bounds: BoxDimensions;
-    protected _linear: BoxDimensions;
+    protected _box: RectDimensions;
+    protected _bounds: RectDimensions;
+    protected _linear: RectDimensions;
 
     private _element: Element;
     private _parent: T;
@@ -81,7 +81,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             depth: -1,
             children: [],
             styleMap: {},
-            bounds: newClientRect()
+            bounds: newRectDimensions()
         };
         if (element) {
             this._element = element;
@@ -385,8 +385,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return false;
     }
 
-    public intersectX(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public intersectX(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return (
             rect.top >= bounds.top && rect.top < bounds.bottom ||
             rect.bottom > bounds.top && rect.bottom <= bounds.bottom ||
@@ -395,8 +395,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         );
     }
 
-    public intersectY(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public intersectY(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return (
             rect.left >= bounds.left && rect.left < bounds.right ||
             rect.right > bounds.left && rect.right <= bounds.right ||
@@ -405,18 +405,18 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         );
     }
 
-    public withinX(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public withinX(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return bounds.top >= rect.top && bounds.bottom <= rect.bottom;
     }
 
-    public withinY(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public withinY(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return bounds.left >= rect.left && bounds.right <= rect.right;
     }
 
-    public inside(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public inside(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         const top = rect.top > bounds.top && rect.top < bounds.bottom;
         const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
         const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
@@ -424,13 +424,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return top && (left || right) || bottom && (left || right);
     }
 
-    public outsideX(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public outsideX(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return bounds.bottom < rect.top || bounds.top > rect.bottom;
     }
 
-    public outsideY(rect: BoxDimensions, dimension = 'linear') {
-        const bounds: BoxDimensions = this[dimension] || this.linear;
+    public outsideY(rect: RectDimensions, dimension = 'linear') {
+        const bounds: RectDimensions = this[dimension] || this.linear;
         return bounds.right < rect.left || bounds.left > rect.right;
     }
 
@@ -633,9 +633,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 this._bounds = assignBounds(this._element.getBoundingClientRect());
             }
             else if (this.plainText) {
-                const [bounds, multiLine] = getRangeClientRect(this._element);
-                this._bounds = bounds;
-                this._cached.multiLine = multiLine;
+                const bounds = getRangeClientRect(this._element);
+                this._bounds = assignBounds(bounds);
+                this._cached.multiLine = bounds.multiLine;
             }
             Object.assign(this.initial.bounds, this._bounds);
         }
@@ -1013,15 +1013,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get box() {
-        return this._box || newClientRect();
+        return this._box || newRectDimensions();
     }
 
     get bounds() {
-        return this._bounds || newClientRect();
+        return this._bounds || newRectDimensions();
     }
 
     get linear() {
-        return this._linear || newClientRect();
+        return this._linear || newRectDimensions();
     }
 
     set renderAs(value) {
@@ -1428,7 +1428,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     break;
                 default:
                     if (this.textElement && !this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
-                        this._cached.multiLine = getRangeClientRect(this._element)[1];
+                        this._cached.multiLine = getRangeClientRect(this._element).multiLine;
                     }
                     break;
             }

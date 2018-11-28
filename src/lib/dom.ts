@@ -41,7 +41,7 @@ export function newBoxRect(): BoxRect {
     };
 }
 
-export function newClientRect(): BoxDimensions {
+export function newRectDimensions(): RectDimensions {
     return Object.assign({ width: 0, height: 0 }, newBoxRect());
 }
 
@@ -67,11 +67,11 @@ export function convertClientUnit(value: string, dimension: number, dpi: number,
     }
 }
 
-export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
+export function getRangeClientRect(element: Element): TextDimensions {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
-    let bounds: BoxDimensions = newClientRect();
+    let bounds: RectDimensions = newRectDimensions();
     let multiLine = false;
     if (domRect.length) {
         bounds = assignBounds(domRect[0]);
@@ -93,10 +93,10 @@ export function getRangeClientRect(element: Element): [BoxDimensions, boolean] {
             }
         }
     }
-    return [bounds, multiLine];
+    return Object.assign(bounds, { multiLine }) as TextDimensions;
 }
 
-export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {
+export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions {
     return {
         top: bounds.top,
         right: bounds.right,
@@ -211,8 +211,8 @@ export function cssAttribute(element: Element, attr: string): string {
     return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
 }
 
-export function getBackgroundPosition(value: string, dimension: BoxDimensions, dpi: number, fontSize: number, leftPerspective = false, percent = false) {
-    const result: BoxPosition = {
+export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective = false, percent = false) {
+    const result: RectPosition = {
         top: 0,
         left: 0,
         right: 0,

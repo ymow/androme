@@ -46,7 +46,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                     }
                     else {
                         const radial = <RadialGradient> item;
-                        let boxPosition: BoxPosition | undefined;
+                        let boxPosition: RectPosition | undefined;
                         if (radial.shapePosition && radial.shapePosition.length > 1) {
                             boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.dpi, node.fontSize, true, !hasStop);
                         }

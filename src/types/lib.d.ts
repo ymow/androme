@@ -36,11 +36,11 @@ declare global {
             export function isUserAgent(value: number): boolean;
             export function getDataSet(element: Element, prefix: string): StringMap;
             export function newBoxRect(): BoxRect;
-            export function newClientRect(): BoxDimensions;
+            export function newRectDimensions(): RectDimensions;
             export function newBoxModel(): BoxModel;
             export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
-            export function getRangeClientRect(element: Element): [BoxDimensions, boolean];
-            export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
+            export function getRangeClientRect(element: Element): TextDimensions;
+            export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions;
             export function getStyle(element: Element | null, cache?: boolean): CSSStyleDeclaration;
             export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
             export function cssResolveUrl(value: string): string;
@@ -48,7 +48,7 @@ declare global {
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
             export function cssAttribute(element: Element, attr: string): string;
-            export function getBackgroundPosition(value: string, dimension: BoxDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): BoxPosition;
+            export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): RectPosition;
             export function getFirstChildElement(elements: Element[]): Element | null;
             export function getLastChildElement(elements: Element[]): Element | null;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
@@ -68,7 +68,7 @@ declare global {
         namespace svg {
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
-            export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): BoxPosition | undefined;
+            export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): RectPosition | undefined;
             export function getOffsetX(angle: number, radius: number): number;
             export function getOffsetY(angle: number, radius: number): number;
             export function isSvgVisible(element: SVGGraphicsElement): boolean;

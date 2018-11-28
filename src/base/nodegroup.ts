@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, newClientRect, isStyleElement } from '../lib/dom';
+import { assignBounds, newRectDimensions, isStyleElement } from '../lib/dom';
 
 export default abstract class NodeGroup extends Node {
     public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
@@ -78,7 +78,7 @@ export default abstract class NodeGroup extends Node {
                 };
             }
             else {
-                this._bounds = newClientRect();
+                this._bounds = newRectDimensions();
             }
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;

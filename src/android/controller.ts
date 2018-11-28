@@ -933,10 +933,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             const previous = children[i - 1];
             let dimension = item.bounds;
             if (item.inlineText && !item.hasWidth) {
-                const [bounds, multiLine] = $dom.getRangeClientRect(item.element);
-                if (bounds && (multiLine || bounds.width < item.box.width)) {
+                const bounds = $dom.getRangeClientRect(item.element);
+                if (bounds.multiLine || bounds.width > 0 && bounds.width < item.box.width) {
                     dimension = bounds;
-                    if (edgeOrFirefox && multiLine && !/^\s*\n+/.test(item.textContent)) {
+                    if (edgeOrFirefox && bounds.multiLine && !/^\s*\n+/.test(item.textContent)) {
                         rangeMultiLine.add(item);
                     }
                 }
@@ -1046,8 +1046,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             if (siblings.length > 0 && !siblings.some(element => !!$dom.getElementAsNode(element) || $dom.isLineBreak(element))) {
                 const betweenStart = $dom.getRangeClientRect(siblings[0]);
                 const betweenEnd = siblings.length > 1 ? $dom.getRangeClientRect(siblings[siblings.length - 1]) : null;
-                if (!betweenStart[1] && (betweenEnd === null || !betweenEnd[1])) {
-                    previousOffset = betweenEnd ? betweenStart[0].left - betweenEnd[0].right : betweenStart[0].width;
+                if (!betweenStart.multiLine && (betweenEnd === null || !betweenEnd.multiLine)) {
+                    previousOffset = betweenEnd ? betweenStart.left - betweenEnd.right : betweenStart.width;
                 }
             }
             rowWidth += previousOffset + item.marginLeft + dimension.width + item.marginRight;

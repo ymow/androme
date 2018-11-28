@@ -2,9 +2,9 @@ export interface InitialData<T> {
     readonly styleMap: StringMap;
     readonly depth: number;
     readonly children: T[];
-    readonly bounds: BoxDimensions;
-    readonly linear?: BoxDimensions;
-    readonly box?: BoxDimensions;
+    readonly bounds: RectDimensions;
+    readonly linear?: RectDimensions;
+    readonly box?: RectDimensions;
 }
 
 export interface CachedValue<T> {

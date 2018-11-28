@@ -15,7 +15,7 @@ interface SvgTransformAttributes {
     rotateAngle: number;
     rotateX: number;
     rotateY: number;
-    origin?: BoxPosition;
+    origin?: RectPosition;
 }
 
 interface SvgLinearGradient extends Gradient {
