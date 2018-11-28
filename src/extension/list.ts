@@ -25,8 +25,13 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return super.condition(node) && node.length > 0 && (
             node.every(item => item.blockStatic) ||
             node.every(item => item.inlineVertical) ||
-            (node.every(item => item.floating) && NodeList.floated(node.children).size === 1) ||
-            node.every((item, index) => !item.floating && (index === 0 || index === node.length - 1 || item.blockStatic || (item.inlineflow && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic)))
+            node.every(item => item.floating) && NodeList.floated(node.children).size === 1 ||
+            node.every((item, index) => !item.floating && (
+                index === 0 ||
+                index === node.length - 1 ||
+                item.blockStatic ||
+                item.inlineflow && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic
+            ))
         ) && (
             node.some(item => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
             node.every(item => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
@@ -93,8 +98,8 @@ export default abstract class List<T extends Node> extends Extension<T> {
             item.data(EXT_NAME.LIST, 'mainData', mainData);
         });
         const layout = new Layout(
-            node,
             parent,
+            node,
             0,
             0,
             node.length,
@@ -107,7 +112,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             layout.setType(NODE_CONTAINER.GRID, NODE_ALIGNMENT.AUTO_LAYOUT);
             complete = true;
         }
-        else if (this.application.viewController.checkRelativeHorizontal(node, node.children as T[])) {
+        else if (this.application.viewController.checkRelativeHorizontal(layout)) {
             layout.rowCount = 1;
             layout.columnCount = node.length;
             layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);

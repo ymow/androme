@@ -292,7 +292,11 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             for (let i = 0; i < gridPosition.length; i++) {
                 const item = gridPosition[i];
                 if (item) {
-                    data.count = Math.max(data.count, item.placement[horizontal ? 1 : 0] || 0, horizontal ? item.columnSpan : item.rowSpan, (item.placement[horizontal ? 3 : 2] || 0) - 1);
+                    data.count = Math.max(
+                        data.count,
+                        item.placement[horizontal ? 1 : 0] || 0,
+                        horizontal ? item.columnSpan : item.rowSpan, (item.placement[horizontal ? 3 : 2] || 0) - 1
+                    );
                 }
             }
             const unitRepeat = data.unit[data.unit.length - 1] || 'auto';
@@ -467,8 +471,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 node.replace(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
                 const layout = new Layout(
-                    node,
                     parent,
+                    node,
                     NODE_CONTAINER.GRID,
                     NODE_ALIGNMENT.AUTO_LAYOUT,
                     node.length,

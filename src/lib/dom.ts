@@ -173,7 +173,9 @@ export function cssInherit(element: Element, attr: string, exclude?: string[], t
     let current = element.parentElement;
     while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
         result = getStyle(current)[attr] || '';
-        if (result === 'inherit' || (exclude && exclude.some(value => result.indexOf(value) !== -1))) {
+        if (result === 'inherit' ||
+            exclude && exclude.some(value => result.indexOf(value) !== -1))
+        {
             result = '';
         }
         if (current === document.body || result) {
@@ -362,7 +364,9 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
         }
         return elements.some((sibling: Element) => {
             if (sibling.nodeName === '#text') {
-                if (isPlainText(sibling, whiteSpace) || (cssParent(sibling, 'whiteSpace', 'pre', 'pre-wrap') && sibling.textContent && sibling.textContent !== '')) {
+                if (isPlainText(sibling, whiteSpace) ||
+                    cssParent(sibling, 'whiteSpace', 'pre', 'pre-wrap') && sibling.textContent && sibling.textContent !== '')
+                {
                     return true;
                 }
             }
@@ -413,11 +417,11 @@ export function hasLineBreak(element: Element) {
         const fromParent = element.nodeName === '#text';
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
-            (element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR')) ||
-            (/\n/.test(element.textContent || '') && (
+            element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR') ||
+            /\n/.test(element.textContent || '') && (
                 ['pre', 'pre-wrap'].includes(whiteSpace) ||
                 (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
-            ))
+            )
         );
     }
     return false;
@@ -426,21 +430,24 @@ export function hasLineBreak(element: Element) {
 export function isLineBreak(element: Element, excluded = true) {
     const node = getElementAsNode<T>(element);
     if (node) {
-        return node.tagName === 'BR' || (excluded && node.block && (node.excluded || node.textContent.trim() === ''));
+        return node.tagName === 'BR' || excluded && node.block && node.excluded;
     }
     return false;
 }
 
-export function getBetweenElements(elementStart: Element | null, elementEnd: Element, cacheNode = false, whiteSpace = false) {
+export function getBetweenElements(elementStart: Element | null, elementEnd: Element, asNode = false, whiteSpace = false) {
     if (!elementStart || elementStart.parentElement === elementEnd.parentElement) {
         const parentElement = elementEnd.parentElement;
         if (parentElement) {
-            const elements = <Element[]> Array.from(parentElement.childNodes);
-            const firstIndex = elementStart ? elements.findIndex(element => element === elementStart) : 0;
-            const secondIndex = elements.findIndex(element => element === elementEnd);
-            if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
-                let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
-                if (!whiteSpace) {
+            const elements = Array.from(parentElement.childNodes) as Element[];
+            const indexStart = elementStart ? elements.findIndex(element => element === elementStart) : 0;
+            const indexEnd = elements.findIndex(element => element === elementEnd);
+            if (indexStart !== -1 && indexEnd !== -1 && indexStart !== indexEnd) {
+                let result = elements.slice(Math.min(indexStart, indexEnd) + 1, Math.max(indexStart, indexEnd));
+                if (whiteSpace) {
+                    result = result.filter(element => element.nodeName !== '#comment');
+                }
+                else {
                     result = result.filter(element => {
                         if (element.nodeName.charAt(0) === '#') {
                             return isPlainText(element);
@@ -448,10 +455,7 @@ export function getBetweenElements(elementStart: Element | null, elementEnd: Ele
                         return true;
                     });
                 }
-                else {
-                    result = result.filter(element => element.nodeName !== '#comment');
-                }
-                if (cacheNode) {
+                if (asNode) {
                     result = result.filter(element => getElementAsNode(element));
                 }
                 return result;
@@ -468,34 +472,30 @@ export function isStyleElement(element: Element): element is HTMLElement {
 export function isElementVisible(element: Element, hideOffScreen: boolean) {
     if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
         if (isStyleElement(element)) {
-            if (typeof element.getBoundingClientRect === 'function') {
-                const bounds = element.getBoundingClientRect();
-                if (bounds.width !== 0 && bounds.height !== 0) {
-                    return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
-                }
-                else if (hasValue(element.dataset.import) || getStyle(element).clear !== 'none') {
-                    return true;
-                }
-                else {
-                    let current = element.parentElement;
-                    let valid = true;
-                    while (current) {
-                        if (getStyle(current).display === 'none') {
-                            valid = false;
-                            break;
-                        }
-                        current = current.parentElement;
+            const bounds = element.getBoundingClientRect();
+            if (bounds.width !== 0 && bounds.height !== 0) {
+                return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+            }
+            else if (hasValue(element.dataset.import)) {
+                return true;
+            }
+            else {
+                let current = element.parentElement;
+                let valid = true;
+                while (current) {
+                    if (getStyle(current).display === 'none') {
+                        valid = false;
+                        break;
                     }
-                    if (valid) {
-                        if (element.children.length) {
-                            return Array.from(element.children).some((item: Element) => {
-                                const style = getStyle(item);
-                                const float = style.cssFloat;
-                                const position = style.position;
-                                return (position !== 'static' && position !== 'initial') || float === 'left' || float === 'right';
-                            });
-                        }
-                    }
+                    current = current.parentElement;
+                }
+                if (valid && element.children.length) {
+                    return Array.from(element.children).some((item: Element) => {
+                        const style = getStyle(item);
+                        const float = style.cssFloat;
+                        const position = style.position;
+                        return position === 'absolute' || position === 'fixed' || float === 'left' || float === 'right';
+                    });
                 }
             }
             return false;

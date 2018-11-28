@@ -33,14 +33,14 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             const ordinal = node.find(item => item.float === 'left' && $util.convertInt(item.cssInitial('marginLeft', true)) < 0 && Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
                 ordinal.parent = parent;
-                const layout = new $Layout(ordinal, parent);
+                const layout = new $Layout(parent, ordinal);
                 if (ordinal.inlineText || ordinal.length === 0) {
                     layout.containerType = $enum.NODE_CONTAINER.TEXT;
                 }
                 else {
                     layout.items = ordinal.children as T[];
                     layout.itemCount = ordinal.length;
-                    if (this.application.viewController.checkRelativeHorizontal(ordinal as T, ordinal.children as T[])) {
+                    if (this.application.viewController.checkRelativeHorizontal(layout)) {
                         layout.setType($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
                     }
                     else {
@@ -70,7 +70,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     top = boxPosition.top;
                     image = Resource.addImageUrl(mainData.imageSrc);
                 }
-                const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
+                const gravity = image !== '' && !listStyleImage || parentLeft === 0 && node.marginLeft === 0 ? '' : 'right';
                 if (gravity === '') {
                     paddingLeft += node.paddingLeft;
                     node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
@@ -164,8 +164,8 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             const [linearX, linearY] = [$NodeList.linearX(node.children), $NodeList.linearY(node.children)];
             if (linearX || linearY) {
                 const layout = new $Layout(
-                    node,
                     parent,
+                    node,
                     $enum.NODE_CONTAINER.LINEAR,
                     linearX ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL,
                     node.length,

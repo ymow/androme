@@ -39,14 +39,14 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     };
 
     public condition(node: T) {
-        return this.included(<HTMLElement> node.element) || (node.length > 1 && (
-            (node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))) ||
-            (node.every(item => item.pageflow && !item.visibleStyle.background && (!item.inlineflow || item.blockStatic)) && (
+        return this.included(<HTMLElement> node.element) || node.length > 1 && (
+            node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell')) ||
+            node.every(item => item.pageflow && !item.visibleStyle.background && (!item.inlineflow || item.blockStatic)) && (
                 node.css('listStyle') === 'none' ||
                 node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                (!hasValue(node.dataset.import) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement))
-            ))
-        ));
+                !hasValue(node.dataset.import) && !node.flexElement && node.length > 1 && node.some(item => item.length > 1) && !node.some(item => item.display === 'list-item' || item.textElement)
+            )
+        );
     }
 
     public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
@@ -133,7 +133,10 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         }
         else {
             function getRowIndex(current: T) {
-                return columns[0].findIndex(item => withinFraction(item.linear.top, current.linear.top) || (current.linear.top >= item.linear.top && current.linear.bottom <= item.linear.bottom));
+                return (
+                    columns[0].findIndex(item => withinFraction(item.linear.top, current.linear.top) ||
+                    current.linear.top >= item.linear.top && current.linear.bottom <= item.linear.bottom)
+                );
             }
             const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
             const nextCoordsX = nextMapX ? Object.keys(nextMapX) : [];
@@ -296,8 +299,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
             const layout = new Layout(
-                node,
                 parent,
+                node,
                 NODE_CONTAINER.GRID,
                 NODE_ALIGNMENT.AUTO_LAYOUT,
                 node.length,
@@ -337,19 +340,19 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 const group = this.application.viewController.createNodeGroup(node, parent, siblings);
                 siblings.forEach(item => item.inherit(group, 'data'));
                 const layout = new Layout(
-                    group,
                     parent,
+                    group,
                     0,
                     NODE_ALIGNMENT.SEGMENTED,
                     siblings.length,
                     siblings
                 );
-                const linearX = NodeList.linearX(siblings);
-                if (this.application.viewController.checkRelativeHorizontal(group, siblings, undefined, undefined, linearX)) {
+                layout.linearX = NodeList.linearX(siblings);
+                if (this.application.viewController.checkRelativeHorizontal(layout)) {
                     layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
                 }
-                else if (linearX || NodeList.linearY(siblings)) {
-                    layout.setType(NODE_CONTAINER.LINEAR, linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
+                else if (layout.linearX || NodeList.linearY(siblings)) {
+                    layout.setType(NODE_CONTAINER.LINEAR, layout.linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
                 }
                 else {
                     layout.setType(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.UNKNOWN);

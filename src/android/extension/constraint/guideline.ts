@@ -19,8 +19,8 @@ export default class Guideline<T extends View> extends androme.lib.base.Extensio
     public processNode(node: T, parent: T): ExtensionResult<T> {
         node.exclude({ procedure: $enum.NODE_PROCEDURE.CONSTRAINT });
         const layout = new $Layout(
-            node,
             parent,
+            node,
             $enum.NODE_CONTAINER.CONSTRAINT,
             $enum.NODE_ALIGNMENT.ABSOLUTE,
             node.length,

@@ -8,10 +8,10 @@ declare global {
             readonly delegateNodeInit: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
-            checkConstraintFloat(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
-            checkConstraintHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
-            checkFrameHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
-            checkRelativeHorizontal(parent: T, nodes: T[], floated?: Set<string>, cleared?: Map<T, string>, linearX?: boolean): boolean;
+            checkConstraintFloat(data: Layout<T>): boolean;
+            checkConstraintHorizontal(data: Layout<T>): boolean;
+            checkFrameHorizontal(data: Layout<T>): boolean;
+            checkRelativeHorizontal(data: Layout<T>): boolean;
             setConstraints(): void;
             renderNode(data: Layout<T>);
             renderNodeGroup(data: Layout<T>);

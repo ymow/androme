@@ -7,7 +7,7 @@ import Container from './container';
 import Extension from './extension';
 
 import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newClientRect, setElementCache, deleteElementCache } from '../lib/dom';
-import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
+import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
 
@@ -65,7 +65,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     private _element: Element;
     private _parent: T;
-    private _renderAs: T;
+    private _renderAs: T | undefined;
     private _renderDepth: number;
     private _data = {};
     private _excludeSection = 0;
@@ -96,6 +96,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyCustomizations(): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): [number, number];
+    public abstract alignParent(position: string): boolean;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
     public abstract set controlName(value: string);
@@ -337,37 +338,49 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public alignedVertically(previous: T | null, siblings?: T[], cleared?: Map<T, string>) {
-        if (previous && this.siblingflow) {
+    public alignedVertically(previousSiblings: T[], siblings?: T[], cleared?: Map<T, string>) {
+        if (this.lineBreak) {
+            return true;
+        }
+        if (this.siblingflow && previousSiblings.length) {
             const parent = this.parent ? (this.rendered ? this.renderParent : this.parent) : null;
             const actualParent = this.actualParent;
-            return (
-                this.lineBreak ||
-                (previous.lineBreak && !this.floating) ||
-                previous.blockStatic ||
-                (previous.float === 'left' && this.autoMargin.right) ||
-                (previous.float === 'right' && this.autoMargin.left) ||
-                (previous.plainText && previous.multiLine && parent && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical)) ||
-                (previous.bounds && actualParent !== null && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.toInt('width') : actualParent.box.width) && (
-                    !previous.textElement ||
-                    (previous.textElement && previous.css('whiteSpace') === 'nowrap')
-                )) ||
-                (!previous.floating && (
-                    (!this.inlineflow && !this.floating) ||
-                    this.blockStatic
-                )) ||
-                (this.blockStatic && (
-                    !previous.inlineflow ||
-                    (cleared && cleared.has(previous))
-                )) ||
-                (siblings !== undefined && siblings[0] !== this && (
-                    (cleared && cleared.has(this)) ||
-                    (this.floating && actualParent !== null && (
-                        (this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0) ||
-                        (this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0)
-                    ))
-                ))
-            );
+            if (isArray(siblings) && this !== siblings[0]) {
+                if (cleared && cleared.has(this)) {
+                    return true;
+                }
+                if (this.floating && actualParent && (
+                        this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0 ||
+                        this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0
+                   ))
+                {
+                    return true;
+                }
+            }
+            for (const previous of previousSiblings) {
+                const vertical = (
+                    previous.blockStatic ||
+                    this.blockStatic && (
+                        !previous.inlineflow ||
+                        cleared && cleared.has(previous)
+                    ) ||
+                    !previous.floating && (
+                        this.blockStatic ||
+                        !this.inlineflow && !this.floating
+                    ) ||
+                    previous.bounds && actualParent !== null && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.toInt('width') : actualParent.box.width) && (
+                        !previous.textElement ||
+                        previous.textElement && previous.css('whiteSpace') === 'nowrap'
+                    ) ||
+                    previous.lineBreak ||
+                    previous.plainText && previous.multiLine && parent && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical) ||
+                    previous.float === 'left' && this.autoMargin.right ||
+                    previous.float === 'right' && this.autoMargin.left
+                );
+                if (vertical) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -375,20 +388,20 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public intersectX(rect: BoxDimensions, dimension = 'linear') {
         const bounds: BoxDimensions = this[dimension] || this.linear;
         return (
-            (rect.top >= bounds.top && rect.top < bounds.bottom) ||
-            (rect.bottom > bounds.top && rect.bottom <= bounds.bottom) ||
-            (bounds.top >= rect.top && this[dimension].bottom <= rect.bottom) ||
-            (rect.top >= bounds.top && rect.bottom <= bounds.bottom)
+            rect.top >= bounds.top && rect.top < bounds.bottom ||
+            rect.bottom > bounds.top && rect.bottom <= bounds.bottom ||
+            bounds.top >= rect.top && this[dimension].bottom <= rect.bottom ||
+            rect.top >= bounds.top && rect.bottom <= bounds.bottom
         );
     }
 
     public intersectY(rect: BoxDimensions, dimension = 'linear') {
         const bounds: BoxDimensions = this[dimension] || this.linear;
         return (
-            (rect.left >= bounds.left && rect.left < bounds.right) ||
-            (rect.right > bounds.left && rect.right <= bounds.right) ||
-            (bounds.left >= rect.left && bounds.right <= rect.right) ||
-            (rect.left >= bounds.left && rect.right <= bounds.right)
+            rect.left >= bounds.left && rect.left < bounds.right ||
+            rect.right > bounds.left && rect.right <= bounds.right ||
+            bounds.left >= rect.left && bounds.right <= rect.right ||
+            rect.left >= bounds.left && rect.right <= bounds.right
         );
     }
 
@@ -408,7 +421,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
         const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
         const left = rect.left > bounds.left && rect.left < bounds.right;
-        return (top && (left || right)) || (bottom && (left || right));
+        return top && (left || right) || bottom && (left || right);
     }
 
     public outsideX(rect: BoxDimensions, dimension = 'linear') {
@@ -433,7 +446,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     this.unsetCache(attr);
                 }
             }
-            return this.styleMap[attr] || (this.style && this.style[attr]) || '';
+            return this.styleMap[attr] || this.style && this.style[attr] || '';
         }
     }
 
@@ -679,7 +692,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public resetBox(region: number, node?: T, fromParent = false) {
         [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
-            if ((index === 0 && hasBit(region, BOX_STANDARD.MARGIN)) || (index === 1 && hasBit(region, BOX_STANDARD.PADDING))) {
+            if (index === 0 && hasBit(region, BOX_STANDARD.MARGIN) ||
+                index === 1 && hasBit(region, BOX_STANDARD.PADDING))
+            {
                 for (let i = 0; i < item.length; i++) {
                     const attr = item[i];
                     this._boxReset[attr] = 1;
@@ -693,7 +708,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public inheritBox(region: number, node: T) {
         [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
-            if ((index === 0 && hasBit(region, BOX_STANDARD.MARGIN)) || (index === 1 && hasBit(region, BOX_STANDARD.PADDING))) {
+            if (index === 0 && hasBit(region, BOX_STANDARD.MARGIN) ||
+                index === 1 && hasBit(region, BOX_STANDARD.PADDING))
+            {
                 for (let i = 0; i < item.length; i++) {
                     const attr = item[i];
                     const value = this._boxAdjustment[attr];
@@ -723,7 +740,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                             else {
                                 const top = this.top || 0;
                                 const left = this.left || 0;
-                                if ((top >= 0 && left >= 0) || !negative || (negative && (Math.abs(top) <= parent.marginTop || Math.abs(left) <= parent.marginLeft)) || this.imageElement) {
+                                if (top >= 0 && left >= 0 ||
+                                    !negative ||
+                                    negative && (Math.abs(top) <= parent.marginTop || Math.abs(left) <= parent.marginLeft) ||
+                                    this.imageElement)
+                                {
                                     if (negative &&
                                         !parent.documentRoot &&
                                         top !== 0 &&
@@ -744,13 +765,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         }
                     }
                     else {
-                        if ((this.withinX(parent.box) && this.withinY(parent.box)) ||
-                            (previous && (
-                                (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
-                                (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
-                                (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
-                                (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)
-                           )))
+                        if (this.withinX(parent.box) && this.withinY(parent.box) ||
+                            previous && (
+                                this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top ||
+                                this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right ||
+                                this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom ||
+                                this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left
+                           ))
                         {
                             found = true;
                             break;
@@ -768,8 +789,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return null;
     }
 
-    public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
+    public previousSibling(pageflow = false, lineBreak = true, excluded = true, visible = false) {
         let element: Element | null = null;
+        const result: T[] = [];
         if (this._element) {
             element = <Element> this._element.previousSibling;
         }
@@ -779,16 +801,25 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
         while (element) {
             const node = Node.getElementAsNode(element);
-            if (node && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded) && ((pageflow && node.pageflow) || (!pageflow && node.siblingflow))) {
-                return node;
+            if (node) {
+                if (lineBreak && node.lineBreak || excluded && node.excluded) {
+                    result.push(node);
+                }
+                else if (!node.excluded && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
+                    result.push(node);
+                    if (!visible || node.visible) {
+                        break;
+                    }
+                }
             }
             element = <Element> element.previousSibling;
         }
-        return null;
+        return result;
     }
 
-    public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
+    public nextSibling(pageflow = false, lineBreak = true, excluded = true, visible = false) {
         let element: Element | null = null;
+        const result: T[] = [];
         if (this._element) {
             element = <Element> this._element.nextSibling;
         }
@@ -798,10 +829,44 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
         while (element) {
             const node = Node.getElementAsNode(element);
-            if (node && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded) && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
-                return node;
+            if (node) {
+                if (lineBreak && node.lineBreak || excluded && node.excluded) {
+                    result.push(node);
+                }
+                else if (!node.excluded && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
+                    result.push(node);
+                    if (!visible || node.visible) {
+                        break;
+                    }
+                }
             }
             element = <Element> element.nextSibling;
+        }
+        return result;
+    }
+
+    public firstChild(element?: HTMLElement) {
+        if (element === undefined) {
+            element = <HTMLElement> this.element;
+        }
+        for (let i = 0; i < element.childNodes.length; i++) {
+            const node = Node.getElementAsNode(<Element> element.childNodes[i]);
+            if (node && this.initial.children.includes(node)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    public lastChild(element?: HTMLElement) {
+        if (element === undefined) {
+            element = <HTMLElement> this.element;
+        }
+        for (let i = element.childNodes.length - 1; i >= 0; i--) {
+            const node = Node.getElementAsNode(<Element> element.childNodes[i]);
+            if (node && this.initial.children.includes(node)) {
+                return node;
+            }
         }
         return null;
     }
@@ -960,7 +1025,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     set renderAs(value) {
-        if (!this.rendered && !value.rendered) {
+        if (!this.rendered && value && !value.rendered) {
             this._renderAs = value;
         }
     }
@@ -1053,8 +1118,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get positionStatic() {
         if (this._cached.positionStatic === undefined) {
+            const actualParent = this.actualParent;
             const position = this.position;
-            this._cached.positionStatic = position === 'static' || position === 'initial' || position === 'unset';
+            this._cached.positionStatic = position === 'static' || position === 'initial' || position === 'unset' || position === 'inherit' && actualParent && actualParent.positionStatic;
         }
         return this._cached.positionStatic;
     }
@@ -1144,7 +1210,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get inlineflow() {
         if (this._cached.inlineflow === undefined) {
             const display = this.display;
-            this._cached.inlineflow = this.inline || display.startsWith('inline') || display === 'table-cell' || this.imageElement || this.floating || (!this.siblingflow && this.alignOrigin);
+            this._cached.inlineflow = this.inline || display.startsWith('inline') || display === 'table-cell' || this.imageElement || this.floating || !this.siblingflow && this.alignOrigin;
         }
         return this._cached.inlineflow;
     }
@@ -1152,7 +1218,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get inline() {
         if (this._cached.inline === undefined) {
             const value = this.display;
-            this._cached.inline = value === 'inline' || ((value === 'initial' || value === 'unset') && ELEMENT_INLINE.includes(this.tagName));
+            this._cached.inline = value === 'inline' || (value === 'initial' || value === 'unset') && ELEMENT_INLINE.includes(this.tagName);
         }
         return this._cached.inline;
     }
@@ -1468,17 +1534,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get nodes() {
         return this.rendered ? this.renderChildren : this.children;
-    }
-
-    get firstChild() {
-        const children = this.nodes;
-        for (let i = 0; i < this.element.children.length; i++) {
-            const node = Node.getElementAsNode(<Element> this.element.children[i]);
-            if (node && children.includes(node)) {
-                return node;
-            }
-        }
-        return null;
     }
 
     get singleChild() {

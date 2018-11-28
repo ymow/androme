@@ -91,12 +91,12 @@ export default abstract class NodeGroup extends Node {
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
         const node = this.item(0);
-        return node ? node.previousSibling(pageflow, lineBreak, excluded) : null;
+        return node ? node.previousSibling(pageflow, lineBreak, excluded) : [];
     }
 
     public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
-        const node = this.item(0);
-        return node ? node.nextSibling(pageflow, lineBreak, excluded) : null;
+        const node = this.item();
+        return node ? node.nextSibling(pageflow, lineBreak, excluded) : [];
     }
 
     get inline() {
@@ -151,9 +151,9 @@ export default abstract class NodeGroup extends Node {
     }
 
     get display() {
-        return this.css('display') || (
-            this.some(node => node.block) ? 'block'
-                                          : this.some(node => node.blockDimension) ? 'inline-block' : 'inline'
+        return (
+            this.css('display') ||
+            this.some(node => node.block) ? 'block' : (this.some(node => node.blockDimension) ? 'inline-block' : 'inline')
         );
     }
 
@@ -176,5 +176,27 @@ export default abstract class NodeGroup extends Node {
             return super.element;
         }
         return cascade(this.children) || super.element;
+    }
+
+    public firstChild() {
+        const actualParent = NodeList.actualParent(this.initial.children);
+        if (actualParent) {
+            return super.firstChild(<HTMLElement> actualParent.element);
+        }
+        else if (this.initial.children.length > 0) {
+            return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
+        }
+        return null;
+    }
+
+    public lastChild() {
+        const actualParent = NodeList.actualParent(this.initial.children);
+        if (actualParent) {
+            return super.lastChild(<HTMLElement> actualParent.element);
+        }
+        else if (this.initial.children.length > 0) {
+            return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
+        }
+        return null;
     }
 }

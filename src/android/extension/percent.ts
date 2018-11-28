@@ -11,8 +11,8 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
         group.android('layout_width', 'match_parent');
         controller[node.rightAligned ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
         const layout = new $Layout(
-            group,
             parent,
+            group,
             $enum.NODE_CONTAINER.GRID,
             $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
             1,

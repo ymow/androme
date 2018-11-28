@@ -24,6 +24,7 @@ import Origin from './extension/origin';
 import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
+import WhiteSpace from './extension/whitespace';
 
 import * as color from './lib/color';
 import * as constant from './lib/constant';
@@ -259,7 +260,8 @@ const lib = {
         Origin,
         Percent,
         Sprite,
-        Table
+        Table,
+        WhiteSpace
     },
     color,
     constant,

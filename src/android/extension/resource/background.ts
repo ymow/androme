@@ -48,7 +48,11 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
                     if (direction === 0 || direction === 2) {
                         halfSize = !halfSize;
                     }
-                    if (color.valueRGB === '#000000' && ((groove && (direction === 1 || direction === 3)) || (!groove && (direction === 0 || direction === 2)))) {
+                    if (color.valueRGB === '#000000' && (
+                            groove && (direction === 1 || direction === 3) ||
+                            !groove && (direction === 0 || direction === 2)
+                       ))
+                    {
                         halfSize = !halfSize;
                     }
                     if (halfSize) {
@@ -497,7 +501,11 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         backgroundVector.push({ vector });
                     }
                     let template: StringMap;
-                    if (stored.border && !((parseInt(stored.border.width) > 2 && stored.border.style === 'double') || (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')))) {
+                    if (stored.border && !(
+                            stored.border.style === 'double' && parseInt(stored.border.width) > 2 ||
+                            (stored.border.style === 'groove' || stored.border.style === 'ridge') && parseInt(stored.border.width) > 1
+                       ))
+                    {
                         if (!hasBackgroundImage && backgroundGradient.length <= 1 && !vectorGradient) {
                             if (borderRadius && borderRadius[0]['radius'] === undefined) {
                                 borderRadius[0]['radius'] = '1px';

@@ -112,7 +112,6 @@ declare global {
             readonly actualHeight: number;
             readonly dir: string;
             readonly nodes: Node[];
-            readonly firstChild: Node | null;
             readonly singleChild: boolean;
             readonly previousElementSibling: Element | null;
             readonly nextElementSibling: Element | null;
@@ -128,11 +127,12 @@ declare global {
             overflow: number;
             setControlType(controlName: string, containerType?: number): void;
             setLayout(): void;
-            setAlignment(settings: UserSettings): void;
-            applyOptimizations(settings: UserSettings): void;
-            applyCustomizations(settings: UserSettings): void;
+            setAlignment(): void;
+            applyOptimizations(): void;
+            applyCustomizations(): void;
             modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
             valueBox(region: number): [number, number];
+            alignParent(position: string): boolean;
             localizeString(value: string): string;
             clone(id?: number, children?: boolean): Node;
             init(): void;
@@ -151,7 +151,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previous: Node | null, siblings?: Node[], cleared?: Map<Node, string>): boolean;
+            alignedVertically(previousSiblings: Node[], siblings?: Node[], cleared?: Map<Node, string>): boolean;
             intersectX(rect: BoxDimensions, dimension?: string): boolean;
             intersectY(rect: BoxDimensions, dimension?: string): boolean;
             withinX(rect: BoxDimensions, dimension?: string): boolean;
@@ -180,8 +180,10 @@ declare global {
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
             getParentElementAsNode(negative?: boolean): Node | null;
-            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
-            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
+            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
+            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
+            firstChild(element?: HTMLElement): Node | null;
+            lastChild(element?: HTMLElement): Node | null;
         }
 
         export class Node implements Node {

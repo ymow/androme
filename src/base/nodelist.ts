@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 import Container from './container';
 import Node from './node';
 
-import { isUserAgent } from '../lib/dom';
+import {  isUserAgent } from '../lib/dom';
 import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
@@ -20,7 +20,33 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return new Set(list.map(node => node.float).filter(value => value !== 'none'));
     }
 
-    public static cleared<T extends Node>(list: T[]) {
+    public static cleared<T extends Node>(list: T[], parent = true) {
+        if (parent && list.length > 1) {
+            list.sort(this.siblingIndex);
+            const actualParent = this.actualParent(list);
+            if (actualParent) {
+                const nodes: T[] = [];
+                const listEnd = list[list.length - 1];
+                let valid = false;
+                for (let i = 0; i < actualParent.element.childNodes.length; i++) {
+                    const node = Node.getElementAsNode<T>(<Element> actualParent.element.childNodes[i]);
+                    if (node) {
+                        if (node === list[0]) {
+                            valid = true;
+                        }
+                        if (valid) {
+                            nodes.push(node);
+                        }
+                        if (node === listEnd) {
+                            break;
+                        }
+                    }
+                }
+                if (nodes.length >= list.length) {
+                    list = nodes;
+                }
+            }
+        }
         const result = new Map<T, string>();
         const floated = new Set<string>();
         for (const node of list) {
@@ -49,7 +75,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static clearedAll<T extends Node>(parent: T) {
-        return NodeList.cleared(parent.actualChildren.filter(item => item.siblingflow) as T[]);
+        return NodeList.cleared(parent.actualChildren.filter(item => item.siblingflow) as T[], false);
     }
 
     public static textBaseline<T extends Node>(list: T[]) {
@@ -120,10 +146,10 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         }
                         return a.containerType < b.containerType ? -1 : 1;
                     }
-                    else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                    else if (b.imageElement || a.lineHeight > heightB && b.lineHeight === 0) {
                         return -1;
                     }
-                    else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
+                    else if (a.imageElement || b.lineHeight > heightA && a.lineHeight === 0) {
                         return 1;
                     }
                     else {
@@ -175,7 +201,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     node.css('fontSize') === fontSize &&
                     node.css('fontWeight') === fontWeight &&
                     node.tagName === baseline[0].tagName && (
-                        (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
+                        node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight ||
                         node.bounds.height === baseline[0].bounds.height
                     )
                 );
@@ -271,8 +297,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         let row: T[] = [];
         for (let i = 0; i < children.length; i++) {
             const node = children[i];
-            const previous = node.previousSibling() as T;
-            if (i === 0 || previous === null) {
+            const previous = node.previousSibling() as T[];
+            if (i === 0 || previous.length === 0) {
                 if (list.includes(node)) {
                     row.push(node);
                 }

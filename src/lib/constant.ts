@@ -109,7 +109,8 @@ export const EXT_NAME = {
     ORIGIN: 'androme.origin',
     PERCENT: 'androme.percent',
     SPRITE: 'androme.sprite',
-    TABLE: 'androme.table'
+    TABLE: 'androme.table',
+    WHITESPACE: 'androme.whitespace'
 };
 
 export const REGEX_PATTERN = {

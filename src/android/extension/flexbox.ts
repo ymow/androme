@@ -24,15 +24,18 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
         super.processNode(node, parent);
         const mainData: FlexboxData<T> = node.data($const.EXT_NAME.FLEXBOX, 'mainData');
         const layout = new $Layout(
-            node,
             parent,
+            node,
             0,
             $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
             node.length
         );
         layout.rowCount = mainData.rowCount;
         layout.columnCount = mainData.columnCount;
-        if (node.filter(item => !item.pageflow).length > 0 || (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) || (mainData.columnDirection && mainData.columnCount === 1)) {
+        if (node.filter(item => !item.pageflow).length > 0 ||
+            (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) ||
+            mainData.columnDirection && mainData.columnCount === 1)
+        {
             layout.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
         }
         else {
@@ -46,8 +49,8 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
         let output = '';
         if (node.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)) {
             const layout = new $Layout(
-                node,
                 parent,
+                node,
                 $enum.NODE_CONTAINER.CONSTRAINT,
                 $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
                 node.length,
@@ -88,8 +91,11 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                     largest = previous[j];
                                 }
                             }
+                            const offset = segment.linear.left - largest.actualRight();
+                            if (offset > 0) {
+                                segment.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, offset);
+                            }
                             segment.constraint.horizontal = true;
-                            segment.constraint.marginHorizontal = largest.stringId;
                         }
                         basicHorizontal.push(segment);
                         previous = pageflow;

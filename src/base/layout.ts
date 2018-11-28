@@ -1,14 +1,22 @@
+import { NODE_ALIGNMENT } from '../lib/enumeration';
+
 import Node from './node';
+import NodeList from './nodelist';
+
+import { hasBit } from '../lib/util';
 
 export default class Layout<T extends Node> implements androme.lib.base.Layout<T> {
     public rowCount = 0;
     public columnCount = 0;
 
-    private _items: T[] | undefined;
+    private _items: T[] = [];
+    private _floated: Set<string> | undefined;
+    private _cleared: Map<T, string> | undefined;
+    private _linearX: boolean | undefined;
 
     constructor(
-        public node: T,
         public parent: T,
+        public node: T,
         public containerType = 0,
         public alignmentType = 0,
         public itemCount = 0,
@@ -17,6 +25,18 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
         if (items) {
             this.items = items;
         }
+    }
+
+    public init() {
+        this.floated = this.getFloated();
+        this.cleared = this.getCleared();
+        this.linearX = this.getLinearX();
+    }
+
+    public initParent() {
+        this.floated = this.getFloated(true);
+        this.cleared = this.getCleared(true);
+        this.linearX = this.getLinearX();
     }
 
     public setType(containerType: number, alignmentType?: number) {
@@ -32,8 +52,22 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
     }
 
     public delete(value: number) {
-        this.alignmentType ^= value;
+        if (hasBit(this.alignmentType, value)) {
+            this.alignmentType ^= value;
+        }
         return this.alignmentType;
+    }
+
+    public getFloated(parent = false) {
+        return parent ? NodeList.floatedAll(this.parent) : NodeList.floated(this.items);
+    }
+
+    public getCleared(parent = false) {
+        return parent ? NodeList.clearedAll(this.parent) : NodeList.cleared(this.items);
+    }
+
+    public getLinearX() {
+        return NodeList.linearX(this.items);
     }
 
     set items(value) {
@@ -41,9 +75,39 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
         this.itemCount = value.length;
     }
     get items() {
-        if (this._items === undefined) {
-            this._items = [];
-        }
         return this._items;
+    }
+
+    set floated(value) {
+        if (value.size) {
+            this.add(NODE_ALIGNMENT.FLOAT);
+        }
+        else {
+            this.delete(NODE_ALIGNMENT.FLOAT);
+        }
+        if (value.has('right')) {
+            this.add(NODE_ALIGNMENT.RIGHT);
+        }
+        else {
+            this.delete(NODE_ALIGNMENT.RIGHT);
+        }
+        this._floated = value;
+    }
+    get floated() {
+        return this._floated || this.getFloated();
+    }
+
+    set cleared(value) {
+        this._cleared = value;
+    }
+    get cleared() {
+        return this._cleared || this.getCleared();
+    }
+
+    set linearX(value) {
+        this._linearX = value;
+    }
+    get linearX() {
+        return this._linearX || this.getLinearX();
     }
 }

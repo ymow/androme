@@ -10,7 +10,7 @@ export default abstract class Percent<T extends Node> extends Extension<T> {
             node.pageflow &&
             node.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
             !node.imageElement &&
-            (parent.linearVertical || (parent.layoutFrame && node.singleChild))
+            (parent.linearVertical || parent.layoutFrame && node.singleChild)
         );
     }
 }

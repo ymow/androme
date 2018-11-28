@@ -90,7 +90,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border: BorderAttribute | undefined) {
-        return !!border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (border.color.length === 9 && border.color.endsWith('00')));
+        return !!border && !(
+            border.style === 'none' ||
+            border.width === '0px' ||
+            border.color === '' ||
+            border.color.length === 9 && border.color.endsWith('00')
+        );
     }
 
     public static hasDrawableBackground(object: BoxStyle | undefined) {
@@ -332,7 +337,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache) {
             if (this.checkPermissions(node, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
-                if (!(node.renderChildren.length || !node.domElement || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))) {
+                if (node.renderChildren.length ||
+                    !node.domElement ||
+                    node.imageElement ||
+                    node.tagName === 'HR' ||
+                    node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === '')
+                {
+                    continue;
+                }
+                else {
                     const opacity = node.css('opacity');
                     const color = parseRGBA(node.css('color'), opacity);
                     let backgroundColor: ColorHexAlpha | null = null;
@@ -514,10 +527,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
                 if (value !== '') {
                     if (performTrim) {
-                        const previousSibling = node.previousSibling();
-                        const nextSibling = node.nextSibling();
+                        const previousSibling = node.previousSibling().pop();
+                        const nextSibling = node.nextSibling().shift();
                         let previousSpaceEnd = false;
-                        if (!previousSibling || previousSibling.multiLine || previousSibling.lineBreak) {
+                        if (previousSibling === undefined || previousSibling.multiLine || previousSibling.lineBreak) {
                             value = value.replace(/^\s+/, '');
                         }
                         else {

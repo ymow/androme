@@ -157,7 +157,10 @@ export function createTemplate(value: StringMap, data: ExternalData, index?: str
             }
             output = output.replace(new RegExp(`{${hash + attr}}`, 'g'), result);
         }
-        if (result === false || (Array.isArray(result) && result.length === 0) || (hash && hash !== '%')) {
+        if (result === false ||
+            Array.isArray(result) && result.length === 0 ||
+            hash && hash !== '%')
+        {
             output = output.replace(new RegExp(`{%${attr}}\\n*`, 'g'), '');
         }
         if (hash === '' && new RegExp(`{&${attr}}`).test(output)) {

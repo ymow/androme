@@ -154,7 +154,9 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     if (this.options.useFontAlias && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[fontFamily]) || (this.options.useFontAlias && FONTALIAS_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                    if (FONT_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[fontFamily] ||
+                        this.options.useFontAlias && FONTALIAS_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])
+                    {
                         system = true;
                         stored.fontFamily = fontFamily;
                         if (stored.fontStyle === 'normal') {

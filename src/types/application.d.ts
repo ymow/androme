@@ -70,10 +70,11 @@ interface AppCurrent<T extends androme.lib.base.Node> {
     userSettings: UserSettings;
 }
 
-interface AppSession<T> {
-    cache: T;
+interface AppSession<T, U> {
+    cache: U;
     image: Map<string, ImageAsset>;
     renderQueue: Map<string, string[]>;
+    excluded: T[];
 }
 
 interface AppProcessing<T, U> {
@@ -81,6 +82,7 @@ interface AppProcessing<T, U> {
     depthMap: Map<string, Map<number, string>>;
     node: T | null;
     layout: FileAsset | null;
+    excluded: T[];
 }
 
 interface SessionData<T> {

@@ -115,12 +115,14 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     else {
                         const percentColumnWidth = isPercent(columnWidth);
                         const unitMapWidth = isUnit(mapWidth[m]);
-                        if (mapWidth[m] === undefined || td.bounds.width < mapBounds[m] || (td.bounds.width === mapBounds[m] && (
-                                (mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) ||
-                                (percentColumnWidth && unitMapWidth) ||
-                                (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m])) ||
-                                (unitMapWidth && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m]))
-                           )))
+                        if (mapWidth[m] === undefined ||
+                            td.bounds.width < mapBounds[m] ||
+                            td.bounds.width === mapBounds[m] && (
+                                mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth) ||
+                                percentColumnWidth && unitMapWidth ||
+                                percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m]) ||
+                                unitMapWidth && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m])
+                           ))
                         {
                             mapWidth[m] = columnWidth;
                         }
@@ -414,8 +416,8 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             });
         }
         const layout = new Layout(
-            node,
             parent,
+            node,
             NODE_CONTAINER.GRID,
             NODE_ALIGNMENT.AUTO_LAYOUT,
             node.length,

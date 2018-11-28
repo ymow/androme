@@ -93,10 +93,12 @@ androme.settings = {
         'androme.grid',
         'androme.percent',
         'androme.accessibility',
+        'androme.whitespace',
         'android.constraint.guideline',
         'android.delegate.element',
         'android.delegate.radiogroup',
         'android.delegate.scrollbar',
+        'android.delegate.verticalalign',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',
@@ -113,8 +115,6 @@ androme.settings = {
     alwaysReevaluateResources: true,
     autoSizePaddingAndBorderWidth: true,
     ellipsisOnTextOverflow: true,
-    whitespaceHorizontalOffset: 3.5, // Chrome/Safari/Edge: 3.5 | Firefox: 3
-    whitespaceVerticalOffset: 16,  // 1em
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
     hideOffScreenElements: true,
@@ -1143,7 +1143,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol99291">):</string>
+    <string name="__symbol46916">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1448,7 +1448,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
-    <dimen name="checkbox_margin_start">8dp</dimen>
+    <dimen name="checkbox_margin_start">7dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">3dp</dimen>
     <dimen name="form_padding_horizontal">11dp</dimen>
@@ -1462,7 +1462,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="label_width">80dp</dimen>
     <dimen name="radio_margin_end">3dp</dimen>
     <dimen name="radio_margin_start">5dp</dimen>
-    <dimen name="radio_margin_start_1">9dp</dimen>
+    <dimen name="radio_margin_start_1">8dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
     <dimen name="select_group_margin_top">13dp</dimen>
     <dimen name="select_margin_start">3dp</dimen>

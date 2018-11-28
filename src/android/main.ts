@@ -19,6 +19,7 @@ import Origin from './extension/origin';
 import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
+import WhiteSpace from './extension/whitespace';
 
 import ConstraintGuideline from './extension/constraint/guideline';
 
@@ -78,6 +79,7 @@ const lib = {
         Percent,
         Sprite,
         Table,
+        WhiteSpace,
         constraint: {
             Guideline: ConstraintGuideline
         },
@@ -220,6 +222,7 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_NAME.WHITESPACE]: new WhiteSpace(EXT_NAME.WHITESPACE, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
             [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
             [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),

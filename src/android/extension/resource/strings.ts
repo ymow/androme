@@ -97,7 +97,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                         if (actualParent.blockDimension || node.blockDimension) {
                             textIndent = node.toInt('textIndent') || actualParent.toInt('textIndent');
                         }
-                        if (textIndent !== 0 && (node.blockDimension || actualParent.firstChild === node)) {
+                        if (textIndent !== 0 && (node.blockDimension || actualParent.firstChild() === node)) {
                             if (textIndent > 0) {
                                 stored.value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + stored.value;
                             }

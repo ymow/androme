@@ -27,7 +27,10 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 else {
                     const left = item.toInt('left');
                     const right = item.toInt('right');
-                    return (left < 0 && ((index === 0 && node.marginLeft > 0) || node.marginLeft >= Math.abs(left))) || (right < 0 && Math.abs(right) >= item.bounds.width);
+                    return (
+                        left < 0 && (index === 0 && node.marginLeft > 0 || node.marginLeft >= Math.abs(left)) ||
+                        right < 0 && Math.abs(right) >= item.bounds.width
+                    );
                 }
             });
             if (outside) {

@@ -10,7 +10,7 @@ declare global {
             appName: string;
             readonly framework: number;
             readonly builtInExtensions: ObjectMap<Extension<T>>;
-            readonly session: AppSession<NodeList<T>>;
+            readonly session: AppSession<T, NodeList<T>>;
             readonly parseElements: Set<Element>;
             readonly processing: AppProcessing<T, NodeList<T>>;
             readonly extensions: Set<Extension<T>>;

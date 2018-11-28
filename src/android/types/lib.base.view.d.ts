@@ -14,7 +14,6 @@ declare global {
             anchor(position: string, stringId?: string, overwrite?: boolean): void;
             anchorParent(orientation: string, overwrite?: boolean, constraintBias?: boolean): void;
             anchorDelete(...position: string[]): void;
-            alignParent(position: string): boolean;
             alignSibling(position: string): string;
             horizontalBias(): number;
             verticalBias(): number;

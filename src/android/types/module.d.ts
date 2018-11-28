@@ -3,8 +3,6 @@ export interface UserSettingsAndroid extends UserSettings {
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     autoSizePaddingAndBorderWidth: boolean;
-    whitespaceHorizontalOffset: number;
-    whitespaceVerticalOffset: number;
     customizationsOverwritePrivilege: boolean;
     convertPixels: string;
     showAttributes: boolean;
@@ -19,16 +17,14 @@ export interface LocalSettings extends EnvironmentSettings {
 }
 
 export interface Constraint {
+    current: ObjectMap<{ stringId: string; horizontal: boolean; }>;
     horizontal: boolean;
     vertical: boolean;
-    current: ObjectMap<{ stringId: string; horizontal: boolean; }>;
-    marginHorizontal?: string;
-    marginVertical?: string;
     minWidth?: boolean;
     minHeight?: boolean;
+    guideline?: ObjectMapNested<ObjectMapNested<number>>;
     guidelineHorizontal?: string;
     guidelineVertical?: string;
-    guideline?: ObjectMapNested<ObjectMapNested<number>>;
 }
 
 export interface ViewAttribute {

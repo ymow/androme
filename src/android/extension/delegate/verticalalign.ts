@@ -17,7 +17,7 @@ export default class VerticalAlign<T extends View> extends androme.lib.base.Exte
         let containerType = 0;
         if (node.block && node.length > 1 && node.every(item => item.pageflow) && $NodeList.linearX(node.children)) {
             if (node.some(item => item.inlineVertical && item.has('verticalAlign', $enum.CSS_STANDARD.UNIT))) {
-                if (node.every(item => item.inlineVertical && (item.baseline || (item.has('verticalAlign', $enum.CSS_STANDARD.UNIT) && item.toInt('verticalAlign') <= 0)))) {
+                if (node.every(item => item.inlineVertical && (item.baseline || item.has('verticalAlign', $enum.CSS_STANDARD.UNIT) && item.toInt('verticalAlign') <= 0))) {
                     containerType = $enum.NODE_CONTAINER.CONSTRAINT;
                 }
                 else {
@@ -90,15 +90,15 @@ export default class VerticalAlign<T extends View> extends androme.lib.base.Exte
                         });
                         tallest.forEach(item => item.css('verticalAlign', '0px'));
                     }
-                    const floated = $NodeList.floated(node.children);
                     const layout = new $Layout(
-                        node,
                         parent,
+                        node,
                         mainData.containerType,
-                        $enum.NODE_ALIGNMENT.HORIZONTAL | (floated.size ? $enum.NODE_ALIGNMENT.FLOAT : 0) | (floated.has('right') ? $enum.NODE_ALIGNMENT.RIGHT : 0),
+                        $enum.NODE_ALIGNMENT.HORIZONTAL,
                         node.length,
                         node.children as T[]
                     );
+                    layout.floated = layout.getFloated(true);
                     const output = this.application.renderNode(layout);
                     return { output };
                 }
