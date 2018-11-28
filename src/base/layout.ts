@@ -1,15 +1,15 @@
 import { NODE_ALIGNMENT } from '../lib/enumeration';
 
+import Container from './container';
 import Node from './node';
 import NodeList from './nodelist';
 
 import { hasBit } from '../lib/util';
 
-export default class Layout<T extends Node> implements androme.lib.base.Layout<T> {
+export default class Layout<T extends Node> extends Container<T> implements androme.lib.base.Layout<T> {
     public rowCount = 0;
     public columnCount = 0;
 
-    private _items: T[] = [];
     private _floated: Set<string> | undefined;
     private _cleared: Map<T, string> | undefined;
     private _linearX: boolean | undefined;
@@ -20,11 +20,9 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
         public containerType = 0,
         public alignmentType = 0,
         public itemCount = 0,
-        items?: T[])
+        children?: T[])
     {
-        if (items) {
-            this.items = items;
-        }
+        super(children);
     }
 
     public init() {
@@ -51,6 +49,12 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
         return this.alignmentType;
     }
 
+    public replace(list: T[]) {
+        super.replace(list);
+        this.itemCount = list.length;
+        return this;
+    }
+
     public delete(value: number) {
         if (hasBit(this.alignmentType, value)) {
             this.alignmentType ^= value;
@@ -59,23 +63,15 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
     }
 
     public getFloated(parent = false) {
-        return parent ? NodeList.floatedAll(this.parent) : NodeList.floated(this.items);
+        return parent ? NodeList.floatedAll(this.parent) : NodeList.floated(this.children);
     }
 
     public getCleared(parent = false) {
-        return parent ? NodeList.clearedAll(this.parent) : NodeList.cleared(this.items);
+        return parent ? NodeList.clearedAll(this.parent) : NodeList.cleared(this.children);
     }
 
     public getLinearX() {
-        return NodeList.linearX(this.items);
-    }
-
-    set items(value) {
-        this._items = value;
-        this.itemCount = value.length;
-    }
-    get items() {
-        return this._items;
+        return NodeList.linearX(this.children);
     }
 
     set floated(value) {
@@ -85,7 +81,7 @@ export default class Layout<T extends Node> implements androme.lib.base.Layout<T
         else {
             this.delete(NODE_ALIGNMENT.FLOAT);
         }
-        if (value.has('right')) {
+        if (this.every(item => item.float === 'right')) {
             this.add(NODE_ALIGNMENT.RIGHT);
         }
         else {

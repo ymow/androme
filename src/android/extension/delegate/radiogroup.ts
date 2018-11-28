@@ -41,6 +41,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                 item.positioned = true;
                 item.parent = container;
             });
+            container.css('verticalAlign', 'text-bottom');
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
             container.render(target ? container : parent);
             this.subscribers.add(container);

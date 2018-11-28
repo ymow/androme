@@ -623,11 +623,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 return textAlign;
             }
             const renderParent = this.renderParent;
-            let textAlign = this.cssInitial('textAlign') || '';
+            let textAlign = this.styleMap.textAlign || '';
             let verticalAlign = '';
             let floating = '';
             if (this.inlineVertical && renderParent.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.GRID)) {
-                switch (this.cssInitial('verticalAlign')) {
+                switch (this.styleMap.verticalAlign) {
                     case 'text-top':
                     case 'top':
                         verticalAlign = 'top';
@@ -655,15 +655,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                ))
             {
                 floating = right;
-            }
-            if (renderParent.tableElement) {
-                this.mergeGravity('layout_gravity', 'fill');
-                if (this.tagName === 'TH' && textAlign === '') {
-                    textAlign = 'center';
-                }
-                if (verticalAlign === '') {
-                    verticalAlign = 'center_vertical';
-                }
             }
             if (renderParent.layoutFrame) {
                 if (!setAutoMargin(this)) {

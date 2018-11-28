@@ -79,29 +79,39 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         columnIndex[l] += element.colSpan;
                     }
                 }
-                if (!td.has('background') && !td.has('backgroundColor')) {
-                    const item = <HTMLElement> td.element;
+                if (!td.visibleStyle.background) {
                     if (colgroup) {
                         const style = getStyle(colgroup.children[columnIndex[i]]);
                         if (style.background) {
-                            item.style.background = style.background;
+                            element.style.background = style.background;
                         }
                         else if (style.backgroundColor) {
-                            item.style.backgroundColor = style.backgroundColor;
+                            element.style.backgroundColor = style.backgroundColor;
                         }
                     }
                     else {
-                        let value = cssInherit(item, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
+                        let value = cssInherit(element, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                         if (value !== '') {
-                            item.style.background = value;
+                            element.style.background = value;
                         }
                         else {
-                            value = cssInherit(item, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
+                            value = cssInherit(element, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                             if (value !== '') {
-                                item.style.backgroundColor = value;
+                                element.style.backgroundColor = value;
                             }
                         }
                     }
+                }
+                switch (td.tagName) {
+                    case 'TH':
+                        if (td.cssInitial('textAlign') === '') {
+                            td.css('textAlign', 'center');
+                        }
+                    case 'TD':
+                        if (td.cssInitial('verticalAlign') === '') {
+                            td.css('verticalAlign', 'middle');
+                        }
+                        break;
                 }
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
@@ -210,20 +220,18 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         node.clear();
         let rowCount = table.length;
         if (caption) {
-            if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
-                caption.css('textAlign', 'center');
-            }
             if (!caption.hasWidth && !isUserAgent(USER_AGENT.EDGE)) {
                 if (caption.textElement) {
                     if (!caption.has('maxWidth')) {
                         caption.css('maxWidth', formatPX(caption.bounds.width));
                     }
                 }
-                else {
-                    if (caption.bounds.width > maxArray(rowWidth)) {
-                        setBoundsWidth(caption);
-                    }
+                else if (caption.bounds.width > maxArray(rowWidth)) {
+                    setBoundsWidth(caption);
                 }
+            }
+            if (caption.cssInitial('textAlign') === '') {
+                caption.css('textAlign', 'center');
             }
             rowCount++;
             caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);

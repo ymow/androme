@@ -56,8 +56,8 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
         return this._children.includes(item);
     }
 
-    public replace(item: T[]) {
-        this._children = item;
+    public replace(list: T[]) {
+        this._children = list;
         return this;
     }
 

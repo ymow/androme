@@ -77,6 +77,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
         if (columnSpan > 1) {
             node.android('layout_columnSpan', columnSpan.toString());
         }
+        node.mergeGravity('layout_gravity', 'fill');
         if (spaceSpan > 0) {
             this.application.viewController.appendAfter(
                 node.id,

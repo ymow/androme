@@ -1,6 +1,6 @@
 declare global {
     namespace androme.lib.base {
-        interface Layout<T extends Node> {
+        interface Layout<T extends Node> extends Container<T> {
             parent: T;
             node: T;
             containerType: number;
@@ -8,7 +8,6 @@ declare global {
             itemCount: number;
             rowCount: number;
             columnCount: number;
-            items: T[];
             floated: Set<string>;
             cleared: Map<T, string>;
             linearX: boolean;
@@ -23,7 +22,7 @@ declare global {
         }
 
         export class Layout<T extends Node> implements Layout<T> {
-            constructor(node: T, parent: T, containerType?: number, alignmentType?: number, itemCount?: number, items?: T[]);
+            constructor(node: T, parent: T, containerType?: number, alignmentType?: number, itemCount?: number, children?: T[]);
         }
     }
 }

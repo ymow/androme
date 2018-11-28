@@ -38,8 +38,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     layout.containerType = $enum.NODE_CONTAINER.TEXT;
                 }
                 else {
-                    layout.items = ordinal.children as T[];
-                    layout.itemCount = ordinal.length;
+                    layout.replace(ordinal.children as T[]);
                     if (this.application.viewController.checkRelativeHorizontal(layout)) {
                         layout.setType($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
                     }

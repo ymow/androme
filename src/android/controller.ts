@@ -286,19 +286,19 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkConstraintHorizontal(data: $Layout<T>) {
-        return !data.parent.hasHeight && new Set(data.items.map(node => node.bounds.height)).size !== 1 && data.items.some(node => node.verticalAlign === 'bottom') && data.items.every(node => node.inlineVertical && (node.baseline || node.verticalAlign === 'bottom'));
+        return !data.parent.hasHeight && new Set(data.map(node => node.bounds.height)).size !== 1 && data.some(node => node.verticalAlign === 'bottom') && data.every(node => node.inlineVertical && (node.baseline || node.verticalAlign === 'bottom'));
     }
 
     public checkConstraintFloat(data: $Layout<T>) {
-        return (data.floated && data.floated.size === 1) && data.items.every(node => node.pageflow && node.floating && (!node.positionRelative || node.alignOrigin) && node.marginLeft >= 0 && node.marginRight >= 0 && node.css('width') !== '100%');
+        return (data.floated && data.floated.size === 1) && data.every(node => node.pageflow && node.floating && (!node.positionRelative || node.alignOrigin) && node.marginLeft >= 0 && node.marginRight >= 0 && node.css('width') !== '100%');
     }
 
     public checkFrameHorizontal(data: $Layout<T>) {
-        const [floating, sibling] = $util.partition(data.items, node => node.floating);
+        const [floating, sibling] = $util.partition(data.children, node => node.floating);
         if (data.floated.size === 2 ||
             data.cleared.size > 0 ||
             data.floated.has('right') && sibling.length > 0 ||
-            data.items.some(node => node.autoMargin.enabled) ||
+            data.some(node => node.autoMargin.enabled) ||
             !data.linearX && floating.length > 0 && sibling.length > 0)
         {
             return true;
@@ -315,7 +315,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         if (data.linearX && data.floated.has('right')) {
             return false;
         }
-        const visible = data.items.filter(node => node.visible);
+        const visible = data.filter(node => node.visible);
         const [floating, sibling] = $util.partition(visible, node => node.floating);
         const minFlow = $util.minArray(sibling.map(node => node.siblingIndex));
         const maxFloat = $util.maxArray(floating.map(node => node.siblingIndex));
@@ -1090,7 +1090,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             const setHeight = (child: T) => {
                 if (stringId === 'true') {
                     if (child.actualParent && child.actualHeight < child.actualParent.box.height) {
-                        node.css('height', $util.formatPX(node.bounds.height + Math.ceil(node.fontSize / this.localSettings.relative.subscriptFontScale)));
+                        node.css('height', $util.formatPX(node.bounds.height));
                         return true;
                     }
                 }

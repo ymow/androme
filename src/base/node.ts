@@ -1232,7 +1232,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get inlineVertical() {
         if (this._cached.inlineVertical === undefined) {
-            this._cached.inlineVertical = this.display.startsWith('inline') && !this.floating && !this.plainText;
+            const display = this.display;
+            this._cached.inlineVertical = (display.startsWith('inline') || display === 'table-cell') && !this.floating && !this.plainText;
         }
         return this._cached.inlineVertical;
     }

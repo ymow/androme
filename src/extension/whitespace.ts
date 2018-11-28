@@ -12,15 +12,27 @@ function setMinHeight<T extends Node>(node: T, offset: number) {
 }
 
 export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
-    public afterBaseLayout() {
+    public afterConstraints() {
         for (const node of this.application.session.cache) {
             if (node.pageflow && node.styleElement && node.inlineVertical && !node.renderParent.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT) && !node.alignParent('left')) {
-                const previous = node.previousSibling(false);
-                if (previous.length && !previous.some(item => item.lineBreak || item.excluded && item.blockStatic)) {
-                    const offset = node.linear.left - previous[previous.length - 1].actualRight();
-                    if (offset > 0) {
-                        (node.renderAs || node).modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                const previous: T[] = [];
+                let current = node;
+                while (true) {
+                    previous.push(...current.previousSibling(false) as T[]);
+                    if (previous.length && !previous.some(item => item.lineBreak || item.excluded && item.blockStatic)) {
+                        const previousSibling = previous[previous.length - 1];
+                        if (previousSibling.inlineVertical) {
+                            const offset = node.linear.left - previous[previous.length - 1].actualRight();
+                            if (offset > 0) {
+                                (node.renderAs || node).modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                            }
+                        }
+                        else if (previousSibling.floating) {
+                            current = previousSibling;
+                            continue;
+                        }
                     }
+                    break;
                 }
             }
         }
