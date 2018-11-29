@@ -8,15 +8,23 @@ export interface InitialData<T> {
 }
 
 export interface CachedValue<T> {
-    pageflow?: boolean;
-    siblingflow?: boolean;
-    inlineflow?: boolean;
-    baseline?: boolean;
-    multiLine?: boolean;
-    inlineText?: boolean;
-    supSubscript?: boolean;
+    pageFlow?: boolean;
+    inlineFlow?: boolean;
     positionStatic?: boolean;
-    alignOrigin?: boolean;
+    positionAuto?: boolean;
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+    marginTop?: number;
+    marginRight?: number;
+    marginBottom?: number;
+    marginLeft?: number;
+    paddingTop?: number;
+    paddingRight?: number;
+    paddingBottom?: number;
+    paddingLeft?: number;
+    inlineText?: boolean;
     inline?: boolean;
     inlineStatic?: boolean;
     inlineVertical?: boolean;
@@ -24,8 +32,11 @@ export interface CachedValue<T> {
     blockStatic?: boolean;
     blockDimension?: boolean;
     floating?: boolean;
+    baseline?: boolean;
+    multiLine?: boolean;
     rightAligned?: boolean;
     bottomAligned?: boolean;
+    supSubscript?: boolean;
     preserveWhiteSpace?: boolean;
     overflow?: number;
     lineHeight?: number;
@@ -40,11 +51,14 @@ export interface CachedValue<T> {
 }
 
 type AutoMargin = {
-    enabled: boolean;
+    horizontal: boolean;
     left: boolean;
     right: boolean;
-    horizontal: boolean;
+    leftRight: boolean;
     vertical: boolean;
+    top: boolean;
+    bottom: boolean;
+    topBottom: boolean;
 };
 
 type VisibleStyle = {

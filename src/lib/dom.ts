@@ -93,7 +93,7 @@ export function getRangeClientRect(element: Element): TextDimensions {
             }
         }
     }
-    return Object.assign(bounds, { multiLine }) as TextDimensions;
+    return Object.assign(bounds, { multiLine });
 }
 
 export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions {
@@ -326,30 +326,24 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
     return result;
 }
 
-export function getFirstChildElement(elements: Element[]) {
-    if (elements.length) {
-        const parentElement = elements[0].parentElement;
-        if (parentElement) {
-            for (let i = 0; i < parentElement.childNodes.length; i++) {
-                const element = <Element> parentElement.childNodes[i];
-                if (elements.includes(element)) {
-                    return element;
-                }
+export function getFirstChildElement(element: Element, lineBreak = false) {
+    if (element instanceof HTMLElement) {
+        for (let i = 0; i < element.childNodes.length; i++) {
+            const node = getElementAsNode<T>(<Element> element.childNodes[i]);
+            if (node && (!node.excluded || (lineBreak && node.lineBreak))) {
+                return node.element;
             }
         }
     }
     return null;
 }
 
-export function getLastChildElement(elements: Element[]) {
-    if (elements.length) {
-        const parentElement = elements[0].parentElement;
-        if (parentElement) {
-            for (let i = parentElement.childNodes.length - 1; i >= 0; i--) {
-                const element = <Element> parentElement.childNodes[i];
-                if (elements.includes(element)) {
-                    return element;
-                }
+export function getLastChildElement(element: Element, lineBreak = false) {
+    if (element instanceof HTMLElement) {
+        for (let i = element.childNodes.length - 1; i >= 0; i--) {
+            const node = getElementAsNode<T>(<Element> element.childNodes[i]);
+            if (node && (!node.excluded || (lineBreak && node.lineBreak))) {
+                return node.element;
             }
         }
     }
@@ -414,14 +408,10 @@ export function isPlainText(element: Element, whiteSpace = false) {
 export function hasLineBreak(element: Element) {
     if (element) {
         const node = getElementAsNode<T>(element);
-        const fromParent = element.nodeName === '#text';
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
-            element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR') ||
-            /\n/.test(element.textContent || '') && (
-                ['pre', 'pre-wrap'].includes(whiteSpace) ||
-                (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
-            )
+            element instanceof HTMLElement && Array.from(element.children).some(item => item.tagName === 'BR') ||
+            element.nodeName === '#text' && ['pre', 'pre-wrap'].includes(whiteSpace) && /\n/.test(element.textContent || '')
         );
     }
     return false;
@@ -430,7 +420,7 @@ export function hasLineBreak(element: Element) {
 export function isLineBreak(element: Element, excluded = true) {
     const node = getElementAsNode<T>(element);
     if (node) {
-        return node.tagName === 'BR' || excluded && node.block && node.excluded;
+        return node.tagName === 'BR' || excluded && node.excluded && node.blockStatic;
     }
     return false;
 }
@@ -456,13 +446,37 @@ export function getBetweenElements(elementStart: Element | null, elementEnd: Ele
                     });
                 }
                 if (asNode) {
-                    result = result.filter(element => getElementAsNode(element));
+                    result = result.filter(element => getElementAsNode<T>(element));
                 }
                 return result;
             }
         }
     }
     return [];
+}
+
+export function getPreviousElementSibling(element: Element) {
+    element = <Element> element.previousSibling;
+    while (element) {
+        const node = getElementAsNode<T>(element);
+        if (node && (!node.excluded || node.lineBreak)) {
+            return node.element;
+        }
+        element = <Element> element.previousSibling;
+    }
+    return null;
+}
+
+export function getNextElementSibling(element: Element) {
+    element = <Element> element.nextSibling;
+    while (element) {
+        const node = getElementAsNode<T>(element);
+        if (node && (!node.excluded || node.lineBreak)) {
+            return node.element;
+        }
+        element = <Element> element.nextSibling;
+    }
+    return null;
 }
 
 export function isStyleElement(element: Element): element is HTMLElement {

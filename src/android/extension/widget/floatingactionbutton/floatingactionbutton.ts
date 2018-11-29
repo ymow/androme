@@ -54,7 +54,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         }
         node.setControlType($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, $enum.NODE_CONTAINER.BUTTON);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
-        if (!node.pageflow || target) {
+        if (!node.pageFlow || target) {
             const horizontalBias = node.horizontalBias();
             const verticalBias = node.verticalBias();
             const documentParent = node.documentParent;
@@ -81,18 +81,18 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             const layoutGravity = node.mergeGravity('layout_gravity', ...gravity);
             if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
                 if (horizontalBias < 0.5) {
-                    node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - documentParent.box.left)));
+                    node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - documentParent.box.left)), true);
                 }
                 else {
-                    node.css('marginRight', $util.formatPX(Math.floor(documentParent.box.right - node.bounds.right)));
+                    node.css('marginRight', $util.formatPX(Math.floor(documentParent.box.right - node.bounds.right)), true);
                 }
             }
             if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
                 if (verticalBias < 0.5) {
-                    node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - documentParent.box.top)));
+                    node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - documentParent.box.top)), true);
                 }
                 else {
-                    node.css('marginBottom', $util.formatPX(Math.floor(documentParent.box.bottom - node.bounds.bottom)));
+                    node.css('marginBottom', $util.formatPX(Math.floor(documentParent.box.bottom - node.bounds.bottom)), true);
                 }
             }
             if (target) {

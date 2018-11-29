@@ -527,8 +527,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
                 if (value !== '') {
                     if (performTrim) {
-                        const previousSibling = node.previousSibling().pop();
-                        const nextSibling = node.nextSibling().shift();
+                        const previousSibling = node.previousSiblings().pop();
+                        const nextSibling = node.nextSiblings().shift();
                         let previousSpaceEnd = false;
                         if (previousSibling === undefined || previousSibling.multiLine || previousSibling.lineBreak) {
                             value = value.replace(/^\s+/, '');

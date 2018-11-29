@@ -28,9 +28,9 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
 
     public processNode(node: T): ExtensionResult<T> {
         const controller = this.application.viewController;
-        const pageflow = node.children.filter(item => item.pageflow) as T[];
+        const pageFlow = node.children.filter(item => item.pageFlow) as T[];
         const flex = node.flexbox;
-        const mainData = Object.assign(Flexbox.createDataAttribute(pageflow), {
+        const mainData = Object.assign(Flexbox.createDataAttribute(pageFlow), {
             wrap: flex.wrap.startsWith('wrap'),
             wrapReverse: flex.wrap === 'wrap-reverse',
             directionReverse: flex.direction.endsWith('reverse'),
@@ -39,7 +39,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             columnDirection: flex.direction.startsWith('column')
         });
         if (node.cssTry('display', 'block')) {
-            for (const item of pageflow) {
+            for (const item of pageFlow) {
                 const bounds = item.element.getBoundingClientRect();
                 Object.assign(item.initial.bounds, { width: bounds.width, height: bounds.height });
             }
@@ -48,7 +48,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         if (mainData.wrap) {
             function setFlexDirection(align: string, sort: string, size: string) {
                 const map = new Map<number, T[]>();
-                pageflow.sort((a, b) => {
+                pageFlow.sort((a, b) => {
                     if (a.linear[align] < b.linear[align]) {
                         return a.linear[align] < b.linear[align] ? -1 : 1;
                     }
@@ -56,7 +56,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                         return a.linear[sort] < b.linear[sort] ? -1 : 1;
                     }
                 });
-                for (const item of pageflow) {
+                for (const item of pageFlow) {
                     const xy = Math.round(item.linear[align]);
                     const items: T[] = map.get(xy) || [];
                     items.push(item);
@@ -93,7 +93,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
             }
         }
         else {
-            if (pageflow.some(item => item.flexbox.order !== 0)) {
+            if (pageFlow.some(item => item.flexbox.order !== 0)) {
                 if (mainData.directionReverse) {
                     sortDesc(node.children, 'flexbox.order');
                 }

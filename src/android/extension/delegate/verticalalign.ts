@@ -15,7 +15,7 @@ interface VerticalAlignData {
 export default class VerticalAlign<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         let containerType = 0;
-        if (node.block && node.length > 1 && node.every(item => item.pageflow) && $NodeList.linearX(node.children)) {
+        if (node.block && node.length > 1 && node.every(item => item.pageFlow) && $NodeList.linearX(node.children)) {
             if (node.some(item => item.inlineVertical && item.has('verticalAlign', $enum.CSS_STANDARD.UNIT))) {
                 if (node.every(item => item.inlineVertical && (item.baseline || item.has('verticalAlign', $enum.CSS_STANDARD.UNIT) && item.toInt('verticalAlign') <= 0))) {
                     containerType = $enum.NODE_CONTAINER.CONSTRAINT;

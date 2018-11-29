@@ -30,7 +30,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
                 index === 0 ||
                 index === node.length - 1 ||
                 item.blockStatic ||
-                item.inlineflow && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic
+                item.inlineFlow && (node.item(index - 1) as T).blockStatic && (node.item(index + 1) as T).blockStatic
             ))
         ) && (
             node.some(item => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||

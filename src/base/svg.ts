@@ -220,7 +220,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     }
                 }
             }
-            this.replace([...this.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
+            this.retain([...this.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
         }
     }
 

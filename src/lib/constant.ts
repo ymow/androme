@@ -108,6 +108,7 @@ export const EXT_NAME = {
     LIST: 'androme.list',
     ORIGIN: 'androme.origin',
     PERCENT: 'androme.percent',
+    RELATIVE: 'androme.relative',
     SPRITE: 'androme.sprite',
     TABLE: 'androme.table',
     WHITESPACE: 'androme.whitespace'

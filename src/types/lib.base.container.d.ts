@@ -8,7 +8,7 @@ declare global {
                 item(index?: number, value?: T): T | undefined;
                 append(item: T): this;
                 remove(item: T): T[];
-                replace(list: T[]): this;
+                retain(list: T[]): this;
                 contains(item: T): boolean;
                 duplicate(): T[];
                 clear(): this;

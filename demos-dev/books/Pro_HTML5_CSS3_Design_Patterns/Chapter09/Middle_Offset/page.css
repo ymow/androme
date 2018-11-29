@@ -4,9 +4,9 @@
 *.ex1 span { height:36px; left:0; width:130px;
          position:absolute; top:0; margin-top:auto; bottom:0; margin-bottom:auto;  }
 
-#ia   { height:100px; top:60px; margin-top:auto;  bottom:-60px; margin-bottom:auto; 
+#ia   { height:100px; top:60px; margin-top:auto;  bottom:60px; margin-bottom:auto; 
         position:absolute;      line-height:100px;             margin-left:40px;  }
-#za   { height:100px; top:60px; margin-top:auto;  bottom:-60px; margin-bottom:auto; 
+#za   { height:100px; top:60px; margin-top:auto;  bottom:60px; margin-bottom:auto; 
         position:absolute;                                      margin-left:200px; }
 #wa   { height:auto;  top:0;    margin-top:150px; bottom:0;     margin-bottom:30px; 
         position:absolute;                                      margin-left:355px; }

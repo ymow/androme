@@ -13,7 +13,7 @@ export default class ViewGroup<T extends View> extends ViewBase(androme.lib.base
         this.tagName = `${node.tagName}_GROUP`;
         this.documentParent = node.documentParent;
         parent.replaceNode(node, this);
-        this.replace(children);
+        this.retain(children);
         if (children.length) {
             this.init();
         }

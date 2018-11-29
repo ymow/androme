@@ -6,7 +6,7 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER
 import Container from './container';
 import Extension from './extension';
 
-import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, newRectDimensions, setElementCache, deleteElementCache } from '../lib/dom';
+import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, hasLineBreak, newRectDimensions, setElementCache, deleteElementCache } from '../lib/dom';
 import { assignWhenNull, convertCamelCase, convertInt, convertPX, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
@@ -222,9 +222,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._data[obj] === undefined || this._data[obj][attr] === undefined ? undefined : this._data[obj][attr];
     }
 
-    public unsetCache(attr?: string) {
-        if (attr) {
-            this._cached[attr] = undefined;
+    public unsetCache(...attrs: string[]) {
+        if (attrs.length) {
+            for (const attr of attrs) {
+                this._cached[attr] = undefined;
+            }
         }
         else {
             this._cached = {};
@@ -276,15 +278,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         this._box = assignBounds(node.box);
                         break;
                     case 'alignment':
-                        ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(value => {
-                            this.styleMap[value] = node.css(value);
+                        ['position', 'top', 'right', 'bottom', 'left', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(value => {
+                            this.styleMap[value] = node.styleMap[value];
                             this.initial.styleMap[value] = node.cssInitial(value);
                         });
-                        if (node.css('marginLeft') === 'auto') {
+                        if (node.autoMargin.left || node.autoMargin.leftRight) {
                             this.styleMap.marginLeft = 'auto';
                             this.initial.styleMap.marginLeft = 'auto';
                         }
-                        if (node.css('marginRight') === 'auto') {
+                        if (node.autoMargin.right || node.autoMargin.leftRight) {
                             this.styleMap.marginRight = 'auto';
                             this.initial.styleMap.marginRight = 'auto';
                         }
@@ -342,14 +344,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (this.lineBreak) {
             return true;
         }
-        if (this.siblingflow && previousSiblings.length) {
+        if (this.pageFlow && previousSiblings.length) {
             const parent = this.parent ? (this.rendered ? this.renderParent : this.parent) : null;
             const actualParent = this.actualParent;
             if (isArray(siblings) && this !== siblings[0]) {
                 if (cleared && cleared.has(this)) {
                     return true;
                 }
-                if (this.floating && actualParent && (
+                if (this.floating && (
                         this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0 ||
                         this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0
                    ))
@@ -361,19 +363,19 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 const vertical = (
                     previous.blockStatic ||
                     this.blockStatic && (
-                        !previous.inlineflow ||
+                        !previous.inlineFlow ||
                         cleared && cleared.has(previous)
                     ) ||
                     !previous.floating && (
                         this.blockStatic ||
-                        !this.inlineflow && !this.floating
+                        !this.inlineFlow && !this.floating
                     ) ||
                     previous.bounds && actualParent !== null && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.toInt('width') : actualParent.box.width) && (
                         !previous.textElement ||
                         previous.textElement && previous.css('whiteSpace') === 'nowrap'
                     ) ||
                     previous.lineBreak ||
-                    previous.plainText && previous.multiLine && parent && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical) ||
+                    previous.plainText && previous.multiLine && parent && !parent.layoutRelative && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical) ||
                     previous.float === 'left' && this.autoMargin.right ||
                     previous.float === 'right' && this.autoMargin.left
                 );
@@ -386,52 +388,43 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public intersectX(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
+        const self: RectDimensions = this[dimension];
         return (
-            rect.top >= bounds.top && rect.top < bounds.bottom ||
-            rect.bottom > bounds.top && rect.bottom <= bounds.bottom ||
-            bounds.top >= rect.top && this[dimension].bottom <= rect.bottom ||
-            rect.top >= bounds.top && rect.bottom <= bounds.bottom
+            rect.top >= self.top && rect.top < self.bottom ||
+            rect.bottom > self.top && rect.bottom <= self.bottom ||
+            self.top >= rect.top && self.bottom <= rect.bottom ||
+            rect.top >= self.top && rect.bottom <= self.bottom
         );
     }
 
     public intersectY(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
+        const self: RectDimensions = this[dimension];
         return (
-            rect.left >= bounds.left && rect.left < bounds.right ||
-            rect.right > bounds.left && rect.right <= bounds.right ||
-            bounds.left >= rect.left && bounds.right <= rect.right ||
-            rect.left >= bounds.left && rect.right <= bounds.right
+            rect.left >= self.left && rect.left < self.right ||
+            rect.right > self.left && rect.right <= self.right ||
+            self.left >= rect.left && self.right <= rect.right ||
+            rect.left >= self.left && rect.right <= self.right
         );
     }
 
     public withinX(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
-        return bounds.top >= rect.top && bounds.bottom <= rect.bottom;
+        const self: RectDimensions = this[dimension];
+        return Math.ceil(self.top) >= Math.floor(rect.top) && Math.floor(self.bottom) <= Math.ceil(rect.bottom);
     }
 
     public withinY(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
-        return bounds.left >= rect.left && bounds.right <= rect.right;
-    }
-
-    public inside(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
-        const top = rect.top > bounds.top && rect.top < bounds.bottom;
-        const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
-        const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
-        const left = rect.left > bounds.left && rect.left < bounds.right;
-        return top && (left || right) || bottom && (left || right);
+        const self: RectDimensions = this[dimension];
+        return Math.ceil(self.left) >= Math.floor(rect.left) && Math.floor(self.right) <= Math.ceil(rect.right);
     }
 
     public outsideX(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
-        return bounds.bottom < rect.top || bounds.top > rect.bottom;
+        const self: RectDimensions = this[dimension];
+        return Math.ceil(self.left) < Math.floor(rect.left) || Math.floor(self.left) >= Math.ceil(rect.right);
     }
 
     public outsideY(rect: RectDimensions, dimension = 'linear') {
-        const bounds: RectDimensions = this[dimension] || this.linear;
-        return bounds.right < rect.left || bounds.left > rect.right;
+        const self: RectDimensions = this[dimension];
+        return Math.ceil(self.top) < Math.floor(rect.top) || Math.floor(self.top) >= Math.ceil(rect.bottom);
     }
 
     public css(attr: object | string, value = '', cache = false): string {
@@ -531,6 +524,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 case '0px':
                     if (hasBit(checkType, CSS_STANDARD.ZERO)) {
                         return true;
+                    }
+                    else {
+                        switch (attr) {
+                            case 'top':
+                            case 'right':
+                            case 'bottom':
+                            case 'left':
+                                return true;
+                        }
                     }
                 case 'left':
                     if (hasBit(checkType, CSS_STANDARD.LEFT)) {
@@ -635,7 +637,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             else if (this.plainText) {
                 const bounds = getRangeClientRect(this._element);
                 this._bounds = assignBounds(bounds);
-                this._cached.multiLine = bounds.multiLine;
             }
             Object.assign(this.initial.bounds, this._bounds);
         }
@@ -723,80 +724,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         });
     }
 
-    public getParentElementAsNode(negative = false) {
-        if (this._element) {
-            let parent = this.actualParent;
-            if (!this.pageflow) {
-                let found = false;
-                let previous: T | null = null;
-                let relativeParent: T | null = null;
-                let outside = false;
-                while (parent && parent.id !== 0) {
-                    if (relativeParent === null && this.position === 'absolute') {
-                        if (!parent.positionStatic) {
-                            if (parent.css('overflow') === 'hidden') {
-                                return parent;
-                            }
-                            else {
-                                const top = this.top || 0;
-                                const left = this.left || 0;
-                                if (top >= 0 && left >= 0 ||
-                                    !negative ||
-                                    negative && (Math.abs(top) <= parent.marginTop || Math.abs(left) <= parent.marginLeft) ||
-                                    this.imageElement)
-                                {
-                                    if (negative &&
-                                        !parent.documentRoot &&
-                                        top !== 0 &&
-                                        left !== 0 &&
-                                        this.bottom === null &&
-                                        this.right === null &&
-                                        (this.outsideX(parent.linear) || this.outsideX(parent.linear)))
-                                    {
-                                        outside = true;
-                                    }
-                                    else {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            relativeParent = parent;
-                        }
-                    }
-                    else {
-                        if (this.withinX(parent.box) && this.withinY(parent.box) ||
-                            previous && (
-                                this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top ||
-                                this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right ||
-                                this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom ||
-                                this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left
-                           ))
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    previous = parent;
-                    parent = parent.actualParent;
-                }
-                if (!found && !outside && relativeParent) {
-                    parent = relativeParent;
-                }
-            }
-            return parent;
-        }
-        return null;
-    }
-
-    public previousSibling(pageflow = false, lineBreak = true, excluded = true, visible = false) {
+    public previousSiblings(lineBreak = true, excluded = true, visible = false) {
         let element: Element | null = null;
         const result: T[] = [];
         if (this._element) {
             element = <Element> this._element.previousSibling;
         }
         else if (this.initial.children.length) {
-            const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
+            const list = this.initial.children.filter(node => node.pageFlow);
             element = list.length ? <Element> list[0].element.previousSibling : null;
         }
         while (element) {
@@ -805,7 +740,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 if (lineBreak && node.lineBreak || excluded && node.excluded) {
                     result.push(node);
                 }
-                else if (!node.excluded && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
+                else if (!node.excluded && node.pageFlow) {
                     result.push(node);
                     if (!visible || node.visible) {
                         break;
@@ -817,14 +752,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return result;
     }
 
-    public nextSibling(pageflow = false, lineBreak = true, excluded = true, visible = false) {
+    public nextSiblings(lineBreak = true, excluded = true, visible = false) {
         let element: Element | null = null;
         const result: T[] = [];
         if (this._element) {
             element = <Element> this._element.nextSibling;
         }
         else if (this.initial.children.length) {
-            const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
+            const list = this.initial.children.filter(node => node.pageFlow);
             element = list.length ? <Element> list[0].element.nextSibling : null;
         }
         while (element) {
@@ -833,7 +768,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 if (lineBreak && node.lineBreak || excluded && node.excluded) {
                     result.push(node);
                 }
-                else if (!node.excluded && (pageflow && node.pageflow || !pageflow && node.siblingflow)) {
+                else if (!node.excluded && node.pageFlow) {
                     result.push(node);
                     if (!visible || node.visible) {
                         break;
@@ -880,7 +815,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     protected setDimensions(dimension: string) {
-        const bounds = this[dimension];
+        const bounds: RectDimensions = this[dimension];
         bounds.width = this.bounds.width;
         bounds.height = bounds.bottom - bounds.top;
         if (this.styleElement) {
@@ -898,13 +833,27 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
+    private convertPosition(attr: string) {
+        let result = 0;
+        if (!this.positionStatic) {
+            const value = this.initial.styleMap[attr];
+            if (isUnit(value) || isPercent(value)) {
+                result = convertInt(this.percentValue(attr, value, attr === 'left' || attr === 'right'));
+            }
+        }
+        return result;
+    }
+
     private convertBox(region: string, direction: string) {
         const attr = region + direction;
-        const value = this.css(attr);
+        return convertInt(this.percentValue(attr, this.css(attr), direction === 'Left' || direction === 'Right'));
+    }
+
+    private percentValue(attr: string, value: string, horizontal: boolean) {
         if (isPercent(value)) {
-            return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[direction === 'Left' || direction === 'Right' ? 'width' : 'height'] * convertInt(value) / 100;
+            return isUnit(this.style[attr]) ? this.style[attr] as string : this.convertPercent(value, horizontal, true);
         }
-        return convertInt(value);
+        return value;
     }
 
     set parent(value) {
@@ -1118,45 +1067,86 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get positionStatic() {
         if (this._cached.positionStatic === undefined) {
-            const actualParent = this.actualParent;
-            const position = this.position;
-            this._cached.positionStatic = position === 'static' || position === 'initial' || position === 'unset' || position === 'inherit' && actualParent && actualParent.positionStatic;
+            this._cached.positionStatic = (() => {
+                switch (this.position) {
+                    case 'fixed':
+                    case 'absolute':
+                        return false;
+                    case 'sticky':
+                    case 'relative':
+                        return this.toInt('top') === 0 && this.toInt('right') === 0 && this.toInt('bottom') === 0 && this.toInt('left') === 0;
+                    case 'inherit':
+                        const actualParent = this.actualParent;
+                        return !!actualParent && !(actualParent.position === 'absolute' || actualParent.position === 'fixed');
+                    default:
+                        return true;
+                }
+            })();
         }
         return this._cached.positionStatic;
     }
 
     get positionRelative() {
-        return this.position === 'relative';
+        const position = this.position;
+        return position === 'relative' || position === 'sticky';
+    }
+
+    get positionAuto() {
+        if (this._cached.positionAuto === undefined) {
+            const styleMap = this.initial.styleMap;
+            this._cached.positionAuto = !this.pageFlow && (styleMap.top === 'auto' || !styleMap.top) && (styleMap.right === 'auto' || !styleMap.right) && (styleMap.bottom === 'auto' || !styleMap.bottom) && (styleMap.left === 'auto' || !styleMap.left);
+        }
+        return this._cached.positionAuto;
     }
 
     get top() {
-        const value = this.styleMap.top;
-        return !value || value === 'auto' ? null : convertInt(value);
+        if (this._cached.top === undefined) {
+            this._cached.top = this.convertPosition('top');
+        }
+        return this._cached.top;
     }
     get right() {
-        const value = this.styleMap.right;
-        return !value || value === 'auto' ? null : convertInt(value);
+        if (this._cached.right === undefined) {
+            this._cached.right = this.convertPosition('right');
+        }
+        return this._cached.right;
     }
     get bottom() {
-        const value = this.styleMap.bottom;
-        return !value || value === 'auto' ? null : convertInt(value);
+        if (this._cached.bottom === undefined) {
+            this._cached.bottom = this.convertPosition('bottom');
+        }
+        return this._cached.bottom;
     }
     get left() {
-        const value = this.styleMap.left;
-        return !value || value === 'auto' ? null : convertInt(value);
+        if (this._cached.left === undefined) {
+            this._cached.left = this.convertPosition('left');
+        }
+        return this._cached.left;
     }
 
     get marginTop() {
-        return this.inlineStatic ? 0 : this.convertBox('margin', 'Top');
+        if (this._cached.marginTop === undefined) {
+            this._cached.marginTop = this.inlineStatic ? 0 : this.convertBox('margin', 'Top');
+        }
+        return this._cached.marginTop;
     }
     get marginRight() {
-        return this.convertBox('margin', 'Right');
+        if (this._cached.marginRight === undefined) {
+            this._cached.marginRight = this.convertBox('margin', 'Right');
+        }
+        return this._cached.marginRight;
     }
     get marginBottom() {
-        return this.inlineStatic ? 0 : this.convertBox('margin', 'Bottom');
+        if (this._cached.marginBottom === undefined) {
+            this._cached.marginBottom = this.inlineStatic ? 0 : this.convertBox('margin', 'Bottom');
+        }
+        return this._cached.marginBottom;
     }
     get marginLeft() {
-        return this.convertBox('margin', 'Left');
+        if (this._cached.marginLeft === undefined) {
+            this._cached.marginLeft = this.convertBox('margin', 'Left');
+        }
+        return this._cached.marginLeft;
     }
 
     get borderTopWidth() {
@@ -1173,46 +1163,28 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get paddingTop() {
-        return this.convertBox('padding', 'Top');
+        if (this._cached.paddingTop === undefined) {
+            this._cached.paddingTop = this.convertBox('padding', 'Top');
+        }
+        return this._cached.paddingTop;
     }
     get paddingRight() {
-        return this.convertBox('padding', 'Right');
+        if (this._cached.paddingRight === undefined) {
+            this._cached.paddingRight = this.convertBox('padding', 'Right');
+        }
+        return this._cached.paddingRight;
     }
     get paddingBottom() {
-        return this.convertBox('padding', 'Bottom');
+        if (this._cached.paddingBottom === undefined) {
+            this._cached.paddingBottom = this.convertBox('padding', 'Bottom');
+        }
+        return this._cached.paddingBottom;
     }
     get paddingLeft() {
-        return this.convertBox('padding', 'Left');
-    }
-
-    get pageflow() {
-        if (this._cached.pageflow === undefined) {
-            let value = this.positionStatic || this.positionRelative || this.alignOrigin;
-            if (this.parent) {
-                if (!value && this.parent.length === 1 && this.toInt('top') === 0 && this.toInt('right') === 0 && this.toInt('bottom') === 0 && this.toInt('left') === 0) {
-                    value = true;
-                }
-                this._cached.pageflow = value;
-            }
-            return value;
+        if (this._cached.paddingLeft === undefined) {
+            this._cached.paddingLeft = this.convertBox('padding', 'Left');
         }
-        return this._cached.pageflow;
-    }
-
-    get siblingflow() {
-        if (this._cached.siblingflow === undefined) {
-            const value = this.position;
-            this._cached.siblingflow = !(value === 'absolute' || value === 'fixed');
-        }
-        return this._cached.siblingflow;
-    }
-
-    get inlineflow() {
-        if (this._cached.inlineflow === undefined) {
-            const display = this.display;
-            this._cached.inlineflow = this.inline || display.startsWith('inline') || display === 'table-cell' || this.imageElement || this.floating || !this.siblingflow && this.alignOrigin;
-        }
-        return this._cached.inlineflow;
+        return this._cached.paddingLeft;
     }
 
     get inline() {
@@ -1274,7 +1246,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get blockStatic() {
         if (this._cached.blockStatic === undefined) {
-            this._cached.blockStatic = this.block && this.siblingflow && (!this.floating || this.cssInitial('width') === '100%');
+            this._cached.blockStatic = this.block && this.pageFlow && (!this.floating || this.cssInitial('width') === '100%');
         }
         return this._cached.blockStatic;
     }
@@ -1287,48 +1259,84 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.blockDimension;
     }
 
-    get alignOrigin() {
-        if (this._cached.alignOrigin === undefined) {
-            this._cached.alignOrigin = this.top === null && this.right === null && this.bottom === null && this.left === null;
+    get pageFlow() {
+        if (this._cached.pageFlow === undefined) {
+            this._cached.pageFlow = this.positionStatic || this.positionRelative;
         }
-        return this._cached.alignOrigin;
+        return this._cached.pageFlow;
+    }
+
+    get inlineFlow() {
+        if (this._cached.inlineFlow === undefined) {
+            const display = this.display;
+            this._cached.inlineFlow = this.inline || display.startsWith('inline') || display === 'table-cell' || this.imageElement || this.floating;
+        }
+        return this._cached.inlineFlow;
+    }
+
+    get relativeVertical() {
+        return this.positionRelative && (this.top !== 0 || this.bottom !== 0);
+    }
+
+    get absoluteParent() {
+        let current = this.actualParent;
+        while (current && current.id !== 0) {
+            if (!current.positionStatic || current.positionRelative) {
+                return current;
+            }
+            current = current.actualParent;
+        }
+        return current;
     }
 
     get rightAligned() {
         if (this._cached.rightAligned === undefined) {
-            this._cached.rightAligned = this.float === 'right' || this.autoMargin.left || this.css('textAlign') === 'right' || (!this.siblingflow && this.right !== null && this.right >= 0);
+            this._cached.rightAligned = (
+                this.float === 'right' ||
+                this.autoMargin.left ||
+                this.inlineVertical && this.cssParent('textAlign', true) === 'right' ||
+                !this.pageFlow && this.has('right') && this.right >= 0
+            );
         }
         return this._cached.rightAligned || this.hasAlign(NODE_ALIGNMENT.RIGHT);
     }
 
     get bottomAligned() {
         if (this._cached.bottomAligned === undefined) {
-            this._cached.bottomAligned = !this.siblingflow && this.bottom !== null && this.bottom >= 0;
+            this._cached.bottomAligned = !this.pageFlow && this.has('bottom') && this.bottom >= 0;
         }
         return this._cached.bottomAligned;
     }
 
     get autoMargin() {
         if (this._cached.autoMargin === undefined) {
-            if (this.blockStatic) {
+            if (this.blockStatic || !this.pageFlow) {
                 const styleMap = this.initial.styleMap;
                 const left = styleMap.marginLeft === 'auto';
                 const right = styleMap.marginRight === 'auto';
+                const top = styleMap.marginTop === 'auto';
+                const bottom = styleMap.marginBottom === 'auto';
                 this._cached.autoMargin = {
-                    enabled: left || right,
+                    horizontal: left || right,
                     left: left && !right,
                     right: !left && right,
-                    horizontal: left && right,
-                    vertical: styleMap.marginTop === 'auto' && styleMap.marginBottom === 'auto'
+                    leftRight: left && right,
+                    vertical: top || bottom,
+                    top: top && !bottom,
+                    bottom: !top && bottom,
+                    topBottom: top && bottom
                 };
             }
             else {
                 this._cached.autoMargin = {
-                    enabled: false,
+                    horizontal: false,
                     left: false,
                     right: false,
-                    horizontal: false,
-                    vertical: false
+                    leftRight: false,
+                    top: false,
+                    bottom: false,
+                    vertical: false,
+                    topBottom: false
                 };
             }
         }
@@ -1338,7 +1346,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get floating() {
         if (this._cached.floating === undefined) {
             const value = this.css('cssFloat');
-            this._cached.floating = this.siblingflow ? (value === 'left' || value === 'right') : false;
+            this._cached.floating = this.pageFlow ? (value === 'left' || value === 'right') : false;
         }
         return this._cached.floating;
     }
@@ -1395,7 +1403,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get baseline() {
         if (this._cached.baseline === undefined) {
             const value = this.verticalAlign;
-            this._cached.baseline = this.siblingflow && (value === 'baseline' || value === 'initial');
+            this._cached.baseline = this.pageFlow && (value === 'baseline' || value === 'initial');
         }
         return this._cached.baseline;
     }
@@ -1425,10 +1433,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 case 'BUTTON':
                 case 'TEXTAREA':
                 case 'HR':
-                case 'IFRAME':
                     break;
                 default:
-                    if (this.textElement && !this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
+                    if (this.plainText) {
+                        const actualParent = this.actualParent;
+                        if (actualParent) {
+                            this._cached.multiLine = this.bounds.width > actualParent.box.width;
+                        }
+                    }
+                    else if (this.textElement && !this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
                         this._cached.multiLine = getRangeClientRect(this._element).multiLine;
                     }
                     break;
@@ -1478,10 +1491,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get layoutHorizontal() {
-        return this.hasAlign(NODE_ALIGNMENT.HORIZONTAL);
+        return this.hasAlign(NODE_ALIGNMENT.HORIZONTAL) || this.layoutFrame && this.nodes.length === 1;
     }
     get layoutVertical() {
-        return this.hasAlign(NODE_ALIGNMENT.VERTICAL);
+        return this.hasAlign(NODE_ALIGNMENT.VERTICAL) || this.layoutFrame && this.nodes.length === 1;
     }
 
     get linearVertical() {
@@ -1539,27 +1552,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get singleChild() {
         return this.rendered ? this.renderParent.length === 1 : this.parent.length === 1;
-    }
-
-    get previousElementSibling() {
-        let element = <Element> this.element.previousSibling;
-        while (element) {
-            if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
-                return element;
-            }
-            element = <Element> element.previousSibling;
-        }
-        return null;
-    }
-    get nextElementSibling() {
-        let element = <Element> this.element.nextSibling;
-        while (element) {
-            if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
-                return element;
-            }
-            element = <Element> element.nextSibling;
-        }
-        return null;
     }
 
     get center(): Point {

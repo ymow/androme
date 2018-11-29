@@ -56,6 +56,8 @@ declare global {
             export function hasLineBreak(element: Element): boolean;
             export function isLineBreak(element: Element, excluded?: boolean): boolean;
             export function getBetweenElements(elementStart: Element | null, elementEnd: Element, asNode?: boolean, whiteSpace?: boolean): Element[];
+            export function getPreviousElementSibling(element: Element): Element | null;
+            export function getNextElementSibling(element: Element): Element | null;
             export function isStyleElement(element: Element): element is HTMLElement;
             export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
             export function getNestedExtension(element: Element, name: string): HTMLElement | null;

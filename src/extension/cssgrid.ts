@@ -468,7 +468,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                         }
                     }
                 }
-                node.replace(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
+                node.retain(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
                 const layout = new Layout(
                     parent,

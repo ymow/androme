@@ -3,7 +3,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
 
     constructor(children?: T[]) {
         if (Array.isArray(children)) {
-            this.replace(children);
+            this.retain(children);
         }
     }
 
@@ -56,7 +56,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
         return this._children.includes(item);
     }
 
-    public replace(list: T[]) {
+    public retain(list: T[]) {
         this._children = list;
         return this;
     }

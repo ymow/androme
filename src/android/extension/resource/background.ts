@@ -164,10 +164,6 @@ function insertDoubleBorder(border: BorderAttribute, top: boolean, right: boolea
     });
 }
 
-function getHideWidth(value: number) {
-    return value + (value === 1 ? 1 : 2);
-}
-
 export default class ResourceBackground<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
         autoSizeBackgroundImage: true
@@ -545,6 +541,10 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         const borderWidth = new Set(borderFiltered.map(item => item.width));
                         const borderStyle = new Set(borderFiltered.map(item => getBorderStyle(item)));
                         const borderData = borderFiltered[0];
+                        const visibleAll = borderVisible.every(value => value);
+                        function getHideWidth(value: number) {
+                            return value + (visibleAll ? 0 : value === 1 ? 1 : 2);
+                        }
                         if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                             const width = parseInt(borderData.width);
                             if (width > 2 && borderData.style === 'double') {
@@ -571,7 +571,6 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             }
                         }
                         else {
-                            const visibleAll = borderVisible.every(value => value);
                             for (let i = 0; i < borders.length; i++) {
                                 if (borderVisible[i]) {
                                     const border = borders[i];
@@ -649,7 +648,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                     if (current.hasHeight) {
                                         sizeParent.height = current.bounds.height;
                                     }
-                                    if (!current.pageflow || (sizeParent.width > 0 && sizeParent.height > 0)) {
+                                    if (!current.pageFlow || (sizeParent.width > 0 && sizeParent.height > 0)) {
                                         break;
                                     }
                                     current = current.documentParent as T;

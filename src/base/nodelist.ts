@@ -50,7 +50,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         const result = new Map<T, string>();
         const floated = new Set<string>();
         for (const node of list) {
-            if (node.siblingflow) {
+            if (node.pageFlow) {
                 const clear = node.css('clear');
                 if (floated.size > 0) {
                     if (clear === 'both') {
@@ -71,11 +71,11 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static floatedAll<T extends Node>(parent: T) {
-        return NodeList.floated(parent.actualChildren.filter(item => item.siblingflow) as T[]);
+        return NodeList.floated(parent.actualChildren.filter(item => item.pageFlow) as T[]);
     }
 
     public static clearedAll<T extends Node>(parent: T) {
-        return NodeList.cleared(parent.actualChildren.filter(item => item.siblingflow) as T[], false);
+        return NodeList.cleared(parent.actualChildren.filter(item => item.pageFlow) as T[], false);
     }
 
     public static textBaseline<T extends Node>(list: T[]) {
@@ -130,7 +130,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     const fontSizeA = convertInt(a.css('fontSize'));
                     const fontSizeB = convertInt(b.css('fontSize'));
                     if (a.multiLine || b.multiLine) {
-                        if (a.lineHeight > 0 && b.lineHeight > 0) {
+                        if (a.lineHeight && b.lineHeight) {
                             return a.lineHeight <= b.lineHeight ? 1 : -1;
                         }
                         else if (fontSizeA === fontSizeB) {
@@ -210,7 +210,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearX<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow).sort(NodeList.siblingIndex);
+        const nodes = list.filter(node => node.pageFlow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -221,7 +221,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
-                        if (nodes[i].alignedVertically(nodes[i].previousSibling(), undefined, cleared)) {
+                        if (nodes[i].alignedVertically(nodes[i].previousSiblings(), undefined, cleared)) {
                             return false;
                         }
                     }
@@ -262,7 +262,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow).sort(NodeList.siblingIndex);
+        const nodes = list.filter(node => node.pageFlow).sort(NodeList.siblingIndex);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -273,7 +273,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 if (parent) {
                     const cleared = this.clearedAll(parent);
                     for (let i = 1; i < nodes.length; i++) {
-                        if (!nodes[i].alignedVertically(nodes[i].previousSibling(), nodes, cleared)) {
+                        if (!nodes[i].alignedVertically(nodes[i].previousSiblings(), nodes, cleared)) {
                             return false;
                         }
                     }
@@ -297,14 +297,14 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         let row: T[] = [];
         for (let i = 0; i < children.length; i++) {
             const node = children[i];
-            const previous = node.previousSibling() as T[];
-            if (i === 0 || previous.length === 0) {
+            const previousSiblings = node.previousSiblings() as T[];
+            if (i === 0 || previousSiblings.length === 0) {
                 if (list.includes(node)) {
                     row.push(node);
                 }
             }
             else {
-                if (node.alignedVertically(previous, row, cleared)) {
+                if (node.alignedVertically(previousSiblings, row, cleared)) {
                     if (row.length > 0) {
                         result.push(row);
                     }

@@ -49,8 +49,8 @@ export default class Layout<T extends Node> extends Container<T> implements andr
         return this.alignmentType;
     }
 
-    public replace(list: T[]) {
-        super.replace(list);
+    public retain(list: T[]) {
+        super.retain(list);
         this.itemCount = list.length;
         return this;
     }

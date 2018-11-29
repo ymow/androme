@@ -32,7 +32,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
         );
         layout.rowCount = mainData.rowCount;
         layout.columnCount = mainData.columnCount;
-        if (node.filter(item => !item.pageflow).length > 0 ||
+        if (node.filter(item => !item.pageFlow).length > 0 ||
             (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) ||
             mainData.columnDirection && mainData.columnCount === 1)
         {
@@ -71,19 +71,19 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             if (mainData.wrap) {
                 let previous: T[] | undefined;
                 node.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)).forEach((segment: T) => {
-                    const pageflow = segment.renderChildren.filter(item => item.pageflow) as T[];
+                    const pageFlow = segment.renderChildren.filter(item => item.pageFlow) as T[];
                     if (mainData.rowDirection) {
                         segment.android('layout_width', 'match_parent');
                         if (node.hasHeight) {
                             segment.android('layout_height', '0px');
                             segment.app('layout_constraintVertical_weight', '1');
                         }
-                        chainHorizontal.push(pageflow);
+                        chainHorizontal.push(pageFlow);
                         basicVertical.push(segment);
                     }
                     else {
                         segment.android('layout_height', 'match_parent');
-                        chainVertical.push(pageflow);
+                        chainVertical.push(pageFlow);
                         if (previous) {
                             let largest = previous[0];
                             for (let j = 1; j < previous.length; j++) {
@@ -98,7 +98,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                             segment.constraint.horizontal = true;
                         }
                         basicHorizontal.push(segment);
-                        previous = pageflow;
+                        previous = pageFlow;
                     }
                 });
                 if (node.is($enum.NODE_CONTAINER.LINEAR)) {

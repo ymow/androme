@@ -17,6 +17,7 @@ import Grid from './extension/grid';
 import List from './extension/list';
 import Origin from './extension/origin';
 import Percent from './extension/percent';
+import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 import WhiteSpace from './extension/whitespace';
@@ -77,6 +78,7 @@ const lib = {
         List,
         Origin,
         Percent,
+        Relative,
         Sprite,
         Table,
         WhiteSpace,
@@ -221,8 +223,9 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_NAME.RELATIVE]: new Relative(EXT_NAME.RELATIVE, framework),
             [EXT_NAME.WHITESPACE]: new WhiteSpace(EXT_NAME.WHITESPACE, framework),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
             [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
             [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),

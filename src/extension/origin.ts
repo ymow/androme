@@ -11,12 +11,12 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
         function modifyMarginLeft(node: T, offset: number, parent = false) {
             node.bounds.left -= offset;
             node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
-            node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
+            node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))), true);
             node.setBounds(true);
         }
         for (const node of this.application.processing.cache.elements) {
             const outside = node.some((item, index) => {
-                if (item.pageflow) {
+                if (item.pageFlow) {
                     return (
                         item.float !== 'right' &&
                         item.marginLeft < 0 &&
@@ -38,7 +38,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                 const marginRight: T[] = [];
                 node.each((item: T, index) => {
                     let leftType = 0;
-                    if (item.pageflow) {
+                    if (item.pageFlow) {
                         const left = item.marginLeft;
                         if (left < 0 && node.marginLeft >= Math.abs(left)) {
                             leftType = 1;
@@ -64,18 +64,18 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     const [sectionLeft, sectionRight] = partition(node.children, (item: T) => !marginRight.includes(item));
                     if (sectionLeft.length && sectionRight.length) {
                         if (node.style.marginLeft && node.autoMargin.left) {
-                            node.css('marginLeft', node.style.marginLeft);
+                            node.css('marginLeft', node.style.marginLeft, true);
                         }
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                         const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : maxArray(sectionRight.map(item => item.bounds.width));
                         const widthRight = maxArray(sectionRight.map(item => Math.abs(item.toInt('right'))));
-                        sectionLeft.forEach(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
+                        sectionLeft.forEach(item => item.pageFlow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
                     }
                 }
                 const marginLeftType = maxArray(marginLeft);
                 if (marginLeftType > 0) {
-                    const rows = NodeList.partitionRows(node.children.filter(item => item.pageflow));
+                    const rows = NodeList.partitionRows(node.children.filter(item => item.pageFlow));
                     const columnStart: T[] = [];
                     rows.forEach((list: T[]) => {
                         columnStart.push(list[0]);
@@ -90,11 +90,11 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                             const left = item.toInt('left') + node.marginLeft;
                             item.css('left', formatPX(Math.max(left, 0)));
                             if (left < 0) {
-                                item.css('marginLeft', formatPX(item.marginLeft + left));
+                                item.css('marginLeft', formatPX(item.marginLeft + left), true);
                                 modifyMarginLeft(item, left);
                             }
                         }
-                        else if (columnStart.includes(item) && (marginLeftType === 2 || (item.pageflow && !item.plainText && marginLeft.includes(1)))) {
+                        else if (columnStart.includes(item) && (marginLeftType === 2 || (item.pageFlow && !item.plainText && marginLeft.includes(1)))) {
                             modifyMarginLeft(item, node.marginLeft);
                         }
                     });

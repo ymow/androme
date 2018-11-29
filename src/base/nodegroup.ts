@@ -89,29 +89,25 @@ export default abstract class NodeGroup extends Node {
         this.setDimensions('box');
     }
 
-    public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
+    public previousSiblings(lineBreak = true, excluded = true, visible = false) {
         const node = this.item(0);
-        return node ? node.previousSibling(pageflow, lineBreak, excluded) : [];
+        return node ? node.previousSiblings(lineBreak, excluded, visible) : [];
     }
 
-    public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
+    public nextSiblings(lineBreak = true, excluded = true, visible = false) {
         const node = this.item();
-        return node ? node.nextSibling(pageflow, lineBreak, excluded) : [];
+        return node ? node.nextSiblings(lineBreak, excluded, visible) : [];
     }
 
     get inline() {
         return this.every(node => node.inline);
     }
 
-    get pageflow() {
-        return this.every(node => node.pageflow);
+    get pageFlow() {
+        return this.every(node => node.pageFlow);
     }
 
-    get siblingflow() {
-        return this.every(node => node.siblingflow);
-    }
-
-    get inlineflow() {
+    get inlineFlow() {
         return this.inlineStatic || this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
     }
 

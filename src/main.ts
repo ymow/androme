@@ -22,6 +22,7 @@ import Grid from './extension/grid';
 import List from './extension/list';
 import Origin from './extension/origin';
 import Percent from './extension/percent';
+import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 import WhiteSpace from './extension/whitespace';
@@ -259,6 +260,7 @@ const lib = {
         List,
         Origin,
         Percent,
+        Relative,
         Sprite,
         Table,
         WhiteSpace

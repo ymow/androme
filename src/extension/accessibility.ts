@@ -3,6 +3,7 @@ import { NODE_PROCEDURE } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
+import { getNextElementSibling, getPreviousElementSibling } from '../lib/dom';
 import { hasValue } from '../lib/util';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
@@ -14,11 +15,11 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                     switch (element.type) {
                         case 'radio':
                         case 'checkbox':
-                            [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
+                            [getPreviousElementSibling(element), getNextElementSibling(element)].some((sibling: HTMLLabelElement) => {
                                 if (sibling) {
                                     const label = Node.getElementAsNode(sibling);
                                     const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? Node.getElementAsNode(sibling.parentElement) : null;
-                                    if (label && label.visible && label.pageflow) {
+                                    if (label && label.visible && label.pageFlow) {
                                         if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             node.companion = label;
                                         }

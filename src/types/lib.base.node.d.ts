@@ -59,10 +59,11 @@ declare global {
             readonly position: string;
             readonly positionStatic: boolean;
             readonly positionRelative: boolean;
-            readonly top: number | null;
-            readonly right: number | null;
-            readonly bottom: number | null;
-            readonly left: number | null;
+            readonly positionAuto: boolean;
+            readonly top: number;
+            readonly right: number;
+            readonly bottom: number;
+            readonly left: number;
             readonly marginTop: number;
             readonly marginRight: number;
             readonly marginBottom: number;
@@ -75,8 +76,7 @@ declare global {
             readonly paddingRight: number;
             readonly paddingBottom: number;
             readonly paddingLeft: number;
-            readonly siblingflow: boolean;
-            readonly inlineflow: boolean;
+            readonly inlineFlow: boolean;
             readonly inline: boolean;
             readonly inlineStatic: boolean;
             readonly inlineVertical: boolean;
@@ -86,9 +86,10 @@ declare global {
             readonly block: boolean;
             readonly blockStatic: boolean;
             readonly blockDimension: boolean;
-            readonly alignOrigin: boolean;
+            readonly relativeVertical: boolean;
+            readonly absoluteParent: Node | null;
             readonly autoMargin: AutoMargin;
-            readonly pageflow: boolean;
+            readonly pageFlow: boolean;
             readonly floating: boolean;
             readonly float: string;
             readonly visibleStyle: VisibleStyle;
@@ -113,8 +114,6 @@ declare global {
             readonly dir: string;
             readonly nodes: Node[];
             readonly singleChild: boolean;
-            readonly previousElementSibling: Element | null;
-            readonly nextElementSibling: Element | null;
             readonly center: Point;
             parent: Node;
             renderParent: Node;
@@ -147,7 +146,7 @@ declare global {
             render(parent: Node): void;
             hide(): void;
             data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
-            unsetCache(attr?: string): void;
+            unsetCache(...attrs: string[]): void;
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(): Node[];
             inherit(node: Node, ...props: string[]): void;
@@ -156,7 +155,6 @@ declare global {
             intersectY(rect: RectDimensions, dimension?: string): boolean;
             withinX(rect: RectDimensions, dimension?: string): boolean;
             withinY(rect: RectDimensions, dimension?: string): boolean;
-            inside(rect: RectDimensions, dimension?: string): boolean;
             outsideX(rect: RectDimensions, dimension?: string): boolean;
             outsideY(rect: RectDimensions, dimension?: string): boolean;
             css(attr: object | string, value?: string, cache?: boolean): string;
@@ -179,9 +177,8 @@ declare global {
             inheritBox(region: number, node: Node): void;
             actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
-            getParentElementAsNode(negative?: boolean): Node | null;
-            previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
-            nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
+            previousSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
+            nextSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
             firstChild(element?: HTMLElement): Node | null;
             lastChild(element?: HTMLElement): Node | null;
         }
