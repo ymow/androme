@@ -38,8 +38,9 @@ export interface CachedValue<T> {
     hasHeight?: boolean;
     rightAligned?: boolean;
     bottomAligned?: boolean;
-    supSubscript?: boolean;
     preserveWhiteSpace?: boolean;
+    width?: number;
+    height?: number;
     overflow?: number;
     lineHeight?: number;
     dir?: string;
@@ -64,7 +65,7 @@ type AutoMargin = {
 };
 
 type VisibleStyle = {
-    border: boolean;
+    borderWidth: boolean;
     background: boolean;
     backgroundImage: boolean;
     backgroundColor: boolean;

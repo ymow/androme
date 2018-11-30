@@ -1,4 +1,3 @@
-import { UserSettingsAndroid } from '../../types/module';
 import { BackgroundImage, BackgroundGradient } from '../../template/resource/types/data';
 
 import { EXT_ANDROID } from '../../lib/constant';
@@ -173,7 +172,6 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
 
     public afterResources() {
         const application = this.application;
-        const settings = <UserSettingsAndroid> application.userSettings;
         const colorAlias = application.getExtensionOptionValue(EXT_ANDROID.RESOURCE_SVG, 'useColorAlias');
         application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
@@ -296,64 +294,60 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             }
                             if (gravity !== '' && image && image.width > 0 && image.height > 0 && node.renderChildren.length === 0) {
                                 if (tileModeY === 'repeat') {
-                                    let backgroundWidth = node.viewWidth;
-                                    if (backgroundWidth > 0) {
-                                        if (settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                                            backgroundWidth = node.viewWidth + node.paddingLeft + node.paddingRight;
-                                        }
+                                    let width = 0;
+                                    if (node.hasWidth) {
+                                        width = node.width + node.paddingLeft + node.paddingRight;
                                     }
                                     else {
-                                        backgroundWidth = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
+                                        width = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
                                     }
-                                    if (image.width < backgroundWidth) {
+                                    if (image.width < width) {
                                         const layoutWidth = $util.convertInt(node.android('layout_width'));
                                         if (gravity.indexOf('left') !== -1) {
-                                            boxPosition.right = backgroundWidth - image.width;
-                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                            boxPosition.right = width - image.width;
+                                            if (node.hasWidth && width > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity.indexOf('right') !== -1) {
-                                            boxPosition.left = backgroundWidth - image.width;
-                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                            boxPosition.left = width - image.width;
+                                            if (node.hasWidth && width > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
-                                            boxPosition.right = Math.floor((backgroundWidth - image.width) / 2);
-                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                            boxPosition.right = Math.floor((width - image.width) / 2);
+                                            if (node.hasWidth && width > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                     }
                                 }
                                 if (tileModeX === 'repeat') {
-                                    let backgroundHeight = node.viewHeight;
-                                    if (backgroundHeight > 0) {
-                                        if (settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                                            backgroundHeight = node.viewHeight + node.paddingTop + node.paddingBottom;
-                                        }
+                                    let height = 0;
+                                    if (node.hasHeight) {
+                                        height = node.height + node.paddingTop + node.paddingBottom;
                                     }
                                     else {
-                                        backgroundHeight = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
+                                        height = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
                                     }
-                                    if (image.height < backgroundHeight) {
+                                    if (image.height < height) {
                                         const layoutHeight = $util.convertInt(node.android('layout_height'));
                                         if (gravity.indexOf('top') !== -1) {
-                                            boxPosition.bottom = backgroundHeight - image.height;
-                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                            boxPosition.bottom = height - image.height;
+                                            if (!node.hasHeight && height > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity.indexOf('bottom') !== -1) {
-                                            boxPosition.top = backgroundHeight - image.height;
-                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                            boxPosition.top = height - image.height;
+                                            if (!node.hasHeight && height > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
-                                            boxPosition.bottom = Math.floor((backgroundHeight - image.height) / 2);
-                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                            boxPosition.bottom = Math.floor((height - image.height) / 2);
+                                            if (!node.hasHeight && height > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
@@ -652,12 +646,14 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 const width = node.bounds.width + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
                                     node.css('width', $util.formatPX(width));
+                                    node.unsetCache('width', 'hasWidth');
                                 }
                             }
                             if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
                                 const height = node.actualHeight + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
                                     node.css('height', $util.formatPX(height));
+                                    node.unsetCache('height', 'hasHeight');
                                     if (node.marginTop < 0) {
                                         node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
                                     }

@@ -34,7 +34,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             return null;
         }) as T[];
         if (children.length > 1) {
-            const container = this.application.viewController.createNodeGroup(node, children, parent, replaceWith);
+            const container = this.application.controllerHandler.createNodeGroup(node, children, parent, replaceWith);
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
             container.setControlType(RADIO_GROUP, $enum.NODE_CONTAINER.INLINE);
             container.inherit(node, 'alignment');

@@ -206,11 +206,11 @@ export function getExtension(value: string) {
 }
 
 export function ready() {
-    return main && !main.loading && !main.closed;
+    return main && !main.initialized && !main.closed;
 }
 
 export function close() {
-    if (main && !main.loading && main.size > 0) {
+    if (main && !main.initialized && main.size > 0) {
         main.finalize();
     }
 }
@@ -222,7 +222,7 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (main && !main.loading && main.size > 0) {
+    if (main && !main.initialized && main.size > 0) {
         if (!main.closed) {
             main.finalize();
         }

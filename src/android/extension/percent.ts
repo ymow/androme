@@ -6,7 +6,7 @@ import $enum = androme.lib.enumeration;
 
 export default class <T extends View> extends androme.lib.extensions.Percent<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const controller = <android.lib.base.Controller<T>> this.application.viewController;
+        const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
         const group = controller.createNodeGroup(node, [node], parent);
         group.android('layout_width', 'match_parent');
         controller[node.rightAligned ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
@@ -27,7 +27,7 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
     public processChild(node: T) {
         if (node.has('width', $enum.CSS_STANDARD.PERCENT)) {
             node.android('layout_width', '0px');
-            node.android('layout_columnWeight', (parseInt(node.styleMap.width) / 100).toFixed(2));
+            node.android('layout_columnWeight', (parseInt(node.css('width')) / 100).toFixed(2));
         }
         return { output: '' };
     }

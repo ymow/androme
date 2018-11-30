@@ -19,7 +19,6 @@ declare global {
                 export import AXIS_ANDROID = $const.AXIS_ANDROID;
                 export import LAYOUT_ANDROID = $const.LAYOUT_ANDROID;
                 export import XMLNS_ANDROID = $const.XMLNS_ANDROID;
-                export import WEBVIEW_ANDROID = $const.WEBVIEW_ANDROID;
                 export import RESERVED_JAVA = $const.RESERVED_JAVA;
                 export import PREFIX_ANDROID = $const.PREFIX_ANDROID;
             }

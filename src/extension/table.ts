@@ -104,19 +104,19 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 switch (td.tagName) {
                     case 'TH':
-                        if (td.cssInitial('textAlign') === '') {
+                        if (!td.cssInitial('textAlign')) {
                             td.css('textAlign', 'center');
                         }
                     case 'TD':
-                        if (td.cssInitial('verticalAlign') === '') {
+                        if (!td.cssInitial('verticalAlign')) {
                             td.css('verticalAlign', 'middle');
                         }
                         break;
                 }
-                const columnWidth = td.styleMap.width;
+                const columnWidth = td.cssInitial('width');
                 const m = columnIndex[i];
                 if (i === 0 || mapWidth[m] === undefined || !layoutFixed) {
-                    if (!columnWidth || columnWidth === 'auto') {
+                    if (columnWidth === '' || columnWidth === 'auto') {
                         if (mapWidth[m] === undefined) {
                             mapWidth[m] = columnWidth || '0px';
                             mapBounds[m] = 0;
@@ -146,7 +146,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     marginRight: j < tr.length - 1 ? spacingWidth : '0px',
                     marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                     marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
-                });
+                }, '', true);
                 if (multiLine === 0) {
                     multiLine = td.multiLine;
                 }
@@ -172,13 +172,13 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         else if (mapWidth.every(value => isUnit(value))) {
             const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
-            if ((isPercent(tableWidth) && tableWidth !== '100%') || pxWidth < node.viewWidth) {
+            if ((isPercent(tableWidth) && tableWidth !== '100%') || pxWidth < node.width) {
                 mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
             }
             else if (tableWidth === 'auto') {
                 mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = mapBounds[index] === undefined ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
             }
-            else if (pxWidth > node.viewWidth) {
+            else if (pxWidth > node.width) {
                 node.css('width', 'auto');
                 if (!layoutFixed) {
                     node.cascade().forEach(item => item.css('width', 'auto'));
@@ -230,7 +230,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     setBoundsWidth(caption);
                 }
             }
-            if (caption.cssInitial('textAlign') === '') {
+            if (!caption.cssInitial('textAlign')) {
                 caption.css('textAlign', 'center');
             }
             rowCount++;

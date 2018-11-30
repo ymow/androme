@@ -24,7 +24,7 @@ export default class Element<T extends View> extends androme.lib.base.Extension<
         if (data.tag) {
             node.setControlType(data.tag, node.blockStatic ? $enum.NODE_CONTAINER.BLOCK : $enum.NODE_CONTAINER.INLINE);
             node.render(parent);
-            output = this.application.viewController.renderNodeStatic(data.tag, node.renderDepth, {}, '', '', node, node.length > 0);
+            output = this.application.controllerHandler.renderNodeStatic(data.tag, node.renderDepth, {}, '', '', node, node.length > 0);
         }
         if (data.tagChild) {
             node.each(item => {

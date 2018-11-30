@@ -5,7 +5,6 @@ declare global {
         export interface Node extends Container<Node>, BoxModel {
             id: number;
             style: CSSStyleDeclaration;
-            styleMap: StringMap;
             containerType: number;
             alignmentType: number;
             depth: number;
@@ -34,7 +33,6 @@ declare global {
             readonly baseElement: Element | undefined;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
-            readonly domElement: boolean;
             readonly imageElement: boolean;
             readonly svgElement: boolean;
             readonly flexElement: boolean;
@@ -48,8 +46,8 @@ declare global {
             readonly flexbox: Flexbox;
             readonly rightAligned: boolean;
             readonly bottomAligned: boolean;
-            readonly viewWidth: number;
-            readonly viewHeight: number;
+            readonly width: number;
+            readonly height: number;
             readonly hasWidth: boolean;
             readonly hasHeight: boolean;
             readonly lineHeight: number;
@@ -74,6 +72,8 @@ declare global {
             readonly paddingRight: number;
             readonly paddingBottom: number;
             readonly paddingLeft: number;
+            readonly contentBoxWidth: number;
+            readonly contentBoxHeight: number;
             readonly inlineFlow: boolean;
             readonly inline: boolean;
             readonly inlineStatic: boolean;
@@ -84,7 +84,6 @@ declare global {
             readonly block: boolean;
             readonly blockStatic: boolean;
             readonly blockDimension: boolean;
-            readonly relativeVertical: boolean;
             readonly absoluteParent: Node | null;
             readonly autoMargin: AutoMargin;
             readonly pageFlow: boolean;
@@ -97,7 +96,6 @@ declare global {
             readonly overflowY: boolean;
             readonly baseline: boolean;
             readonly verticalAlign: string;
-            readonly supSubscript: boolean;
             readonly preserveWhiteSpace: boolean;
             readonly layoutHorizontal: boolean;
             readonly layoutVertical: boolean;
@@ -112,6 +110,7 @@ declare global {
             readonly blockHeight: boolean;
             readonly actualParent: Node | null;
             readonly actualChildren: Node[];
+            readonly actualBoxParent: Node;
             readonly actualHeight: number;
             readonly dir: string;
             readonly nodes: Node[];
@@ -150,7 +149,7 @@ declare global {
             data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
             unsetCache(...attrs: string[]): void;
             ascend(generated?: boolean, levels?: number): Node[];
-            cascade(): Node[];
+            cascade(element?: boolean): Node[];
             inherit(node: Node, ...props: string[]): void;
             alignedVertically(previousSiblings: Node[], siblings?: Node[], cleared?: Map<Node, string>): boolean;
             intersectX(rect: RectDimensions, dimension?: string): boolean;
@@ -160,8 +159,8 @@ declare global {
             outsideX(rect: RectDimensions, dimension?: string): boolean;
             outsideY(rect: RectDimensions, dimension?: string): boolean;
             css(attr: object | string, value?: string, cache?: boolean): string;
-            cssInitial(attr: string, complete?: boolean): string;
-            cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
+            cssInitial(attr: string, modified?: boolean, computed?: boolean): string;
+            cssParent(attr: string, childStart?: boolean, visible?: boolean): string;
             cssTry(attr: string, value: string): boolean;
             cssFinally(attr: string): boolean;
             appendTry(node: Node, withNode: Node, append?: boolean): void;
@@ -177,7 +176,6 @@ declare global {
             renderChild(node: Node, append?: boolean): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
-            actualLeft(dimension?: string): number;
             actualRight(dimension?: string): number;
             previousSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
             nextSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
@@ -185,11 +183,7 @@ declare global {
             lastChild(element?: HTMLElement): Node | null;
         }
 
-        export class Node implements Node {
-            public static getContentBoxWidth<T extends Node>(node: T): number;
-            public static getContentBoxHeight<T extends Node>(node: T): number;
-            public static getElementAsNode<T>(element: Element): T | null;
-        }
+        export class Node implements Node {}
 
         export class NodeGroup extends Node {
             public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;

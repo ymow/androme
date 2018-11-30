@@ -74,7 +74,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                             const item = parent.find(sibling => sibling.id === id);
                                             if (item) {
                                                 if (k === 0) {
-                                                    const xml = this.application.viewController.renderNodeStatic('include', item.renderDepth, { layout: `@layout/${openData.name}` });
+                                                    const xml = this.application.controllerHandler.renderNodeStatic('include', item.renderDepth, { layout: `@layout/${openData.name}` });
                                                     templates.set(id, xml);
                                                     k++;
                                                 }

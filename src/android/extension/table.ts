@@ -79,9 +79,9 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
         }
         node.mergeGravity('layout_gravity', 'fill');
         if (spaceSpan > 0) {
-            this.application.viewController.appendAfter(
+            this.application.controllerHandler.appendAfter(
                 node.id,
-                (<android.lib.base.Controller<T>> this.application.viewController).renderSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
+                (<android.lib.base.Controller<T>> this.application.controllerHandler).renderSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
             );
         }
         return { output: '' };

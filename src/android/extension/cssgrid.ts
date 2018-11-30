@@ -3,6 +3,7 @@ import { CONTAINER_ANDROID } from '../lib/constant';
 import View from '../view';
 
 import $const = androme.lib.constant;
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
@@ -110,7 +111,11 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
             const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
             if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
-                container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
+                container = new View(
+                    this.application.nextId,
+                    $dom.createElement(parent.actualBoxParent.baseElement),
+                    this.application.controllerHandler.delegateNodeInit
+                ) as T;
                 container.tagName = node.tagName;
                 container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
                 container.inherit(node, 'initial', 'base');
@@ -165,25 +170,21 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
     public postProcedure(node: T) {
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
         if (mainData) {
-            const columnGap = (!mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0);
-            if (columnGap > 0 && node.viewWidth > 0) {
-                if (node.has('width')) {
-                    let width = $util.convertInt(node.android('layout_width'));
-                    if (width > 0) {
-                        width += columnGap;
-                        node.android('layout_width', $util.formatPX(width));
-                    }
+            const columnGap = !mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
+            if (columnGap > 0) {
+                let width = $util.convertInt(node.android('layout_width'));
+                if (width > 0) {
+                    width += columnGap;
+                    node.android('layout_width', $util.formatPX(width));
                 }
-                if (node.has('minSize')) {
-                    let minSize = $util.convertInt(node.android('minSize'));
-                    if (minSize > 0) {
-                        minSize += columnGap;
-                        node.android('minSize', $util.formatPX(minSize));
-                    }
+                else if (node.has('maxWidth') && node.inlineWidth) {
+                    node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
                 }
-            }
-            if (node.has('maxWidth') && node.inlineWidth) {
-                node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
+                let minWidth = $util.convertInt(node.android('minWidth'));
+                if (minWidth > 0) {
+                    minWidth += columnGap;
+                    node.android('minWidth', $util.formatPX(minWidth));
+                }
             }
         }
     }

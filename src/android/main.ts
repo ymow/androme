@@ -44,8 +44,8 @@ import * as util from './lib/util';
 type T = View;
 
 function autoClose() {
-    const main = viewController.application;
-    if (main.userSettings.autoCloseOnWrite && !main.loading && !main.closed) {
+    const main = controllerHandler.application;
+    if (main.userSettings.autoCloseOnWrite && !main.initialized && !main.closed) {
         main.finalize();
         return true;
     }
@@ -55,7 +55,7 @@ function autoClose() {
 let initialized = false;
 
 let application: androme.lib.base.Application<T>;
-let viewController: Controller<T>;
+let controllerHandler: Controller<T>;
 let resourceHandler: Resource<T>;
 let fileHandler: File<T>;
 let userSettings: UserSettingsAndroid;
@@ -123,7 +123,7 @@ const appBase: AppFramework<T> = {
         },
         writeLayoutAllXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.layoutAllToXml(main.sessionData, saveToDisk);
                 }
@@ -132,7 +132,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceAllXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceAllToXml(saveToDisk);
                 }
@@ -141,7 +141,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceStringXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceStringToXml(saveToDisk);
                 }
@@ -150,7 +150,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceArrayXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceStringArrayToXml(saveToDisk);
                 }
@@ -159,7 +159,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceFontXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceFontToXml(saveToDisk);
                 }
@@ -168,7 +168,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceColorXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceColorToXml(saveToDisk);
                 }
@@ -177,7 +177,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceStyleXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceStyleToXml(saveToDisk);
                 }
@@ -186,7 +186,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceDimenXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceDimenToXml(saveToDisk);
                 }
@@ -195,7 +195,7 @@ const appBase: AppFramework<T> = {
         },
         writeResourceDrawableXml(saveToDisk = false) {
             if (initialized) {
-                const main = viewController.application;
+                const main = controllerHandler.application;
                 if (main.closed || autoClose()) {
                     return fileHandler.resourceDrawableToXml(saveToDisk);
                 }
@@ -208,11 +208,11 @@ const appBase: AppFramework<T> = {
         userSettings = Object.assign({}, SETTINGS);
         fileHandler = new File<T>(userSettings);
         application = new androme.lib.base.Application(framework);
-        viewController = new Controller<T>();
+        controllerHandler = new Controller<T>();
         resourceHandler = new Resource<T>(fileHandler);
-        application.registerController(viewController);
+        application.registerController(controllerHandler);
         application.registerResource(resourceHandler);
-        application.nodeObject = View;
+        application.nodeConstructor = View;
         Object.assign(application.builtInExtensions, {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),

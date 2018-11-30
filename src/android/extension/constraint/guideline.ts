@@ -31,7 +31,7 @@ export default class Guideline<T extends View> extends androme.lib.base.Extensio
     }
 
     public afterConstraints() {
-        const controller = (<android.lib.base.Controller<T>> this.application.viewController);
+        const controller = (<android.lib.base.Controller<T>> this.application.controllerHandler);
         for (const node of this.subscribers) {
             const alignParent = new Map<T, string[]>();
             node.each((item: T) => {

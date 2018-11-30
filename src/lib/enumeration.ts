@@ -47,8 +47,7 @@ export enum NODE_ALIGNMENT {
     NOWRAP = 1024,
     SINGLE = 2048,
     MULTILINE = 4096,
-    EXTENDABLE = 8192,
-    SPACE = 16384
+    EXTENDABLE = 8192
 }
 
 export enum NODE_RESOURCE {

@@ -3,7 +3,6 @@ import { UserSettingsAndroid } from './types/module';
 const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
-        'androme.origin',
         'androme.sprite',
         'androme.css-grid',
         'androme.flexbox',
@@ -30,14 +29,11 @@ const settings: UserSettingsAndroid = {
     targetAPI: 26,
     resolutionDPI: 160,
     supportRTL: true,
-    renderInlineText: true,
     preloadImages: true,
-    alwaysReevaluateResources: true,
     autoSizePaddingAndBorderWidth: true,
     ellipsisOnTextOverflow: true,
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
-    hideOffScreenElements: true,
     collapseUnattributedElements: true,
     customizationsOverwritePrivilege: true,
     showAttributes: true,

@@ -32,7 +32,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     public readonly eventOnly = true;
 
     public beforeInit() {
-        this.application.viewController.localSettings.unsupported.tagName.delete('svg');
+        this.application.controllerHandler.localSettings.unsupported.tagName.delete('svg');
     }
 
     public afterResources() {
@@ -214,6 +214,6 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     }
 
     public afterFinalize() {
-        this.application.viewController.localSettings.unsupported.tagName.add('svg');
+        this.application.controllerHandler.localSettings.unsupported.tagName.add('svg');
     }
 }

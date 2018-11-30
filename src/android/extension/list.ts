@@ -18,8 +18,8 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');
         let output = '';
         if (mainData) {
-            const controller = this.application.viewController;
-            const parentLeft = $util.convertInt(parent.css('paddingLeft')) + $util.convertInt(parent.cssInitial('marginLeft', true));
+            const controller = this.application.controllerHandler;
+            const parentLeft = $util.convertInt(parent.css('paddingLeft')) + $util.convertInt(parent.css('marginLeft'));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;
             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
@@ -30,22 +30,28 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             else if (parent.item(0) === node) {
                 paddingLeft += parentLeft;
             }
-            const ordinal = node.find(item => item.float === 'left' && $util.convertInt(item.cssInitial('marginLeft', true)) < 0 && Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))) as T | undefined;
+            const ordinal = node.find(item => {
+                const marginLeft = $util.convertInt(item.cssInitial('marginLeft') || item.css('marginLeft'));
+                if (item.float === 'left' && marginLeft < 0 && Math.abs(marginLeft) <= $util.convertInt(item.documentParent.cssInitial('marginLeft'))) {
+                    return true;
+                }
+                return false;
+            }) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
-                ordinal.parent = parent;
                 const layout = new $Layout(parent, ordinal);
                 if (ordinal.inlineText || ordinal.length === 0) {
                     layout.containerType = $enum.NODE_CONTAINER.TEXT;
                 }
                 else {
                     layout.retain(ordinal.children as T[]);
-                    if (this.application.viewController.checkRelativeHorizontal(layout)) {
+                    if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {
                         layout.setType($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
                     }
                     else {
                         layout.setType($enum.NODE_CONTAINER.CONSTRAINT, $enum.NODE_ALIGNMENT.UNKNOWN);
                     }
                 }
+                ordinal.parent = parent;
                 controller.prependBefore(node.id, this.application.renderNode(layout));
                 if (columnCount === 3) {
                     node.android('layout_columnSpan', '2');
@@ -59,17 +65,15 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             else {
                 const columnWeight = columnCount > 0 ? '0' : '';
                 const positionInside = node.css('listStylePosition') === 'inside';
-                const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
+                let [left, top] = [0, 0];
                 let image = '';
-                let left = 0;
-                let top = 0;
                 if (mainData.imageSrc !== '') {
                     const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.dpi, node.fontSize);
                     left = boxPosition.left;
                     top = boxPosition.top;
                     image = Resource.addImageUrl(mainData.imageSrc);
                 }
-                const gravity = image !== '' && !listStyleImage || parentLeft === 0 && node.marginLeft === 0 ? '' : 'right';
+                const gravity = image !== '' && !node.has('listStyleImage') || parentLeft === 0 && node.marginLeft === 0 ? '' : 'right';
                 if (gravity === '') {
                     paddingLeft += node.paddingLeft;
                     node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
@@ -78,7 +82,6 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     paddingLeft -= left;
                 }
                 paddingLeft = Math.max(paddingLeft, 20);
-                const minWidth = paddingLeft > 0 ? $util.formatPX(paddingLeft) : '';
                 const paddingRight = (() => {
                     if (paddingLeft <= 24) {
                         return 6;
@@ -91,20 +94,26 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     }
                 })();
                 const marginLeft = left > 0 ? $util.formatPX(left) : '';
+                const minWidth = paddingLeft > 0 ? $util.formatPX(paddingLeft) : '';
                 const options = createAttribute({
                     android: {
                         layout_columnWeight: columnWeight
                     }
                 });
                 if (positionInside) {
-                    const insideOptions = createAttribute({
-                        android: {
-                            minWidth,
-                            layout_columnWeight: columnWeight,
-                            [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: marginLeft
-                        }
-                    });
-                    const xml = controller.renderNodeStatic(CONTAINER_ANDROID.SPACE, parent.renderDepth + 1, insideOptions, 'wrap_content', 'wrap_content');
+                    const xml = controller.renderNodeStatic(
+                        CONTAINER_ANDROID.SPACE,
+                        parent.renderDepth + 1,
+                        {
+                            android: {
+                                minWidth,
+                                layout_columnWeight: columnWeight,
+                                [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: marginLeft
+                            }
+                        },
+                        'wrap_content',
+                        'wrap_content'
+                    );
                     controller.prependBefore(node.id, xml);
                     options.android.minWidth = $util.formatPX('24');
                 }
@@ -136,8 +145,11 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     else {
                         options.android.text = mainData.ordinal;
                     }
-                    const companion = new View(this.application.processing.cache.nextId, document.createElement('SPAN'), this.application.viewController.delegateNodeInit) as T;
-                    companion.alignmentType = $enum.NODE_ALIGNMENT.SPACE;
+                    const companion = new View(
+                        this.application.nextId,
+                        $dom.createElement(parent.actualBoxParent.baseElement),
+                        this.application.controllerHandler.delegateNodeInit
+                    ) as T;
                     companion.tagName = `${node.tagName}_ORDINAL`;
                     companion.inherit(node, 'style');
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
@@ -203,8 +215,8 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         layout_columnSpan: columnCount.toString()
                     }
                 });
-                const xml = this.application.viewController.renderNodeStatic(CONTAINER_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
-                this.application.viewController.prependBefore(current.id, xml, 0);
+                const xml = this.application.controllerHandler.renderNodeStatic(CONTAINER_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
+                this.application.controllerHandler.prependBefore(current.id, xml, 0);
             }
         }
     }

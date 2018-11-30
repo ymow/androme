@@ -115,7 +115,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     get floating() {
-        return this.hasAlign(NODE_ALIGNMENT.FLOAT);
+        return this.hasAlign(NODE_ALIGNMENT.FLOAT) || this.some(node => node.floating);
     }
 
     get float() {
@@ -142,6 +142,10 @@ export default abstract class NodeGroup extends Node {
 
     get baseElement() {
         return undefined;
+    }
+
+    get actualBoxParent() {
+        return NodeList.actualParent(this.cascade(true)) || this;
     }
 
     public firstChild() {

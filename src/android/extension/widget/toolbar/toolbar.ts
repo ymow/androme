@@ -52,7 +52,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const application = this.application;
-        const controller = application.viewController;
+        const controller = application.controllerHandler;
         const target = $util.hasValue(node.dataset.target);
         const options: ExternalData = Object.assign({}, this.options[node.element.id]);
         const toolbarOptions = $android_util.createAttribute(options.self);
@@ -191,7 +191,6 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         let collapsingToolbarNode: T | undefined;
         if (hasAppBar) {
             $util.defaultWhenNull(appBarOptions, 'android', 'id', `${node.stringId}_appbar`);
-            $util.defaultWhenNull(appBarOptions, 'android', 'layout_height', node.viewHeight > 0 ? $util.formatPX(node.viewHeight) : 'wrap_content');
             $util.defaultWhenNull(appBarOptions, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (appBarOptions['android'].theme) {
@@ -207,7 +206,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             else {
                 $util.defaultWhenNull(appBarOptions, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = this.createPlaceholder(application.processing.cache.nextId, node, appBarChildren) as T;
+            appBarNode = this.createPlaceholder(application.nextId, node, parent, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.controlId = $android_util.stripId(appBarOptions['android'].id);
             appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $enum.NODE_CONTAINER.BLOCK);
@@ -230,7 +229,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 }
                 $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'toolbarId', node.stringId);
-                collapsingToolbarNode = this.createPlaceholder(application.processing.cache.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode = this.createPlaceholder(application.nextId, node, parent, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).controlId);
@@ -324,10 +323,10 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_TOOLBAR_TMPL, data, options);
     }
 
-    private createPlaceholder(nextId: number, container: T, nodes: T[]) {
-        const placeholder = new $View(nextId, undefined, this.application.viewController.delegateNodeInit);
+    private createPlaceholder(nextId: number, node: T, parent: T, nodes: T[]) {
+        const placeholder = new $View(nextId, $dom.createElement(parent.actualBoxParent.baseElement, node.blockStatic), this.application.controllerHandler.delegateNodeInit);
         placeholder.init();
-        placeholder.inherit(container, 'dimensions');
+        placeholder.inherit(node, 'dimensions');
         placeholder.positioned = true;
         placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
         nodes.forEach(item => item.parent = placeholder);

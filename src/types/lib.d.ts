@@ -38,6 +38,7 @@ declare global {
             export function newBoxRect(): BoxRect;
             export function newRectDimensions(): RectDimensions;
             export function newBoxModel(): BoxModel;
+            export function createElement(parent?: Element, block?: boolean): HTMLElement;
             export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
             export function getRangeClientRect(element: Element): TextDimensions;
             export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions;
@@ -51,7 +52,7 @@ declare global {
             export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): RectPosition;
             export function getFirstChildElement(elements: Element[]): Element | null;
             export function getLastChildElement(elements: Element[]): Element | null;
-            export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
+            export function hasFreeFormText(element: Element, whiteSpace?: boolean): boolean;
             export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Element, trim?: boolean): boolean;
             export function isLineBreak(element: Element, excluded?: boolean): boolean;
@@ -118,7 +119,7 @@ declare global {
             export function hasValue(value: any): boolean;
             export function withinRange(a: number, b: number, offset?: number): boolean;
             export function withinFraction(lower: number, upper: number): boolean;
-            export function assignWhenNull(source: {}, destination: {}): void;
+            export function assignWhenNull(destination: {}, source: {}): void;
             export function defaultWhenNull(options: {}, ...attrs: string[]): void;
             export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>): [T[], T[]];
             export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[];

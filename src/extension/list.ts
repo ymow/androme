@@ -34,7 +34,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             ))
         ) && (
             node.some(item => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || hasSingleImage(item))) ||
-            node.every(item => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && hasSingleImage(item))
+            node.every(item => item.tagName !== 'LI' && item.cssInitial('listStyleType') === 'none' && hasSingleImage(item))
         );
     }
 
@@ -112,7 +112,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             layout.setType(NODE_CONTAINER.GRID, NODE_ALIGNMENT.AUTO_LAYOUT);
             complete = true;
         }
-        else if (this.application.viewController.checkRelativeHorizontal(layout)) {
+        else if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {
             layout.rowCount = 1;
             layout.columnCount = layout.length;
             layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);

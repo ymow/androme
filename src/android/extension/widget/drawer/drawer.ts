@@ -57,7 +57,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         node.documentRoot = true;
         node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $enum.NODE_CONTAINER.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
-        const output = this.application.viewController.renderNodeStatic(
+        const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.DRAWER,
             0,
             $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
@@ -84,7 +84,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             $util.defaultWhenNull(options, 'android', 'id', `${node.stringId}_navigation`);
             $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
             $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
-            const output = application.viewController.renderNodeStatic(
+            const output = application.controllerHandler.renderNodeStatic(
                 $android_const.SUPPORT_ANDROID.NAVIGATION_VIEW,
                 1,
                 $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),

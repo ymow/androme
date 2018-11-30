@@ -231,7 +231,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                 segment.forEach(item => item.app(`layout_constraint${HV}_weight`, (item.flexbox.grow || 1).toString()));
                                 break;
                             case 'space-around':
-                                const controller = <android.lib.base.Controller<T>> this.application.viewController;
+                                const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
                                 const orientation = HV.toLowerCase();
                                 chainStart.app(chainStyle, 'spread_inside');
                                 chainStart.constraint[orientation] = false;
@@ -241,11 +241,11 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                 break;
                         }
                     }
-                    const rightParent = $util.withinFraction(chainEnd.linear.right, node.box.right);
-                    const leftParent = $util.withinFraction(node.box.left, chainStart.linear.left);
-                    const topParent = $util.withinFraction(node.box.top, chainStart.linear.top);
-                    const bottomParent = $util.withinFraction(chainEnd.linear.bottom, node.box.bottom);
-                    if (segment.length > 1 && (horizontal && leftParent && rightParent) || (!horizontal && topParent && bottomParent)) {
+                    if (segment.length > 1 && (
+                            horizontal && $util.withinFraction(node.box.left, chainStart.linear.left) && $util.withinFraction(chainEnd.linear.right, node.box.right) ||
+                            !horizontal && $util.withinFraction(node.box.top, chainStart.linear.top) && $util.withinFraction(chainEnd.linear.bottom, node.box.bottom)
+                       ))
+                    {
                         chainStart.app(chainStyle, 'spread_inside', false);
                     }
                     else {

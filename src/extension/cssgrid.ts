@@ -90,7 +90,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         function convertUnit(value: string) {
             return isUnit(value) ? node.convertPX(value) : value;
         }
-        [node.styleMap.gridTemplateRows, node.styleMap.gridTemplateColumns, node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
+        [node.cssInitial('gridTemplateRows', false, true), node.cssInitial('gridTemplateColumns', false, true), node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
             if (value && value !== 'none' && value !== 'auto') {
                 let i = 1;
                 let match: RegExpMatchArray | null;

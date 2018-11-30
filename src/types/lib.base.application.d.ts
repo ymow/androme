@@ -1,11 +1,11 @@
 declare global {
     namespace androme.lib.base {
         export interface Application<T extends Node> {
-            viewController: Controller<T>;
+            controllerHandler: Controller<T>;
             resourceHandler: Resource<T>;
-            nodeObject: Constructor<T>;
+            nodeConstructor: Constructor<T>;
             userSettings: UserSettings;
-            loading: boolean;
+            initialized: boolean;
             closed: boolean;
             appName: string;
             readonly framework: number;
@@ -16,6 +16,7 @@ declare global {
             readonly extensions: Set<Extension<T>>;
             readonly viewData: FileAsset[];
             readonly sessionData: SessionData<NodeList<T>>;
+            readonly nextId: number;
             readonly size: number;
             registerController(controller: Controller<T>): void;
             registerResource(resource: Resource<T>): void;

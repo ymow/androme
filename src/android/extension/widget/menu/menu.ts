@@ -127,7 +127,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
         node.setControlType(VIEW_NAVIGATION.MENU, $enum.NODE_CONTAINER.INLINE);
         node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
-        const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+        const output = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { output, complete: true };
     }
@@ -167,7 +167,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
         else {
             controlName = VIEW_NAVIGATION.ITEM;
             title = (element.title || element.innerText).trim();
-            if (hasInputType(node, 'checkbox') && parent.android('checkableBehavior') === '') {
+            if (hasInputType(node, 'checkbox') && !parent.android('checkableBehavior')) {
                 options.android.checkable = 'true';
             }
         }
@@ -199,16 +199,14 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 }
                 break;
         }
-        if (title !== '' && !$util.hasValue(options.android.title)) {
-            title = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
-            if (title !== '') {
-                options.android.title = `@string/${title}`;
-            }
+        if (title !== '') {
+            const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+            options.android.title = name !== '' ? `@string/${name}` : title;
         }
         node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
         node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
         node.render(parent);
-        const output = this.application.viewController.renderNodeStatic(controlName, node.renderDepth, options, '', '', node, layout);
+        const output = this.application.controllerHandler.renderNodeStatic(controlName, node.renderDepth, options, '', '', node, layout);
         return { output, complete: true, next: controlName === VIEW_NAVIGATION.MENU };
     }
 

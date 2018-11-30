@@ -3,13 +3,13 @@ import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
 import Container from './container';
 import Node from './node';
 
-import {  isUserAgent } from '../lib/dom';
+import { getElementAsNode, isUserAgent } from '../lib/dom';
 import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
         for (const node of list) {
-            if (node.domElement && node.actualParent) {
+            if (node.baseElement && node.actualParent) {
                 return node.actualParent as T;
             }
         }
@@ -29,7 +29,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 const listEnd = list[list.length - 1];
                 let valid = false;
                 for (let i = 0; i < actualParent.element.childNodes.length; i++) {
-                    const node = Node.getElementAsNode<T>(<Element> actualParent.element.childNodes[i]);
+                    const node = getElementAsNode<T>(<Element> actualParent.element.childNodes[i]);
                     if (node) {
                         if (node === list[0]) {
                             valid = true;
@@ -384,18 +384,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 }
                 return nodes;
             }
-            if (hasBit(NODE_ALIGNMENT.MULTILINE, alignmentType)) {
-                const rows = this.partitionRows(list);
-                const result: T[] = [];
-                for (const row of rows) {
-                    result.push(...sortHorizontal(row));
-                }
-                list.length = 0;
-                list.push(...result);
-            }
-            else {
-                sortHorizontal(list);
-            }
+            sortHorizontal(list);
         }
     }
 

@@ -12,7 +12,7 @@ import $android_util = android.lib.util;
 
 export default class FloatingActionButton<T extends $View> extends androme.lib.base.Extension<T> {
     public is(node: T) {
-        return super.is(node) && (node.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type));
+        return super.is(node) && (node.element.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type));
     }
 
     public condition(node: T) {
@@ -119,7 +119,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         else {
             node.render(parent);
         }
-        const output = this.application.viewController.renderNodeStatic(
+        const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON,
             target ? -1 : node.renderDepth,
             $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),

@@ -426,7 +426,7 @@ export function withinFraction(lower: number, upper: number) {
     );
 }
 
-export function assignWhenNull(source: {}, destination: {}) {
+export function assignWhenNull(destination: {}, source: {}) {
     for (const attr in source) {
         if (!destination.hasOwnProperty(attr)) {
             destination[attr] = source[attr];

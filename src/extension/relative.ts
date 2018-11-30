@@ -24,8 +24,6 @@ export default abstract class Relative<T extends Node> extends Extension<T> {
                         }
                     }
                 }
-                else {
-                }
             }
         }
     }

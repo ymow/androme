@@ -27,7 +27,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const controller = this.application.viewController;
+        const controller = this.application.controllerHandler;
         const pageFlow = node.children.filter(item => item.pageFlow) as T[];
         const flex = node.flexbox;
         const mainData = Object.assign(Flexbox.createDataAttribute(pageFlow), {

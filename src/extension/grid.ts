@@ -6,7 +6,7 @@ import Layout from '../base/layout';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { isStyleElement } from '../lib/dom';
+import { getElementAsNode, isStyleElement } from '../lib/dom';
 import { flatMap, hasValue, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
@@ -323,7 +323,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings = flatMap(Array.from(node.documentParent.element.children), element => {
-                    const item = Node.getElementAsNode(element);
+                    const item = getElementAsNode<T>(element);
                     return (
                         item &&
                         item.visible &&
@@ -335,7 +335,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             if (siblings.length) {
                 siblings.unshift(node);
-                const group = this.application.viewController.createNodeGroup(node, siblings, parent);
+                const group = this.application.controllerHandler.createNodeGroup(node, siblings, parent);
                 siblings.forEach(item => item.inherit(group, 'data'));
                 const layout = new Layout(
                     parent,
@@ -350,11 +350,11 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 if (NodeList.linearY(siblings)) {
                     layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
                 }
-                else if (this.application.viewController.checkFrameHorizontal(layout)) {
+                else if (this.application.controllerHandler.checkFrameHorizontal(layout)) {
                     output = this.application.processLayoutHorizontal(layout);
                 }
                 else {
-                    if (this.application.viewController.checkRelativeHorizontal(layout)) {
+                    if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {
                         layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
                     }
                     else if (layout.linearX) {

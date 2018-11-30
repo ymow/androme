@@ -34,7 +34,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
         node.setControlType($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, $enum.NODE_CONTAINER.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
         node.render(parent);
-        const output = this.application.viewController.renderNodeStatic(
+        const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION,
             node.renderDepth,
             $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),

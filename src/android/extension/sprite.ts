@@ -14,7 +14,11 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
         let container: T | undefined;
         const mainData = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'mainData');
         if (mainData && mainData.uri && mainData.position) {
-            container = new View(this.application.processing.cache.nextId, node.element, this.application.viewController.delegateNodeInit) as T;
+            container = new View(
+                this.application.nextId,
+                node.baseElement,
+                this.application.controllerHandler.delegateNodeInit
+            ) as T;
             container.inherit(node, 'initial', 'base', 'style', 'styleMap');
             container.setControlType(CONTAINER_ANDROID.FRAME);
             container.exclude({ procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.IMAGE_SOURCE });
@@ -51,6 +55,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
                 backgroundPositionY: '0px',
                 backgroundColor: 'transparent'
             });
+            node.unsetCache();
             node.android('src', `@drawable/${Resource.addImage({ mdpi: mainData.uri })}`);
         }
         return { output, parent: container, complete: true };

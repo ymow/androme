@@ -1,5 +1,6 @@
 import View from '../../view';
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
@@ -41,7 +42,11 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             node.overflow = overflowType;
         }
         const scrollView = overflow.map((value, index) => {
-            const container = new View(this.application.processing.cache.nextId, index === 0 ? node.element : undefined, this.application.viewController.delegateNodeInit) as T;
+            const container = new View(
+                this.application.nextId,
+                $dom.createElement(parent.actualBoxParent.baseElement, node.blockStatic),
+                this.application.controllerHandler.delegateNodeInit
+            ) as T;
             container.setControlType(value, $enum.NODE_CONTAINER.BLOCK);
             if (index === 0) {
                 container.inherit(node, 'initial', 'base', 'style', 'styleMap');
@@ -52,7 +57,8 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 container.init();
                 container.tagName = node.tagName;
                 container.documentParent = node.documentParent;
-                container.inherit(node, 'initial', 'dimensions', 'style', 'styleMap');
+                container.inherit(node, 'initial', 'dimensions', 'styleMap');
+                container.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
             }
             container.resetBox($enum.BOX_STANDARD.PADDING);
             return container;
@@ -64,7 +70,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             switch (item.controlName) {
                 case SCROLL_VERTICAL: {
                     const value = item.css('height');
-                    item.android('layout_height', $util.isPercent(value) ? item.convertPercent(value, false) : value);
+                    item.android('layout_height', item.convertPX(value, false));
                     item.css({
                         width: 'auto',
                         overflow: 'scroll visible',
@@ -75,7 +81,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 }
                 case SCROLL_HORIZONTAL: {
                     const value = item.css('width');
-                    item.android('layout_width', $util.isPercent(value) ? item.convertPercent(value, true) : value);
+                    item.android('layout_width', item.convertPX(value));
                     item.css({
                         height: 'auto',
                         overflow: 'visible scroll',
@@ -85,6 +91,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                     break;
                 }
             }
+            item.unsetCache();
             this.application.processing.cache.append(item);
             item.render(i === 0 ? (target ? item : parent) : previous);
             const xml = $xml.getEnclosingTag(item.controlName, item.id, target ? (i === 0 ? -1 : 0) : item.renderDepth, $xml.formatPlaceholder(item.id));

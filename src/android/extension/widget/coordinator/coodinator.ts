@@ -11,7 +11,7 @@ import $android_util = android.lib.util;
 
 export default class Coordinator<T extends $View> extends androme.lib.base.Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const controller = this.application.viewController;
+        const controller = this.application.controllerHandler;
         const options = $android_util.createAttribute(this.options[node.element.id]);
         node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $enum.NODE_CONTAINER.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });

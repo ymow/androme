@@ -43,9 +43,9 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                                     mainData.paddingBottom = heightBottom;
                                 }
                                 else {
-                                    this.application.viewController.appendAfter(
+                                    this.application.controllerHandler.appendAfter(
                                         item.id,
-                                        (<android.lib.base.Controller<T>> this.application.viewController).renderSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
+                                        (<android.lib.base.Controller<T>> this.application.controllerHandler).renderSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
                                     );
                                 }
                             }

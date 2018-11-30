@@ -58,6 +58,15 @@ export function newBoxModel(): BoxModel {
     };
 }
 
+export function createElement(parent?: Element, block = false) {
+    const element = document.createElement(block ? 'DIV' : 'SPAN');
+    element.style.display = 'none';
+    if (parent instanceof HTMLElement) {
+        parent.appendChild(element);
+    }
+    return element;
+}
+
 export function convertClientUnit(value: string, dimension: number, dpi: number, fontSize: number, percent = false) {
     if (percent) {
         return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, dpi, fontSize)) / dimension);
@@ -120,7 +129,7 @@ export function getStyle(element: Element | null, cache = true): CSSStyleDeclara
                     return node.style;
                 }
                 else if (node.plainText) {
-                    return node.styleMap as any;
+                    return node.unsafe('styleMap') as CSSStyleDeclaration || {};
                 }
             }
         }
@@ -200,7 +209,7 @@ export function cssFromParent(element: Element, attr: string) {
     if (isStyleElement(element) && element.parentElement) {
         const node = getElementAsNode<T>(element);
         const style = getStyle(element);
-        return style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]);
+        return style && style[attr] === getStyle(element.parentElement)[attr] && (node === null || !node.cssInitial(attr));
     }
     return false;
 }
@@ -348,28 +357,21 @@ export function getLastChildElement(element: Element, lineBreak = false) {
     return null;
 }
 
-export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
-    let depth = -1;
+export function hasFreeFormText(element: Element, whiteSpace = true) {
     function findFreeForm(elements: any[]): boolean {
-        if (depth++ === maxDepth) {
-            return false;
-        }
-        return elements.some((sibling: Element) => {
-            if (sibling.nodeName === '#text') {
-                if (isPlainText(sibling, whiteSpace) ||
-                    cssParent(sibling, 'whiteSpace', 'pre', 'pre-wrap') && sibling.textContent && sibling.textContent !== '')
-                {
+        return elements.some((child: Element) => {
+            if (child.nodeName === '#text') {
+                if (isPlainText(child, whiteSpace) || cssParent(child, 'whiteSpace', 'pre', 'pre-wrap') && child.textContent && child.textContent !== '') {
                     return true;
                 }
             }
-            else if (sibling instanceof HTMLElement && sibling.childNodes.length && findFreeForm(Array.from(sibling.childNodes))) {
+            else if (child instanceof HTMLElement && child.childNodes.length && findFreeForm(Array.from(child.childNodes))) {
                 return true;
             }
             return false;
         });
     }
     if (element.nodeName === '#text') {
-        maxDepth = 0;
         return findFreeForm([element]);
     }
     else {
@@ -488,42 +490,42 @@ export function isStyleElement(element: Element): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
-export function isElementVisible(element: Element, hideOffScreen: boolean) {
-    if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
-        if (isStyleElement(element)) {
-            const bounds = element.getBoundingClientRect();
-            if (bounds.width !== 0 && bounds.height !== 0) {
-                return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
-            }
-            else if (hasValue(element.dataset.import)) {
-                return true;
-            }
-            else {
-                let current = element.parentElement;
-                let valid = true;
-                while (current) {
-                    if (getStyle(current).display === 'none') {
-                        valid = false;
-                        break;
-                    }
-                    current = current.parentElement;
-                }
-                if (valid && element.children.length) {
-                    return Array.from(element.children).some((item: Element) => {
-                        const style = getStyle(item);
-                        const float = style.cssFloat;
-                        const position = style.position;
-                        return position === 'absolute' || position === 'fixed' || float === 'left' || float === 'right';
-                    });
-                }
-            }
-            return false;
+export function isElementVisible(element: Element) {
+    if (element.parentElement instanceof SVGSVGElement) {
+        return false;
+    }
+    else if (isStyleElement(element)) {
+        const bounds = element.getBoundingClientRect();
+        if (bounds.width !== 0 && bounds.height !== 0) {
+            return !(bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+        }
+        else if (hasValue(element.dataset.import)) {
+            return true;
         }
         else {
-            return isPlainText(element);
+            let current = element.parentElement;
+            let valid = true;
+            while (current) {
+                if (getStyle(current).display === 'none') {
+                    valid = false;
+                    break;
+                }
+                current = current.parentElement;
+            }
+            if (valid && element.children.length) {
+                return Array.from(element.children).some((item: Element) => {
+                    const style = getStyle(item);
+                    const float = style.cssFloat;
+                    const position = style.position;
+                    return position === 'absolute' || position === 'fixed' || float === 'left' || float === 'right';
+                });
+            }
         }
+        return false;
     }
-    return false;
+    else {
+        return isPlainText(element);
+    }
 }
 
 export function getNestedExtension(element: Element, name: string) {

@@ -11,12 +11,9 @@ interface EnvironmentSettings {
 
 interface UserSettings extends EnvironmentSettings {
     builtInExtensions: string[];
-    renderInlineText: boolean;
     preloadImages: boolean;
-    alwaysReevaluateResources: boolean;
     supportNegativeLeftTop: boolean;
     floatOverlapDisabled: boolean;
-    hideOffScreenElements: boolean;
     collapseUnattributedElements: boolean;
     insertSpaces: number;
     handleExtensionsAsync: boolean;
@@ -33,11 +30,8 @@ interface ControllerSettings {
         pathName: string;
         fileExtension: string;
     };
-    inline: {
-        always: string[];
-        tagName: Set<string>
-    };
     unsupported: {
+        excluded: Set<string>,
         tagName: Set<string>
     };
     relative: {
