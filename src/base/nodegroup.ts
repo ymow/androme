@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, newRectDimensions, isStyleElement } from '../lib/dom';
+import { assignBounds, newRectDimensions } from '../lib/dom';
 
 export default abstract class NodeGroup extends Node {
     public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
@@ -49,19 +49,6 @@ export default abstract class NodeGroup extends Node {
             }
         }
         return { top, right, bottom, left };
-    }
-
-    public init() {
-        super.init();
-        if (this.length) {
-            for (const item of this.children) {
-                item.parent = this;
-            }
-            this.parent.sort(NodeList.siblingIndex);
-            this.initial.children.push(...this.duplicate());
-        }
-        this.setBounds();
-        this.css('direction', this.documentParent.dir);
     }
 
     public setBounds(calibrate = false) {
@@ -143,7 +130,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     get multiLine() {
-        return this.some(node => node.multiLine);
+        return this.children.reduce((a, b) => a + b.multiLine, 0);
     }
 
     get display() {
@@ -153,25 +140,8 @@ export default abstract class NodeGroup extends Node {
         );
     }
 
-    get element() {
-        function cascade<T extends Node>(nodes: T[]): Element | null {
-            for (const node of nodes.slice().sort(NodeList.siblingIndex)) {
-                if (node.domElement) {
-                    return node.element;
-                }
-                else if (node.length) {
-                    const element = cascade(node.children);
-                    if (element) {
-                        return element;
-                    }
-                }
-            }
-            return null;
-        }
-        if (isStyleElement(super.element)) {
-            return super.element;
-        }
-        return cascade(this.children) || super.element;
+    get baseElement() {
+        return undefined;
     }
 
     public firstChild() {

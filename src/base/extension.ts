@@ -95,6 +95,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public postBaseLayout(node: T) {}
+    public postConstraints(node: T) {}
     public postParseDocument(node: T) {}
     public postProcedure(node: T) {}
 

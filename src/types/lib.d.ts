@@ -53,9 +53,9 @@ declare global {
             export function getLastChildElement(elements: Element[]): Element | null;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
             export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
-            export function hasLineBreak(element: Element): boolean;
+            export function hasLineBreak(element: Element, trim?: boolean): boolean;
             export function isLineBreak(element: Element, excluded?: boolean): boolean;
-            export function getBetweenElements(elementStart: Element | null, elementEnd: Element, asNode?: boolean, whiteSpace?: boolean): Element[];
+            export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
             export function getPreviousElementSibling(element: Element): Element | null;
             export function getNextElementSibling(element: Element): Element | null;
             export function isStyleElement(element: Element): element is HTMLElement;
@@ -64,7 +64,7 @@ declare global {
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getElementAsNode<T>(element: UndefNull<Element>): T | null;
+            export function getElementAsNode<T>(element: Element): T | null;
         }
 
         namespace svg {

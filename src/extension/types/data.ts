@@ -63,3 +63,11 @@ interface ListData {
     imageSrc: string;
     imagePosition: string;
 }
+
+interface VerticalAlignData<T> {
+    containerType: number;
+    marginTop?: number;
+    idMap?: ObjectIndex<number>;
+    aboveBaseline?: T[];
+    belowBaseline?: T[];
+}

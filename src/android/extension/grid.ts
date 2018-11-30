@@ -15,7 +15,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
             if (cellData.columnSpan > 1) {
                 node.android('layout_columnSpan', cellData.columnSpan.toString());
             }
-            if (node.parent.tableElement && node.display === 'table-cell') {
+            if (node.display === 'table-cell') {
                 node.mergeGravity('layout_gravity', 'fill');
             }
         }
@@ -58,6 +58,9 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
             node.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, mainData.paddingRight);
             node.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, mainData.paddingBottom);
             node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, mainData.paddingLeft);
+        }
+        if (!node.hasWidth && $util.withinFraction(node.box.right, $util.maxArray(node.renderChildren.filter(item => item.inlineFlow || !item.blockStatic).map(item => item.linear.right)))) {
+            node.android('layout_width', 'wrap_content');
         }
     }
 }

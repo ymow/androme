@@ -20,6 +20,7 @@ import Percent from './extension/percent';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
+import VerticalAlign from './extension/verticalalign';
 import WhiteSpace from './extension/whitespace';
 
 import ConstraintGuideline from './extension/constraint/guideline';
@@ -27,7 +28,6 @@ import ConstraintGuideline from './extension/constraint/guideline';
 import DelegateElement from './extension/delegate/element';
 import DelegateRadioGroup from './extension/delegate/radiogroup';
 import DelegateScrollBar from './extension/delegate/scrollbar';
-import DelegateVerticalAlign from './extension/delegate/verticalalign';
 
 import ResourceBackground from './extension/resource/background';
 import ResourceDimens from './extension/resource/dimens';
@@ -81,6 +81,7 @@ const lib = {
         Relative,
         Sprite,
         Table,
+        VerticalAlign,
         WhiteSpace,
         constraint: {
             Guideline: ConstraintGuideline
@@ -89,7 +90,6 @@ const lib = {
             Element: DelegateElement,
             RadioGroup: DelegateRadioGroup,
             ScrollBar: DelegateScrollBar,
-            VerticalAlign: DelegateVerticalAlign
         },
         resource: {
             Background: ResourceBackground,
@@ -224,13 +224,13 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
             [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
             [EXT_NAME.RELATIVE]: new Relative(EXT_NAME.RELATIVE, framework),
+            [EXT_NAME.VERTICAL_ALIGN]: new VerticalAlign(EXT_NAME.VERTICAL_ALIGN, framework),
             [EXT_NAME.WHITESPACE]: new WhiteSpace(EXT_NAME.WHITESPACE, framework),
             [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
             [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
             [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
             [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),
             [EXT_ANDROID.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EXT_ANDROID.DELEGATE_SCROLLBAR, framework),
-            [EXT_ANDROID.DELEGATE_VERTICALALIGN]: new DelegateVerticalAlign(EXT_ANDROID.DELEGATE_VERTICALALIGN, framework),
             [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
             [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
             [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),

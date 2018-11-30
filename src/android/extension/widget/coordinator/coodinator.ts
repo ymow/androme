@@ -25,13 +25,16 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
             node,
             true
         );
-        const toolbar = $dom.getElementAsNode<T>($dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
-        if (toolbar) {
-            const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
-            if (ext) {
-                const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
-                if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {
-                    node.android('fitsSystemWindows', 'true');
+        const element = $dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR);
+        if (element) {
+            const toolbar = $dom.getElementAsNode<T>(element);
+            if (toolbar) {
+                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
+                if (ext) {
+                    const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
+                    if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {
+                        node.android('fitsSystemWindows', 'true');
+                    }
                 }
             }
         }

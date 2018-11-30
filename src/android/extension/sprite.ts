@@ -18,7 +18,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             container.inherit(node, 'initial', 'base', 'style', 'styleMap');
             container.setControlType(CONTAINER_ANDROID.FRAME);
             container.exclude({ procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.IMAGE_SOURCE });
-            parent.replaceNode(node, container);
+            parent.appendTry(node, container);
             container.render(parent);
             this.application.processing.cache.append(container, false);
             output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));

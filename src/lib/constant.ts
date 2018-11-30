@@ -111,6 +111,7 @@ export const EXT_NAME = {
     RELATIVE: 'androme.relative',
     SPRITE: 'androme.sprite',
     TABLE: 'androme.table',
+    VERTICAL_ALIGN: 'androme.verticalalign',
     WHITESPACE: 'androme.whitespace'
 };
 

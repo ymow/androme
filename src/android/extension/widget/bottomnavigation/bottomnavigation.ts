@@ -49,11 +49,13 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
 
     public postBaseLayout(node: T) {
         const renderParent = node.renderParent as T;
-        if (!renderParent.has('width')) {
-            renderParent.android('layout_width', 'match_parent');
-        }
-        if (!renderParent.has('height')) {
-            renderParent.android('layout_height', 'match_parent');
+        if (renderParent) {
+            if (!renderParent.has('width')) {
+                renderParent.android('layout_width', 'match_parent');
+            }
+            if (!renderParent.has('height')) {
+                renderParent.android('layout_height', 'match_parent');
+            }
         }
         const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {

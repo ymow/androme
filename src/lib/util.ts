@@ -349,14 +349,14 @@ export function lastIndexOf(value: string, char = '/') {
 }
 
 export function minArray(list: number[]) {
-    if (list.length > 0) {
+    if (list.length) {
         return Math.min.apply(null, list) as number;
     }
     return Number.MAX_VALUE;
 }
 
 export function maxArray(list: number[]) {
-    if (list.length > 0) {
+    if (list.length) {
         return Math.max.apply(null, list) as number;
     }
     return Number.MAX_VALUE * -1;

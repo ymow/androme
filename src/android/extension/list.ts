@@ -173,7 +173,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 output = this.application.renderNode(layout);
             }
         }
-        return { output };
+        return { output, next: output !== '' };
     }
 
     public postBaseLayout(node: T) {

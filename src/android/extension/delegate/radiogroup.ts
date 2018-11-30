@@ -19,9 +19,13 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         const element = <HTMLInputElement> node.element;
-        const children = parent.flatMap(item => {
+        let replaceWith: T | undefined;
+        const children = parent.flatMap((item: T) => {
             if (item.renderAs) {
-                item = item.renderAs;
+                if (item.renderAs === node) {
+                    replaceWith = item;
+                }
+                item = item.renderAs as T;
             }
             const input = <HTMLInputElement> item.element;
             if (input.type === 'radio' && input.name === element.name && !item.rendered) {
@@ -30,7 +34,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             return null;
         }) as T[];
         if (children.length > 1) {
-            const container = this.application.viewController.createNodeGroup(node, parent, children);
+            const container = this.application.viewController.createNodeGroup(node, children, parent, replaceWith);
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
             container.setControlType(RADIO_GROUP, $enum.NODE_CONTAINER.INLINE);
             container.inherit(node, 'alignment');

@@ -22,7 +22,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static cleared<T extends Node>(list: T[], parent = true) {
         if (parent && list.length > 1) {
-            list.sort(this.siblingIndex);
+            list.slice().sort(this.siblingIndex);
             const actualParent = this.actualParent(list);
             if (actualParent) {
                 const nodes: T[] = [];
@@ -87,13 +87,13 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 if (a.layoutHorizontal) {
                     containerTypeA = minArray(a.map(item => item.containerType));
                 }
-                else if (a.length > 0) {
+                else if (a.length) {
                     containerTypeA = Number.MAX_VALUE;
                 }
                 if (b.layoutHorizontal) {
                     containerTypeB = minArray(b.map(item => item.containerType));
                 }
-                else if (b.length > 0) {
+                else if (b.length) {
                     containerTypeB = Number.MAX_VALUE;
                 }
                 return containerTypeA === containerTypeB ? (a.id < b.id ? -1 : 1) : (containerTypeA < containerTypeB ? -1 : 1);
@@ -105,7 +105,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             if (lineHeight > boundsHeight) {
                 const result = list.filter(node => node.lineHeight === lineHeight);
                 baseline = (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
-                if (baseline.length > 0) {
+                if (baseline.length) {
                     return baseline;
                 }
             }
@@ -305,7 +305,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             }
             else {
                 if (node.alignedVertically(previousSiblings, row, cleared)) {
-                    if (row.length > 0) {
+                    if (row.length) {
                         result.push(row);
                     }
                     if (list.includes(node)) {
@@ -321,7 +321,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     }
                 }
             }
-            if (i === children.length - 1 && row.length > 0) {
+            if (i === children.length - 1 && row.length) {
                 result.push(row);
             }
         }

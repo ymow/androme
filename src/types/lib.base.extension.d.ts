@@ -23,6 +23,7 @@ declare global {
             processNode(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
             processChild(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
             postBaseLayout(node: T): void;
+            postConstraints(node: T): void;
             postParseDocument(node: T): void;
             postProcedure(node: T): void;
             beforeParseDocument(): void;

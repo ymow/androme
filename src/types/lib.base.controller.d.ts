@@ -16,7 +16,7 @@ declare global {
             renderNode(data: Layout<T>);
             renderNodeGroup(data: Layout<T>);
             renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
-            createNodeGroup(node: T, parent: T, children: T[]): T;
+            createNodeGroup(node: T, children: T[], parent?: T, replaceWith?: T): T;
             replaceRenderQueue(output: string): string;
             prependBefore(id: number, output: string, index?: number): void;
             appendAfter(id: number, output: string, index?: number): void;

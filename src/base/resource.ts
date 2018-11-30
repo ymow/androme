@@ -445,7 +445,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setValueString() {
         function replaceWhiteSpace(node: T, value: string): [string, boolean] {
-            if (node.multiLine && !node.linearVertical) {
+            const renderParent = node.renderParent;
+            if (node.multiLine && renderParent && !renderParent.layoutVertical) {
                 value = value.replace(/^\s*\n/, '');
             }
             switch (node.css('whiteSpace')) {
@@ -454,7 +455,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     break;
                 case 'pre':
                 case 'pre-wrap':
-                    if (!node.linearVertical) {
+                    if (renderParent && !renderParent.layoutVertical) {
                         value = value.replace(/^\n/, '');
                     }
                     value = value.replace(/\n/g, '\\n');
@@ -465,19 +466,22 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     value = value.replace(/\s+/g, ' ');
                     break;
                 default:
-                    if (isLineBreak(<Element> node.element.previousSibling)) {
-                        value = value.replace(/^\s+/, '');
-                    }
-                    if (isLineBreak(<Element> node.element.nextSibling)) {
-                        value = value.replace(/\s+$/, '');
+                    const element = node.baseElement;
+                    if (element) {
+                        if (element.previousSibling && isLineBreak(<Element> element.previousSibling)) {
+                            value = value.replace(/^\s+/, '');
+                        }
+                        if (element.nextSibling && isLineBreak(<Element> element.nextSibling)) {
+                            value = value.replace(/\s+$/, '');
+                        }
                     }
                     return [value, false];
             }
             return [value, true];
         }
         for (const node of this.cache.visible) {
-            if (this.checkPermissions(node, 'valueString')) {
-                const element = node.element;
+            const element = node.baseElement;
+            if (element && this.checkPermissions(node, 'valueString')) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -511,7 +515,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         name = node.textContent.trim();
                         value = replaceEntity(element.children.length || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
                         [value, inlineTrim] = replaceWhiteSpace(node, value);
-                        value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
+                        value = value.replace(/\s*<br[^>]*>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
                     else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'))) {

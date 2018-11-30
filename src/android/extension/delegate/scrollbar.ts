@@ -45,7 +45,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             container.setControlType(value, $enum.NODE_CONTAINER.BLOCK);
             if (index === 0) {
                 container.inherit(node, 'initial', 'base', 'style', 'styleMap');
-                parent.replaceNode(node, container);
+                parent.appendTry(node, container);
                 container.render(parent);
             }
             else {
@@ -64,7 +64,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             switch (item.controlName) {
                 case SCROLL_VERTICAL: {
                     const value = item.css('height');
-                    item.android('layout_height', $util.isPercent(value) ? item.convertPercent(value, false, true) : value);
+                    item.android('layout_height', $util.isPercent(value) ? item.convertPercent(value, false) : value);
                     item.css({
                         width: 'auto',
                         overflow: 'scroll visible',
@@ -75,7 +75,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 }
                 case SCROLL_HORIZONTAL: {
                     const value = item.css('width');
-                    item.android('layout_width', $util.isPercent(value) ? item.convertPercent(value, true, true) : value);
+                    item.android('layout_width', $util.isPercent(value) ? item.convertPercent(value, true) : value);
                     item.css({
                         height: 'auto',
                         overflow: 'visible scroll',

@@ -16,17 +16,19 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
                 switch (node.controlName) {
                     case CONTAINER_ANDROID.EDIT:
                         if (!node.companion) {
-                            [$dom.getPreviousElementSibling(element), $dom.getNextElementSibling(element)].some((sibling: HTMLLabelElement) => {
-                                const label = $dom.getElementAsNode<T>(sibling);
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : null;
-                                if (label && label.visible && label.pageFlow) {
-                                    if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
-                                        label.android('labelFor', node.stringId);
-                                        return true;
-                                    }
-                                    else if (label.textElement && labelParent) {
-                                        labelParent.android('labelFor', node.stringId);
-                                        return true;
+                            [$dom.getPreviousElementSibling(element), $dom.getNextElementSibling(element)].some((sibling: HTMLLabelElement | null) => {
+                                if (sibling) {
+                                    const label = $dom.getElementAsNode<T>(sibling);
+                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : null;
+                                    if (label && label.visible && label.pageFlow) {
+                                        if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                            label.android('labelFor', node.stringId);
+                                            return true;
+                                        }
+                                        else if (label.textElement && labelParent) {
+                                            labelParent.android('labelFor', node.stringId);
+                                            return true;
+                                        }
                                     }
                                 }
                                 return false;

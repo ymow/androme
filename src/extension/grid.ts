@@ -7,7 +7,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
 import { isStyleElement } from '../lib/dom';
-import { hasValue, sortAsc, withinFraction } from '../lib/util';
+import { flatMap, hasValue, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public static createDataAttribute(): GridData {
@@ -213,7 +213,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
                 for (let l = 0; l < columns.length; l++) {
-                    if (columns[l] && columns[l].length > 0) {
+                    if (columns[l] && columns[l].length) {
                         columnEnd.push(columnRight[l]);
                     }
                 }
@@ -322,22 +322,20 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
-                siblings = Array.from(node.documentParent.element.children).map(element => {
+                siblings = flatMap(Array.from(node.documentParent.element.children), element => {
                     const item = Node.getElementAsNode(element);
                     return (
                         item &&
                         item.visible &&
-                        !item.excluded &&
                         !item.rendered &&
                         item.linear.left >= node.linear.right &&
                         item.linear.right <= columnEnd ? item : null
                     );
-                })
-                .filter(item => item) as T[];
+                }) as T[];
             }
-            if (siblings.length > 0) {
+            if (siblings.length) {
                 siblings.unshift(node);
-                const group = this.application.viewController.createNodeGroup(node, parent, siblings);
+                const group = this.application.viewController.createNodeGroup(node, siblings, parent);
                 siblings.forEach(item => item.inherit(group, 'data'));
                 const layout = new Layout(
                     parent,
@@ -348,16 +346,27 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     siblings
                 );
                 layout.linearX = NodeList.linearX(siblings);
-                if (this.application.viewController.checkRelativeHorizontal(layout)) {
-                    layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
+                let output = '';
+                if (NodeList.linearY(siblings)) {
+                    layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
                 }
-                else if (layout.linearX || NodeList.linearY(siblings)) {
-                    layout.setType(NODE_CONTAINER.LINEAR, layout.linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
+                else if (this.application.viewController.checkFrameHorizontal(layout)) {
+                    output = this.application.processLayoutHorizontal(layout);
                 }
                 else {
-                    layout.setType(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.UNKNOWN);
+                    if (this.application.viewController.checkRelativeHorizontal(layout)) {
+                        layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
+                    }
+                    else if (layout.linearX) {
+                        layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL);
+                    }
+                    else {
+                        layout.setType(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.UNKNOWN);
+                    }
                 }
-                const output = this.application.renderNode(layout);
+                if (output === '') {
+                    output = this.application.renderNode(layout);
+                }
                 return { output, parent: group, complete: true };
             }
         }

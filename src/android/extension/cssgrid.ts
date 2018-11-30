@@ -116,7 +116,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 container.inherit(node, 'initial', 'base');
                 container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
                 container.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
-                parent.replaceNode(node, container);
+                parent.appendTry(node, container);
                 container.render(parent);
                 this.application.processing.cache.append(container, false);
                 applyLayout(container, 'column', 'width');

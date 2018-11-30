@@ -7,7 +7,7 @@ import $enum = androme.lib.enumeration;
 export default class <T extends View> extends androme.lib.extensions.Percent<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = <android.lib.base.Controller<T>> this.application.viewController;
-        const group = controller.createNodeGroup(node, parent, [node]);
+        const group = controller.createNodeGroup(node, [node], parent);
         group.android('layout_width', 'match_parent');
         controller[node.rightAligned ? 'prependBefore' : 'appendAfter'](node.id, controller.renderSpace(group.renderDepth + 1, `${100 - node.toInt('width')}%`, '', 1));
         const layout = new $Layout(

@@ -14,6 +14,7 @@ declare global {
             renderPosition: number;
             renderExtension: Set<Extension<Node>>;
             documentRoot: boolean;
+            baselineActive: boolean;
             positioned: boolean;
             visible: boolean;
             excluded: boolean;
@@ -26,14 +27,11 @@ declare global {
             readonly excludeResource: number;
             readonly initial: InitialData<Node>;
             readonly renderChildren: Node[];
-            readonly documentParent: Node;
             readonly box: RectDimensions;
             readonly bounds: RectDimensions;
             readonly linear: RectDimensions;
-            readonly inlineWidth: boolean;
-            readonly inlineHeight: boolean;
-            readonly blockWidth: boolean;
-            readonly blockHeight: boolean;
+            readonly element: Element;
+            readonly baseElement: Element | undefined;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
             readonly domElement: boolean;
@@ -108,6 +106,10 @@ declare global {
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
             readonly linearVertical: boolean;
+            readonly inlineWidth: boolean;
+            readonly inlineHeight: boolean;
+            readonly blockWidth: boolean;
+            readonly blockHeight: boolean;
             readonly actualParent: Node | null;
             readonly actualChildren: Node[];
             readonly actualHeight: number;
@@ -115,14 +117,14 @@ declare global {
             readonly nodes: Node[];
             readonly singleChild: boolean;
             readonly center: Point;
-            parent: Node;
-            renderParent: Node;
-            element: Element;
+            parent: Node | undefined;
+            documentParent: Node;
+            renderParent: Node | undefined;
             tagName: string;
             controlName: string;
             renderAs: Node | undefined;
             renderDepth: number;
-            multiLine: boolean;
+            multiLine: number;
             overflow: number;
             setControlType(controlName: string, containerType?: number): void;
             setLayout(): void;
@@ -162,16 +164,16 @@ declare global {
             cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
             cssTry(attr: string, value: string): boolean;
             cssFinally(attr: string): boolean;
+            appendTry(node: Node, withNode: Node, append?: boolean): void;
             toInt(attr: string, initial?: boolean, defaultValue?: number): number;
-            convertPX(value: string): string;
-            convertPercent(value: string, horizontal: boolean, parentBounds?: boolean): string;
+            convertPX(value: string, horizontal?: boolean, parent?: boolean): string;
+            convertPercent(value: string, horizontal: boolean, parent?: boolean): string;
             has(attr: string, checkType?: number, options?: {}): boolean;
             hasBit(attr: string, value: number): boolean;
             hasAlign(value: number): boolean;
             exclude(options: { section?: number, procedure?: number, resource?: number }): void;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
-            replaceNode(node: Node, withNode: Node, append?: boolean): void;
             renderChild(node: Node, append?: boolean): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
@@ -186,7 +188,7 @@ declare global {
         export class Node implements Node {
             public static getContentBoxWidth<T extends Node>(node: T): number;
             public static getContentBoxHeight<T extends Node>(node: T): number;
-            public static getElementAsNode<T>(element: UndefNull<Element>): T | null;
+            public static getElementAsNode<T>(element: Element): T | null;
         }
 
         export class NodeGroup extends Node {

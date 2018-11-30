@@ -26,6 +26,8 @@ declare global {
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
             renderNode(data: Layout<T>): string;
+            processLayoutHorizontal(data: Layout<T>): string;
+            processLayoutVertical(data: Layout<T>, group?: T): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);

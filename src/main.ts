@@ -25,6 +25,7 @@ import Percent from './extension/percent';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
+import VerticalAlign from './extension/verticalalign';
 import WhiteSpace from './extension/whitespace';
 
 import * as color from './lib/color';
@@ -263,6 +264,7 @@ const lib = {
         Relative,
         Sprite,
         Table,
+        VerticalAlign,
         WhiteSpace
     },
     color,

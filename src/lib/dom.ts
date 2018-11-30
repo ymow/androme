@@ -72,7 +72,7 @@ export function getRangeClientRect(element: Element): TextDimensions {
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
     let bounds: RectDimensions = newRectDimensions();
-    let multiLine = false;
+    let multiLine = 0;
     if (domRect.length) {
         bounds = assignBounds(domRect[0]);
         const top = new Set([bounds.top]);
@@ -89,7 +89,7 @@ export function getRangeClientRect(element: Element): TextDimensions {
             bounds.top = minArray(Array.from(top));
             bounds.bottom = maxArray(Array.from(bottom));
             if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
-                multiLine = true;
+                multiLine = domRect.length - 1;
             }
         }
     }
@@ -173,9 +173,7 @@ export function cssInherit(element: Element, attr: string, exclude?: string[], t
     let current = element.parentElement;
     while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
         result = getStyle(current)[attr] || '';
-        if (result === 'inherit' ||
-            exclude && exclude.some(value => result.indexOf(value) !== -1))
-        {
+        if (result === 'inherit' || exclude && exclude.some(value => result.indexOf(value) !== -1)) {
             result = '';
         }
         if (current === document.body || result) {
@@ -405,13 +403,20 @@ export function isPlainText(element: Element, whiteSpace = false) {
     return false;
 }
 
-export function hasLineBreak(element: Element) {
+export function hasLineBreak(element: Element, trim = false) {
     if (element) {
         const node = getElementAsNode<T>(element);
         const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
+        let value = element.textContent || '';
+        if (trim) {
+            value = value.trim();
+        }
         return (
-            element instanceof HTMLElement && Array.from(element.children).some(item => item.tagName === 'BR') ||
-            element.nodeName === '#text' && ['pre', 'pre-wrap'].includes(whiteSpace) && /\n/.test(element.textContent || '')
+            (element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR')) ||
+            (/\n/.test(value) && (
+                ['pre', 'pre-wrap'].includes(whiteSpace) ||
+                (element.nodeName === '#text' && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
+            ))
         );
     }
     return false;
@@ -425,11 +430,11 @@ export function isLineBreak(element: Element, excluded = true) {
     return false;
 }
 
-export function getBetweenElements(elementStart: Element | null, elementEnd: Element, asNode = false, whiteSpace = false) {
+export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace = false, asNode = false) {
     if (!elementStart || elementStart.parentElement === elementEnd.parentElement) {
-        const parentElement = elementEnd.parentElement;
-        if (parentElement) {
-            const elements = Array.from(parentElement.childNodes) as Element[];
+        const parent = elementEnd.parentElement;
+        if (parent) {
+            const elements = Array.from(parent.childNodes) as Element[];
             const indexStart = elementStart ? elements.findIndex(element => element === elementStart) : 0;
             const indexEnd = elements.findIndex(element => element === elementEnd);
             if (indexStart !== -1 && indexEnd !== -1 && indexStart !== indexEnd) {
@@ -529,23 +534,19 @@ export function getNestedExtension(element: Element, name: string) {
 }
 
 export function setElementCache(element: Element, attr: string, data: any) {
-    if (element) {
-        element[`__${attr}`] = data;
-    }
+    element[`__${attr}`] = data;
 }
 
 export function getElementCache(element: Element, attr: string) {
-    return element ? element[`__${attr}`] : undefined;
+    return element[`__${attr}`] || undefined;
 }
 
 export function deleteElementCache(element: Element, ...attrs: string[]) {
-    if (element) {
-        for (const attr of attrs) {
-            delete element[`__${attr}`];
-        }
+    for (const attr of attrs) {
+        delete element[`__${attr}`];
     }
 }
 
-export function getElementAsNode<T>(element?: Element | null): T | null {
-    return element ? getElementCache(element, 'node') || null : null;
+export function getElementAsNode<T>(element: Element): T | null {
+    return getElementCache(element, 'node') || null;
 }

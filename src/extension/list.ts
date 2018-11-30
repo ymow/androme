@@ -106,7 +106,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             node.children as T[]
         );
         let complete = false;
-        if (NodeList.linearY(node.children)) {
+        if (NodeList.linearY(layout.children)) {
             layout.rowCount = node.length;
             layout.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
             layout.setType(NODE_CONTAINER.GRID, NODE_ALIGNMENT.AUTO_LAYOUT);
@@ -114,7 +114,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         }
         else if (this.application.viewController.checkRelativeHorizontal(layout)) {
             layout.rowCount = 1;
-            layout.columnCount = node.length;
+            layout.columnCount = layout.length;
             layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
             complete = true;
         }

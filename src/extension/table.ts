@@ -65,7 +65,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const rowWidth: number[] = [];
         const tableFilled: T[][] = [];
         let columnIndex = new Array(table.length).fill(0);
-        let multiLine = false;
+        let multiLine = 0;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             rowWidth[i] = horizontal;
@@ -147,7 +147,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                     marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
                 });
-                if (!multiLine) {
+                if (multiLine === 0) {
                     multiLine = td.multiLine;
                 }
                 if (td.length || td.inlineText) {

@@ -24,6 +24,8 @@ declare global {
 
         export class Table<T extends Node> extends androme.lib.base.Extension<T> {}
 
+        export class VerticalAlign<T extends Node> extends androme.lib.base.Extension<T> {}
+
         export class WhiteSpace<T extends Node> extends androme.lib.base.Extension<T> {}
     }
 }

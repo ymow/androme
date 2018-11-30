@@ -18,7 +18,7 @@ interface RectDimensions extends BoxRect {
 }
 
 interface TextDimensions extends RectDimensions {
-    multiLine: boolean;
+    multiLine: number;
 }
 
 interface BoxMargin {

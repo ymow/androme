@@ -427,13 +427,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                                 }
                                                 dimensions.forEach((value, index) => {
                                                     if (value !== 'auto' && value !== '100%') {
-                                                        const attr = index === 0 ? 'width' : 'height';
-                                                        if ($util.isPercent(backgroundSize[i])) {
-                                                            imageData[attr] = node.convertPercent(backgroundSize[i], index === 0);
-                                                        }
-                                                        else {
-                                                            imageData[attr] = node.convertPX(backgroundSize[i]);
-                                                        }
+                                                        imageData[index === 0 ? 'width' : 'height'] = node.convertPX(backgroundSize[i], index === 0, false);
                                                     }
                                                 });
                                                 break;
@@ -629,7 +623,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             !node.documentRoot &&
                             !node.imageElement &&
                             !node.svgElement &&
-                            !node.renderParent.tableElement &&
+                            node.renderParent && !node.renderParent.tableElement &&
                             !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
                             const sizeParent: ImageAsset = { width: 0, height: 0 };
