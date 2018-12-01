@@ -8,7 +8,6 @@ import { getXmlNs } from '../../lib/util';
 
 import $Svg = androme.lib.base.Svg;
 
-import $enum = androme.lib.enumeration;
 import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
@@ -37,14 +36,25 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
 
     public afterResources() {
         for (const node of this.application.processing.cache) {
-            const stored: $Svg = node.data(Resource.KEY_NAME, 'imageSource');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+            if (node.svgElement && node.element.children.length) {
+                const svg = new $Svg(<SVGSVGElement> node.element, node.dpi, node.fontSize);
+                svg.defs.image.forEach(item => {
+                    const dimensions = Resource.ASSETS.images.get(item.uri);
+                    if (dimensions) {
+                        if (item.width === 0) {
+                            item.width = dimensions.width;
+                        }
+                        if (item.height === 0) {
+                            item.height = dimensions.height;
+                        }
+                    }
+                });
                 let result = '';
                 let vectorName = '';
-                if (stored.length) {
+                if (svg.length) {
                     const namespace = new Set<string>();
                     const groups: StringMap[] = [];
-                    for (const group of stored) {
+                    for (const group of svg) {
                         const data: ExternalData = {
                             name: group.name,
                             '2': []
@@ -80,7 +90,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             if (item.visibility) {
                                 const clipPaths: ExternalData[] = [];
                                 if (item.clipPath !== '') {
-                                    const clipPath = stored.defs.clipPath.get(item.clipPath);
+                                    const clipPath = svg.defs.clipPath.get(item.clipPath);
                                     if (clipPath) {
                                         clipPath.forEach(path => clipPaths.push({ name: path.name, d: path.d }));
                                     }
@@ -88,7 +98,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 ['fill', 'stroke'].forEach(value => {
                                     if ($util.isString(item[value])) {
                                         if (item[value].charAt(0) === '@') {
-                                            const gradient = stored.defs.gradient.get(item[value]);
+                                            const gradient = svg.defs.gradient.get(item[value]);
                                             if (gradient) {
                                                 const gradients = Resource.createBackgroundGradient(node, [gradient], this.options.useColorAlias);
                                                 item[value] = [{ gradients }];
@@ -126,27 +136,27 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     }
                     const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
                         namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
-                        width: $util.formatPX(stored.width),
-                        height: $util.formatPX(stored.height),
-                        viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
-                        viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
-                        alpha: stored.opacity < 1 ? stored.opacity : false,
+                        width: $util.formatPX(svg.width),
+                        height: $util.formatPX(svg.height),
+                        viewportWidth: svg.viewBoxWidth > 0 ? svg.viewBoxWidth.toString() : false,
+                        viewportHeight: svg.viewBoxHeight > 0 ? svg.viewBoxHeight.toString() : false,
+                        alpha: svg.opacity < 1 ? svg.opacity : false,
                         '1': groups
                     });
                     vectorName = Resource.getStoredName('drawables', xml);
                     if (vectorName === '') {
-                        vectorName = `${node.tagName.toLowerCase()}_${node.controlId + (stored.defs.image.length ? '_vector' : '')}`;
+                        vectorName = `${node.tagName.toLowerCase()}_${node.controlId + (svg.defs.image.length ? '_vector' : '')}`;
                         Resource.STORED.drawables.set(vectorName, xml);
                     }
                 }
-                if (stored.defs.image.length) {
+                if (svg.defs.image.length) {
                     const images: ExternalData = [];
                     const rotate: ExternalData = [];
-                    for (const item of stored.defs.image) {
+                    for (const item of svg.defs.image) {
                         if (item.uri) {
                             const transform = item.transform;
-                            const scaleX = stored.width / stored.viewBoxWidth;
-                            const scaleY = stored.height / stored.viewBoxHeight;
+                            const scaleX = svg.width / svg.viewBoxWidth;
+                            const scaleY = svg.height / svg.viewBoxHeight;
                             if (transform) {
                                 if (item.width) {
                                     item.width *= scaleX * transform.scaleX;

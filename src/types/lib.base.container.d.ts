@@ -17,6 +17,7 @@ declare global {
                 filter(predicate: IteratorPredicate<T, void>): T[];
                 map<U>(predicate: IteratorPredicate<T, U>): U[];
                 flatMap<U>(predicate: IteratorPredicate<T, U>): U[];
+                partition(predicate: IteratorPredicate<T, boolean>): [T[], T[]];
                 every(predicate: IteratorPredicate<T, boolean>): boolean;
                 some(predicate: IteratorPredicate<T, boolean>): boolean;
                 sort(predicate: (a: T, b: T) => number): this;

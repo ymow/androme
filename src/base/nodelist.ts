@@ -4,7 +4,7 @@ import Container from './container';
 import Node from './node';
 
 import { getElementAsNode, isUserAgent } from '../lib/dom';
-import { convertInt, hasBit, maxArray, minArray, partition, withinFraction } from '../lib/util';
+import { convertInt, hasBit, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -71,11 +71,11 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static floatedAll<T extends Node>(parent: T) {
-        return NodeList.floated(parent.actualChildren.filter(item => item.pageFlow) as T[]);
+        return this.floated(parent.actualChildren.filter(item => item.pageFlow) as T[]);
     }
 
     public static clearedAll<T extends Node>(parent: T) {
-        return NodeList.cleared(parent.actualChildren.filter(item => item.pageFlow) as T[], false);
+        return this.cleared(parent.actualChildren.filter(item => item.pageFlow) as T[], false);
     }
 
     public static textBaseline<T extends Node>(list: T[]) {
@@ -328,7 +328,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return result;
     }
 
-    public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number) {
+    public static nextAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number) {
         const result: T[] = [];
         const preferred: T[] = [];
         if (maxBottom) {
@@ -414,11 +414,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return this;
     }
 
-    public partition(predicate: (value: T) => boolean) {
-        const [valid, invalid]: T[][] = partition(this.children, predicate);
-        return [new NodeList(valid), new NodeList(invalid)];
-    }
-
     get visible() {
         return this.children.filter(node => node.visible);
     }
@@ -429,12 +424,5 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     get nextId() {
         return ++this._currentId;
-    }
-
-    get linearX() {
-        return NodeList.linearX(this.children);
-    }
-    get linearY() {
-        return NodeList.linearY(this.children);
     }
 }

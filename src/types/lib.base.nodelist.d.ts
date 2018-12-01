@@ -5,11 +5,8 @@ declare global {
             readonly visible: T[];
             readonly elements: T[];
             readonly nextId: number;
-            readonly linearX: boolean;
-            readonly linearY: boolean;
             append(node: T, delegate?: boolean): this;
             reset(): void;
-            partition(predicate: (value: T) => boolean): NodeList<T>[];
         }
 
         export class NodeList<T extends Node> implements NodeList<T> {
@@ -22,7 +19,7 @@ declare global {
             public static linearX<T>(list: T[]): boolean;
             public static linearY<T>(list: T[]): boolean;
             public static partitionRows<T>(list: T[], parent?: T): T[][];
-            public static partitionAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
+            public static nextAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
             public static sortByAlignment<T>(list: T[], alignmentType: number): void;
             public static siblingIndex(): number;
             constructor(children?: T[]);

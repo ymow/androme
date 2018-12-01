@@ -632,26 +632,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             Object.assign(this.initial.bounds, this._bounds);
         }
-        if (this._bounds) {
-            this._linear = {
-                top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
-                right: this.bounds.right + this.marginRight,
-                bottom: this.bounds.bottom + this.marginBottom,
-                left: this.bounds.left - (this.marginLeft > 0 ? this.marginLeft : 0),
-                width: 0,
-                height: 0
-            };
-            this.setDimensions('linear');
-            this._box = {
-                top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
-                right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
-                bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
-                left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
-                width: 0,
-                height: 0
-            };
-            this.setDimensions('box');
-        }
     }
 
     public appendTry(node: T, withNode: T, append = true) {
@@ -896,7 +876,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return this._element;
         }
         else {
-            const element = document.createElement('SPAN');
+            const element = document.createElement('span');
             setElementCache(element, 'node', this);
             return element;
         }
@@ -954,16 +934,48 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._element === document.body;
     }
 
-    get box() {
-        return this._box || newRectDimensions();
-    }
-
     get bounds() {
         return this._bounds || newRectDimensions();
     }
 
     get linear() {
+        if (this._linear === undefined && this._bounds) {
+            if (this._element) {
+                this._linear = {
+                    top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
+                    right: this.bounds.right + this.marginRight,
+                    bottom: this.bounds.bottom + this.marginBottom,
+                    left: this.bounds.left - (this.marginLeft > 0 ? this.marginLeft : 0),
+                    width: 0,
+                    height: 0
+                };
+            }
+            else {
+                this._linear = assignBounds(this._bounds);
+            }
+            this.setDimensions('linear');
+        }
         return this._linear || newRectDimensions();
+    }
+
+    get box() {
+        if (this._box === undefined && this._bounds) {
+            if (this._element) {
+                this._box = {
+                    top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
+                    right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
+                    bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
+                    left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
+                    width: 0,
+                    height: 0
+                };
+            }
+            else {
+                this._box = assignBounds(this._bounds);
+            }
+            this.setDimensions('box');
+        }
+        return this._box || newRectDimensions();
     }
 
     set renderAs(value) {
@@ -1012,7 +1024,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.dataset.import ? this.dataset.import.split(',')[0].trim() : '';
     }
 
-    get flexbox(): Flexbox {
+    get flexbox() {
         if (this._cached.flexbox === undefined) {
             const actualParent = this.actualParent;
             this._cached.flexbox = {

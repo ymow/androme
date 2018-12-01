@@ -16,9 +16,9 @@ declare global {
             is(node: T): boolean;
             require(name: string, preload?: boolean): void;
             included(element: HTMLElement): boolean;
-            beforeInit(element: HTMLElement, internal?: boolean): void;
+            beforeInit(element: HTMLElement, recursive?: boolean): void;
             init(element: HTMLElement): boolean;
-            afterInit(element: HTMLElement, internal?: boolean): void;
+            afterInit(element: HTMLElement, recursive?: boolean): void;
             condition(node: T, parent?: T): boolean;
             processNode(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
             processChild(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;

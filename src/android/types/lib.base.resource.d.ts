@@ -9,6 +9,7 @@ declare global {
         export class Resource<T extends View> implements Resource<T> {
             public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], colorAlias?: boolean): BackgroundGradient[];
             public static formatOptions(options: ExternalData, numberAlias?: boolean): ExternalData;
+            public static getOptionArray(element: HTMLSelectElement): (string[] | null)[];
             public static addString(value: string, name?: string, numberAlias?: boolean): string;
             public static addImageSrcSet(element: HTMLImageElement, prefix?: string): string;
             public static addImage(images: StringMap, prefix?: string): string;

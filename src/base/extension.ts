@@ -52,8 +52,8 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return includes(element.dataset.import, this.name);
     }
 
-    public beforeInit(element: HTMLElement, internal = false) {
-        if (!internal && this.included(element)) {
+    public beforeInit(element: HTMLElement, recursive = false) {
+        if (!recursive && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
                 if (ext && !ext.preloaded) {
@@ -68,8 +68,8 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return false;
     }
 
-    public afterInit(element: HTMLElement, internal = false) {
-        if (!internal && this.included(element)) {
+    public afterInit(element: HTMLElement, recursive = false) {
+        if (!recursive && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
                 if (ext && ext.preloaded) {

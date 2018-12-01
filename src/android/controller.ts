@@ -1414,7 +1414,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 Controller.dimensionConstraint(chain);
                 if (index > 0) {
-                    const abovePrevious = $NodeList.partitionAboveBottom(chainHorizontal[index - 1], chain);
+                    const abovePrevious = $NodeList.nextAboveBottom(chainHorizontal[index - 1], chain);
                     if (abovePrevious.length) {
                         const stringId = abovePrevious[0].stringId;
                         chain.anchor('topBottom', stringId);

@@ -22,8 +22,8 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     }
 
     public name: string;
-    public dpi: number;
-    public fontSize: number;
+    public dpi = 0;
+    public fontSize = 0;
 
     public readonly defs: SvgDefs<SvgImage, SvgPath> = {
         image: [],
@@ -39,8 +39,18 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     private _viewBoxHeight = 0;
     private _opacity = 1;
 
-    constructor(element: SVGSVGElement) {
+    constructor(
+        element: SVGSVGElement,
+        dpi?: number,
+        fontSize?: number)
+    {
         super();
+        if (dpi) {
+            this.dpi = dpi;
+        }
+        if (fontSize) {
+            this.fontSize = fontSize;
+        }
         if (element) {
             this.setElement(element);
             this.build();

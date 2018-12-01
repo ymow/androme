@@ -3,8 +3,6 @@ import { NODE_ALIGNMENT } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, newRectDimensions } from '../lib/dom';
-
 type T = Node;
 
 export default abstract class NodeGroup extends Node {
@@ -20,17 +18,10 @@ export default abstract class NodeGroup extends Node {
                     width: 0,
                     height: 0
                 };
+                this.bounds.width = this.bounds.right - this.bounds.left;
+                this.bounds.height = this.bounds.bottom - this.bounds.top;
             }
-            else {
-                this._bounds = newRectDimensions();
-            }
-            this.bounds.width = this.bounds.right - this.bounds.left;
-            this.bounds.height = this.bounds.bottom - this.bounds.top;
         }
-        this._linear = assignBounds(this.bounds);
-        this.setDimensions('linear');
-        this._box = assignBounds(this.bounds);
-        this.setDimensions('box');
     }
 
     public previousSiblings(lineBreak = true, excluded = true, visible = false) {

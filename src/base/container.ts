@@ -1,3 +1,5 @@
+import { partition } from '../lib/util';
+
 export default class Container<T> implements androme.lib.base.Container<T>, Iterable<T> {
     private _children: T[] = [];
 
@@ -79,7 +81,9 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
         if (typeof predicate === 'string') {
             return this._children.find(item => item[predicate] === value);
         }
-        return this._children.find(predicate);
+        else {
+            return this._children.find(predicate);
+        }
     }
 
     public filter(predicate: IteratorPredicate<T, any>) {
@@ -92,6 +96,10 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
 
     public flatMap<U>(predicate: IteratorPredicate<T, U>): U[] {
         return this._children.map(predicate).filter(item => item);
+    }
+
+    public partition(predicate: IteratorPredicate<T, boolean>): [T[], T[]] {
+        return partition(this._children, predicate);
     }
 
     public sort(predicate: (a: T, b: T) => number) {

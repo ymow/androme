@@ -59,7 +59,7 @@ export function newBoxModel(): BoxModel {
 }
 
 export function createElement(parent?: Element, block = false) {
-    const element = document.createElement(block ? 'DIV' : 'SPAN');
+    const element = document.createElement(block ? 'div' : 'span');
     element.style.display = 'none';
     element.className = 'androme.display.none';
     if (parent instanceof HTMLElement) {

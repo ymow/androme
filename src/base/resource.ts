@@ -5,7 +5,6 @@ import Application from './application';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import Svg from './svg';
 
 import { parseRGBA } from '../lib/color';
 import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
@@ -333,7 +332,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setFontStyle() {
         for (const node of this.cache) {
-            const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'));
+            const backgroundImage = Resource.hasDrawableBackground(node.data(Resource.KEY_NAME, 'boxStyle'));
             if (node.renderChildren.length ||
                 !node.baseElement ||
                 node.imageElement ||
@@ -515,7 +514,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         value = value.replace(/\s*<br[^>]*>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
-                    else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> node.data(Resource.KEY_NAME, 'boxStyle'))) {
+                    else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(node.data(Resource.KEY_NAME, 'boxStyle'))) {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
                     }
@@ -566,67 +565,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     if (value !== '') {
                         node.data(Resource.KEY_NAME, 'valueString', { name, value });
-                    }
-                }
-            }
-        }
-    }
-
-    public setOptionArray() {
-        for (const node of this.cache.visible) {
-            if (node.tagName === 'SELECT') {
-                const element = <HTMLSelectElement> node.element;
-                const stringArray: string[] = [];
-                let numberArray: string[] | null = [];
-                let i = -1;
-                while (++i < element.children.length) {
-                    const item = <HTMLOptionElement> element.children[i];
-                    const value = item.text.trim();
-                    if (value !== '') {
-                        if (numberArray && stringArray.length === 0 && isNumber(value)) {
-                            numberArray.push(value);
-                        }
-                        else {
-                            if (numberArray && numberArray.length) {
-                                i = -1;
-                                numberArray = null;
-                                continue;
-                            }
-                            if (value !== '') {
-                                stringArray.push(replaceEntity(value));
-                            }
-                        }
-                    }
-                }
-                node.data(Resource.KEY_NAME, 'optionArray', {
-                    stringArray: stringArray.length ? stringArray : null,
-                    numberArray: numberArray && numberArray.length ? numberArray : null
-                });
-            }
-        }
-    }
-
-    public setImageSource() {
-        for (const node of this.cache.visible) {
-            if (node.svgElement) {
-                const element = <SVGSVGElement> node.element;
-                if (element.children.length) {
-                    const result = new Svg(element);
-                    result.dpi = node.dpi;
-                    result.fontSize = node.fontSize;
-                    result.defs.image.forEach(item => {
-                        const dimensions = Resource.ASSETS.images.get(item.uri);
-                        if (dimensions) {
-                            if (item.width === 0) {
-                                item.width = dimensions.width;
-                            }
-                            if (item.height === 0) {
-                                item.height = dimensions.height;
-                            }
-                        }
-                    });
-                    if (result.length || result.defs.image.length) {
-                        node.data(Resource.KEY_NAME, 'imageSource', result);
                     }
                 }
             }

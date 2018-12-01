@@ -23,7 +23,9 @@ declare global {
             setOpacity(value: string | number): void;
         }
 
-        export class Svg implements Svg {}
+        export class Svg implements Svg {
+            constructor(element: SVGSVGElement, dpi?: number, fontSize?: number);
+        }
     }
 }
 

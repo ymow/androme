@@ -260,7 +260,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             });
             for (const image of this.session.image.values()) {
                 if (image.width === 0 && image.height === 0 && image.uri) {
-                    const imageElement = <HTMLImageElement> document.createElement('IMG');
+                    const imageElement = document.createElement('img');
                     imageElement.src = image.uri;
                     if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
                         image.width = imageElement.naturalWidth;
@@ -602,7 +602,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         layerIndex.push(leftSub, rightSub);
                     }
                 }
-                layerIndex = layerIndex.filter(item => item && item.length > 0);
+                layerIndex = layerIndex.filter(item => item.length > 0);
                 layout.itemCount = layerIndex.length;
                 if (inlineAbove.length === 0 && (leftSub.length === 0 || rightSub.length === 0)) {
                     layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
@@ -933,7 +933,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public setRenderPosition(parent: T, node?: T) {
-        let children: T[] | undefined;
+        let children: T[];
         if (parent.groupElement && parent.parent) {
             const id = parent.parent.id;
             const parentMap = this._renderPosition.get(id);
@@ -1657,13 +1657,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             !hasValue(nodeY.element.id) &&
                                             !hasValue(nodeY.dataset.import) &&
                                             !hasValue(nodeY.dataset.target) &&
-                                            nodeY.toInt('width') === 0 &&
-                                            nodeY.toInt('height') === 0 &&
-                                            nodeY.lineHeight === 0 &&
-                                            !child.hasWidth && !child.visibleStyle.borderWidth &&
+                                            !nodeY.hasWidth &&
+                                            !nodeY.hasHeight &&
+                                            !nodeY.lineHeight &&
                                             !nodeY.visibleStyle.background &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
-                                            nodeY.float !== 'right' && !nodeY.autoMargin.horizontal &&
+                                            nodeY.rightAligned && !nodeY.autoMargin.horizontal &&
+                                            !child.hasWidth &&
+                                            !child.visibleStyle.borderWidth &&
                                             !this.controllerHandler.hasAppendProcessing(nodeY.id))
                                         {
                                             child.documentRoot = nodeY.documentRoot;
@@ -1732,24 +1733,24 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                             else {
-                                const visibleStyle = nodeY.visibleStyle;
-                                if (nodeY.inlineText || visibleStyle.borderWidth && nodeY.textContent.length) {
+                                const visible = nodeY.visibleStyle;
+                                if (nodeY.inlineText || visible.borderWidth && nodeY.textContent.length) {
                                     containerType = NODE_CONTAINER.TEXT;
                                 }
-                                else if (visibleStyle.backgroundImage && !visibleStyle.backgroundRepeat && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
+                                else if (visible.backgroundImage && !visible.backgroundRepeat && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
                                     containerType = NODE_CONTAINER.IMAGE;
                                     layout.add(NODE_ALIGNMENT.SINGLE);
                                     nodeY.exclude({ resource: NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING });
                                 }
-                                else if (nodeY.block && (visibleStyle.borderWidth || visibleStyle.backgroundImage) && (visibleStyle.borderWidth || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingBottom + nodeY.paddingLeft > 0)) {
+                                else if (nodeY.block && (visible.borderWidth || visible.backgroundImage) && (visible.borderWidth || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingBottom + nodeY.paddingLeft > 0)) {
                                     containerType = NODE_CONTAINER.LINE;
                                 }
                                 else if (!nodeY.documentRoot) {
-                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !visibleStyle.background) {
+                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !visible.background) {
                                         parentY.remove(nodeY);
                                         nodeY.hide();
                                     }
-                                    else if (visibleStyle.background) {
+                                    else if (visible.background) {
                                         containerType = NODE_CONTAINER.TEXT;
                                     }
                                     else {
@@ -1882,8 +1883,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setValueString();
-        this.resourceHandler.setOptionArray();
-        this.resourceHandler.setImageSource();
         for (const ext of this.extensions) {
             ext.afterResources();
         }
@@ -1904,9 +1903,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     node.css({
                         position: 'static',
                         display: 'inline',
-                        clear: 'none',
+                        verticalAlign: 'baseline',
                         cssFloat: 'none',
-                        verticalAlign: 'baseline'
+                        clear: 'none',
                     });
                 }
             }
@@ -1984,8 +1983,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     private setStyleMap() {
-        const settings = this.userSettings;
-        const dpi = settings.resolutionDPI;
+        const dpi = this.userSettings.resolutionDPI;
         const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
         let warning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
@@ -2059,7 +2057,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         }
                                     }
                                 }
-                                if (settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
+                                if (this.userSettings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
                                     styleMap.backgroundImage.split(',').map(value => value.trim()).forEach(value => {
                                         const uri = cssResolveUrl(value);
                                         if (uri !== '' && !this.session.image.has(uri)) {

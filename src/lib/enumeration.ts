@@ -56,9 +56,8 @@ export enum NODE_RESOURCE {
     BOX_SPACING = 4,
     FONT_STYLE = 8,
     VALUE_STRING = 16,
-    OPTION_ARRAY = 32,
-    IMAGE_SOURCE = 64,
-    ASSET = 8 | 16 | 32 | 64,
+    IMAGE_SOURCE = 32,
+    ASSET = 8 | 16 | 32,
     ALL = 126
 }
 

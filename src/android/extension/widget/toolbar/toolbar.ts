@@ -324,7 +324,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     }
 
     private createPlaceholder(nextId: number, node: T, parent: T, nodes: T[]) {
-        const placeholder = new $View(nextId, $dom.createElement(parent.actualBoxParent.baseElement, node.blockStatic), this.application.controllerHandler.delegateNodeInit);
+        const placeholder = new $View(nextId, $dom.createElement(parent.actualBoxParent.baseElement, node.block), this.application.controllerHandler.delegateNodeInit);
         placeholder.init();
         placeholder.inherit(node, 'dimensions');
         placeholder.positioned = true;

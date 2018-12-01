@@ -170,6 +170,32 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return options;
     }
 
+    public static getOptionArray(element: HTMLSelectElement) {
+        const stringArray: string[] = [];
+        let numberArray: string[] | null = [];
+        let i = -1;
+        while (++i < element.children.length) {
+            const item = <HTMLOptionElement> element.children[i];
+            const value = item.text.trim();
+            if (value !== '') {
+                if (numberArray && stringArray.length === 0 && $util.isNumber(value)) {
+                    numberArray.push(value);
+                }
+                else {
+                    if (numberArray && numberArray.length) {
+                        i = -1;
+                        numberArray = null;
+                        continue;
+                    }
+                    if (value !== '') {
+                        stringArray.push($xml.replaceEntity(value));
+                    }
+                }
+            }
+        }
+        return [stringArray.length ? stringArray : null, numberArray && numberArray.length ? numberArray : null];
+    }
+
     public static addString(value: string, name = '', numberAlias = false) {
         if (value !== '') {
             if (name === '') {

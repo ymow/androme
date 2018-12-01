@@ -11,8 +11,6 @@ declare global {
             setBoxStyle(): void;
             setFontStyle(): void;
             setValueString(): void;
-            setImageSource(): void;
-            setOptionArray(): void;
         }
 
         export class Resource<T extends Node> implements Resource<T> {
