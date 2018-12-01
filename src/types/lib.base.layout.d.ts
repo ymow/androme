@@ -11,6 +11,7 @@ declare global {
             floated: Set<string>;
             cleared: Map<T, string>;
             linearX: boolean;
+            readonly visible: T[];
             init(): void;
             initParent(): void;
             setType(containerType: number, alignmentType?: number): void;

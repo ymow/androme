@@ -8,7 +8,7 @@ export default abstract class Relative<T extends Node> extends Extension<T> {
         for (const node of this.application.session.cache) {
             const renderParent = node.renderParent;
             if (renderParent && node.positionRelative) {
-                if (!renderParent.layoutRelative && !renderParent.layoutConstraint) {
+                if (!node.baseline || (!renderParent.layoutRelative && !renderParent.layoutConstraint)) {
                     if (node.top !== 0) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.top);
                     }

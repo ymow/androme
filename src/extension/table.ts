@@ -17,12 +17,19 @@ const enum LAYOUT_TABLE {
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
+        function setAutoWidth(td: T) {
+            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
+            td.data(EXT_NAME.TABLE, 'expand', true);
+        }
+        function setBoundsWidth(td: T) {
+            td.css('width', formatPX(td.bounds.width));
+            td.unsetCache('width', 'hasWidth');
+        }
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');
         const tbody = node.filter(item => item.tagName === 'TBODY');
         const tfoot = node.filter(item => item.tagName === 'TFOOT');
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
-        const tableWidth = node.css('width');
         if (thead.length) {
             thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...thead[0].children as T[]);
@@ -60,11 +67,11 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         const spacingWidth = formatPX(horizontal > 1 ? Math.round(horizontal / 2) : horizontal);
         const spacingHeight = formatPX(vertical > 1 ? Math.round(vertical / 2) : vertical);
-        const mapWidth: string[] = [];
-        const mapBounds: number[] = [];
         const rowWidth: number[] = [];
+        const mapBounds: number[] = [];
         const tableFilled: T[][] = [];
         let columnIndex = new Array(table.length).fill(0);
+        let mapWidth: string[] = [];
         let multiLine = 0;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
@@ -79,7 +86,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         columnIndex[l] += element.colSpan;
                     }
                 }
-                if (!td.visibleStyle.background) {
+                if (!td.visibleStyle.backgroundImage && !td.visibleStyle.backgroundColor) {
                     if (colgroup) {
                         const style = getStyle(colgroup.children[columnIndex[i]]);
                         if (style.background) {
@@ -115,38 +122,36 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = td.cssInitial('width');
                 const m = columnIndex[i];
-                if (i === 0 || mapWidth[m] === undefined || !layoutFixed) {
+                const reevaluate = mapWidth[m] === undefined || mapWidth[m] === 'auto';
+                if (i === 0 || reevaluate || !layoutFixed) {
                     if (columnWidth === '' || columnWidth === 'auto') {
                         if (mapWidth[m] === undefined) {
                             mapWidth[m] = columnWidth || '0px';
                             mapBounds[m] = 0;
                         }
+                        else if (i === table.length - 1) {
+                            if (reevaluate && mapBounds[m] === 0) {
+                                mapBounds[m] = td.bounds.width;
+                            }
+                        }
                     }
                     else {
-                        const percentColumnWidth = isPercent(columnWidth);
-                        const unitMapWidth = isUnit(mapWidth[m]);
-                        if (mapWidth[m] === undefined ||
-                            td.bounds.width < mapBounds[m] ||
-                            td.bounds.width === mapBounds[m] && (
-                                mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth) ||
-                                percentColumnWidth && unitMapWidth ||
-                                percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m]) ||
-                                unitMapWidth && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m])
+                        const percent = isPercent(columnWidth);
+                        const unit = isUnit(mapWidth[m]);
+                        if (reevaluate || td.bounds.width < mapBounds[m] || td.bounds.width === mapBounds[m] && (
+                                (percent || unit) ||
+                                percent && unit ||
+                                percent && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m]) ||
+                                unit && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m])
                            ))
                         {
                             mapWidth[m] = columnWidth;
                         }
-                        if (mapBounds[m] === undefined || element.colSpan === 1) {
+                        if (reevaluate || element.colSpan === 1) {
                             mapBounds[m] = td.bounds.width;
                         }
                     }
                 }
-                td.css({
-                    marginTop: i === 0 ? '0px' : spacingHeight,
-                    marginRight: j < tr.length - 1 ? spacingWidth : '0px',
-                    marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
-                    marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
-                }, '', true);
                 if (multiLine === 0) {
                     multiLine = td.multiLine;
                 }
@@ -154,34 +159,49 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     rowWidth[i] += td.bounds.width + horizontal;
                 }
                 columnIndex[i] += element.colSpan;
+                td.css({
+                    marginTop: i === 0 ? '0px' : spacingHeight,
+                    marginRight: j < tr.length - 1 ? spacingWidth : '0px',
+                    marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
+                    marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
+                }, '', true);
             }
         }
-        const columnCount = maxArray(columnIndex);
+        if (node.has('width', CSS_STANDARD.UNIT) && mapWidth.some(value => isPercent(value))) {
+            mapWidth = mapWidth.map((value, index) => {
+                if (value === 'auto' && mapBounds[index] > 0) {
+                    value = formatPX(mapBounds[index]);
+                }
+                return value;
+            });
+        }
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
             let percentTotal = 100;
-            mapWidth.forEach((value, index) => {
+            mapWidth = mapWidth.map(value => {
                 const percent = parseFloat(value);
                 if (percentTotal <= 0) {
-                    mapWidth[index] = '0px';
+                    value = '0px';
                 }
                 else if (percentTotal - percent < 0) {
-                    mapWidth[index] = formatPercent(percentTotal);
+                    value = formatPercent(percentTotal);
                 }
                 percentTotal -= percent;
+                return value;
             });
         }
         else if (mapWidth.every(value => isUnit(value))) {
-            const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
-            if ((isPercent(tableWidth) && tableWidth !== '100%') || pxWidth < node.width) {
-                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
+            const width = mapWidth.reduce((a, b) => a + parseInt(b), 0);
+            if (node.has('width', CSS_STANDARD.PERCENT) || width < node.width) {
+                mapWidth = mapWidth.map(value => value !== '0px' ? `${(parseInt(value) / width) * 100}%` : value);
             }
-            else if (tableWidth === 'auto') {
-                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = mapBounds[index] === undefined ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
-            }
-            else if (pxWidth > node.width) {
+            else if (width > node.width) {
                 node.css('width', 'auto');
+                node.unsetCache('width', 'hasWidth');
                 if (!layoutFixed) {
-                    node.cascade().forEach(item => item.css('width', 'auto'));
+                    node.cascade().forEach(item => {
+                        item.css('width', 'auto');
+                        node.unsetCache('width', 'hasWidth');
+                    });
                 }
             }
         }
@@ -209,16 +229,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
-        function setAutoWidth(td: T) {
-            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
-            td.data(EXT_NAME.TABLE, 'expand', true);
-        }
-        function setBoundsWidth(td: T) {
-            td.css('width', formatPX(td.bounds.width));
-        }
+        const columnCount = maxArray(columnIndex);
+        let rowCount = table.length;
         const caption = node.find(item => item.tagName === 'CAPTION') as T | undefined;
         node.clear();
-        let rowCount = table.length;
         if (caption) {
             if (!caption.hasWidth && !isUserAgent(USER_AGENT.EDGE)) {
                 if (caption.textElement) {

@@ -939,7 +939,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
             const parentMap = this._renderPosition.get(id);
             if (parentMap) {
                 const previous = parentMap.children.filter(item => !parent.contains(item));
-                previous.push(parent);
+                if (parent.siblingIndex < previous.length) {
+                    previous.splice(parent.siblingIndex, 0, parent);
+                }
+                else {
+                    previous.push(parent);
+                }
                 this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
             }
         }
@@ -1349,14 +1354,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         continue;
                     }
                     let parentY = nodeY.parent as T;
-                    if (nodeY.renderAs) {
-                        nodeY.hide();
-                        nodeY = nodeY.renderAs as T;
-                        if (nodeY.positioned) {
-                            parentY = nodeY.parent as T;
-                        }
-                    }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
+                    if (axisY.length > 1 && k < axisY.length - 1 && !nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE)) {
                         const extendable = nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE);
                         const unknownParent = parentY.hasAlign(NODE_ALIGNMENT.UNKNOWN);
                         if (nodeY.pageFlow && !parentY.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT) && (parentY.alignmentType === 0 || unknownParent || extendable)) {
@@ -1570,7 +1568,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
+                    if (nodeY.renderAs && parentY.appendTry(nodeY, nodeY.renderAs, false)) {
+                        nodeY.hide();
+                        nodeY = nodeY.renderAs as T;
+                        if (nodeY.positioned) {
+                            parentY = nodeY.parent as T;
+                        }
+                    }
+                    if (!nodeY.rendered && !nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION)) {
                         let next = false;
                         for (const ext of [...parentY.renderExtension, ...extensions.filter(item => item.subscribersChild.has(nodeY))]) {
                             const result = ext.processChild(nodeY, parentY);
@@ -1621,7 +1626,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
+                    if (!nodeY.rendered && !nodeY.hasBit('excludeSection', APP_SECTION.RENDER)) {
                         const layout = new Layout(parentY, nodeY);
                         let containerType = nodeY.containerType || Controller.getContainerType(nodeY.tagName);
                         let output = '';

@@ -16,7 +16,7 @@ import $util = androme.lib.util;
 type T = androme.lib.base.Node;
 
 function setLineHeight(node: T, lineHeight: number) {
-    const offset = lineHeight - (node.hasHeight ? parseInt(node.convertPX(node.css('height'), false, true)) : node.bounds.height);
+    const offset = lineHeight - (node.hasHeight ? parseInt(node.convertPX(node.css('height'), false, true)) : node.bounds.height - (node.paddingTop + node.paddingBottom));
     if (offset > 0) {
         node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? node.toInt('verticalAlign') : 0));
         node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
@@ -875,7 +875,7 @@ export default (Base: Constructor<T>) => {
                     this.android('baselineAligned', 'false');
                 }
                 else {
-                    baseline = $NodeList.textBaseline(children.filter(node => node.baseline))[0];
+                    baseline = $NodeList.textBaseline(children.filter(node => node.baseline && !node.layoutRelative && !node.layoutConstraint))[0];
                     if (baseline) {
                         this.android('baselineAlignedChildIndex', children.indexOf(baseline).toString());
                     }

@@ -4,7 +4,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { formatPX, maxArray, partition } from '../lib/util';
+import { formatPX, maxArray } from '../lib/util';
 
 export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
@@ -61,7 +61,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     marginLeft.push(leftType);
                 });
                 if (marginRight.length) {
-                    const [sectionLeft, sectionRight] = partition(node.children, (item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = node.partition((item: T) => !marginRight.includes(item));
                     if (sectionLeft.length && sectionRight.length) {
                         if (node.style.marginLeft && node.autoMargin.left) {
                             node.css('marginLeft', node.style.marginLeft, true);
@@ -71,6 +71,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         const widthRight = maxArray(sectionRight.map(item => Math.abs(item.toInt('right'))));
                         sectionLeft.forEach(item => item.pageFlow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
+                        node.unsetCache('width', 'hasWidth');
                     }
                 }
                 const marginLeftType = maxArray(marginLeft);
@@ -100,6 +101,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     });
                     if (node.has('width', CSS_STANDARD.UNIT)) {
                         node.css('width', formatPX(node.toInt('width') + node.marginLeft));
+                        node.unsetCache('width', 'hasWidth');
                     }
                     modifyMarginLeft(node, node.marginLeft, true);
                 }

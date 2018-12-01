@@ -272,31 +272,27 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkFrameHorizontal(data: $Layout<T>) {
-        const [floating, sibling] = $util.partition(data.children, node => node.floating);
+        const [floating, sibling] = data.partition(node => node.floating);
         if (data.floated.size === 2 ||
             data.cleared.size > 0 ||
             data.some(node => node.pageFlow && node.autoMargin.horizontal) ||
-            sibling.length > 0 && (data.floated.has('right') || !data.linearX && floating.length))
+            sibling.length > 0 && data.floated.has('right'))
         {
             return true;
         }
         const flowIndex = $util.minArray(sibling.map(node => node.siblingIndex));
         const floatMap = floating.map(node => node.siblingIndex);
-        return data.floated.has('left') && (
-            floatMap.some(value => value > flowIndex) ||
-            !data.linearX && floatMap.every(value => value < flowIndex)
-        );
+        return data.floated.has('left') && floatMap.some(value => value > flowIndex);
     }
 
     public checkRelativeHorizontal(data: $Layout<T>) {
-        const visible = data.filter(node => node.visible);
-        const [floating, sibling] = $util.partition(visible, node => node.floating);
+        const [floating, sibling] = data.partition(node => node.floating);
         const minFlow = $util.minArray(sibling.map(node => node.siblingIndex));
         const maxFloat = $util.maxArray(floating.map(node => node.siblingIndex));
         if (data.floated.size === 2 || maxFloat > minFlow) {
             return false;
         }
-        return visible.some(node => node.positionRelative || node.textElement || node.imageElement || !node.baseline);
+        return data.some(node => node.positionRelative || node.textElement || node.imageElement || !node.baseline);
     }
 
     public checkConstraintFloat(data: $Layout<T>) {
@@ -577,6 +573,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (!node.hasWidth) {
                     if (element.cols) {
                         node.css('width', $util.formatPX(element.cols * 10));
+                        node.unsetCache('width', 'hasWidth');
                     }
                 }
                 node.android('hint', element.placeholder);
@@ -635,6 +632,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     case 'password':
                         if (!node.hasWidth && element.size > 0) {
                             node.css('width', $util.formatPX(element.size * 10));
+                            node.unsetCache('width', 'hasWidth');
                         }
                         break;
                 }
@@ -937,24 +935,28 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     protected processRelativeHorizontal(node: T, children: T[]) {
-        const renderParent = node.renderParent;
-        const actualParent = node.actualParent;
         const boxWidth = Math.ceil((() => {
-            if (renderParent && renderParent.overflowX) {
-                if (node.has('width', $enum.CSS_STANDARD.UNIT)) {
-                    return node.toInt('width', true);
+            const renderParent = node.renderParent;
+            if (renderParent) {
+                if (renderParent.overflowX) {
+                    if (node.has('width', $enum.CSS_STANDARD.UNIT)) {
+                        return node.toInt('width', true);
+                    }
+                    else if (renderParent.has('width', $enum.CSS_STANDARD.UNIT)) {
+                        return renderParent.toInt('width', true);
+                    }
+                    else if (renderParent.has('width', $enum.CSS_STANDARD.PERCENT)) {
+                        return renderParent.bounds.width - renderParent.contentBoxWidth;
+                    }
                 }
-                else if (renderParent.has('width', $enum.CSS_STANDARD.UNIT)) {
-                    return renderParent.toInt('width', true);
-                }
-                else if (renderParent.has('width', $enum.CSS_STANDARD.PERCENT)) {
-                    return renderParent.bounds.width - renderParent.contentBoxWidth;
-                }
-            }
-            else if (actualParent) {
-                const floatStart = $util.maxArray(actualParent.initial.children.filter(item => item.float === 'left' && item.siblingIndex < node.siblingIndex).map(item => item.linear.right));
-                if (children.some(item => item.linear.left === floatStart)) {
-                    return node.box.right - floatStart;
+                else {
+                    const floating = renderParent.children.filter((item: T) => item.float === 'left' && item.siblingIndex < node.siblingIndex).map(item => item.linear.right);
+                    if (floating.length) {
+                        const floatStart = $util.maxArray(floating);
+                        if (children.some(item => item.linear.left === floatStart)) {
+                            return node.box.right - floatStart;
+                        }
+                    }
                 }
             }
             return node.box.width;
@@ -1017,11 +1019,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (!checkRowWrap) {
                                 return false;
                             }
-                            if (checkLineWrap && !connected && (
-                                    rangeMultiLine.has(previous) ||
-                                    previous.multiLine && $dom.hasLineBreak(previous.element, true)
-                               ))
-                            {
+                            if (checkLineWrap && !connected && (rangeMultiLine.has(previous) || previous.multiLine && $dom.hasLineBreak(previous.element, true))) {
                                 return true;
                             }
                         }
@@ -1104,7 +1102,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         for (let i = 0; i < rows.length; i++) {
             let tallest: T | undefined;
             rows[i].forEach(item => {
-                if (item.textElement && item.baseline) {
+                if (!item.floating) {
                     if (tallest) {
                         if (item.lineHeight) {
                             if (tallest.lineHeight && item.lineHeight > tallest.lineHeight) {
@@ -1114,7 +1112,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 tallest = item;
                             }
                         }
-                        else if (item.bounds.height > tallest.bounds.height) {
+                        else if (item.bounds.height > Math.max(tallest.lineHeight, tallest.bounds.height)) {
                             tallest = item;
                         }
                     }
@@ -1139,6 +1137,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     }
                     else if (!node.hasHeight) {
                         node.css('height', $util.formatPX(node.bounds.height));
+                        node.unsetCache('height', 'hasHeight');
                     }
                 }
                 return false;
@@ -1197,7 +1196,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 adjustBaseline(parent, baseline);
                 parent.baselineActive = true;
                 if (node.lineHeight || parent.lineHeight) {
-                    const offset = Math.max(node.lineHeight, parent.lineHeight) - parent.bounds.height;
+                    const offset = Math.max(node.lineHeight, parent.lineHeight) - (parent.bounds.height - (parent.paddingTop + parent.paddingBottom));
                     if (offset > 0) {
                         parent.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
                         parent.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));

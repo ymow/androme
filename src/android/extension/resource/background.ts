@@ -529,7 +529,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         const borderWidth = new Set(borderFiltered.map(item => item.width));
                         const borderStyle = new Set(borderFiltered.map(item => getBorderStyle(item)));
                         const borderData = borderFiltered[0];
-                        const visibleAll = borderVisible.every(value => value);
+                        const visibleAll = borderVisible[1] && borderVisible[2];
                         function getHideWidth(value: number) {
                             return value + (visibleAll ? 0 : value === 1 ? 1 : 2);
                         }

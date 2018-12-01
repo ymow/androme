@@ -1066,7 +1066,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_8"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -1080,16 +1080,15 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
-                <LinearLayout
-                    android:id="@+id/linearlayout_12"
-                    android:baselineAlignedChildIndex="1"
+                <RelativeLayout
+                    android:id="@+id/relativelayout_4"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/div_margin_start"
-                    android:layout_width="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_width="wrap_content">
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
                         android:checkedButton="@+id/c2"
+                        android:layout_alignParentStart="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:orientation="horizontal">
@@ -1106,14 +1105,16 @@ The attributes "include" and "include-end" can only be applied to elements which
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
+                        android:layout_alignBaseline="@+id/radiogroup_1"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
                         android:layout_marginVertical="@dimen/checkbox_margin_vertical"
+                        android:layout_toEndOf="@+id/radiogroup_1"
                         android:layout_width="wrap_content"
                         android:text="@string/none"
                         style="@style/Checkbox" />
-                </LinearLayout>
+                </RelativeLayout>
                 <Button
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"

@@ -61,6 +61,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
                 }
                 else {
                     node.css('width', $util.formatPX(node.bounds.width));
+                    node.unsetCache('width', 'hasWidth');
                 }
             }
         }

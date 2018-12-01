@@ -100,6 +100,10 @@ export default class Layout<T extends Node> extends Container<T> implements andr
         return this._cleared || this.getCleared();
     }
 
+    get visible() {
+        return this.children.filter(node => node.visible);
+    }
+
     set linearX(value) {
         this._linearX = value;
     }

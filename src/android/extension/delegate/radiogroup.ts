@@ -19,11 +19,15 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         const element = <HTMLInputElement> node.element;
+        const pending: T[] = [];
         let replaceWith: T | undefined;
         const children = parent.flatMap((item: T) => {
             if (item.renderAs) {
                 if (item.renderAs === node) {
                     replaceWith = item;
+                }
+                else {
+                    pending.push(item);
                 }
                 item = item.renderAs as T;
             }
@@ -45,6 +49,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                 item.positioned = true;
                 item.parent = container;
             });
+            pending.forEach(item => item.hide());
             container.css('verticalAlign', 'text-bottom');
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
             container.render(target ? container : parent);
