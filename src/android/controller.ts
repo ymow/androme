@@ -485,6 +485,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (match) {
                                 width = parseInt(match[1]);
                                 node.css('width', $util.formatPX(match[1]));
+                                node.unsetCache('width', 'hasWidth');
                             }
                         }
                         if (height === 0) {
@@ -492,6 +493,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (match) {
                                 height = parseInt(match[1]);
                                 node.css('height', $util.formatPX(match[1]));
+                                node.unsetCache('height', 'hasHeight');
                             }
                         }
                         switch (node.css('objectFit')) {
@@ -516,6 +518,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     if (width > 0 && height === 0 || width === 0 && height > 0) {
                         node.android('adjustViewBounds', 'true');
                     }
+                    if (node.baseline) {
+                        node.android('baselineAlignBottom', 'true');
+                    }
                     const src = Resource.addImageSrcSet(element);
                     if (src !== '') {
                         node.android('src', `@drawable/${src}`);
@@ -529,6 +534,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
                         container.init();
                         container.inherit(node, 'base');
+                        container.css('zIndex', node.css('zIndex'));
+                        container.companion = node;
                         container.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
                         parent.appendTry(node, container);
                         this.cache.append(container);
@@ -545,11 +552,15 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             container.android('layout_height', 'wrap_content');
                         }
                         container.render(target ? container : parent);
+                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.top);
+                        node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, node.left);
                         node.render(container);
-                        return $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, target ? -1 : container.renderDepth, $xml.getEnclosingTag(controlName, node.id, target ? 0 : node.renderDepth));
-                    }
-                    if (node.baseline) {
-                        node.android('baselineAlignBottom', 'true');
+                        return $xml.getEnclosingTag(
+                            CONTAINER_ANDROID.FRAME,
+                            container.id,
+                            target ? -1 : container.renderDepth,
+                            $xml.getEnclosingTag(controlName, node.id, target ? 0 : node.renderDepth)
+                        );
                     }
                 }
                 break;

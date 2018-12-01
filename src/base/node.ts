@@ -265,7 +265,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     this._box = assignBounds(node.box);
                     break;
                 case 'alignment':
-                    ['position', 'top', 'right', 'bottom', 'left', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
+                    ['position', 'top', 'right', 'bottom', 'left', 'display', 'verticalAlign', 'cssFloat', 'clear', 'zIndex'].forEach(attr => {
                         this._styleMap[attr] = node.css(attr);
                         this.initial.styleMap[attr] = node.initial.styleMap[attr];
                     });
@@ -442,7 +442,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public cssParent(attr: string, childStart = false, visible = false) {
         let result = '';
-        let current = childStart && this._element ? this : this.actualParent;
+        let current = childStart ? this : this.actualParent;
         while (current) {
             result = current.initial.styleMap[attr] || '';
             if (result || current.documentBody) {
@@ -1571,11 +1571,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._renderParent;
     }
 
-    get actualParent(): T | null {
+    get actualParent() {
         return this.element.parentElement ? getElementAsNode(this.element.parentElement) as T : null;
     }
 
-    get actualChildren(): T[] {
+    get actualChildren() {
         if (this._cached.actualChildren === undefined) {
             if (this.htmlElement) {
                 this._cached.actualChildren = flatMap(Array.from(this.element.childNodes), (element: Element) => getElementAsNode(element) as T) as T[];

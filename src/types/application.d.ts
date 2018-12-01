@@ -63,19 +63,19 @@ interface AppCurrent<T extends androme.lib.base.Node> {
     userSettings: UserSettings;
 }
 
-interface AppSession<T, U> {
+interface AppSession<T extends androme.lib.base.Node, U> {
     cache: U;
     image: Map<string, ImageAsset>;
     renderQueue: Map<string, string[]>;
-    excluded: T[];
+    excluded: androme.lib.base.NodeList<T>;
 }
 
-interface AppProcessing<T, U> {
+interface AppProcessing<T extends androme.lib.base.Node, U> {
     cache: U;
     depthMap: Map<string, Map<number, string>>;
     node: T | null;
     layout: FileAsset | null;
-    excluded: T[];
+    excluded: androme.lib.base.NodeList<T>;
 }
 
 interface SessionData<T> {

@@ -617,65 +617,67 @@ export default (Base: Constructor<T>) => {
                 }
                 let textAlign = this.cssInitial('textAlign', true) || '';
                 let verticalAlign = '';
-                let floating = '';
-                if (this.inlineVertical && renderParent.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.GRID)) {
-                    switch (this.cssInitial('verticalAlign', true)) {
-                        case 'top':
-                            verticalAlign = 'top';
-                            break;
-                        case 'middle':
-                            verticalAlign = 'center_vertical';
-                            break;
-                        case 'bottom':
-                            verticalAlign = 'bottom';
-                            break;
-                    }
-                }
-                if (!this.blockWidth && (renderParent.linearVertical || (this.documentRoot && this.linearVertical))) {
-                    if (this.float === 'right') {
-                        this.mergeGravity('layout_gravity', right);
-                    }
-                    else {
-                        setAutoMargin(this);
-                    }
-                }
-                if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.nodes.length > 0 && this.nodes.every(node => node.rightAligned))) {
-                    floating = right;
-                }
-                if (renderParent.layoutFrame) {
-                    if (!setAutoMargin(this)) {
-                        floating = this.floating ? this.float : floating;
-                        if (floating !== 'none') {
-                            if (renderParent.inlineWidth || this.singleChild && !renderParent.documentRoot) {
-                                (renderParent as View).mergeGravity('layout_gravity', floating);
-                            }
-                            else {
-                                if (this.blockWidth) {
-                                    textAlign = setTextAlign(floating);
-                                }
-                                else {
-                                    this.mergeGravity('layout_gravity', floating);
-                                }
-                            }
+                if (this.pageFlow) {
+                    let floating = '';
+                    if (this.inlineVertical && renderParent.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.GRID)) {
+                        switch (this.cssInitial('verticalAlign', true)) {
+                            case 'top':
+                                verticalAlign = 'top';
+                                break;
+                            case 'middle':
+                                verticalAlign = 'center_vertical';
+                                break;
+                            case 'bottom':
+                                verticalAlign = 'bottom';
+                                break;
                         }
                     }
-                }
-                else if (floating !== '') {
-                    if (this.is($enum.NODE_CONTAINER.LINEAR)) {
-                        if (this.blockWidth) {
-                            textAlign = setTextAlign(floating);
+                    if (!this.blockWidth && (renderParent.linearVertical || (this.documentRoot && this.linearVertical))) {
+                        if (this.float === 'right') {
+                            this.mergeGravity('layout_gravity', right);
                         }
                         else {
-                            this.mergeGravity('layout_gravity', floating);
+                            setAutoMargin(this);
+                        }
+                    }
+                    if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.nodes.length && this.nodes.every(node => node.rightAligned))) {
+                        floating = right;
+                    }
+                    if (renderParent.layoutFrame) {
+                        if (!setAutoMargin(this)) {
+                            floating = this.floating ? this.float : floating;
+                            if (floating !== '' && floating !== 'none') {
+                                if (renderParent.inlineWidth || this.singleChild && !renderParent.documentRoot) {
+                                    (renderParent as View).mergeGravity('layout_gravity', floating);
+                                }
+                                else {
+                                    if (this.blockWidth) {
+                                        textAlign = setTextAlign(floating);
+                                    }
+                                    else {
+                                        this.mergeGravity('layout_gravity', floating);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (floating !== '') {
+                        if (this.layoutLinear) {
+                            if (this.blockWidth) {
+                                textAlign = setTextAlign(floating);
+                            }
+                            else {
+                                this.mergeGravity('layout_gravity', floating);
+                            }
                         }
                     }
                 }
                 const textAlignParent = this.cssParent('textAlign');
                 if (textAlignParent !== '' && this.localizeString(textAlignParent) !== left) {
-                    if (renderParent.layoutFrame && !this.floating && !this.autoMargin.horizontal && !this.blockWidth) {
+                    if (this.pageFlow && renderParent.layoutFrame && !this.floating && !this.autoMargin.horizontal && !this.blockWidth) {
                         this.mergeGravity('layout_gravity', convertHorizontal(textAlignParent));
                     }
-                    if (textAlign === '') {
+                    if (!this.imageElement && textAlign === '') {
                         textAlign = textAlignParent;
                     }
                 }

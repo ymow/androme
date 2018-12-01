@@ -58,7 +58,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const toolbarOptions = $android_util.createAttribute(options.self);
         const appBarOptions = $android_util.createAttribute(options.appBar);
         const collapsingToolbarOptions = $android_util.createAttribute(options.collapsingToolbar);
-        const hasMenu = !!$dom.getNestedExtension(node.element, WIDGET_NAME.MENU);
+        const hasMenu = Toolbar.findNestedByName(node.element, WIDGET_NAME.MENU);
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
@@ -285,7 +285,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     }
 
     public postProcedure(node: T) {
-        const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu = $util.optionalAsString(Toolbar.findNestedByName(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);
             const toolbarOptions = $android_util.createAttribute(options.self);

@@ -1,7 +1,7 @@
 import { REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
-import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, includes, isPercent, maxArray, minArray, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, isPercent, maxArray, minArray, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -21,7 +21,7 @@ export function isUserAgent(value: number) {
 
 export function getDataSet(element: Element, prefix: string) {
     const result: StringMap = {};
-    if (isStyleElement(element)) {
+    if (hasComputedStyle(element)) {
         prefix = convertCamelCase(prefix, '\\.');
         for (const attr in element.dataset) {
             if (attr.length > prefix.length && attr.startsWith(prefix)) {
@@ -61,10 +61,15 @@ export function newBoxModel(): BoxModel {
 export function createElement(parent?: Element, block = false) {
     const element = document.createElement(block ? 'DIV' : 'SPAN');
     element.style.display = 'none';
+    element.className = 'androme.display.none';
     if (parent instanceof HTMLElement) {
         parent.appendChild(element);
     }
     return element;
+}
+
+export function removeElementsByClassName(className: string) {
+    Array.from(document.getElementsByClassName(className)).forEach(element => element.parentElement && element.parentElement.removeChild(element));
 }
 
 export function convertClientUnit(value: string, dimension: number, dpi: number, fontSize: number, percent = false) {
@@ -206,10 +211,12 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
 }
 
 export function cssFromParent(element: Element, attr: string) {
-    if (isStyleElement(element) && element.parentElement) {
+    if (element.parentElement && hasComputedStyle(element)) {
         const node = getElementAsNode<T>(element);
         const style = getStyle(element);
-        return style && style[attr] === getStyle(element.parentElement)[attr] && (node === null || !node.cssInitial(attr));
+        if (node && style) {
+            return style[attr] === getStyle(element.parentElement)[attr] && !node.cssInitial(attr);
+        }
     }
     return false;
 }
@@ -365,7 +372,7 @@ export function hasFreeFormText(element: Element, whiteSpace = true) {
                     return true;
                 }
             }
-            else if (child instanceof HTMLElement && child.childNodes.length && findFreeForm(Array.from(child.childNodes))) {
+            else if (child instanceof HTMLElement && hasVisibleDimensions(child) && child.childNodes.length && findFreeForm(Array.from(child.childNodes))) {
                 return true;
             }
             return false;
@@ -486,20 +493,27 @@ export function getNextElementSibling(element: Element) {
     return null;
 }
 
-export function isStyleElement(element: Element): element is HTMLElement {
+export function hasComputedStyle(element: Element): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
-export function isElementVisible(element: Element) {
+export function hasVisibleDimensions(element: Element) {
+    const bounds = element.getBoundingClientRect();
+    if (bounds.width !== 0 && bounds.height !== 0) {
+        return !(bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+    }
+    return false;
+}
+
+export function isElementIncluded(element: Element) {
     if (element.parentElement instanceof SVGSVGElement) {
         return false;
     }
-    else if (isStyleElement(element)) {
-        const bounds = element.getBoundingClientRect();
-        if (bounds.width !== 0 && bounds.height !== 0) {
-            return !(bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+    else if (hasComputedStyle(element)) {
+        if (hasValue(element.dataset.import)) {
+            return true;
         }
-        else if (hasValue(element.dataset.import)) {
+        else if (hasVisibleDimensions(element)) {
             return true;
         }
         else {
@@ -526,13 +540,6 @@ export function isElementVisible(element: Element) {
     else {
         return isPlainText(element);
     }
-}
-
-export function getNestedExtension(element: Element, name: string) {
-    if (isStyleElement(element)) {
-        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.import, name)) as HTMLElement || null;
-    }
-    return null;
 }
 
 export function setElementCache(element: Element, attr: string, data: any) {

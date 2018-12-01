@@ -1,10 +1,17 @@
 import Application from './application';
 import Node from './node';
 
-import { isStyleElement } from '../lib/dom';
+import { hasComputedStyle } from '../lib/dom';
 import { includes } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
+    public static findNestedByName(element: Element, name: string) {
+        if (hasComputedStyle(element)) {
+            return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.import, name)) as HTMLElement || null;
+        }
+        return null;
+    }
+
     public application: Application<T>;
     public tagNames: string[] = [];
     public documentRoot = false;
@@ -74,7 +81,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public condition(node: T, parent?: T) {
-        if (isStyleElement(node.element)) {
+        if (hasComputedStyle(node.element)) {
             const ext = node.dataset.import;
             if (!ext) {
                 return this.tagNames.length > 0;

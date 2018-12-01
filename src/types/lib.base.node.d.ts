@@ -185,9 +185,7 @@ declare global {
 
         export class Node implements Node {}
 
-        export class NodeGroup extends Node {
-            public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;
-        }
+        export class NodeGroup extends Node {}
     }
 }
 

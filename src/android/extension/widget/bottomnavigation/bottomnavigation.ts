@@ -2,7 +2,6 @@ import { WIDGET_NAME, getAppTheme } from '../common';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
-import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
@@ -57,7 +56,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
                 renderParent.android('layout_height', 'match_parent');
             }
         }
-        const menu = $util.optionalAsString($dom.getNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu = $util.optionalAsString(BottomNavigation.findNestedByName(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = $android_util.createAttribute(this.options[node.element.id]);
             $util.defaultWhenNull(options, 'app', 'menu', `@menu/${menu}`);

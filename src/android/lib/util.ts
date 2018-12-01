@@ -53,7 +53,7 @@ export function calculateBias(start: number, end: number, accuracy = 4) {
     }
 }
 
-export function replaceRTL(value: string, rtl = true, api: BUILD_ANDROID.OREO) {
+export function replaceRTL(value: string, rtl = true, api = BUILD_ANDROID.OREO) {
     value = value ? value.trim() : '';
     if (rtl && api >= BUILD_ANDROID.JELLYBEAN_1) {
         value = value.replace(/left/g, 'start').replace(/right/g, 'end');

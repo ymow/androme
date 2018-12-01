@@ -5,56 +5,13 @@ import NodeList from './nodelist';
 
 import { assignBounds, newRectDimensions } from '../lib/dom';
 
-export default abstract class NodeGroup extends Node {
-    public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
-        let top: T[] = [];
-        let right: T[] = [];
-        let bottom: T[] = [];
-        let left: T[] = [];
-        const nodes = list.slice();
-        list.forEach(node => node.companion && nodes.push(node.companion as T));
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            if (i === 0) {
-                top.push(node);
-                right.push(node);
-                bottom.push(node);
-                left.push(node);
-            }
-            else {
-                if (top[0][dimension].top === node[dimension].top) {
-                    top.push(node);
-                }
-                else if (node[dimension].top < top[0][dimension].top) {
-                    top = [node];
-                }
-                if (right[0][dimension].right === node[dimension].right) {
-                    right.push(node);
-                }
-                else if (node[dimension].right > right[0][dimension].right) {
-                    right = [node];
-                }
-                if (bottom[0][dimension].bottom === node[dimension].bottom) {
-                    bottom.push(node);
-                }
-                else if (node[dimension].bottom > bottom[0][dimension].bottom) {
-                    bottom = [node];
-                }
-                if (left[0][dimension].left === node[dimension].left) {
-                    left.push(node);
-                }
-                else if (node[dimension].left < left[0][dimension].left) {
-                    left = [node];
-                }
-            }
-        }
-        return { top, right, bottom, left };
-    }
+type T = Node;
 
+export default abstract class NodeGroup extends Node {
     public setBounds(calibrate = false) {
         if (!calibrate) {
             if (this.length) {
-                const nodes = NodeGroup.outerRegion(this.children);
+                const nodes = this.outerRegion();
                 this._bounds = {
                     top: nodes.top[0].linear.top,
                     right: nodes.right[0].linear.right,
@@ -86,6 +43,28 @@ export default abstract class NodeGroup extends Node {
         return node ? node.nextSiblings(lineBreak, excluded, visible) : [];
     }
 
+    public firstChild() {
+        const actualParent = NodeList.actualParent(this.initial.children);
+        if (actualParent) {
+            return super.firstChild(<HTMLElement> actualParent.element);
+        }
+        else if (this.initial.children.length > 0) {
+            return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
+        }
+        return null;
+    }
+
+    public lastChild() {
+        const actualParent = NodeList.actualParent(this.initial.children);
+        if (actualParent) {
+            return super.lastChild(<HTMLElement> actualParent.element);
+        }
+        else if (this.initial.children.length > 0) {
+            return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
+        }
+        return null;
+    }
+
     get inline() {
         return this.every(node => node.inline);
     }
@@ -104,6 +83,10 @@ export default abstract class NodeGroup extends Node {
 
     get inlineVertical() {
         return this.every(node => node.inlineVertical);
+    }
+
+    get block() {
+        return this.some(node => node.block);
     }
 
     get blockStatic() {
@@ -140,6 +123,11 @@ export default abstract class NodeGroup extends Node {
         );
     }
 
+    get element() {
+        const children = this.cascade(true);
+        return children.length ? children[0].element : super.element;
+    }
+
     get baseElement() {
         return undefined;
     }
@@ -148,25 +136,48 @@ export default abstract class NodeGroup extends Node {
         return NodeList.actualParent(this.cascade(true)) || this;
     }
 
-    public firstChild() {
-        const actualParent = NodeList.actualParent(this.initial.children);
-        if (actualParent) {
-            return super.firstChild(<HTMLElement> actualParent.element);
+    private outerRegion() {
+        let top: T[] = [];
+        let right: T[] = [];
+        let bottom: T[] = [];
+        let left: T[] = [];
+        const nodes = this.children.slice();
+        this.each(node => node.companion && nodes.push(node.companion as T));
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            if (i === 0) {
+                top.push(node);
+                right.push(node);
+                bottom.push(node);
+                left.push(node);
+            }
+            else {
+                if (top[0].linear.top === node.linear.top) {
+                    top.push(node);
+                }
+                else if (node.linear.top < top[0].linear.top) {
+                    top = [node];
+                }
+                if (right[0].linear.right === node.linear.right) {
+                    right.push(node);
+                }
+                else if (node.linear.right > right[0].linear.right) {
+                    right = [node];
+                }
+                if (bottom[0].linear.bottom === node.linear.bottom) {
+                    bottom.push(node);
+                }
+                else if (node.linear.bottom > bottom[0].linear.bottom) {
+                    bottom = [node];
+                }
+                if (left[0].linear.left === node.linear.left) {
+                    left.push(node);
+                }
+                else if (node.linear.left < left[0].linear.left) {
+                    left = [node];
+                }
+            }
         }
-        else if (this.initial.children.length > 0) {
-            return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
-        }
-        return null;
-    }
-
-    public lastChild() {
-        const actualParent = NodeList.actualParent(this.initial.children);
-        if (actualParent) {
-            return super.lastChild(<HTMLElement> actualParent.element);
-        }
-        else if (this.initial.children.length > 0) {
-            return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
-        }
-        return null;
+        return { top, right, bottom, left };
     }
 }

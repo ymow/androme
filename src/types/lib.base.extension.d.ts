@@ -37,6 +37,7 @@ declare global {
         }
 
         export class Extension<T extends Node> implements Extension<T> {
+            public static findNestedByName(element: Element, name: string): HTMLElement | null;
             constructor(name: string, framework: number, tagNames?: string[], options?: ExternalData);
         }
     }

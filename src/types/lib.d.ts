@@ -39,6 +39,7 @@ declare global {
             export function newRectDimensions(): RectDimensions;
             export function newBoxModel(): BoxModel;
             export function createElement(parent?: Element, block?: boolean): HTMLElement;
+            export function removeElementsByClassName(className: string): void;
             export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
             export function getRangeClientRect(element: Element): TextDimensions;
             export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions;
@@ -59,9 +60,9 @@ declare global {
             export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
             export function getPreviousElementSibling(element: Element): Element | null;
             export function getNextElementSibling(element: Element): Element | null;
-            export function isStyleElement(element: Element): element is HTMLElement;
-            export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
-            export function getNestedExtension(element: Element, name: string): HTMLElement | null;
+            export function hasComputedStyle(element: Element): element is HTMLElement;
+            export function hasVisibleDimensions(element: Element): boolean;
+            export function isElementIncluded(element: Element, hideOffScreen: boolean): boolean;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;

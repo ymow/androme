@@ -6,7 +6,7 @@ import Layout from '../base/layout';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { getElementAsNode, isStyleElement } from '../lib/dom';
+import { getElementAsNode, hasComputedStyle } from '../lib/dom';
 import { flatMap, hasValue, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
@@ -153,7 +153,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         const nextX = nextAxisX[m];
                         let [left, right] = [nextX.linear.left, nextX.linear.right];
                         let index = l;
-                        if (index > 0 && isStyleElement(nextX.element) && nextX.float === 'right') {
+                        if (index > 0 && hasComputedStyle(nextX.element) && nextX.float === 'right') {
                             nextX.element.style.cssFloat = 'left';
                             const bounds = nextX.element.getBoundingClientRect();
                             if (bounds.left - nextX.marginLeft !== left) {

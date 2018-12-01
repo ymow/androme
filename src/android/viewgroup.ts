@@ -47,7 +47,7 @@ export default class ViewGroup<T extends View> extends ViewBase(androme.lib.base
             }
             return null;
         }
-        if ($dom.isStyleElement(super.element)) {
+        if ($dom.hasComputedStyle(super.element)) {
             return super.element;
         }
         return cascade(this.children as T[]) || super.element;

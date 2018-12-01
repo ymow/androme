@@ -25,7 +25,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
             node,
             true
         );
-        const element = $dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR);
+        const element = Coordinator.findNestedByName(node.element, WIDGET_NAME.TOOLBAR);
         if (element) {
             const toolbar = $dom.getElementAsNode<T>(element);
             if (toolbar) {
