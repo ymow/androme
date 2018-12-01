@@ -363,19 +363,13 @@ export function maxArray(list: number[]) {
 }
 
 export function hasSameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
-    let result = false;
     for (const attr of attrs) {
         const value = compareObject(obj1, obj2, attr, false);
-        if (value && value[0] === value[1]) {
-            result = true;
-            continue;
-        }
-        else {
-            result = false;
-            break;
+        if (!value || value[0] !== value[1]) {
+            return false;
         }
     }
-    return result;
+    return true;
 }
 
 export function searchObject(obj: StringMap, value: string | StringMap) {

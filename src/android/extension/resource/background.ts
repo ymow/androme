@@ -645,15 +645,13 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             if (!node.has('width', $enum.CSS_STANDARD.UNIT)) {
                                 const width = node.bounds.width + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
-                                    node.css('width', $util.formatPX(width));
-                                    node.unsetCache('width', 'hasWidth');
+                                    node.css('width', $util.formatPX(width), true);
                                 }
                             }
                             if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
                                 const height = node.actualHeight + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
-                                    node.css('height', $util.formatPX(height));
-                                    node.unsetCache('height', 'hasHeight');
+                                    node.css('height', $util.formatPX(height), true);
                                     if (node.marginTop < 0) {
                                         node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
                                     }

@@ -1,9 +1,9 @@
-import { NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
+import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
 
 import Container from './container';
 import Node from './node';
 
-import { getElementAsNode, isUserAgent } from '../lib/dom';
+import { getElementAsNode, getStyle } from '../lib/dom';
 import { convertInt, hasBit, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
@@ -14,6 +14,66 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             }
         }
         return null;
+    }
+
+    public static baseline<T extends Node>(list: T[], text = false) {
+        if (text) {
+            list = list.filter(item => item.baseElement && !item.imageElement && getStyle(item.baseElement).display !== 'none');
+        }
+        const lineHeight = maxArray(list.map(node => node.lineHeight));
+        const boundsHeight = maxArray(list.map(node => node.bounds.height));
+        return list.filter(item => lineHeight > boundsHeight ? item.lineHeight === lineHeight : item.bounds.height === boundsHeight).sort((a, b) => {
+            if (a.groupElement || (!a.baseline && b.baseline)) {
+                return 1;
+            }
+            else if (b.groupElement || (a.baseline && !b.baseline)) {
+                return -1;
+            }
+            if (!a.imageElement || !b.imageElement) {
+                const fontSizeA = convertInt(a.css('fontSize'));
+                const fontSizeB = convertInt(b.css('fontSize'));
+                if (a.multiLine || b.multiLine) {
+                    if (a.lineHeight && b.lineHeight) {
+                        return a.lineHeight <= b.lineHeight ? 1 : -1;
+                    }
+                    else if (fontSizeA === fontSizeB) {
+                        return a.htmlElement || !b.htmlElement ? -1 : 1;
+                    }
+                }
+                if (a.containerType !== b.containerType && (a.containerType < NODE_CONTAINER.TEXT || b.containerType < NODE_CONTAINER.TEXT)) {
+                    if (a.textElement || a.imageElement) {
+                        return -1;
+                    }
+                    else if (b.textElement || b.imageElement) {
+                        return 1;
+                    }
+                    return a.containerType < b.containerType ? -1 : 1;
+                }
+                else if (b.imageElement) {
+                    return -1;
+                }
+                else if (a.imageElement) {
+                    return 1;
+                }
+                else {
+                    if (fontSizeA === fontSizeB) {
+                        if (a.htmlElement && !b.htmlElement) {
+                            return -1;
+                        }
+                        else if (!a.htmlElement && b.htmlElement) {
+                            return 1;
+                        }
+                        else {
+                            return a.siblingIndex >= b.siblingIndex ? 1 : -1;
+                        }
+                    }
+                    else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
+                        return fontSizeA > fontSizeB ? -1 : 1;
+                    }
+                }
+            }
+            return 0;
+        });
     }
 
     public static floated<T extends Node>(list: T[]) {
@@ -76,137 +136,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static clearedAll<T extends Node>(parent: T) {
         return this.cleared(parent.actualChildren.filter(item => item.pageFlow) as T[], false);
-    }
-
-    public static textBaseline<T extends Node>(list: T[]) {
-        let baseline: T[] = [];
-        if (!list.some(node => node.baseline && (node.textElement || node.imageElement))) {
-            baseline = list.filter(node => node.baseline).sort((a, b) => {
-                let containerTypeA = a.containerType;
-                let containerTypeB = b.containerType;
-                if (a.layoutHorizontal) {
-                    containerTypeA = minArray(a.map(item => item.containerType));
-                }
-                else if (a.length) {
-                    containerTypeA = Number.MAX_VALUE;
-                }
-                if (b.layoutHorizontal) {
-                    containerTypeB = minArray(b.map(item => item.containerType));
-                }
-                else if (b.length) {
-                    containerTypeB = Number.MAX_VALUE;
-                }
-                return containerTypeA === containerTypeB ? (a.id < b.id ? -1 : 1) : (containerTypeA < containerTypeB ? -1 : 1);
-            });
-        }
-        else {
-            const lineHeight = maxArray(list.map(node => node.lineHeight));
-            const boundsHeight = maxArray(list.map(node => node.bounds.height));
-            if (lineHeight > boundsHeight) {
-                const result = list.filter(node => node.lineHeight === lineHeight);
-                baseline = (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
-                if (baseline.length) {
-                    return baseline;
-                }
-            }
-            baseline = list.slice().sort((a, b) => {
-                if (a.groupElement || (!a.baseline && b.baseline)) {
-                    return 1;
-                }
-                else if (b.groupElement || (a.baseline && !b.baseline)) {
-                    return -1;
-                }
-                let heightA = a.bounds.height;
-                let heightB = b.bounds.height;
-                if (isUserAgent(USER_AGENT.EDGE)) {
-                    if (a.textElement) {
-                        heightA = Math.max(Math.floor(heightA), a.lineHeight);
-                    }
-                    if (b.textElement) {
-                        heightB = Math.max(Math.floor(heightB), b.lineHeight);
-                    }
-                }
-                if (!a.imageElement || !b.imageElement) {
-                    const fontSizeA = convertInt(a.css('fontSize'));
-                    const fontSizeB = convertInt(b.css('fontSize'));
-                    if (a.multiLine || b.multiLine) {
-                        if (a.lineHeight && b.lineHeight) {
-                            return a.lineHeight <= b.lineHeight ? 1 : -1;
-                        }
-                        else if (fontSizeA === fontSizeB) {
-                            return a.htmlElement || !b.htmlElement ? -1 : 1;
-                        }
-                    }
-                    if (a.containerType !== b.containerType && (a.containerType < NODE_CONTAINER.TEXT || b.containerType < NODE_CONTAINER.TEXT)) {
-                        if (a.textElement || a.imageElement) {
-                            return -1;
-                        }
-                        else if (b.textElement || b.imageElement) {
-                            return 1;
-                        }
-                        return a.containerType < b.containerType ? -1 : 1;
-                    }
-                    else if (b.imageElement || a.lineHeight > heightB && b.lineHeight === 0) {
-                        return -1;
-                    }
-                    else if (a.imageElement || b.lineHeight > heightA && a.lineHeight === 0) {
-                        return 1;
-                    }
-                    else {
-                        if (fontSizeA === fontSizeB && heightA === heightB) {
-                            if (a.htmlElement && !b.htmlElement) {
-                                return -1;
-                            }
-                            else if (!a.htmlElement && b.htmlElement) {
-                                return 1;
-                            }
-                            else {
-                                return a.siblingIndex >= b.siblingIndex ? 1 : -1;
-                            }
-                        }
-                        else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
-                            return fontSizeA > fontSizeB ? -1 : 1;
-                        }
-                    }
-                }
-                return heightA <= heightB ? 1 : -1;
-            });
-        }
-        let fontFamily: string;
-        let fontSize: string;
-        let fontWeight: string;
-        return baseline.filter((node, index) => {
-            if (node.length) {
-                node = node.nodes.slice().sort((a, b) => {
-                    if (a.textElement && !b.textElement) {
-                        return -1;
-                    }
-                    else if (!a.textElement && b.textElement) {
-                        return 1;
-                    }
-                    else {
-                        return a.bounds.height <= b.bounds.height ? 1 : -1;
-                    }
-                })[0] as T;
-            }
-            if (index === 0) {
-                fontFamily = node.css('fontFamily');
-                fontSize = node.css('fontSize');
-                fontWeight = node.css('fontWeight');
-                return true;
-            }
-            else {
-                return (
-                    node.css('fontFamily') === fontFamily &&
-                    node.css('fontSize') === fontSize &&
-                    node.css('fontWeight') === fontWeight &&
-                    node.tagName === baseline[0].tagName && (
-                        node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight ||
-                        node.bounds.height === baseline[0].bounds.height
-                    )
-                );
-            }
-        });
     }
 
     public static linearX<T extends Node>(list: T[]) {

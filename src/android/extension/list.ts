@@ -32,10 +32,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             }
             const ordinal = node.find(item => {
                 const marginLeft = $util.convertInt(item.cssInitial('marginLeft') || item.css('marginLeft'));
-                if (item.float === 'left' && marginLeft < 0 && Math.abs(marginLeft) <= $util.convertInt(item.documentParent.cssInitial('marginLeft'))) {
-                    return true;
-                }
-                return false;
+                return item.float === 'left' && marginLeft < 0 && Math.abs(marginLeft) <= $util.convertInt(item.documentParent.cssInitial('marginLeft'));
             }) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
                 const layout = new $Layout(parent, ordinal);

@@ -22,8 +22,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             td.data(EXT_NAME.TABLE, 'expand', true);
         }
         function setBoundsWidth(td: T) {
-            td.css('width', formatPX(td.bounds.width));
-            td.unsetCache('width', 'hasWidth');
+            td.css('width', formatPX(td.bounds.width), true);
         }
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');
@@ -195,13 +194,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 mapWidth = mapWidth.map(value => value !== '0px' ? `${(parseInt(value) / width) * 100}%` : value);
             }
             else if (width > node.width) {
-                node.css('width', 'auto');
-                node.unsetCache('width', 'hasWidth');
+                node.css('width', 'auto', true);
                 if (!layoutFixed) {
-                    node.cascade().forEach(item => {
-                        item.css('width', 'auto');
-                        node.unsetCache('width', 'hasWidth');
-                    });
+                    node.cascade().forEach(item => item.css('width', 'auto', true));
                 }
             }
         }

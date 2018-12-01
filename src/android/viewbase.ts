@@ -875,7 +875,7 @@ export default (Base: Constructor<T>) => {
                     this.android('baselineAligned', 'false');
                 }
                 else {
-                    baseline = $NodeList.textBaseline(children.filter(node => node.baseline && !node.layoutRelative && !node.layoutConstraint))[0];
+                    baseline = $NodeList.baseline(children.filter(node => node.baseline && !node.layoutRelative && !node.layoutConstraint), true )[0];
                     if (baseline) {
                         this.android('baselineAlignedChildIndex', children.indexOf(baseline).toString());
                     }

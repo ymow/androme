@@ -70,17 +70,6 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                         }
                         stored.value = $xml.replaceCharacter(stored.value);
                         if (node.htmlElement) {
-                            const match = node.css('textDecoration').match(/(underline|line-through)/);
-                            if (match) {
-                                switch (match[0]) {
-                                    case 'underline':
-                                        stored.value = `<u>${stored.value}</u>`;
-                                        break;
-                                    case 'line-through':
-                                        stored.value = `<strike>${stored.value}</strike>`;
-                                        break;
-                                }
-                            }
                             if (node.css('fontVariant') === 'small-caps') {
                                 stored.value = stored.value.toUpperCase();
                             }
@@ -93,7 +82,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                             }
                             if (textIndent !== 0 && (node.blockDimension || actualParent.firstChild() === node)) {
                                 if (textIndent > 0) {
-                                    stored.value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + stored.value;
+                                    stored.value = '&#160;'.repeat(Math.floor(textIndent / 7)) + stored.value;
                                 }
                                 else if (node.toInt('textIndent') + node.bounds.width < 0) {
                                     stored.value = '';

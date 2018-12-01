@@ -43,16 +43,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     protected abstract readonly _boxReset: BoxModel;
 
     protected _cached: CachedValue<T> = {};
+    protected _styleMap: StringMap = {};
     protected _box: RectDimensions | undefined;
     protected _bounds: RectDimensions | undefined;
     protected _linear: RectDimensions | undefined;
-    protected _styleMap: StringMap = {};
     protected _controlName: string | undefined;
     protected _renderParent: T | undefined;
     protected _documentParent: T | undefined;
 
     private _initialized = false;
-    private _element: Element | undefined;
     private _parent: T | undefined;
     private _renderAs: T | undefined;
     private _renderDepth: number;
@@ -60,6 +59,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _excludeSection = 0;
     private _excludeProcedure = 0;
     private _excludeResource = 0;
+    private readonly _element: Element | undefined;
 
     protected constructor(
         public readonly id: number,
@@ -101,9 +101,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 const element = <HTMLElement> this._element;
                 const styleMap = getElementCache(element, 'styleMap') || {};
                 Array.from(element.style).forEach(value => styleMap[convertCamelCase(value)] = element.style[value]);
-                this.style = getElementCache(element, 'style') || getComputedStyle(element);
-                Object.assign(this.initial.styleMap, styleMap);
                 this._styleMap = Object.assign({}, styleMap);
+                Object.assign(this.initial.styleMap, styleMap);
+                this.style = getElementCache(element, 'style') || getComputedStyle(element);
+            }
+            else {
+                this.style = {} as CSSStyleDeclaration;
             }
             if (this._element && this.id !== 0) {
                 setElementCache(this._element, 'node', this);
@@ -208,6 +211,14 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public unsetCache(...attrs: string[]) {
         if (attrs.length) {
             for (const attr of attrs) {
+                switch (attr) {
+                    case 'width':
+                        this._cached.hasWidth = undefined;
+                        break;
+                    case 'height':
+                        this._cached.hasHeight = undefined;
+                        break;
+                }
                 this._cached[attr] = undefined;
             }
         }

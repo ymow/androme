@@ -41,6 +41,12 @@ function adjustBaseline<T extends View>(baseline: T, nodes: T[]) {
     }
 }
 
+function checkSingleLine<T extends View>(node: T, nowrap = false) {
+    if (node.textElement && node.cssParent('textAlign', true) !== 'center' && (nowrap || (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 0))) {
+        node.android('singleLine', 'true');
+    }
+}
+
 function adjustFloatingNegativeMargin<T extends View>(node: T, previous: T) {
     if (previous.float === 'left') {
         if (previous.marginRight < 0) {
@@ -480,16 +486,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             const match = /width="(\d+)"/.exec(element.outerHTML);
                             if (match) {
                                 width = parseInt(match[1]);
-                                node.css('width', $util.formatPX(match[1]));
-                                node.unsetCache('width', 'hasWidth');
+                                node.css('width', $util.formatPX(match[1]), true);
                             }
                         }
                         if (height === 0) {
                             const match = /height="(\d+)"/.exec(element.outerHTML);
                             if (match) {
                                 height = parseInt(match[1]);
-                                node.css('height', $util.formatPX(match[1]));
-                                node.unsetCache('height', 'hasHeight');
+                                node.css('height', $util.formatPX(match[1]), true);
                             }
                         }
                         switch (node.css('objectFit')) {
@@ -572,8 +576,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 if (!node.hasWidth) {
                     if (element.cols) {
-                        node.css('width', $util.formatPX(element.cols * 10));
-                        node.unsetCache('width', 'hasWidth');
+                        node.css('width', $util.formatPX(element.cols * 10), true);
                     }
                 }
                 node.android('hint', element.placeholder);
@@ -631,8 +634,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     case 'email':
                     case 'password':
                         if (!node.hasWidth && element.size > 0) {
-                            node.css('width', $util.formatPX(element.size * 10));
-                            node.unsetCache('width', 'hasWidth');
+                            node.css('width', $util.formatPX(element.size * 10), true);
                         }
                         break;
                 }
@@ -1014,7 +1016,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(item.textContent);
                             }
                             if (connected) {
-                                this.checkSingleLine(item, checkLineWrap);
+                                checkSingleLine(item, checkLineWrap);
                             }
                             if (!checkRowWrap) {
                                 return false;
@@ -1091,53 +1093,26 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             rowWidth += previousOffset + item.marginLeft + dimension.width + item.marginRight;
             if (rowWidth > boxWidth && !item.alignParent(alignParent)) {
-                this.checkSingleLine(item, checkLineWrap);
+                checkSingleLine(item, checkLineWrap);
             }
         }
         if (rows.length > 1) {
             node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
             alignmentMultiLine = true;
         }
-        const rowParent: Undefined<T>[] = [];
-        for (let i = 0; i < rows.length; i++) {
-            let tallest: T | undefined;
-            rows[i].forEach(item => {
-                if (!item.floating) {
-                    if (tallest) {
-                        if (item.lineHeight) {
-                            if (tallest.lineHeight && item.lineHeight > tallest.lineHeight) {
-                                tallest = item;
-                            }
-                            else if (item.lineHeight > tallest.bounds.height) {
-                                tallest = item;
-                            }
-                        }
-                        else if (item.bounds.height > Math.max(tallest.lineHeight, tallest.bounds.height)) {
-                            tallest = item;
-                        }
-                    }
-                    else {
-                        tallest = item;
-                    }
-                }
-            });
-            if (tallest) {
-                rowParent[i] = tallest;
-            }
-        }
         for (let i = 0; i < rows.length; i++) {
             const baseline: T[] = [];
-            let parent = rowParent[i];
-            const parentId = parent ? parent.stringId : '';
-            let stringId = i === 0 ? 'true' : parentId;
+            const optimal = $NodeList.baseline(rows[i]);
+            const optimalText = $NodeList.baseline(rows[i], true)[0];
+            const parent = optimal.length ? optimal[0] : null;
+            let stringId = i === 0 ? 'true' : parent ? parent.stringId : '';
             const tryHeight = (child: T) => {
                 if (!alignmentMultiLine) {
-                    if (child.actualParent && child.actualHeight >= child.actualParent.box.height) {
+                    if (optimal.includes(child) || child.actualParent && child.actualHeight >= child.actualParent.box.height) {
                         return true;
                     }
                     else if (!node.hasHeight) {
-                        node.css('height', $util.formatPX(node.bounds.height));
-                        node.unsetCache('height', 'hasHeight');
+                        node.css('height', $util.formatPX(node.bounds.height), true);
                     }
                 }
                 return false;
@@ -1150,10 +1125,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     else if (item.inlineVertical) {
                         switch (item.verticalAlign) {
                             case 'text-top':
-                                if (parent) {
-                                    item.anchor('top', parent.stringId);
-                                    break;
+                                if (optimalText) {
+                                    item.anchor('top', optimalText.stringId);
                                 }
+                                break;
                             case 'super':
                             case 'top':
                                 if (stringId) {
@@ -1168,14 +1143,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     const height = Math.max(item.bounds.height, item.lineHeight);
                                     const heightParent = Math.max(parent.bounds.height, parent.lineHeight);
                                     if (height < heightParent) {
-                                        item.anchor('top', stringId);
+                                        item.anchor('top', parent.stringId);
                                         item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.round((heightParent - height) / 2));
                                     }
                                 }
                                 break;
                             case 'text-bottom':
-                                if (parent) {
-                                    item.anchor('bottom', parent.stringId);
+                                if (optimalText) {
+                                    item.anchor('bottom', optimalText.stringId);
                                 }
                                 break;
                             case 'sub':
@@ -1191,7 +1166,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     }
                 }
             }
-            parent = parent || $NodeList.textBaseline(baseline)[0];
             if (parent) {
                 adjustBaseline(parent, baseline);
                 parent.baselineActive = true;
@@ -1207,32 +1181,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     protected processConstraintHorizontal(node: T, children: T[]) {
-        const tallest = children.slice().sort((a, b) => {
-            const heightA = a.bounds.height + a.marginTop;
-            const heightB = b.bounds.height + b.marginTop;
-            if (heightA === heightB) {
-                return !a.baseline && b.baseline ? 1 : -1;
-            }
-            else {
-                return heightA > heightB ? -1 : 1;
-            }
-        })[0];
-        const baseline: T | undefined = $NodeList.textBaseline(children)[0];
+        const optimal: T | undefined = $NodeList.baseline(children)[0];
+        const optimalText: T | undefined = $NodeList.baseline(children, true)[0];
         const reverse = node.hasAlign($enum.NODE_ALIGNMENT.RIGHT);
-        if (baseline) {
-            if (children.some(item => item.imageElement && item.baseline)) {
-                baseline.anchor('bottom', 'parent');
-            }
-            else if (tallest === baseline) {
-                baseline.anchor('top', 'parent');
-            }
-            else {
-                baseline.anchor('baseline', 'parent');
-            }
-            baseline.baselineActive = true;
-        }
-        else if (tallest.verticalAlign !== 'bottom') {
-            tallest.anchor('top', 'parent');
+        if (optimal) {
+            optimal.baselineActive = true;
         }
         for (let i = 0; i < children.length; i++) {
             const item = children[i];
@@ -1246,10 +1199,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             if (item.inlineVertical) {
                 switch (item.verticalAlign) {
                     case 'text-top':
-                        if (baseline) {
-                            item.anchor('top', baseline.stringId);
-                            break;
+                        if (optimalText && item !== optimalText) {
+                            item.anchor('top', optimalText.stringId);
                         }
+                        break;
                     case 'super':
                     case 'top':
                         item.anchor('top', 'parent');
@@ -1258,17 +1211,17 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         item.anchorParent(AXIS_ANDROID.VERTICAL);
                         break;
                     case 'text-bottom':
-                        if (baseline) {
-                            item.anchor('bottom', baseline.stringId);
-                            break;
+                        if (optimalText && item !== optimalText) {
+                            item.anchor('bottom', optimalText.stringId);
                         }
+                        break;
                     case 'sub':
                     case 'bottom':
                         item.anchor('bottom', 'parent');
                         break;
                     case 'baseline':
-                        if (baseline) {
-                            item.anchor('baseline', baseline.stringId);
+                        if (optimal && item !== optimal) {
+                            item.anchor('baseline', optimal.stringId);
                         }
                         break;
                 }
@@ -1442,12 +1395,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
 
     private withinParentBottom(bottom: number, boxBottom: number) {
         return $util.withinRange(bottom + this.localSettings.constraint.withinParentBottomOffset, boxBottom);
-    }
-
-    private checkSingleLine<T extends View>(node: T, nowrap = false) {
-        if (node.textElement && node.cssParent('textAlign', true) !== 'center' && (nowrap || (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 0))) {
-            node.android('singleLine', 'true');
-        }
     }
 
     public get delegateNodeInit(): SelfWrapped<T, void> {

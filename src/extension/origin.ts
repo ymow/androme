@@ -70,8 +70,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : maxArray(sectionRight.map(item => item.bounds.width));
                         const widthRight = maxArray(sectionRight.map(item => Math.abs(item.toInt('right'))));
                         sectionLeft.forEach(item => item.pageFlow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
-                        node.css('width', formatPX(widthLeft + widthRight));
-                        node.unsetCache('width', 'hasWidth');
+                        node.css('width', formatPX(widthLeft + widthRight), true);
                     }
                 }
                 const marginLeftType = maxArray(marginLeft);
@@ -100,8 +99,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                         }
                     });
                     if (node.has('width', CSS_STANDARD.UNIT)) {
-                        node.css('width', formatPX(node.toInt('width') + node.marginLeft));
-                        node.unsetCache('width', 'hasWidth');
+                        node.css('width', formatPX(node.toInt('width') + node.marginLeft), true);
                     }
                     modifyMarginLeft(node, node.marginLeft, true);
                 }

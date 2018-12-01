@@ -302,7 +302,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (Array.isArray(result)) {
                     for (const item of result) {
                         try {
-                            this.addImagePreload(<HTMLImageElement> item.srcElement);
+                            this.addImagePreload(<HTMLImageElement> item.target);
                         }
                         catch {
                         }
@@ -311,7 +311,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 parseResume();
             })
             .catch((error: Event) => {
-                const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
+                const message = error.target ? (<HTMLImageElement> error.target).src : '';
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }
@@ -1361,7 +1361,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             const linearVertical = parentY.linearVertical;
                             const horizontal: T[] = [];
                             const vertical: T[] = [];
-                            const floatAvailable = new Set(['left', 'right']);
+                            const floatSegment = new Set();
                             let verticalExtended = false;
                             function checkHorizontal(node: T) {
                                 if (vertical.length || verticalExtended) {
@@ -1393,17 +1393,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     const item = axisY[l];
                                     if (item.pageFlow) {
                                         if (hasFloat) {
-                                            const float = cleared && cleared.get(item);
+                                            const float = cleared.get(item);
                                             if (float) {
                                                 if (float === 'both') {
-                                                    floatAvailable.clear();
+                                                    floatSegment.clear();
                                                 }
                                                 else {
-                                                    floatAvailable.delete(float);
+                                                    floatSegment.delete(float);
                                                 }
                                             }
                                             if (item.floating) {
-                                                floatAvailable.add(item.float);
+                                                floatSegment.add(item.float);
                                             }
                                         }
                                         const previousSiblings = item.previousSiblings() as T[];
@@ -1424,11 +1424,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 const startNewRow = item.alignedVertically(previousSiblings, undefined, cleared);
                                                 if (startNewRow ||
                                                     cleared.has(item) ||
-                                                    settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatAvailable.size === 2)
+                                                    settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatSegment.size === 2)
                                                 {
                                                     if (horizontal.length) {
                                                         if (!settings.floatOverlapDisabled &&
-                                                            floatAvailable.size > 0 &&
+                                                            floatSegment.size > 0 &&
                                                             !previousSiblings.some(node => node.lineBreak && !cleared.has(node)) &&
                                                             !pending.some(node => cleared.get(node) === 'both') && (
                                                                 floated.size === 0 ||
@@ -1436,7 +1436,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                            ))
                                                         {
                                                             if (cleared.has(item)) {
-                                                                if (floatAvailable.size < 2 && floated.size === 2 && !item.floating) {
+                                                                if (floatSegment.size < 2 && floated.size === 2 && !item.floating) {
                                                                     item.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
                                                                     verticalExtended = true;
                                                                     horizontal.push(item);
@@ -1448,7 +1448,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                                 horizontal.push(item);
                                                                 continue;
                                                             }
-                                                            if (floated.size === 1 && (!item.floating || floatAvailable.has(item.float))) {
+                                                            if (floated.size === 1 && (!item.floating || floatSegment.has(item.float))) {
                                                                 horizontal.push(item);
                                                                 continue;
                                                             }

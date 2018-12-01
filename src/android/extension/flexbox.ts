@@ -165,7 +165,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                 case 'baseline':
                                     if (horizontal) {
                                         if (baseline === undefined) {
-                                            baseline = $NodeList.textBaseline(segment)[0];
+                                            baseline = $NodeList.baseline(segment)[0];
                                         }
                                         if (baseline) {
                                             if (chain !== baseline) {

@@ -333,15 +333,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setFontStyle() {
         for (const node of this.cache) {
             const backgroundImage = Resource.hasDrawableBackground(node.data(Resource.KEY_NAME, 'boxStyle'));
-            if (node.renderChildren.length ||
+            if (!(node.renderChildren.length ||
                 !node.baseElement ||
                 node.imageElement ||
                 node.tagName === 'HR' ||
-                node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === '')
+                node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))
             {
-                continue;
-            }
-            else {
                 const opacity = node.css('opacity');
                 const color = parseRGBA(node.css('color'), opacity);
                 let backgroundColor: ColorHexAlpha | null;

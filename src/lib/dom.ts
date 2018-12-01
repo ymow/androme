@@ -124,27 +124,29 @@ export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions {
 export function getStyle(element: Element | null, cache = true): CSSStyleDeclaration {
     if (element) {
         if (cache) {
-            const node = getElementAsNode<T>(element);
             const style = getElementCache(element, 'style');
             if (style) {
                 return style;
             }
-            else if (node) {
-                if (node.style) {
-                    return node.style;
-                }
-                else if (node.plainText) {
-                    return node.unsafe('styleMap') as CSSStyleDeclaration || {};
+            else {
+                const node = getElementAsNode<T>(element);
+                if (node) {
+                    if (node.style) {
+                        return node.style;
+                    }
+                    else if (node.plainText) {
+                        return node.unsafe('styleMap') as CSSStyleDeclaration;
+                    }
                 }
             }
         }
-        if (element.nodeName && element.nodeName.charAt(0) !== '#') {
+        if (element.nodeName.charAt(0) !== '#') {
             const style = getComputedStyle(element);
             setElementCache(element, 'style', style);
             return style;
         }
     }
-    return <CSSStyleDeclaration> {};
+    return <CSSStyleDeclaration> { display: 'none' };
 }
 
 export function getBoxSpacing(element: Element, complete = false, merge = false) {

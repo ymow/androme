@@ -60,8 +60,7 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
                     node.android('layout_width', 'match_parent');
                 }
                 else {
-                    node.css('width', $util.formatPX(node.bounds.width));
-                    node.unsetCache('width', 'hasWidth');
+                    node.css('width', $util.formatPX(node.bounds.width), true);
                 }
             }
         }
