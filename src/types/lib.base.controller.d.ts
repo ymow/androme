@@ -8,6 +8,8 @@ declare global {
             readonly delegateNodeInit: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
+            processTraverseHorizontal(data: Layout<T>, siblings: T[]): void;
+            processTraverseVertical(data: Layout<T>, siblings: T[]): void;
             checkConstraintFloat(data: Layout<T>): boolean;
             checkConstraintHorizontal(data: Layout<T>): boolean;
             checkFrameHorizontal(data: Layout<T>): boolean;

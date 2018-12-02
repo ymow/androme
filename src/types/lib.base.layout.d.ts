@@ -5,6 +5,7 @@ declare global {
             node: T;
             containerType: number;
             alignmentType: number;
+            renderType: number;
             itemCount: number;
             rowCount: number;
             columnCount: number;

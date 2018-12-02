@@ -273,6 +273,57 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     }
 
+    public processTraverseHorizontal(data: $Layout<T>, siblings: T[]) {
+        const parent = data.parent;
+        if (this.checkConstraintFloat(data)) {
+            data.node = this.createNodeGroup(data.node, data.children, data.parent);
+            data.setType($enum.NODE_CONTAINER.CONSTRAINT);
+        }
+        else if (this.checkFrameHorizontal(data)) {
+            data.node = this.createNodeGroup(data.node, data.children, data.parent);
+            data.renderType |= $enum.NODE_ALIGNMENT.FLOAT | $enum.NODE_ALIGNMENT.HORIZONTAL;
+        }
+        else if (data.length !== siblings.length) {
+            let containerType = 0;
+            data.node = this.createNodeGroup(data.node, data.children, data.parent);
+            if (this.checkConstraintHorizontal(data)) {
+                containerType = $enum.NODE_CONTAINER.CONSTRAINT;
+            }
+            else if (this.checkRelativeHorizontal(data)) {
+                containerType = $enum.NODE_CONTAINER.RELATIVE;
+            }
+            else {
+                containerType = $enum.NODE_CONTAINER.LINEAR;
+                if (data.floated.size) {
+                    $NodeList.sortByAlignment(data.children, $enum.NODE_ALIGNMENT.HORIZONTAL);
+                }
+            }
+            data.setType(containerType, $enum.NODE_ALIGNMENT.HORIZONTAL);
+        }
+        else {
+            parent.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL;
+        }
+    }
+
+    public processTraverseVertical(data: $Layout<T>, siblings: T[]) {
+        const parent = data.parent;
+        if (data.floated.size && data.cleared.size && !(data.floated.size === 1 && data.every((node, index) => index === 0 || index === data.length - 1 || data.cleared.has(node)))) {
+            if (!parent.linearVertical || $util.hasValue(data.node.dataset.import)) {
+                data.node = this.createNodeGroup(data.node, data.children, parent);
+            }
+            data.renderType |= $enum.NODE_ALIGNMENT.FLOAT | $enum.NODE_ALIGNMENT.VERTICAL;
+        }
+        else if (data.length !== siblings.length) {
+            if (!parent.linearVertical) {
+                data.node = this.createNodeGroup(data.node, data.children, parent);
+                data.setType($enum.NODE_CONTAINER.LINEAR, $enum.NODE_ALIGNMENT.VERTICAL);
+            }
+        }
+        else {
+            parent.alignmentType |= $enum.NODE_ALIGNMENT.VERTICAL;
+        }
+    }
+
     public checkConstraintHorizontal(data: $Layout<T>) {
         return !data.parent.hasHeight && new Set(data.map(node => node.bounds.height)).size !== 1 && data.some(node => node.verticalAlign === 'bottom') && data.every(node => node.inlineVertical && (node.baseline || node.verticalAlign === 'bottom'));
     }

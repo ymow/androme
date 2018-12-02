@@ -351,7 +351,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
                 }
                 else if (this.application.controllerHandler.checkFrameHorizontal(layout)) {
-                    output = this.application.processLayoutHorizontal(layout);
+                    output = this.application.renderFloatHorizontal(layout);
                 }
                 else {
                     if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {

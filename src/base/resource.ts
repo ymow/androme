@@ -334,7 +334,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const node of this.cache) {
             const backgroundImage = Resource.hasDrawableBackground(node.data(Resource.KEY_NAME, 'boxStyle'));
             if (!(node.renderChildren.length ||
-                !node.baseElement ||
+                node.baseElement === undefined ||
                 node.imageElement ||
                 node.tagName === 'HR' ||
                 node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))

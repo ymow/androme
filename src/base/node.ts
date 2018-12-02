@@ -6,7 +6,7 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER
 import Container from './container';
 import Extension from './extension';
 
-import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasFreeFormText, newRectDimensions, setElementCache, deleteElementCache } from '../lib/dom';
+import { assignBounds, getElementCache, getElementAsNode, getRangeClientRect, hasComputedStyle, hasFreeFormText, newRectDimensions, setElementCache, deleteElementCache } from '../lib/dom';
 import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
@@ -1296,7 +1296,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             const element = this._element;
             let value = false;
             if (element) {
-                switch (this.tagName) {
+                switch (element.tagName) {
                     case 'INPUT':
                     case 'BUTTON':
                     case 'IMG':
@@ -1304,7 +1304,19 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     case 'TEXTAREA':
                         break;
                     default:
-                        value = this.htmlElement && hasFreeFormText(element) && this.initial.children.length === 0;
+                        value = (
+                            this.htmlElement &&
+                            hasFreeFormText(element) && (
+                                element.children.length === 0 ||
+                                Array.from(element.children).every(item => {
+                                    const node = getElementAsNode<T>(item);
+                                    if (node && !node.excluded || hasComputedStyle(item) && hasValue(item.dataset.import)) {
+                                        return false;
+                                    }
+                                    return true;
+                                })
+                            )
+                        );
                         break;
                 }
             }

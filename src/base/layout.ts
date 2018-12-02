@@ -9,6 +9,7 @@ import { hasBit } from '../lib/util';
 export default class Layout<T extends Node> extends Container<T> implements androme.lib.base.Layout<T> {
     public rowCount = 0;
     public columnCount = 0;
+    public renderType = 0;
 
     private _floated: Set<string> | undefined;
     private _cleared: Map<T, string> | undefined;

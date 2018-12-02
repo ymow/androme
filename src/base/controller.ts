@@ -24,6 +24,8 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract checkConstraintHorizontal(data: Layout<T>): boolean;
     public abstract checkRelativeHorizontal(data: Layout<T>): boolean;
     public abstract checkFrameHorizontal(data: Layout<T>): boolean;
+    public abstract processTraverseHorizontal(data: Layout<T>, siblings: T[]): void;
+    public abstract processTraverseVertical(data: Layout<T>, siblings: T[]): void;
     public abstract setConstraints(): void;
     public abstract createNodeGroup(node: T, children: T[], parent: T): T;
     public abstract renderNode(data: Layout<T>): string;
