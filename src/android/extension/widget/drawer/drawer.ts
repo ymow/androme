@@ -2,15 +2,16 @@ import { WIDGET_NAME, getAppTheme } from '../common';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
 
+import $Resource = android.lib.base.Resource;
+import $View = android.lib.base.View;
+
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
-import $Resource = android.lib.base.Resource;
-import $View = android.lib.base.View;
-
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 export default class Drawer<T extends $View> extends androme.lib.base.Extension<T> {
@@ -55,7 +56,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             navView.positioned = true;
         }
         node.documentRoot = true;
-        node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $enum.NODE_CONTAINER.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $android_enum.CONTAINER_NODE.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
         const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.DRAWER,

@@ -1,8 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, USER_AGENT } from '../lib/enumeration';
+import { BOX_STANDARD, CSS_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Extension from '../base/extension';
-import Layout from '../base/layout';
 import Node from '../base/node';
 
 import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
@@ -16,7 +15,16 @@ const enum LAYOUT_TABLE {
 }
 
 export default abstract class Table<T extends Node> extends Extension<T> {
-    public processNode(node: T, parent: T): ExtensionResult<T> {
+    public static createDataAttribute(): TableData {
+        return {
+            layoutType: 0,
+            rowCount: 0,
+            columnCount: 0,
+            expand: false
+        };
+    }
+
+    public processNode(node: T): ExtensionResult<T> {
         function setAutoWidth(td: T) {
             td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
             td.data(EXT_NAME.TABLE, 'expand', true);
@@ -24,6 +32,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         function setBoundsWidth(td: T) {
             td.css('width', formatPX(td.bounds.width), true);
         }
+        const mainData = Table.createDataAttribute();
         const table: T[] = [];
         const thead = node.filter(item => item.tagName === 'THEAD');
         const tbody = node.filter(item => item.tagName === 'TBODY');
@@ -201,7 +210,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
-        const typeWidth = (() => {
+        mainData.layoutType = (() => {
             if (mapWidth.some(value => isPercent(value)) || mapWidth.every(value => isUnit(value) && value !== '0px')) {
                 return LAYOUT_TABLE.VARIABLE;
             }
@@ -221,8 +230,8 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
             return LAYOUT_TABLE.NONE;
         })();
-        if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
-            node.data(EXT_NAME.TABLE, 'expand', true);
+        if (multiLine || (mainData.layoutType === LAYOUT_TABLE.STRETCH && !node.hasWidth)) {
+            mainData.expand = true;
         }
         const columnCount = maxArray(columnIndex);
         let rowCount = table.length;
@@ -273,7 +282,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = mapWidth[columnIndex[i]];
                 if (columnWidth !== 'undefined') {
-                    switch (typeWidth) {
+                    switch (mainData.layoutType) {
                         case LAYOUT_TABLE.VARIABLE:
                             if (columnWidth === 'auto') {
                                 if (mapPercent >= 1) {
@@ -432,17 +441,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 borderLeftWidth: '0px'
             });
         }
-        const layout = new Layout(
-            parent,
-            node,
-            NODE_CONTAINER.GRID,
-            NODE_ALIGNMENT.AUTO_LAYOUT,
-            node.length,
-            node.children as T[]
-        );
-        layout.rowCount = rowCount;
-        layout.columnCount = columnCount;
-        const output = this.application.renderNode(layout);
-        return { output, complete: true };
+        mainData.rowCount = rowCount;
+        mainData.columnCount = columnCount;
+        node.data(EXT_NAME.TABLE, 'mainData', mainData);
+        return { output: '' };
     }
 }

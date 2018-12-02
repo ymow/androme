@@ -27,8 +27,7 @@ declare global {
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
             renderNode(data: Layout<T>): string;
-            renderFloatHorizontal(data: Layout<T>): string;
-            renderFloatVertical(data: Layout<T>, group?: T): string;
+            renderLayout(data: Layout<T>, node: T): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);

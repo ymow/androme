@@ -1,70 +1,89 @@
+import { CONTAINER_NODE } from '../lib/enumeration';
+
 import View from '../view';
 
+import $Layout = androme.lib.base.Layout;
+
 import $const = androme.lib.constant;
+import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.Table<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const result = super.processNode(node, parent);
-        const columnCount = $util.convertInt(node.android('columnCount'));
-        if (columnCount > 1) {
-            let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
-            node.each((item: T) => {
-                if (item.css('width') === '0px') {
-                    item.android('layout_width', '0px');
-                    item.android('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
-                }
-                else {
-                    const expand: boolean | undefined = item.data($const.EXT_NAME.TABLE, 'expand');
-                    const exceed: boolean = !!item.data($const.EXT_NAME.TABLE, 'exceed');
-                    const downsized: boolean = !!item.data($const.EXT_NAME.TABLE, 'downsized');
-                    if (typeof expand === 'boolean') {
-                        if (expand) {
-                            const percent = $util.convertFloat(item.data($const.EXT_NAME.TABLE, 'percent')) / 100;
-                            if (percent > 0) {
+        super.processNode(node, parent);
+        const mainData: TableData = node.data($const.EXT_NAME.TABLE, 'mainData');
+        let output = '';
+        if (mainData) {
+            if (mainData.columnCount > 1) {
+                let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
+                node.each((item: T) => {
+                    if (item.css('width') === '0px') {
+                        item.android('layout_width', '0px');
+                        item.android('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
+                    }
+                    else {
+                        const expand: boolean | undefined = item.data($const.EXT_NAME.TABLE, 'expand');
+                        const exceed: boolean = !!item.data($const.EXT_NAME.TABLE, 'exceed');
+                        const downsized: boolean = !!item.data($const.EXT_NAME.TABLE, 'downsized');
+                        if (typeof expand === 'boolean') {
+                            if (expand) {
+                                const percent = $util.convertFloat(item.data($const.EXT_NAME.TABLE, 'percent')) / 100;
+                                if (percent > 0) {
+                                    item.android('layout_width', '0px');
+                                    item.android('layout_columnWeight', $util.trimEnd(percent.toFixed(3), '0'));
+                                    requireWidth = true;
+                                }
+                            }
+                            else {
+                                item.android('layout_columnWeight', '0');
+                            }
+                        }
+                        if (downsized) {
+                            if (exceed) {
                                 item.android('layout_width', '0px');
-                                item.android('layout_columnWeight', $util.trimEnd(percent.toFixed(3), '0'));
-                                requireWidth = true;
+                                item.android('layout_columnWeight', '0.01');
                             }
-                        }
-                        else {
-                            item.android('layout_columnWeight', '0');
-                        }
-                    }
-                    if (downsized) {
-                        if (exceed) {
-                            item.android('layout_width', '0px');
-                            item.android('layout_columnWeight', '0.01');
-                        }
-                        else {
-                            if (item.textElement && !/[\s\n\-]/.test(item.textContent.trim())) {
-                                item.android('maxLines', '1');
-                            }
-                            if (item.has('width') && item.toInt('width') < item.bounds.width) {
-                                item.android('layout_width', $util.formatPX(item.bounds.width));
+                            else {
+                                if (item.textElement && !/[\s\n\-]/.test(item.textContent.trim())) {
+                                    item.android('maxLines', '1');
+                                }
+                                if (item.has('width') && item.toInt('width') < item.bounds.width) {
+                                    item.android('layout_width', $util.formatPX(item.bounds.width));
+                                }
                             }
                         }
                     }
-                }
-            });
-            if (requireWidth && !node.hasWidth) {
-                let widthParent = 0;
-                node.ascend().some(item => {
-                    if (item.hasWidth) {
-                        widthParent = item.bounds.width;
-                        return true;
-                    }
-                    return false;
                 });
-                if (node.bounds.width >= widthParent) {
-                    node.android('layout_width', 'match_parent');
+                if (requireWidth && !node.hasWidth) {
+                    let widthParent = 0;
+                    node.ascend().some(item => {
+                        if (item.hasWidth) {
+                            widthParent = item.bounds.width;
+                            return true;
+                        }
+                        return false;
+                    });
+                    if (node.bounds.width >= widthParent) {
+                        node.android('layout_width', 'match_parent');
+                    }
+                    else {
+                        node.css('width', $util.formatPX(node.bounds.width), true);
+                    }
                 }
-                else {
-                    node.css('width', $util.formatPX(node.bounds.width), true);
-                }
+                const layout = new $Layout(
+                    parent,
+                    node,
+                    CONTAINER_NODE.GRID,
+                    $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
+                    node.length,
+                    node.children as T[]
+                );
+                layout.rowCount = mainData.rowCount;
+                layout.columnCount = mainData.columnCount;
+                output = this.application.renderNode(layout);
             }
         }
-        return result;
+        return { output, complete: output !== '' };
     }
 
     public processChild(node: T, parent: T): ExtensionResult<T> {

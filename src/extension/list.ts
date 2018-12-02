@@ -1,8 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_RESOURCE } from '../lib/enumeration';
+import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 
 import Extension from '../base/extension';
-import Layout from '../base/layout';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
@@ -97,29 +96,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
         });
-        const layout = new Layout(
-            parent,
-            node,
-            0,
-            0,
-            node.length,
-            node.children as T[]
-        );
-        let complete = false;
-        if (NodeList.linearY(layout.children)) {
-            layout.rowCount = node.length;
-            layout.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
-            layout.setType(NODE_CONTAINER.GRID, NODE_ALIGNMENT.AUTO_LAYOUT);
-            complete = true;
-        }
-        else if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {
-            layout.rowCount = 1;
-            layout.columnCount = layout.length;
-            layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
-            complete = true;
-        }
-        const output = complete ? this.application.renderNode(layout) : '';
-        return { output, complete };
+        return { output: '' };
     }
 
     public postBaseLayout(node: T) {

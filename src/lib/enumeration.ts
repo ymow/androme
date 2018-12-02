@@ -11,28 +11,6 @@ export enum APP_SECTION {
     ALL = 14
 }
 
-export enum NODE_CONTAINER {
-    NONE = 0,
-    CHECKBOX,
-    RADIO,
-    EDIT,
-    SELECT,
-    RANGE,
-    SVG,
-    TEXT,
-    IMAGE,
-    BUTTON,
-    INLINE,
-    LINE,
-    SPACE,
-    BLOCK,
-    FRAME,
-    LINEAR,
-    GRID,
-    RELATIVE,
-    CONSTRAINT
-}
-
 export enum NODE_ALIGNMENT {
     NONE = 0,
     UNKNOWN = 2,

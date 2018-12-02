@@ -53,6 +53,25 @@ export interface CachedValue<T> {
     visibleStyle?: VisibleStyle;
 }
 
+interface VisibleStyle {
+    padding: boolean;
+    paddingHorizontal: boolean;
+    paddingVertical: boolean;
+    borderWidth: boolean;
+    background: boolean;
+    backgroundImage: boolean;
+    backgroundColor: boolean;
+    backgroundRepeat: boolean;
+    backgroundRepeatX: boolean;
+    backgroundRepeatY: boolean;
+}
+
+interface Support {
+    container: {
+        positionRelative: boolean;
+    };
+}
+
 type AutoMargin = {
     horizontal: boolean;
     left: boolean;
@@ -62,14 +81,4 @@ type AutoMargin = {
     top: boolean;
     bottom: boolean;
     topBottom: boolean;
-};
-
-type VisibleStyle = {
-    borderWidth: boolean;
-    background: boolean;
-    backgroundImage: boolean;
-    backgroundColor: boolean;
-    backgroundRepeat: boolean;
-    backgroundRepeatX: boolean;
-    backgroundRepeatY: boolean;
 };

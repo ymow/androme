@@ -1,15 +1,9 @@
-import { ELEMENT_MAP } from '../lib/constant';
-
 import Application from './application';
 import Layout from './layout';
 import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
-    public static getContainerType(tagName: string) {
-        return ELEMENT_MAP[tagName] || 0;
-    }
-
     public abstract userSettings: UserSettings;
 
     public abstract readonly localSettings: ControllerSettings;
@@ -20,18 +14,20 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
-    public abstract checkConstraintFloat(data: Layout<T>): boolean;
-    public abstract checkConstraintHorizontal(data: Layout<T>): boolean;
-    public abstract checkRelativeHorizontal(data: Layout<T>): boolean;
-    public abstract checkFrameHorizontal(data: Layout<T>): boolean;
-    public abstract processTraverseHorizontal(data: Layout<T>, siblings: T[]): void;
-    public abstract processTraverseVertical(data: Layout<T>, siblings: T[]): void;
-    public abstract setConstraints(): void;
-    public abstract createNodeGroup(node: T, children: T[], parent: T): T;
-    public abstract renderNode(data: Layout<T>): string;
-    public abstract renderNodeGroup(data: Layout<T>): string;
+    public abstract processUnknownParent(layout: Layout<T>): LayoutResult<T>;
+    public abstract processUnknownChild(layout: Layout<T>): LayoutResult<T>;
+    public abstract processTraverseHorizontal(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
+    public abstract processTraverseVertical(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
+    public abstract processLayoutHorizontal(layout: Layout<T>): LayoutResult<T>;
+    public abstract renderNode(layout: Layout<T>): string;
+    public abstract renderNodeGroup(layout: Layout<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
+    public abstract setConstraints(): void;
     public abstract finalize(data: SessionData<NodeList<T>>);
+    public abstract createNodeGroup(node: T, children: T[], parent: T): T;
+    public abstract get containerTypeHorizontal(): LayoutType;
+    public abstract get containerTypeVertical(): LayoutType;
+    public abstract get containerTypeVerticalMargin(): LayoutType;
     public abstract get delegateNodeInit(): SelfWrapped<T, void>;
 
     public reset() {

@@ -1,4 +1,4 @@
-import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, USER_AGENT } from '../lib/enumeration';
 
 import Controller from './controller';
 import Extension from './extension';
@@ -339,507 +339,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    public renderFloatHorizontal(data: Layout<T>) {
-        const settings = this.userSettings;
-        let layerIndex: Array<T[] | T[][]> = [];
+    public renderLayout(layout: Layout<T>, node: T) {
         let output = '';
-        if (data.cleared.size === 0 && data.every(node => !node.autoMargin.horizontal)) {
-            const inline: T[] = [];
-            const left: T[] = [];
-            const right: T[] = [];
-            for (const node of data) {
-                if (node.float === 'right') {
-                    right.push(node);
-                }
-                else if (node.float === 'left') {
-                    left.push(node);
-                }
-                else {
-                    inline.push(node);
-                }
+        if (hasBit(layout.renderType, NODE_ALIGNMENT.FLOAT)) {
+            if (hasBit(layout.renderType, NODE_ALIGNMENT.HORIZONTAL)) {
+                output = this.processFloatHorizontal(layout);
             }
-            const layout = new Layout(data.parent, data.node, 0, 0, data.itemCount, data.children);
-            layout.init();
-            if (inline.length === layout.itemCount || left.length === layout.itemCount || right.length === layout.itemCount) {
-                layout.add(NODE_ALIGNMENT.HORIZONTAL);
-                if (this.controllerHandler.checkConstraintFloat(layout)) {
-                    layout.setType(NODE_CONTAINER.CONSTRAINT);
-                    return this.renderNode(layout);
-                }
-                else if (this.controllerHandler.checkRelativeHorizontal(layout)) {
-                    layout.setType(NODE_CONTAINER.RELATIVE);
-                    return this.renderNode(layout);
-                }
-                else {
-                    layout.setType(NODE_CONTAINER.LINEAR);
-                    return this.renderNode(layout);
-                }
-            }
-            else if (left.length === 0 || right.length === 0) {
-                if (NodeList.linearY(data.children)) {
-                    layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
-                    return this.renderNode(layout);
-                }
-                else if (layout.linearX) {
-                    if (this.controllerHandler.checkRelativeHorizontal(layout)) {
-                        const subgroup: T[] = [];
-                        if (right.length === 0) {
-                            subgroup.push(...left, ...inline);
-                        }
-                        else {
-                            subgroup.push(...inline, ...right);
-                        }
-                        layout.retain(subgroup);
-                        layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.NOWRAP);
-                        return this.renderNode(layout);
-                    }
-                    else if (!settings.floatOverlapDisabled && right.length === 0) {
-                        layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL);
-                        output = this.renderNode(layout);
-                        layerIndex.push(left, inline);
-                    }
-                }
+            else if (hasBit(layout.renderType, NODE_ALIGNMENT.VERTICAL)) {
+                output = this.processFloatVertical(layout, layout.node !== node ? layout.node : undefined);
             }
         }
-        const inlineAbove: T[] = [];
-        const inlineBelow: T[] = [];
-        const leftAbove: T[] = [];
-        const rightAbove: T[] = [];
-        const leftBelow: T[] = [];
-        const rightBelow: T[] = [];
-        let leftSub: T[] | T[][] = [];
-        let rightSub: T[] | T[][] = [];
-        if (layerIndex.length === 0) {
-            let current = '';
-            let pendingFloat = 0;
-            for (let i = 0; i < data.length; i++) {
-                const node = data.item(i) as T;
-                if (data.cleared.has(node)) {
-                    const clear = data.cleared.get(node);
-                    if (hasBit(pendingFloat, clear === 'right' ? 4 : 2) || pendingFloat !== 0 && clear === 'both') {
-                        switch (clear) {
-                            case 'left':
-                                pendingFloat ^= 2;
-                                current = 'left';
-                                break;
-                            case 'right':
-                                pendingFloat ^= 4;
-                                current = 'right';
-                                break;
-                            case 'both':
-                                switch (pendingFloat) {
-                                    case 2:
-                                        current = 'left';
-                                        break;
-                                    case 4:
-                                        current = 'right';
-                                        break;
-                                    default:
-                                        current = 'both';
-                                        break;
-                                }
-                                pendingFloat = 0;
-                                break;
-                        }
-                    }
-                }
-                if (current === '') {
-                    if (node.float === 'right') {
-                        rightAbove.push(node);
-                        if (node.floating) {
-                            pendingFloat |= 4;
-                        }
-                    }
-                    else if (node.float === 'left') {
-                        leftAbove.push(node);
-                        if (node.floating) {
-                            pendingFloat |= 2;
-                        }
-                    }
-                    else if (node.autoMargin.horizontal) {
-                        if (node.autoMargin.left) {
-                            if (rightAbove.length) {
-                                rightBelow.push(node);
-                            }
-                            else {
-                                rightAbove.push(node);
-                            }
-                        }
-                        else if (node.autoMargin.right) {
-                            if (leftAbove.length) {
-                                leftBelow.push(node);
-                            }
-                            else {
-                                leftAbove.push(node);
-                            }
-                        }
-                        else {
-                            if (inlineAbove.length) {
-                                if (leftAbove.length === 0) {
-                                    leftAbove.push(node);
-                                }
-                                else {
-                                    rightAbove.push(node);
-                                }
-                            }
-                            else {
-                                inlineAbove.push(node);
-                            }
-                        }
-                    }
-                    else {
-                        inlineAbove.push(node);
-                    }
-                }
-                else {
-                    if (node.float === 'right') {
-                        if (rightBelow.length === 0) {
-                            pendingFloat |= 4;
-                        }
-                        if (!settings.floatOverlapDisabled && current !== 'right' && rightAbove.length) {
-                            rightAbove.push(node);
-                        }
-                        else {
-                            rightBelow.push(node);
-                        }
-                    }
-                    else if (node.float === 'left') {
-                        if (leftBelow.length === 0) {
-                            pendingFloat |= 2;
-                        }
-                        if (!settings.floatOverlapDisabled && current !== 'left' && leftAbove.length) {
-                            leftAbove.push(node);
-                        }
-                        else {
-                            leftBelow.push(node);
-                        }
-                    }
-                    else if (node.autoMargin.horizontal) {
-                        if (node.autoMargin.left && rightBelow.length) {
-                            rightBelow.push(node);
-                        }
-                        else if (node.autoMargin.right && leftBelow.length) {
-                            leftBelow.push(node);
-                        }
-                        else {
-                            inlineBelow.push(node);
-                        }
-                    }
-                    else {
-                        switch (current) {
-                            case 'left':
-                                leftBelow.push(node);
-                                break;
-                            case 'right':
-                                rightBelow.push(node);
-                                break;
-                            default:
-                                inlineBelow.push(node);
-                                break;
-                        }
-                    }
-                }
-            }
-            if (leftAbove.length && leftBelow.length) {
-                leftSub = [leftAbove, leftBelow];
-            }
-            else if (leftAbove.length) {
-                leftSub = leftAbove;
-            }
-            else if (leftBelow.length) {
-                leftSub = leftBelow;
-            }
-            if (rightAbove.length && rightBelow.length) {
-                rightSub = [rightAbove, rightBelow];
-            }
-            else if (rightAbove.length) {
-                rightSub = rightAbove;
-            }
-            else if (rightBelow.length) {
-                rightSub = rightBelow;
-            }
-            const layout = new Layout(data.parent, data.node, 0, rightAbove.length + rightBelow.length === data.length ? NODE_ALIGNMENT.RIGHT : 0);
-            if (settings.floatOverlapDisabled) {
-                if (data.parent.linearVertical) {
-                    data.node.alignmentType |= layout.alignmentType;
-                    output = formatPlaceholder(data.node.id);
-                    data.node.render(data.parent);
-                    data.node.renderDepth--;
-                }
-                else {
-                    layout.itemCount = (inlineAbove.length ? 1 : 0) + (leftAbove.length + rightAbove.length ? 1 : 0) + (inlineBelow.length ? 1 : 0);
-                    layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
-                    output = this.renderNode(layout);
-                }
-                layerIndex.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
-            }
-            else {
-                if (inlineAbove.length) {
-                    if (rightBelow.length) {
-                        leftSub = [inlineAbove, leftAbove];
-                        layerIndex.push(leftSub, rightSub);
-                    }
-                    else if (leftBelow.length) {
-                        rightSub = [inlineAbove, rightAbove];
-                        layerIndex.push(rightSub, leftSub);
-                    }
-                    else {
-                        layerIndex.push(inlineAbove, leftSub, rightSub);
-                    }
-                }
-                else {
-                    if (leftSub === leftBelow && rightSub === rightAbove ||
-                        leftSub === leftAbove && rightSub === rightBelow)
-                    {
-                        if (leftBelow.length === 0) {
-                            layerIndex.push([leftAbove, rightBelow]);
-                        }
-                        else {
-                            layerIndex.push([rightAbove, leftBelow]);
-                        }
-                    }
-                    else {
-                        layerIndex.push(leftSub, rightSub);
-                    }
-                }
-                layerIndex = layerIndex.filter(item => item.length > 0);
-                layout.itemCount = layerIndex.length;
-                if (inlineAbove.length === 0 && (leftSub.length === 0 || rightSub.length === 0)) {
-                    layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
-                    output = this.renderNode(layout);
-                }
-                else {
-                    layout.setType(NODE_CONTAINER.FRAME);
-                    output = this.renderNode(layout);
-                }
-            }
-        }
-        if (layerIndex.length) {
-            const floating = [inlineAbove, leftAbove, leftBelow, rightAbove, rightBelow];
-            let floatgroup: T | null;
-            layerIndex.forEach((item, index) => {
-                if (Array.isArray(item[0])) {
-                    const grouping: T[] = [];
-                    (item as T[][]).forEach(segment => grouping.push(...segment));
-                    grouping.sort(NodeList.siblingIndex);
-                    floatgroup = this.controllerHandler.createNodeGroup(grouping[0], grouping, data.node);
-                    const layout = new Layout(
-                        data.node,
-                        floatgroup,
-                        0,
-                        ((item as T[][]).some(segment => segment === rightSub || segment === rightAbove) ? NODE_ALIGNMENT.RIGHT : 0),
-                        item.length
-                    );
-                    if (settings.floatOverlapDisabled) {
-                        layout.setType(NODE_CONTAINER.FRAME);
-                    }
-                    else {
-                        if (data.node.linearVertical) {
-                            floatgroup = data.node;
-                        }
-                        else {
-                            layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
-                        }
-                    }
-                    if (layout.containerType !== 0) {
-                        output = replacePlaceholder(output, data.node.id, this.renderNode(layout));
-                    }
-                }
-                else {
-                    floatgroup = null;
-                }
-                ((Array.isArray(item[0]) ? item : [item]) as T[][]).forEach(segment => {
-                    let basegroup = data.node;
-                    if (floatgroup && floating.includes(segment)) {
-                        basegroup = floatgroup;
-                    }
-                    if (segment.length > 1) {
-                        const subgroup = this.controllerHandler.createNodeGroup(segment[0], segment, basegroup);
-                        const layout = new Layout(
-                            basegroup,
-                            subgroup,
-                            0,
-                            NODE_ALIGNMENT.SEGMENTED,
-                            segment.length,
-                            segment
-                        );
-                        layout.init();
-                        if (NodeList.linearY(segment)) {
-                            layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.VERTICAL);
-                        }
-                        else if (this.controllerHandler.checkConstraintFloat(layout)) {
-                            layout.setType(NODE_CONTAINER.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL);
-                        }
-                        else if (this.controllerHandler.checkRelativeHorizontal(layout)) {
-                            layout.setType(NODE_CONTAINER.RELATIVE, NODE_ALIGNMENT.HORIZONTAL);
-                        }
-                        else {
-                            layout.setType(NODE_CONTAINER.LINEAR, NODE_ALIGNMENT.HORIZONTAL);
-                            if (layout.floated.size) {
-                                NodeList.sortByAlignment(segment, NODE_ALIGNMENT.HORIZONTAL);
-                            }
-                        }
-                        if (layout.linearX) {
-                            layout.add(NODE_ALIGNMENT.NOWRAP);
-                        }
-                        output = replacePlaceholder(output, basegroup.id, this.renderNode(layout));
-                        basegroup.renderChild(subgroup);
-                    }
-                    else if (segment.length) {
-                        const single = segment[0];
-                        single.alignmentType |= NODE_ALIGNMENT.SINGLE;
-                        single.renderPosition = index;
-                        output = replacePlaceholder(output, basegroup.id, formatPlaceholder(`${basegroup.id}:${index}`));
-                        basegroup.renderChild(single);
-                        this.setRenderPosition(basegroup, single);
-                    }
-                });
-            });
-        }
-        return output;
-    }
-
-    public renderFloatVertical(data: Layout<T>, group?: T) {
-        let output = '';
-        if (group) {
-            const layout = new Layout(
-                data.parent,
-                group,
-                NODE_CONTAINER.LINEAR,
-                NODE_ALIGNMENT.VERTICAL,
-                data.length
-            );
+        else if (layout.containerType !== 0) {
             output = this.renderNode(layout);
-        }
-        else {
-            group = data.parent;
-            output = formatPlaceholder(group.id);
-        }
-        const staticRows: T[][] = [];
-        const floatedRows: Null<T[]>[] = [];
-        const current: T[] = [];
-        const floated: T[] = [];
-        let clearReset = false;
-        let linearVertical = true;
-        let blockArea = false;
-        for (const node of data) {
-            if (node.blockStatic && floated.length === 0) {
-                current.push(node);
-                blockArea = true;
-            }
-            else {
-                if (data.cleared.has(node)) {
-                    if (!node.floating) {
-                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-                        staticRows.push(current.slice());
-                        current.length = 0;
-                        floatedRows.push(floated.slice());
-                        floated.length = 0;
-                    }
-                    else {
-                        clearReset = true;
-                    }
-                }
-                if (node.floating) {
-                    if (blockArea) {
-                        staticRows.push(current.slice());
-                        floatedRows.push(null);
-                        current.length = 0;
-                        floated.length = 0;
-                        blockArea = false;
-                    }
-                    floated.push(node);
-                }
-                else {
-                    if (clearReset && !data.cleared.has(node)) {
-                        linearVertical = false;
-                    }
-                    current.push(node);
-                }
-            }
-        }
-        if (floated.length) {
-            floatedRows.push(floated);
-        }
-        if (current.length) {
-            staticRows.push(current);
-        }
-        if (!linearVertical) {
-            let content = '';
-            for (let i = 0; i < Math.max(floatedRows.length, staticRows.length); i++) {
-                const pageFlow = staticRows[i] || [];
-                if (floatedRows[i] === null && pageFlow.length) {
-                    const basegroup = this.controllerHandler.createNodeGroup(pageFlow[0], pageFlow, group);
-                    const layout = new Layout(
-                        group,
-                        basegroup,
-                        NODE_CONTAINER.LINEAR,
-                        NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.SEGMENTED,
-                        pageFlow.length,
-                        pageFlow
-                    );
-                    content += this.renderNode(layout);
-                }
-                else {
-                    const floating = floatedRows[i] || [];
-                    if (pageFlow.length || floating.length) {
-                        const basegroup = this.controllerHandler.createNodeGroup(floating[0] || pageFlow[0], [], group);
-                        const children: T[] = [];
-                        const layout = new Layout(
-                            group,
-                            basegroup,
-                            NODE_CONTAINER.FRAME,
-                            NODE_ALIGNMENT.VERTICAL
-                        );
-                        let subgroup: T | undefined;
-                        if (floating.length > 1) {
-                            subgroup = this.controllerHandler.createNodeGroup(floating[0], floating, basegroup);
-                            layout.add(NODE_ALIGNMENT.FLOAT);
-                            if (floating.every(item => item.float === 'right')) {
-                                layout.add(NODE_ALIGNMENT.RIGHT);
-                            }
-                        }
-                        else if (floating.length) {
-                            subgroup = floating[0];
-                            subgroup.parent = basegroup;
-                        }
-                        if (subgroup) {
-                            children.push(subgroup);
-                            subgroup = undefined;
-                        }
-                        if (pageFlow.length > 1) {
-                            subgroup = this.controllerHandler.createNodeGroup(pageFlow[0], pageFlow, basegroup);
-                        }
-                        else if (pageFlow.length) {
-                            subgroup = pageFlow[0];
-                            subgroup.parent = basegroup;
-                        }
-                        if (subgroup) {
-                            children.push(subgroup);
-                        }
-                        basegroup.init();
-                        layout.itemCount = children.length;
-                        content += this.renderNode(layout);
-                        children.forEach((node, index) => {
-                            if (data.contains(node)) {
-                                content = replacePlaceholder(content, basegroup.id, formatPlaceholder(`${basegroup.id}:${index}`));
-                            }
-                            else {
-                                const layoutChild = new Layout(
-                                    basegroup,
-                                    node,
-                                    NODE_CONTAINER.LINEAR,
-                                    NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.SEGMENTED,
-                                    node.length,
-                                    node.children as T[]
-                                );
-                                content = replacePlaceholder(content, basegroup.id, this.renderNode(layoutChild));
-                            }
-                        });
-                    }
-                }
-            }
-            output = replacePlaceholder(output, group.id, content);
         }
         return output;
     }
@@ -1372,9 +883,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             return true;
                         }
                         function checkVertical(node: T) {
-                            if (parentY.linearVertical && vertical.length) {
+                            if (parentY.layoutVertical && vertical.length) {
                                 const previousAbove = vertical[vertical.length - 1];
-                                if (previousAbove.linearVertical) {
+                                if (previousAbove.layoutVertical) {
                                     node.parent = previousAbove;
                                     return true;
                                 }
@@ -1420,8 +931,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     }
                                     else if (previous) {
                                         if (hasFloat) {
-                                            const floated = NodeList.floated([...horizontal, ...vertical]);
-                                            const pending = [...horizontal, ...vertical, item];
                                             const startNewRow = item.alignedVertically(previousSiblings, undefined, cleared);
                                             if (startNewRow ||
                                                 cleared.has(item) ||
@@ -1431,11 +940,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                     if (!settings.floatOverlapDisabled &&
                                                         floatSegment.size > 0 &&
                                                         !previousSiblings.some(node => node.lineBreak && !cleared.has(node)) &&
-                                                        !pending.some(node => cleared.get(node) === 'both') && (
-                                                            floated.size === 0 ||
-                                                            item.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom))
-                                                        ))
+                                                        ![...horizontal, item].some(node => cleared.get(node) === 'both') &&
+                                                        item.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom)))
                                                     {
+                                                        const floated = NodeList.floated(horizontal);
                                                         if (cleared.has(item)) {
                                                             if (floatSegment.size < 2 && floated.size === 2 && !item.floating) {
                                                                 item.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
@@ -1445,11 +953,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                             }
                                                             break domNested;
                                                         }
-                                                        else if (!startNewRow) {
-                                                            horizontal.push(item);
-                                                            continue;
-                                                        }
-                                                        if (floated.size === 1 && (!item.floating || floatSegment.has(item.float))) {
+                                                        else if (
+                                                            !startNewRow ||
+                                                            floated.size === 1 && (!item.floating || floatSegment.has(item.float)))
+                                                        {
                                                             horizontal.push(item);
                                                             continue;
                                                         }
@@ -1481,19 +988,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                         }
-                        let output = '';
-                        let layout: Layout<T> | undefined;
+                        let result: LayoutResult<T> | undefined;
                         let segmentEnd: T | undefined;
                         if (horizontal.length > 1) {
-                            layout = new Layout(parentY, nodeY, 0, 0, horizontal.length, horizontal);
+                            const layout = new Layout(parentY, nodeY, 0, 0, horizontal.length, horizontal);
                             layout.init();
-                            this.controllerHandler.processTraverseHorizontal(layout, axisY);
+                            result = this.controllerHandler.processTraverseHorizontal(layout, axisY);
                             segmentEnd = horizontal[horizontal.length - 1];
                         }
                         else if (vertical.length > 1) {
-                            layout = new Layout(parentY, nodeY, 0, 0, vertical.length, vertical);
+                            const layout = new Layout(parentY, nodeY, 0, 0, vertical.length, vertical);
                             layout.init();
-                            this.controllerHandler.processTraverseVertical(layout, axisY);
+                            result = this.controllerHandler.processTraverseVertical(layout, axisY);
                             segmentEnd = vertical[vertical.length - 1];
                             if (!segmentEnd.blockStatic && segmentEnd !== axisY[axisY.length - 1]) {
                                 segmentEnd.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
@@ -1503,18 +1009,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             parentY.alignmentType ^= NODE_ALIGNMENT.UNKNOWN;
                             unknownParent = false;
                         }
-                        if (layout) {
-                            if (hasBit(layout.renderType, NODE_ALIGNMENT.FLOAT)) {
-                                if (hasBit(layout.renderType, NODE_ALIGNMENT.HORIZONTAL)) {
-                                    output = this.renderFloatHorizontal(layout);
-                                }
-                                else if (hasBit(layout.renderType, NODE_ALIGNMENT.VERTICAL)) {
-                                    output = this.renderFloatVertical(layout, layout.node !== nodeY ? layout.node : undefined);
-                                }
-                            }
-                            else if (layout.containerType > 0) {
-                                output = this.renderNode(layout);
-                            }
+                        if (result) {
+                            const layout = result.layout as Layout<T>;
+                            const output = this.renderLayout(layout, nodeY);
                             if (output !== '') {
                                 this.addRenderTemplate(layout.node, parentY, output, true);
                                 parentY = nodeY.parent as T;
@@ -1586,152 +1083,33 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     }
                     if (!nodeY.rendered && !nodeY.hasBit('excludeSection', APP_SECTION.RENDER)) {
-                        const layout = new Layout(parentY, nodeY);
-                        let containerType = nodeY.containerType || Controller.getContainerType(nodeY.tagName);
-                        let output = '';
-                        if (containerType === 0) {
+                        let layout = new Layout(parentY, nodeY, nodeY.containerType, nodeY.alignmentType, nodeY.length, nodeY.children as T[]);
+                        if (layout.containerType === 0) {
+                            let result: LayoutResult<T>;
                             if (nodeY.length) {
-                                layout.retain(nodeY.children as T[]);
-                                if (nodeY.has('columnCount')) {
-                                    layout.columnCount = nodeY.toInt('columnCount');
-                                    containerType = NODE_CONTAINER.CONSTRAINT;
-                                    layout.add(NODE_ALIGNMENT.COLUMN | NODE_ALIGNMENT.AUTO_LAYOUT);
-                                }
-                                else if (nodeY.some(node => !node.pageFlow)) {
-                                    containerType = NODE_CONTAINER.CONSTRAINT;
-                                    layout.add(NODE_ALIGNMENT.ABSOLUTE | NODE_ALIGNMENT.UNKNOWN);
-                                }
-                                else {
-                                    if (nodeY.length === 1) {
-                                        const targeted = nodeY.filter(node => {
-                                            if (node.dataset.target) {
-                                                const element = document.getElementById(node.dataset.target);
-                                                return !!element && hasValue(element.dataset.import) && element !== parentY.element;
-                                            }
-                                            return false;
-                                        });
-                                        const child = nodeY.item(0) as T;
-                                        if (nodeY.documentRoot && targeted.length === 1) {
-                                            nodeY.hide();
-                                            continue;
-                                        }
-                                        else if (
-                                            settings.collapseUnattributedElements &&
-                                            nodeY.positionStatic &&
-                                            !hasValue(nodeY.element.id) &&
-                                            !hasValue(nodeY.dataset.import) &&
-                                            !hasValue(nodeY.dataset.target) &&
-                                            !nodeY.hasWidth &&
-                                            !nodeY.hasHeight &&
-                                            !nodeY.lineHeight &&
-                                            !nodeY.visibleStyle.background &&
-                                            !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
-                                            nodeY.rightAligned && !nodeY.autoMargin.horizontal &&
-                                            !child.hasWidth &&
-                                            !child.visibleStyle.borderWidth &&
-                                            !this.controllerHandler.hasAppendProcessing(nodeY.id))
-                                        {
-                                            child.documentRoot = nodeY.documentRoot;
-                                            child.siblingIndex = nodeY.siblingIndex;
-                                            child.parent = parentY;
-                                            nodeY.resetBox(BOX_STANDARD.MARGIN | BOX_STANDARD.PADDING, child, true);
-                                            nodeY.hide();
-                                            axisY[k] = child;
-                                            k--;
-                                            continue;
-                                        }
-                                        else {
-                                            containerType = NODE_CONTAINER.FRAME;
-                                            layout.add(NODE_ALIGNMENT.SINGLE);
-                                        }
-                                    }
-                                    else {
-                                        layout.init();
-                                        if (Array.from(nodeY.element.children).some(item => item.tagName === 'BR')) {
-                                            containerType = NODE_CONTAINER.LINEAR;
-                                            layout.add(NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN);
-                                        }
-                                        else if (this.controllerHandler.checkConstraintFloat(layout)) {
-                                            containerType = NODE_CONTAINER.CONSTRAINT;
-                                        }
-                                        else if (layout.linearX) {
-                                            if (this.controllerHandler.checkFrameHorizontal(layout)) {
-                                                output = this.renderFloatHorizontal(layout);
-                                            }
-                                            else if (this.controllerHandler.checkConstraintHorizontal(layout)) {
-                                                containerType = NODE_CONTAINER.CONSTRAINT;
-                                            }
-                                            else if (this.controllerHandler.checkRelativeHorizontal(layout)) {
-                                                containerType = NODE_CONTAINER.RELATIVE;
-                                            }
-                                            else {
-                                                containerType = NODE_CONTAINER.LINEAR;
-                                                if (layout.floated.size) {
-                                                    NodeList.sortByAlignment(layout.children, NODE_ALIGNMENT.HORIZONTAL);
-                                                }
-                                            }
-                                            layout.add(NODE_ALIGNMENT.HORIZONTAL);
-                                        }
-                                        else if (NodeList.linearY(layout.children)) {
-                                            containerType = NODE_CONTAINER.LINEAR;
-                                            layout.add(NODE_ALIGNMENT.VERTICAL | (nodeY.documentRoot ? NODE_ALIGNMENT.UNKNOWN : 0));
-                                        }
-                                        else if (layout.every(node => node.inlineFlow)) {
-                                            if (this.controllerHandler.checkFrameHorizontal(layout)) {
-                                                output = this.renderFloatHorizontal(layout);
-                                            }
-                                            else {
-                                                containerType = NODE_CONTAINER.RELATIVE;
-                                                layout.add(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.UNKNOWN);
-                                            }
-                                        }
-                                        else if (layout.some(node => node.alignedVertically(node.previousSiblings(), layout.children, layout.cleared))) {
-                                            containerType = NODE_CONTAINER.LINEAR;
-                                            layout.add(NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.UNKNOWN);
-                                        }
-                                        else {
-                                            containerType = NODE_CONTAINER.CONSTRAINT;
-                                            layout.add(NODE_ALIGNMENT.UNKNOWN);
-                                        }
-                                    }
-                                }
+                                result = this.controllerHandler.processUnknownParent(layout);
                             }
                             else {
-                                const visible = nodeY.visibleStyle;
-                                if (nodeY.inlineText || visible.borderWidth && nodeY.textContent.length) {
-                                    containerType = NODE_CONTAINER.TEXT;
-                                }
-                                else if (visible.backgroundImage && !visible.backgroundRepeat && (!nodeY.inlineText || nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) {
-                                    containerType = NODE_CONTAINER.IMAGE;
-                                    layout.add(NODE_ALIGNMENT.SINGLE);
-                                    nodeY.exclude({ resource: NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING });
-                                }
-                                else if (nodeY.block && (visible.borderWidth || visible.backgroundImage) && (visible.borderWidth || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingBottom + nodeY.paddingLeft > 0)) {
-                                    containerType = NODE_CONTAINER.LINE;
-                                }
-                                else if (!nodeY.documentRoot) {
-                                    if (settings.collapseUnattributedElements && nodeY.bounds.height === 0 && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.import) && !visible.background) {
-                                        parentY.remove(nodeY);
-                                        nodeY.hide();
-                                    }
-                                    else if (visible.background) {
-                                        containerType = NODE_CONTAINER.TEXT;
-                                    }
-                                    else {
-                                        containerType = NODE_CONTAINER.FRAME;
-                                    }
-                                }
+                                result = this.controllerHandler.processUnknownChild(layout);
+                            }
+                            if (result.next === true) {
+                                continue;
+                            }
+                            else if (result.renderAs) {
+                                axisY[k] = result.renderAs as T;
+                                k--;
+                                continue;
+                            }
+                            else {
+                                layout = result.layout as Layout<T>;
                             }
                         }
-                        else {
-                            layout.retain(nodeY.children as T[]);
-                            layout.setType(containerType, nodeY.alignmentType);
+                        if (layout.containerType !== 0) {
+                            const output = this.renderLayout(layout, nodeY);
+                            if (output !== '') {
+                                this.addRenderTemplate(nodeY, parentY, output);
+                            }
                         }
-                        if (output === '' && containerType !== 0) {
-                            layout.setType(containerType);
-                            output = this.renderNode(layout);
-                        }
-                        this.addRenderTemplate(nodeY, parentY, output);
                     }
                 }
             }
@@ -1852,46 +1230,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    protected insertNode(element: Element, parent?: T) {
-        let node: T | null = null;
-        if (element.nodeName.charAt(0) === '#') {
-            if (element.nodeName === '#text') {
-                if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
-                    if (parent) {
-                        node.inherit(parent, 'style');
-                    }
-                    else {
-                        node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
-                    }
-                    node.css({
-                        position: 'static',
-                        display: 'inline',
-                        verticalAlign: 'baseline',
-                        cssFloat: 'none',
-                        clear: 'none',
-                    });
-                }
-            }
-        }
-        else if (hasComputedStyle(element)) {
-            const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
-            if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && isElementIncluded(element)) {
-                node = nodeConstructor;
-                node.setExclusions();
-            }
-            else {
-                nodeConstructor.visible = false;
-                nodeConstructor.excluded = true;
-                this.processing.excluded.append(nodeConstructor);
-            }
-        }
-        if (node) {
-            this.processing.cache.append(node);
-        }
-        return node;
-    }
-
     protected processRenderQueue() {
         const template: StringMap = {};
         for (const [id, templates] of this.session.renderQueue.entries()) {
@@ -1944,6 +1282,529 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             view.content = this.controllerHandler.replaceRenderQueue(view.content);
         }
+    }
+
+    protected processFloatHorizontal(data: Layout<T>) {
+        const settings = this.userSettings;
+        let layerIndex: Array<T[] | T[][]> = [];
+        let output = '';
+        if (data.cleared.size === 0 && !data.some(node => node.autoMargin.horizontal)) {
+            const inline: T[] = [];
+            const left: T[] = [];
+            const right: T[] = [];
+            for (const node of data) {
+                if (node.float === 'right') {
+                    right.push(node);
+                }
+                else if (node.float === 'left') {
+                    left.push(node);
+                }
+                else {
+                    inline.push(node);
+                }
+            }
+            const layout = new Layout(data.parent, data.node, 0, 0, data.itemCount, data.children);
+            layout.init();
+            if (inline.length === layout.itemCount || left.length === layout.itemCount || right.length === layout.itemCount) {
+                this.controllerHandler.processLayoutHorizontal(layout);
+            }
+            else if (layout.linearX && (left.length === 0 || right.length === 0)) {
+                const subgroup: T[] = [];
+                if (right.length === 0) {
+                    subgroup.push(...left, ...inline);
+                }
+                else {
+                    subgroup.push(...inline, ...right);
+                }
+                layout.retain(subgroup);
+                this.controllerHandler.processLayoutHorizontal(layout);
+            }
+            if (layout.containerType !== 0) {
+                return this.renderNode(layout);
+            }
+        }
+        const inlineAbove: T[] = [];
+        const inlineBelow: T[] = [];
+        const leftAbove: T[] = [];
+        const rightAbove: T[] = [];
+        const leftBelow: T[] = [];
+        const rightBelow: T[] = [];
+        let leftSub: T[] | T[][] = [];
+        let rightSub: T[] | T[][] = [];
+        if (layerIndex.length === 0) {
+            let current = '';
+            let pendingFloat = 0;
+            for (let i = 0; i < data.length; i++) {
+                const node = data.item(i) as T;
+                if (data.cleared.has(node)) {
+                    const clear = data.cleared.get(node);
+                    if (hasBit(pendingFloat, clear === 'right' ? 4 : 2) || pendingFloat !== 0 && clear === 'both') {
+                        switch (clear) {
+                            case 'left':
+                                pendingFloat ^= 2;
+                                current = 'left';
+                                break;
+                            case 'right':
+                                pendingFloat ^= 4;
+                                current = 'right';
+                                break;
+                            case 'both':
+                                switch (pendingFloat) {
+                                    case 2:
+                                        current = 'left';
+                                        break;
+                                    case 4:
+                                        current = 'right';
+                                        break;
+                                    default:
+                                        current = 'both';
+                                        break;
+                                }
+                                pendingFloat = 0;
+                                break;
+                        }
+                    }
+                }
+                if (current === '') {
+                    if (node.float === 'right') {
+                        rightAbove.push(node);
+                        if (node.floating) {
+                            pendingFloat |= 4;
+                        }
+                    }
+                    else if (node.float === 'left') {
+                        leftAbove.push(node);
+                        if (node.floating) {
+                            pendingFloat |= 2;
+                        }
+                    }
+                    else if (node.autoMargin.horizontal) {
+                        if (node.autoMargin.left) {
+                            if (rightAbove.length) {
+                                rightBelow.push(node);
+                            }
+                            else {
+                                rightAbove.push(node);
+                            }
+                        }
+                        else if (node.autoMargin.right) {
+                            if (leftAbove.length) {
+                                leftBelow.push(node);
+                            }
+                            else {
+                                leftAbove.push(node);
+                            }
+                        }
+                        else {
+                            if (inlineAbove.length) {
+                                if (leftAbove.length === 0) {
+                                    leftAbove.push(node);
+                                }
+                                else {
+                                    rightAbove.push(node);
+                                }
+                            }
+                            else {
+                                inlineAbove.push(node);
+                            }
+                        }
+                    }
+                    else {
+                        inlineAbove.push(node);
+                    }
+                }
+                else {
+                    if (node.float === 'right') {
+                        if (rightBelow.length === 0) {
+                            pendingFloat |= 4;
+                        }
+                        if (!settings.floatOverlapDisabled && current !== 'right' && rightAbove.length) {
+                            rightAbove.push(node);
+                        }
+                        else {
+                            rightBelow.push(node);
+                        }
+                    }
+                    else if (node.float === 'left') {
+                        if (leftBelow.length === 0) {
+                            pendingFloat |= 2;
+                        }
+                        if (!settings.floatOverlapDisabled && current !== 'left' && leftAbove.length) {
+                            leftAbove.push(node);
+                        }
+                        else {
+                            leftBelow.push(node);
+                        }
+                    }
+                    else if (node.autoMargin.horizontal) {
+                        if (node.autoMargin.left && rightBelow.length) {
+                            rightBelow.push(node);
+                        }
+                        else if (node.autoMargin.right && leftBelow.length) {
+                            leftBelow.push(node);
+                        }
+                        else {
+                            inlineBelow.push(node);
+                        }
+                    }
+                    else {
+                        switch (current) {
+                            case 'left':
+                                leftBelow.push(node);
+                                break;
+                            case 'right':
+                                rightBelow.push(node);
+                                break;
+                            default:
+                                inlineBelow.push(node);
+                                break;
+                        }
+                    }
+                }
+            }
+            if (leftAbove.length && leftBelow.length) {
+                leftSub = [leftAbove, leftBelow];
+            }
+            else if (leftAbove.length) {
+                leftSub = leftAbove;
+            }
+            else if (leftBelow.length) {
+                leftSub = leftBelow;
+            }
+            if (rightAbove.length && rightBelow.length) {
+                rightSub = [rightAbove, rightBelow];
+            }
+            else if (rightAbove.length) {
+                rightSub = rightAbove;
+            }
+            else if (rightBelow.length) {
+                rightSub = rightBelow;
+            }
+            const layout = new Layout(data.parent, data.node, 0, rightAbove.length + rightBelow.length === data.length ? NODE_ALIGNMENT.RIGHT : 0);
+            if (settings.floatOverlapDisabled) {
+                if (data.parent.layoutVertical) {
+                    data.node.alignmentType |= layout.alignmentType;
+                    output = formatPlaceholder(data.node.id);
+                    data.node.render(data.parent);
+                    data.node.renderDepth--;
+                }
+                else {
+                    const vertical = this.controllerHandler.containerTypeVertical;
+                    layout.itemCount = (inlineAbove.length ? 1 : 0) + (leftAbove.length + rightAbove.length ? 1 : 0) + (inlineBelow.length ? 1 : 0);
+                    layout.setType(vertical.containerType, vertical.alignmentType);
+                    output = this.renderNode(layout);
+                }
+                layerIndex.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
+            }
+            else {
+                if (inlineAbove.length) {
+                    if (rightBelow.length) {
+                        leftSub = [inlineAbove, leftAbove];
+                        layerIndex.push(leftSub, rightSub);
+                    }
+                    else if (leftBelow.length) {
+                        rightSub = [inlineAbove, rightAbove];
+                        layerIndex.push(rightSub, leftSub);
+                    }
+                    else {
+                        layerIndex.push(inlineAbove, leftSub, rightSub);
+                    }
+                }
+                else {
+                    if (leftSub === leftBelow && rightSub === rightAbove || leftSub === leftAbove && rightSub === rightBelow) {
+                        if (leftBelow.length === 0) {
+                            layerIndex.push([leftAbove, rightBelow]);
+                        }
+                        else {
+                            layerIndex.push([rightAbove, leftBelow]);
+                        }
+                    }
+                    else {
+                        layerIndex.push(leftSub, rightSub);
+                    }
+                }
+                layerIndex = layerIndex.filter(item => item.length > 0);
+                layout.itemCount = layerIndex.length;
+                let vertical: LayoutType;
+                if (inlineAbove.length === 0 && (leftSub.length === 0 || rightSub.length === 0)) {
+                    vertical = this.controllerHandler.containerTypeVertical;
+                }
+                else {
+                    vertical = this.controllerHandler.containerTypeVerticalMargin;
+                }
+                layout.setType(vertical.containerType, vertical.alignmentType);
+                output = this.renderNode(layout);
+            }
+        }
+        if (layerIndex.length) {
+            const floating = [inlineAbove, leftAbove, leftBelow, rightAbove, rightBelow];
+            let floatgroup: T | null;
+            layerIndex.forEach((item, index) => {
+                if (Array.isArray(item[0])) {
+                    const grouping: T[] = [];
+                    (item as T[][]).forEach(segment => grouping.push(...segment));
+                    grouping.sort(NodeList.siblingIndex);
+                    floatgroup = this.controllerHandler.createNodeGroup(grouping[0], grouping, data.node);
+                    const layout = new Layout(
+                        data.node,
+                        floatgroup,
+                        0,
+                        ((item as T[][]).some(segment => segment === rightSub || segment === rightAbove) ? NODE_ALIGNMENT.RIGHT : 0),
+                        item.length
+                    );
+                    let vertical: LayoutType | undefined;
+                    if (settings.floatOverlapDisabled) {
+                        vertical = this.controllerHandler.containerTypeVerticalMargin;
+                    }
+                    else {
+                        if (data.node.layoutVertical) {
+                            floatgroup = data.node;
+                        }
+                        else {
+                            vertical = this.controllerHandler.containerTypeVertical;
+                        }
+                    }
+                    if (vertical) {
+                        layout.setType(vertical.containerType, vertical.alignmentType);
+                        output = replacePlaceholder(output, data.node.id, this.renderNode(layout));
+                    }
+                }
+                else {
+                    floatgroup = null;
+                }
+                ((Array.isArray(item[0]) ? item : [item]) as T[][]).forEach(segment => {
+                    let basegroup = data.node;
+                    if (floatgroup && floating.includes(segment)) {
+                        basegroup = floatgroup;
+                    }
+                    if (segment.length > 1) {
+                        const subgroup = this.controllerHandler.createNodeGroup(segment[0], segment, basegroup);
+                        const layout = new Layout(
+                            basegroup,
+                            subgroup,
+                            0,
+                            NODE_ALIGNMENT.SEGMENTED,
+                            segment.length,
+                            segment
+                        );
+                        if (layout.linearY) {
+                            const vertical = this.controllerHandler.containerTypeVertical;
+                            layout.setType(vertical.containerType, vertical.alignmentType);
+                        }
+                        else {
+                            layout.init();
+                            this.controllerHandler.processLayoutHorizontal(layout);
+                        }
+                        output = replacePlaceholder(output, basegroup.id, this.renderNode(layout));
+                        basegroup.renderChild(subgroup);
+                    }
+                    else if (segment.length) {
+                        const single = segment[0];
+                        single.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                        single.renderPosition = index;
+                        output = replacePlaceholder(output, basegroup.id, formatPlaceholder(`${basegroup.id}:${index}`));
+                        basegroup.renderChild(single);
+                        this.setRenderPosition(basegroup, single);
+                    }
+                });
+            });
+        }
+        return output;
+    }
+
+    protected processFloatVertical(data: Layout<T>, group?: T) {
+        const controller = this.controllerHandler;
+        let output = '';
+        if (group) {
+            const vertical = controller.containerTypeVertical;
+            const layout = new Layout(
+                data.parent,
+                group,
+                vertical.containerType,
+                vertical.alignmentType,
+                data.length
+            );
+            output = this.renderNode(layout);
+        }
+        else {
+            group = data.parent;
+            output = formatPlaceholder(group.id);
+        }
+        const staticRows: T[][] = [];
+        const floatedRows: Null<T[]>[] = [];
+        const current: T[] = [];
+        const floated: T[] = [];
+        let clearReset = false;
+        let blockArea = false;
+        let layoutVertical = true;
+        for (const node of data) {
+            if (node.blockStatic && floated.length === 0) {
+                current.push(node);
+                blockArea = true;
+            }
+            else {
+                if (data.cleared.has(node)) {
+                    if (!node.floating) {
+                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                        staticRows.push(current.slice());
+                        current.length = 0;
+                        floatedRows.push(floated.slice());
+                        floated.length = 0;
+                    }
+                    else {
+                        clearReset = true;
+                    }
+                }
+                if (node.floating) {
+                    if (blockArea) {
+                        staticRows.push(current.slice());
+                        floatedRows.push(null);
+                        current.length = 0;
+                        floated.length = 0;
+                        blockArea = false;
+                    }
+                    floated.push(node);
+                }
+                else {
+                    if (clearReset && !data.cleared.has(node)) {
+                        layoutVertical = false;
+                    }
+                    current.push(node);
+                }
+            }
+        }
+        if (floated.length) {
+            floatedRows.push(floated);
+        }
+        if (current.length) {
+            staticRows.push(current);
+        }
+        if (!layoutVertical) {
+            let xml = '';
+            for (let i = 0; i < Math.max(floatedRows.length, staticRows.length); i++) {
+                const pageFlow = staticRows[i] || [];
+                if (floatedRows[i] === null && pageFlow.length) {
+                    const layoutType = controller.containerTypeVertical;
+                    layoutType.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                    const layout = new Layout(
+                        group,
+                        controller.createNodeGroup(pageFlow[0], pageFlow, group),
+                        layoutType.containerType,
+                        layoutType.alignmentType,
+                        pageFlow.length,
+                        pageFlow
+                    );
+                    xml += this.renderNode(layout);
+                }
+                else {
+                    const floating = floatedRows[i] || [];
+                    if (pageFlow.length || floating.length) {
+                        const basegroup = controller.createNodeGroup(floating[0] || pageFlow[0], [], group);
+                        const verticalMargin = controller.containerTypeVerticalMargin;
+                        const layout = new Layout(
+                            group,
+                            basegroup,
+                            verticalMargin.containerType,
+                            verticalMargin.alignmentType
+                        );
+                        const children: T[] = [];
+                        let subgroup: T | undefined;
+                        if (floating.length) {
+                            if (floating.length > 1) {
+                                subgroup = controller.createNodeGroup(floating[0], floating, basegroup);
+                                layout.add(NODE_ALIGNMENT.FLOAT);
+                                if (floating.every(item => item.float === 'right')) {
+                                    layout.add(NODE_ALIGNMENT.RIGHT);
+                                }
+                            }
+                            else {
+                                subgroup = floating[0];
+                                subgroup.parent = basegroup;
+                            }
+                        }
+                        if (subgroup) {
+                            children.push(subgroup);
+                            subgroup = undefined;
+                        }
+                        if (pageFlow.length) {
+                            if (pageFlow.length > 1) {
+                                subgroup = controller.createNodeGroup(pageFlow[0], pageFlow, basegroup);
+                            }
+                            else {
+                                subgroup = pageFlow[0];
+                                subgroup.parent = basegroup;
+                            }
+                        }
+                        if (subgroup) {
+                            children.push(subgroup);
+                        }
+                        basegroup.init();
+                        layout.itemCount = children.length;
+                        xml += this.renderNode(layout);
+                        children.forEach((node, index) => {
+                            if (data.contains(node)) {
+                                xml = replacePlaceholder(xml, basegroup.id, formatPlaceholder(`${basegroup.id}:${index}`));
+                            }
+                            else {
+                                const vertical = controller.containerTypeVertical;
+                                vertical.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                                const layoutSegment = new Layout(
+                                    basegroup,
+                                    node,
+                                    vertical.containerType,
+                                    vertical.alignmentType,
+                                    node.length,
+                                    node.children as T[]
+                                );
+                                xml = replacePlaceholder(xml, basegroup.id, this.renderNode(layoutSegment));
+                            }
+                        });
+                    }
+                }
+            }
+            output = replacePlaceholder(output, group.id, xml);
+        }
+        return output;
+    }
+
+    protected insertNode(element: Element, parent?: T) {
+        let node: T | null = null;
+        if (element.nodeName.charAt(0) === '#') {
+            if (element.nodeName === '#text') {
+                if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
+                    if (parent) {
+                        node.inherit(parent, 'style');
+                    }
+                    else {
+                        node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
+                    }
+                    node.css({
+                        position: 'static',
+                        display: 'inline',
+                        verticalAlign: 'baseline',
+                        cssFloat: 'none',
+                        clear: 'none',
+                    });
+                }
+            }
+        }
+        else if (hasComputedStyle(element)) {
+            const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
+            if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && isElementIncluded(element)) {
+                node = nodeConstructor;
+                node.setExclusions();
+            }
+            else {
+                nodeConstructor.visible = false;
+                nodeConstructor.excluded = true;
+                this.processing.excluded.append(nodeConstructor);
+            }
+        }
+        if (node) {
+            this.processing.cache.append(node);
+        }
+        return node;
     }
 
     private setStyleMap() {

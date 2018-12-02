@@ -14,6 +14,7 @@ export default class Layout<T extends Node> extends Container<T> implements andr
     private _floated: Set<string> | undefined;
     private _cleared: Map<T, string> | undefined;
     private _linearX: boolean | undefined;
+    private _linearY: boolean | undefined;
 
     constructor(
         public parent: T,
@@ -29,19 +30,19 @@ export default class Layout<T extends Node> extends Container<T> implements andr
     public init() {
         this.floated = this.getFloated();
         this.cleared = this.getCleared();
-        this.linearX = this.getLinearX();
+        this.linearX = this.isLinearX();
     }
 
     public initParent() {
         this.floated = this.getFloated(true);
         this.cleared = this.getCleared(true);
-        this.linearX = this.getLinearX();
+        this.linearX = this.isLinearX();
     }
 
-    public setType(containerType: number, alignmentType?: number) {
+    public setType(containerType: number, ...alignmentType: number[]) {
         this.containerType = containerType;
-        if (alignmentType) {
-            this.add(alignmentType);
+        for (const value of alignmentType) {
+            this.add(value);
         }
     }
 
@@ -71,8 +72,12 @@ export default class Layout<T extends Node> extends Container<T> implements andr
         return parent ? NodeList.clearedAll(this.parent) : NodeList.cleared(this.children);
     }
 
-    public getLinearX() {
+    public isLinearX() {
         return NodeList.linearX(this.children);
+    }
+
+    public isLinearY() {
+        return NodeList.linearY(this.children);
     }
 
     set floated(value) {
@@ -109,6 +114,13 @@ export default class Layout<T extends Node> extends Container<T> implements andr
         this._linearX = value;
     }
     get linearX() {
-        return this._linearX || this.getLinearX();
+        return this._linearX || this.isLinearX();
+    }
+
+    set linearY(value) {
+        this._linearY = value;
+    }
+    get linearY() {
+        return this._linearY || this.isLinearY();
     }
 }

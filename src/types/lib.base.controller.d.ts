@@ -5,18 +5,20 @@ declare global {
             cache: NodeList<T>;
             userSettings: UserSettings;
             readonly localSettings: ControllerSettings;
+            readonly containerTypeHorizontal: LayoutType;
+            readonly containerTypeVertical: LayoutType;
+            readonly containerTypeVerticalMargin: LayoutType;
             readonly delegateNodeInit: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
-            processTraverseHorizontal(data: Layout<T>, siblings: T[]): void;
-            processTraverseVertical(data: Layout<T>, siblings: T[]): void;
-            checkConstraintFloat(data: Layout<T>): boolean;
-            checkConstraintHorizontal(data: Layout<T>): boolean;
-            checkFrameHorizontal(data: Layout<T>): boolean;
-            checkRelativeHorizontal(data: Layout<T>): boolean;
+            processUnknownParent(layout: Layout<T>): LayoutResult<T>;
+            processUnknownChild(layout: Layout<T>): LayoutResult<T>;
+            processTraverseHorizontal(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
+            processTraverseVertical(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
+            processLayoutHorizontal(layout: Layout<T>): LayoutResult<T>;
             setConstraints(): void;
-            renderNode(data: Layout<T>);
-            renderNodeGroup(data: Layout<T>);
+            renderNode(layout: Layout<T>);
+            renderNodeGroup(layout: Layout<T>);
             renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             createNodeGroup(node: T, children: T[], parent?: T, replaceWith?: T): T;
             replaceRenderQueue(output: string): string;
@@ -25,9 +27,7 @@ declare global {
             hasAppendProcessing(id: number): boolean;
         }
 
-        export class Controller<T extends Node> implements Controller<T> {
-            public static getContainerType(tagName: string): number;
-        }
+        export class Controller<T extends Node> implements Controller<T> {}
     }
 }
 

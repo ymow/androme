@@ -1,7 +1,7 @@
-import { CachedValue, InitialData } from '../types/lib.base.types.node';
+import { CachedValue, InitialData, Support } from '../types/lib.base.types.node';
 
 import { ELEMENT_BLOCK, ELEMENT_INLINE, REGEX_PATTERN } from '../lib/constant';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER, NODE_PROCEDURE, NODE_RESOURCE } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE } from '../lib/enumeration';
 
 import Container from './container';
 import Extension from './extension';
@@ -19,7 +19,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract readonly renderChildren: T[];
 
     public style: CSSStyleDeclaration;
-    public containerType = 0;
     public alignmentType = 0;
     public depth = -1;
     public siblingIndex = Number.MAX_VALUE;
@@ -59,7 +58,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _excludeSection = 0;
     private _excludeProcedure = 0;
     private _excludeResource = 0;
-    private readonly _element: Element | undefined;
+    private readonly _element: Element | null = null;
 
     protected constructor(
         public readonly id: number,
@@ -88,12 +87,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract alignParent(position: string): boolean;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
+    public abstract set containerType(value: number);
+    public abstract get containerType(): number;
     public abstract get inlineWidth(): boolean;
     public abstract get inlineHeight(): boolean;
     public abstract get blockWidth(): boolean;
     public abstract get blockHeight(): boolean;
     public abstract get dpi(): number;
     public abstract get fontSize(): number;
+    public abstract get support(): Support;
 
     public init() {
         if (!this._initialized) {
@@ -340,7 +342,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return true;
         }
         if (this.pageFlow && previousSiblings.length) {
-            const parent = this.parent ? (this.rendered ? this.renderParent : this.parent) : null;
             const actualParent = this.actualParent;
             if (isArray(siblings) && this !== siblings[0]) {
                 if (cleared && cleared.has(this)) {
@@ -365,12 +366,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         this.blockStatic ||
                         !this.inlineFlow && !this.floating
                     ) ||
-                    previous.bounds && actualParent !== null && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.toInt('width') : actualParent.box.width) && (
+                    actualParent && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.width : actualParent.box.width) && (
                         !previous.textElement ||
                         previous.textElement && previous.css('whiteSpace') === 'nowrap'
                     ) ||
                     previous.lineBreak ||
-                    previous.plainText && previous.multiLine && parent && !parent.layoutRelative && (parent.containerType === NODE_ALIGNMENT.NONE || parent.hasAlign(NODE_ALIGNMENT.UNKNOWN) || parent.layoutVertical) ||
                     previous.float === 'left' && this.autoMargin.right ||
                     previous.float === 'right' && this.autoMargin.left
                 );
@@ -930,7 +930,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get groupElement() {
-        return this._element === undefined && this.length > 0;
+        return this._element === null && this.length > 0;
     }
 
     get plainText() {
@@ -1520,7 +1520,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             const backgroundImage = REGEX_PATTERN.CSS_URL.test(this.css('backgroundImage')) || REGEX_PATTERN.CSS_URL.test(this.css('background'));
             const backgroundColor = this.has('backgroundColor');
             const backgroundRepeat = this.css('backgroundRepeat');
+            const paddingHorizontal = this.paddingLeft + this.paddingRight > 0;
+            const paddingVertical = this.paddingTop + this.paddingBottom > 0;
             this._cached.visibleStyle = {
+                padding: paddingHorizontal || paddingVertical,
+                paddingHorizontal,
+                paddingVertical,
                 background: borderWidth || backgroundImage || backgroundColor,
                 borderWidth,
                 backgroundImage,
@@ -1541,28 +1546,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.preserveWhiteSpace;
     }
 
-    get layoutFrame() {
-        return this.is(NODE_CONTAINER.FRAME);
-    }
-    get layoutLinear() {
-        return this.is(NODE_CONTAINER.LINEAR);
-    }
-    get layoutRelative() {
-        return this.is(NODE_CONTAINER.RELATIVE);
-    }
-    get layoutConstraint() {
-        return this.is(NODE_CONTAINER.CONSTRAINT);
-    }
-
     get layoutHorizontal() {
-        return this.hasAlign(NODE_ALIGNMENT.HORIZONTAL) || this.layoutFrame && this.nodes.length === 1;
+        return this.hasAlign(NODE_ALIGNMENT.HORIZONTAL);
     }
     get layoutVertical() {
-        return this.hasAlign(NODE_ALIGNMENT.VERTICAL) || this.layoutFrame && this.nodes.length === 1;
-    }
-
-    get linearVertical() {
-        return this.layoutLinear && this.layoutVertical;
+        return this.hasAlign(NODE_ALIGNMENT.VERTICAL);
     }
 
     set controlName(value) {

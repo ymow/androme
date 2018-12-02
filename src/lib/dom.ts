@@ -58,7 +58,7 @@ export function newBoxModel(): BoxModel {
     };
 }
 
-export function createElement(parent?: Element, block = false) {
+export function createElement(parent: Element | null, block = false) {
     const element = document.createElement(block ? 'div' : 'span');
     element.style.display = 'none';
     element.className = 'androme.display.none';
@@ -495,7 +495,7 @@ export function getNextElementSibling(element: Element) {
     return null;
 }
 
-export function hasComputedStyle(element: Element): element is HTMLElement {
+export function hasComputedStyle(element: Element | null): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 

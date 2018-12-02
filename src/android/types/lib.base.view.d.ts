@@ -6,6 +6,10 @@ declare global {
             anchored: boolean;
             readonly constraint: Constraint;
             readonly stringId: string;
+            readonly layoutFrame: boolean;
+            readonly layoutLinear: boolean;
+            readonly layoutRelative: boolean;
+            readonly layoutConstraint: boolean;
             readonly localSettings: LocalSettings;
             android(attr: string, value?: string, overwrite?: boolean);
             app(attr: string, value?: string, overwrite?: boolean);
@@ -25,7 +29,7 @@ declare global {
             public static documentBody(): View;
             public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string): string;
             public static getControlName(containerType: number): string;
-            constructor(id: number, element?: Element, afterInit?: SelfWrapped<View, void>);
+            constructor(id: number, element?: Element | null, afterInit?: SelfWrapped<View, void>);
         }
 
         export class ViewGroup<T extends View> extends View {}

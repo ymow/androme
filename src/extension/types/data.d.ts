@@ -43,12 +43,10 @@ interface FlexboxData<T> {
 }
 
 interface GridData extends BoxPadding {
-    columnEnd: number[];
     columnCount: number;
 }
 
 interface GridCellData<T> extends Inheritable {
-    siblings?: T[];
     rowSpan: number;
     columnSpan: number;
     index: number;
@@ -56,6 +54,7 @@ interface GridCellData<T> extends Inheritable {
     cellEnd: boolean;
     rowEnd: boolean;
     rowStart: boolean;
+    siblings: T[];
 }
 
 interface ListData {
@@ -65,9 +64,15 @@ interface ListData {
 }
 
 interface VerticalAlignData<T> {
-    containerType: number;
-    marginTop?: number;
-    idMap?: ObjectIndex<number>;
-    aboveBaseline?: T[];
-    belowBaseline?: T[];
+    marginTop: number;
+    idMap: ObjectIndex<number>;
+    aboveBaseline: T[];
+    belowBaseline: T[];
+}
+
+interface TableData {
+    layoutType: number;
+    expand: boolean;
+    rowCount: number;
+    columnCount: number;
 }

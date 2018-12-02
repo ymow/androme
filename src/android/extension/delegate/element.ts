@@ -1,11 +1,11 @@
 import { EXT_ANDROID } from '../../lib/constant';
+import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import Resource from '../../resource';
 import View from '../../view';
 
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
-import $enum = androme.lib.enumeration;
 
 export default class Element<T extends View> extends androme.lib.base.Extension<T> {
     constructor(
@@ -22,7 +22,7 @@ export default class Element<T extends View> extends androme.lib.base.Extension<
         const data = $dom.getDataSet(node.element, this.name);
         let output = '';
         if (data.tag) {
-            node.setControlType(data.tag, node.blockStatic ? $enum.NODE_CONTAINER.BLOCK : $enum.NODE_CONTAINER.INLINE);
+            node.setControlType(data.tag, node.blockStatic ? CONTAINER_NODE.BLOCK : CONTAINER_NODE.INLINE);
             node.render(parent);
             output = this.application.controllerHandler.renderNodeStatic(data.tag, node.renderDepth, {}, '', '', node, node.length > 0);
         }

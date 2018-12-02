@@ -1,6 +1,10 @@
 declare global {
     namespace android.lib.base {
         export interface Controller<T extends View> extends androme.lib.base.Controller<T> {
+            checkFrameHorizontal(data: androme.lib.base.Layout<T>): boolean;
+            checkConstraintFloat(data: androme.lib.base.Layout<T>): boolean;
+            checkConstraintHorizontal(data: androme.lib.base.Layout<T>): boolean;
+            checkRelativeHorizontal(data: androme.lib.base.Layout<T>): boolean;
             renderSpace(depth: number, width: string, height?: string, columnSpan?: number, rowSpan?: number): string;
             addGuideline(node: T, parent: T, orientation?: string, percent?: boolean, opposite?: boolean): void;
         }

@@ -1,4 +1,4 @@
-import { AutoMargin, InitialData, VisibleStyle } from './lib.base.types.node';
+import { AutoMargin, InitialData, Support, VisibleStyle } from './lib.base.types.node';
 
 declare global {
     namespace androme.lib.base {
@@ -30,7 +30,7 @@ declare global {
             readonly bounds: RectDimensions;
             readonly linear: RectDimensions;
             readonly element: Element;
-            readonly baseElement: Element | undefined;
+            readonly baseElement: Element | null;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
             readonly imageElement: boolean;
@@ -99,15 +99,11 @@ declare global {
             readonly preserveWhiteSpace: boolean;
             readonly layoutHorizontal: boolean;
             readonly layoutVertical: boolean;
-            readonly layoutFrame: boolean;
-            readonly layoutLinear: boolean;
-            readonly layoutRelative: boolean;
-            readonly layoutConstraint: boolean;
-            readonly linearVertical: boolean;
             readonly inlineWidth: boolean;
             readonly inlineHeight: boolean;
             readonly blockWidth: boolean;
             readonly blockHeight: boolean;
+            readonly support: Support;
             readonly actualParent: Node | null;
             readonly actualChildren: Node[];
             readonly actualBoxParent: Node;

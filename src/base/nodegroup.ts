@@ -119,10 +119,6 @@ export default abstract class NodeGroup extends Node {
         return children.length ? children[0].element : super.element;
     }
 
-    get baseElement() {
-        return undefined;
-    }
-
     get actualBoxParent() {
         return NodeList.actualParent(this.cascade(true)) || this;
     }

@@ -1,4 +1,5 @@
 import { AXIS_ANDROID } from '../lib/constant';
+import { CONTAINER_NODE } from '../lib/enumeration';
 
 import Controller from '../controller';
 import View from '../view';
@@ -36,10 +37,10 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) ||
             mainData.columnDirection && mainData.columnCount === 1)
         {
-            layout.containerType = $enum.NODE_CONTAINER.CONSTRAINT;
+            layout.containerType = CONTAINER_NODE.CONSTRAINT;
         }
         else {
-            layout.setType($enum.NODE_CONTAINER.LINEAR, mainData.columnDirection ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL);
+            layout.setType(CONTAINER_NODE.LINEAR, mainData.columnDirection ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL);
         }
         const output = this.application.renderNode(layout);
         return { output, complete: true };
@@ -51,7 +52,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             const layout = new $Layout(
                 parent,
                 node,
-                $enum.NODE_CONTAINER.CONSTRAINT,
+                CONTAINER_NODE.CONSTRAINT,
                 $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
                 node.length,
                 node.children as T[]
@@ -101,7 +102,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                         previous = pageFlow;
                     }
                 });
-                if (node.is($enum.NODE_CONTAINER.LINEAR)) {
+                if (node.is(CONTAINER_NODE.LINEAR)) {
                     if (mainData.columnDirection && mainData.wrapReverse) {
                         node.mergeGravity('gravity', 'right');
                     }

@@ -1,14 +1,15 @@
 import { ViewAttribute } from '../../../types/module';
 
+import $Resource = android.lib.base.Resource;
+import $View = android.lib.base.View;
+
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
-import $Resource = android.lib.base.Resource;
-import $View = android.lib.base.View;
-
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 const VIEW_NAVIGATION = {
@@ -125,7 +126,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
     public processNode(node: T): ExtensionResult<T> {
         node.documentRoot = true;
         node.alignmentType |= $enum.NODE_ALIGNMENT.AUTO_LAYOUT;
-        node.setControlType(VIEW_NAVIGATION.MENU, $enum.NODE_CONTAINER.INLINE);
+        node.setControlType(VIEW_NAVIGATION.MENU, $android_enum.CONTAINER_NODE.INLINE);
         node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
         const output = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
@@ -203,7 +204,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
             const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             options.android.title = name !== '' ? `@string/${name}` : title;
         }
-        node.setControlType(controlName, $enum.NODE_CONTAINER.INLINE);
+        node.setControlType(controlName, $android_enum.CONTAINER_NODE.INLINE);
         node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
         node.render(parent);
         const output = this.application.controllerHandler.renderNodeStatic(controlName, node.renderDepth, options, '', '', node, layout);

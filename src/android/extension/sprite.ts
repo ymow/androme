@@ -1,4 +1,5 @@
 import { CONTAINER_ANDROID } from '../lib/constant';
+import { CONTAINER_NODE } from '../lib/enumeration';
 
 import Resource from '../resource';
 import View from '../view';
@@ -13,7 +14,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
         let output = '';
         let container: T | undefined;
         const mainData = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'mainData');
-        if (mainData && mainData.uri && mainData.position) {
+        if (mainData && mainData.uri && mainData.position && node.baseElement) {
             container = new View(
                 this.application.nextId,
                 node.baseElement,
@@ -27,7 +28,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             this.application.processing.cache.append(container, false);
             output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             node.parent = container;
-            node.setControlType(CONTAINER_ANDROID.IMAGE, $enum.NODE_CONTAINER.IMAGE);
+            node.setControlType(CONTAINER_ANDROID.IMAGE, CONTAINER_NODE.IMAGE);
             node.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT, resource: $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE });
             node.css({
                 position: 'static',

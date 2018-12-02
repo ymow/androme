@@ -1,4 +1,5 @@
 import { AXIS_ANDROID } from '../../lib/constant';
+import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import View from '../../view';
 
@@ -21,7 +22,7 @@ export default class Guideline<T extends View> extends androme.lib.base.Extensio
         const layout = new $Layout(
             parent,
             node,
-            $enum.NODE_CONTAINER.CONSTRAINT,
+            CONTAINER_NODE.CONSTRAINT,
             $enum.NODE_ALIGNMENT.ABSOLUTE,
             node.length,
             node.children as T[]

@@ -1,8 +1,7 @@
 import { EXT_NAME } from '../lib/constant';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
+import { BOX_STANDARD } from '../lib/enumeration';
 
 import Extension from '../base/extension';
-import Layout from '../base/layout';
 import Node from '../base/node';
 
 import { convertInt, isNumber, isUnit, trimString, withinFraction } from '../lib/util';
@@ -65,7 +64,6 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const cellsPerRow: number[] = [];
         const gridPosition: GridPosition[] = [];
         let rowInvalid: ObjectIndex<boolean> = {};
-        let output = '';
         function setDataRows(item: T, placement: number[]) {
             if (placement.every(value => value > 0)) {
                 for (let i = placement[horizontal ? 0 : 1] - 1; i < placement[horizontal ? 2 : 3] - 1; i++) {
@@ -470,19 +468,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
                 node.retain(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
-                const layout = new Layout(
-                    parent,
-                    node,
-                    NODE_CONTAINER.GRID,
-                    NODE_ALIGNMENT.AUTO_LAYOUT,
-                    node.length,
-                    node.children as T[]
-                );
-                layout.rowCount = mainData.row.count;
-                layout.columnCount = mainData.column.count;
-                output = this.application.renderNode(layout);
             }
         }
-        return { output, complete: true };
+        return { output: '' };
     }
 }

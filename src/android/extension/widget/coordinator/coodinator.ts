@@ -1,19 +1,20 @@
 import { WIDGET_NAME } from '../common';
 
-import $dom = androme.lib.dom;
-import $enum = androme.lib.enumeration;
-
 import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
 
+import $dom = androme.lib.dom;
+import $enum = androme.lib.enumeration;
+
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 export default class Coordinator<T extends $View> extends androme.lib.base.Extension<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = this.application.controllerHandler;
         const options = $android_util.createAttribute(this.options[node.element.id]);
-        node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $enum.NODE_CONTAINER.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $android_enum.CONTAINER_NODE.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
         node.render(parent);
         const output = controller.renderNodeStatic(

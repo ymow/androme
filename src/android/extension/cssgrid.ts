@@ -1,6 +1,9 @@
 import { CONTAINER_ANDROID } from '../lib/constant';
+import { CONTAINER_NODE } from '../lib/enumeration';
 
 import View from '../view';
+
+import $Layout = androme.lib.base.Layout;
 
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -9,6 +12,26 @@ import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
 export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        super.processNode(node, parent);
+        const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
+        let output = '';
+        if (mainData) {
+            const layout = new $Layout(
+                parent,
+                node,
+                CONTAINER_NODE.GRID,
+                $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
+                node.length,
+                node.children as T[]
+            );
+            layout.rowCount = mainData.row.count;
+            layout.columnCount = mainData.column.count;
+            output = this.application.renderNode(layout);
+        }
+        return { output, complete: output !== '' };
+    }
+
     public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: CssGridData<T> = parent.data($const.EXT_NAME.CSS_GRID, 'mainData');
         const cellData: CssGridCellData = node.data($const.EXT_NAME.CSS_GRID, 'cellData');
@@ -117,7 +140,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     this.application.controllerHandler.delegateNodeInit
                 ) as T;
                 container.tagName = node.tagName;
-                container.setControlType(CONTAINER_ANDROID.FRAME, $enum.NODE_CONTAINER.FRAME);
+                container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                 container.inherit(node, 'initial', 'base');
                 container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
                 container.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
@@ -164,7 +187,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             applyLayout(target, 'row', 'height');
             target.mergeGravity('layout_gravity', 'fill_vertical');
         }
-        return { output, parent: container, complete: true };
+        return { output, parent: container, complete: output !== '' };
     }
 
     public postProcedure(node: T) {

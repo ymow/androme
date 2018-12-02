@@ -4,7 +4,6 @@ import * as $enum from '../lib/enumeration';
 declare global {
     namespace androme.lib {
         namespace constant {
-            export import ELEMENT_MAP = $const.ELEMENT_MAP;
             export import ELEMENT_BLOCK = $const.ELEMENT_BLOCK;
             export import ELEMENT_INLINE = $const.ELEMENT_INLINE;
             export import EXT_NAME = $const.EXT_NAME;
@@ -19,7 +18,6 @@ declare global {
             export import NODE_ALIGNMENT = $enum.NODE_ALIGNMENT;
             export import NODE_PROCEDURE = $enum.NODE_PROCEDURE;
             export import NODE_RESOURCE = $enum.NODE_RESOURCE;
-            export import NODE_CONTAINER = $enum.NODE_CONTAINER;
             export import USER_AGENT = $enum.USER_AGENT;
         }
 
@@ -38,7 +36,7 @@ declare global {
             export function newBoxRect(): BoxRect;
             export function newRectDimensions(): RectDimensions;
             export function newBoxModel(): BoxModel;
-            export function createElement(parent?: Element, block?: boolean): HTMLElement;
+            export function createElement(parent: Element | null, block?: boolean): HTMLElement;
             export function removeElementsByClassName(className: string): void;
             export function convertClientUnit(value: string, dimension: number, fontSize?: string | null, percent?: boolean): number;
             export function getRangeClientRect(element: Element): TextDimensions;
@@ -60,7 +58,7 @@ declare global {
             export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
             export function getPreviousElementSibling(element: Element): Element | null;
             export function getNextElementSibling(element: Element): Element | null;
-            export function hasComputedStyle(element: Element): element is HTMLElement;
+            export function hasComputedStyle(element: Element | null): element is HTMLElement;
             export function hasVisibleDimensions(element: Element): boolean;
             export function isElementIncluded(element: Element, hideOffScreen: boolean): boolean;
             export function setElementCache(element: Element, attr: string, data: any): void;

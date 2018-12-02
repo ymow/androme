@@ -1,3 +1,5 @@
+import { CONTAINER_NODE } from '../lib/enumeration';
+
 import View from '../view';
 
 import $Layout = androme.lib.base.Layout;
@@ -13,7 +15,7 @@ export default class <T extends View> extends androme.lib.extensions.Percent<T> 
         const layout = new $Layout(
             parent,
             group,
-            $enum.NODE_CONTAINER.GRID,
+            CONTAINER_NODE.GRID,
             $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
             1,
             group.children as T[]

@@ -26,3 +26,25 @@ export enum DENSITY_ANDROID {
     XXHDPI = 480,
     XXXHDPI = 640
 }
+
+export enum CONTAINER_NODE {
+    NONE = 0,
+    CHECKBOX,
+    RADIO,
+    EDIT,
+    SELECT,
+    RANGE,
+    SVG,
+    TEXT,
+    IMAGE,
+    BUTTON,
+    INLINE,
+    LINE,
+    SPACE,
+    BLOCK,
+    FRAME,
+    LINEAR,
+    GRID,
+    RELATIVE,
+    CONSTRAINT
+}

@@ -2,13 +2,14 @@ import { WIDGET_NAME, getAppTheme } from '../common';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
-import $enum = androme.lib.enumeration;
-import $util = androme.lib.util;
-
 import $Resource = android.lib.base.Resource;
 import $View = android.lib.base.View;
 
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
+
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 export default class BottomNavigation<T extends $View> extends androme.lib.base.Extension<T> {
@@ -30,7 +31,7 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
             item.hide();
             item.cascade().forEach(child => child.hide());
         }
-        node.setControlType($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, $enum.NODE_CONTAINER.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, $android_enum.CONTAINER_NODE.BLOCK);
         node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
         node.render(parent);
         const output = this.application.controllerHandler.renderNodeStatic(

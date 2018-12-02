@@ -49,7 +49,8 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                 else {
                     const stored: NameValue = node.data(Resource.KEY_NAME, 'valueString');
                     if (stored) {
-                        if (node.renderParent && node.renderParent.layoutRelative) {
+                        const renderParent = node.renderParent as T;
+                        if (renderParent && renderParent.layoutRelative) {
                             if (node.alignParent('left') && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                                 const value = node.textContent;
                                 let leadingSpace = 0;

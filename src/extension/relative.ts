@@ -6,9 +6,9 @@ import Node from '../base/Node';
 export default abstract class Relative<T extends Node> extends Extension<T> {
     public afterConstraints() {
         for (const node of this.application.session.cache) {
-            const renderParent = node.renderParent;
-            if (renderParent && node.positionRelative) {
-                if (!node.baseline || (!renderParent.layoutRelative && !renderParent.layoutConstraint)) {
+            if (node.positionRelative) {
+                const renderParent = node.renderParent;
+                if (!node.baseline || renderParent && !renderParent.support.container.positionRelative) {
                     if (node.top !== 0) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.top);
                     }

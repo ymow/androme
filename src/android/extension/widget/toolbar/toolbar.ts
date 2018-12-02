@@ -2,16 +2,17 @@ import { WIDGET_NAME, getAppTheme } from '../common';
 
 import EXTENSION_TOOLBAR_TMPL from '../__template/toolbar';
 
+import $Resource = android.lib.base.Resource;
+import $View = android.lib.base.View;
+
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-import $Resource = android.lib.base.Resource;
-import $View = android.lib.base.View;
-
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 type ToolbarThemeData = {
@@ -143,7 +144,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
         const useNumberAlias = application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias');
-        node.setControlType($android_const.SUPPORT_ANDROID.TOOLBAR, $enum.NODE_CONTAINER.BLOCK);
+        node.setControlType($android_const.SUPPORT_ANDROID.TOOLBAR, $android_enum.CONTAINER_NODE.BLOCK);
         output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.TOOLBAR,
             innerDepth,
@@ -209,7 +210,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             appBarNode = this.createPlaceholder(application.nextId, node, parent, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.controlId = $android_util.stripId(appBarOptions['android'].id);
-            appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $enum.NODE_CONTAINER.BLOCK);
+            appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $android_enum.CONTAINER_NODE.BLOCK);
             application.processing.cache.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
                 $android_const.SUPPORT_ANDROID.APPBAR,
@@ -233,7 +234,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).controlId);
-                    collapsingToolbarNode.setControlType($android_const.SUPPORT_ANDROID.COLLAPSING_TOOLBAR, $enum.NODE_CONTAINER.BLOCK);
+                    collapsingToolbarNode.setControlType($android_const.SUPPORT_ANDROID.COLLAPSING_TOOLBAR, $android_enum.CONTAINER_NODE.BLOCK);
                     application.processing.cache.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                     const content = controller.renderNodeStatic(
                         $android_const.SUPPORT_ANDROID.COLLAPSING_TOOLBAR,
@@ -270,7 +271,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         else {
             node.render(target ? node : parent);
         }
-        node.containerType = $enum.NODE_CONTAINER.BLOCK;
+        node.containerType = $android_enum.CONTAINER_NODE.BLOCK;
         node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
         return { output };
     }

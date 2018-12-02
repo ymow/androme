@@ -9,12 +9,14 @@ declare global {
             namespace enumeration {
                 export import BUILD_ANDROID = $enum.BUILD_ANDROID;
                 export import DENSITY_ANDROID = $enum.DENSITY_ANDROID;
+                export import CONTAINER_NODE = $enum.CONTAINER_NODE;
             }
 
             namespace constant {
                 export import EXT_ANDROID = $const.EXT_ANDROID;
                 export import CONTAINER_ANDROID = $const.CONTAINER_ANDROID;
                 export import SUPPORT_ANDROID = $const.SUPPORT_ANDROID;
+                export import ELEMENT_ANDROID = $const.ELEMENT_ANDROID;
                 export import BOX_ANDROID = $const.BOX_ANDROID;
                 export import AXIS_ANDROID = $const.AXIS_ANDROID;
                 export import LAYOUT_ANDROID = $const.LAYOUT_ANDROID;

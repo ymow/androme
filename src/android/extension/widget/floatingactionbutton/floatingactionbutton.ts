@@ -1,13 +1,14 @@
 import { WIDGET_NAME } from '../common';
 
+import $Resource = android.lib.base.Resource;
+import $View = android.lib.base.View;
+
 import $color = androme.lib.color;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
-import $Resource = android.lib.base.Resource;
-import $View = android.lib.base.View;
-
 import $android_const = android.lib.constant;
+import $android_enum = android.lib.enumeration;
 import $android_util = android.lib.util;
 
 export default class FloatingActionButton<T extends $View> extends androme.lib.base.Extension<T> {
@@ -52,7 +53,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         if (src !== '') {
             $util.defaultWhenNull(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        node.setControlType($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, $enum.NODE_CONTAINER.BUTTON);
+        node.setControlType($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, $android_enum.CONTAINER_NODE.BUTTON);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
         if (!node.pageFlow || target) {
             const horizontalBias = node.horizontalBias();

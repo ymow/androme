@@ -1,3 +1,5 @@
+import { CONTAINER_NODE } from '../../lib/enumeration';
+
 import View from '../../view';
 
 import $dom = androme.lib.dom;
@@ -47,7 +49,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 $dom.createElement(parent.actualBoxParent.baseElement, node.block),
                 this.application.controllerHandler.delegateNodeInit
             ) as T;
-            container.setControlType(value, $enum.NODE_CONTAINER.BLOCK);
+            container.setControlType(value, CONTAINER_NODE.BLOCK);
             if (index === 0) {
                 container.inherit(node, 'initial', 'base', 'style', 'styleMap');
                 parent.appendTry(node, container);

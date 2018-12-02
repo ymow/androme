@@ -1,8 +1,8 @@
 import { Constraint, LocalSettings } from './types/module';
 
-import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, LAYOUT_ANDROID, RESERVED_JAVA } from './lib/constant';
-import { FunctionResult, API_ANDROID, DEPRECATED_ANDROID } from './customizations';
-import { BUILD_ANDROID } from './lib/enumeration';
+import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, ELEMENT_ANDROID, LAYOUT_ANDROID, RESERVED_JAVA } from './lib/constant';
+import { API_ANDROID, DEPRECATED_ANDROID, FunctionResult } from './customizations';
+import { BUILD_ANDROID, CONTAINER_NODE } from './lib/enumeration';
 
 import { calculateBias, replaceRTL, stripId, validateString } from './lib/util';
 
@@ -46,7 +46,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public static getControlName(containerType: number): string {
-            return CONTAINER_ANDROID[$enum.NODE_CONTAINER[containerType]];
+            return CONTAINER_ANDROID[CONTAINER_NODE[containerType]];
         }
 
         private static _documentBody: View;
@@ -67,6 +67,8 @@ export default (Base: Constructor<T>) => {
         protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
         protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
+        private _containerType = 0;
+
         private _localSettings: LocalSettings & ObjectMap<any> = {
             targetAPI: 0,
             resolutionDPI: 160,
@@ -78,7 +80,7 @@ export default (Base: Constructor<T>) => {
 
         constructor(
             id = 0,
-            element?: Element,
+            element?: Element | null,
             afterInit?: SelfWrapped<View, void>)
         {
             super(id, element);
@@ -137,7 +139,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public anchor(position: string, stringId = '', overwrite?: boolean) {
-            const renderParent = this.renderParent;
+            const renderParent = this.renderParent as View;
             if (renderParent) {
                 if (renderParent.layoutConstraint) {
                     if (stringId === undefined || this.constraint.current[position] === undefined || overwrite) {
@@ -178,7 +180,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public anchorParent(orientation: string, overwrite = false, constraintBias = false) {
-            const renderParent = this.renderParent;
+            const renderParent = this.renderParent as View;
             if (renderParent) {
                 const horizontal = orientation === AXIS_ANDROID.HORIZONTAL;
                 if (renderParent.layoutConstraint) {
@@ -199,7 +201,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public anchorDelete(...position: string[]) {
-            const renderParent = this.renderParent;
+            const renderParent = this.renderParent as View;
             if (renderParent) {
                 if (renderParent.layoutConstraint) {
                     this.delete('app', ...position.map(value => this.localizeString(LAYOUT_ANDROID.constraint[value])));
@@ -218,7 +220,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public alignParent(position: string) {
-            const renderParent = this.renderParent;
+            const renderParent = this.renderParent as View;
             if (renderParent) {
                 if (renderParent.layoutConstraint) {
                     const attr: string = LAYOUT_ANDROID.constraint[position];
@@ -239,12 +241,12 @@ export default (Base: Constructor<T>) => {
         public alignSibling(position: string) {
             if (this.rendered) {
                 const renderParent = this.renderParent as View;
-                if (renderParent.is($enum.NODE_CONTAINER.CONSTRAINT)) {
+                if (renderParent.is(CONTAINER_NODE.CONSTRAINT)) {
                     const attr: string = LAYOUT_ANDROID.constraint[position];
                     const value = this.app(this.localizeString(attr)) || this.app(attr);
                     return value !== 'parent' && value !== renderParent.stringId ? value : '';
                 }
-                else if (renderParent.is($enum.NODE_CONTAINER.RELATIVE)) {
+                else if (renderParent.is(CONTAINER_NODE.RELATIVE)) {
                     const attr = LAYOUT_ANDROID.relative[position];
                     return this.android(this.localizeString(attr)) || this.android(attr);
                 }
@@ -390,9 +392,9 @@ export default (Base: Constructor<T>) => {
             else if (this.containerType === 0) {
                 for (const global in CONTAINER_ANDROID) {
                     if (CONTAINER_ANDROID[global] === controlName) {
-                        for (const local in $enum.NODE_CONTAINER) {
-                            if ($enum.NODE_CONTAINER[$enum.NODE_CONTAINER[local]] === global) {
-                                this.containerType = <unknown> $enum.NODE_CONTAINER[local] as number;
+                        for (const local in CONTAINER_NODE) {
+                            if (CONTAINER_NODE[CONTAINER_NODE[local]] === global) {
+                                this.containerType = <unknown> CONTAINER_NODE[local] as number;
                                 break;
                             }
                         }
@@ -492,12 +494,12 @@ export default (Base: Constructor<T>) => {
                         }
                         else {
                             const wrap = (
-                                this.containerType < $enum.NODE_CONTAINER.INLINE ||
+                                this.containerType < CONTAINER_NODE.INLINE ||
                                 !this.pageFlow ||
                                 this.inlineFlow ||
                                 this.tableElement ||
                                 parent.flexElement ||
-                                !!renderParent && renderParent.is($enum.NODE_CONTAINER.GRID)
+                                !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
                             );
                             if (!wrap || this.blockStatic && !this.has('maxWidth')) {
                                 if (this.linear.width >= parent.box.width ||
@@ -559,7 +561,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public setAlignment() {
-            const renderParent = this.renderParent;
+            const renderParent = this.renderParent as View;
             if (renderParent) {
                 const left = this.localizeString('left');
                 const right = this.localizeString('right');
@@ -619,7 +621,7 @@ export default (Base: Constructor<T>) => {
                 let verticalAlign = '';
                 if (this.pageFlow) {
                     let floating = '';
-                    if (this.inlineVertical && renderParent.is($enum.NODE_CONTAINER.LINEAR, $enum.NODE_CONTAINER.GRID)) {
+                    if (this.inlineVertical && renderParent.is(CONTAINER_NODE.LINEAR, CONTAINER_NODE.GRID)) {
                         switch (this.cssInitial('verticalAlign', true)) {
                             case 'top':
                                 verticalAlign = 'top';
@@ -632,7 +634,7 @@ export default (Base: Constructor<T>) => {
                                 break;
                         }
                     }
-                    if (!this.blockWidth && (renderParent.linearVertical || (this.documentRoot && this.linearVertical))) {
+                    if (!this.blockWidth && (renderParent.layoutVertical || (this.documentRoot && this.layoutVertical))) {
                         if (this.float === 'right') {
                             this.mergeGravity('layout_gravity', right);
                         }
@@ -648,7 +650,7 @@ export default (Base: Constructor<T>) => {
                             floating = this.floating ? this.float : floating;
                             if (floating !== '' && floating !== 'none') {
                                 if (renderParent.inlineWidth || this.singleChild && !renderParent.documentRoot) {
-                                    (renderParent as View).mergeGravity('layout_gravity', floating);
+                                    renderParent.mergeGravity('layout_gravity', floating);
                                 }
                                 else {
                                     if (this.blockWidth) {
@@ -674,7 +676,7 @@ export default (Base: Constructor<T>) => {
                 }
                 const textAlignParent = this.cssParent('textAlign');
                 if (textAlignParent !== '' && this.localizeString(textAlignParent) !== left) {
-                    if (this.pageFlow && renderParent.layoutFrame && !this.floating && !this.autoMargin.horizontal && !this.blockWidth) {
+                    if (renderParent.layoutFrame && this.pageFlow && !this.floating && !this.autoMargin.horizontal && !this.blockWidth) {
                         this.mergeGravity('layout_gravity', convertHorizontal(textAlignParent));
                     }
                     if (!this.imageElement && textAlign === '') {
@@ -832,12 +834,12 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                 }
-                else if (this.is($enum.NODE_CONTAINER.BUTTON) && layoutHeight === 0) {
+                else if (this.is(CONTAINER_NODE.BUTTON) && layoutHeight === 0) {
                     if (!this.has('minHeight')) {
                         this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
                     }
                 }
-                else if (this.is($enum.NODE_CONTAINER.LINE)) {
+                else if (this.is(CONTAINER_NODE.LINE)) {
                     if (layoutHeight > 0 && this.cssInitial('height') && this.tagName !== 'HR') {
                         this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                     }
@@ -967,7 +969,7 @@ export default (Base: Constructor<T>) => {
                     let mergeAll: number | undefined;
                     let mergeHorizontal: number | undefined;
                     let mergeVertical: number | undefined;
-                    if (this.supported('android', 'layout_marginHorizontal') && !(index === 0 && renderParent && renderParent.is($enum.NODE_CONTAINER.GRID))) {
+                    if (this.supported('android', 'layout_marginHorizontal') && !(index === 0 && renderParent && renderParent.is(CONTAINER_NODE.GRID))) {
                         if (boxModel[top] === boxModel[right] && boxModel[right] === boxModel[bottom] && boxModel[bottom] === boxModel[left]) {
                             mergeAll = boxModel[top];
                         }
@@ -1027,6 +1029,40 @@ export default (Base: Constructor<T>) => {
         }
         get anchored() {
             return this.constraint.horizontal && this.constraint.vertical;
+        }
+
+        set containerType(value) {
+            this._containerType = value;
+        }
+        get containerType() {
+            if (this._containerType === 0) {
+                const value = ELEMENT_ANDROID[this.tagName] || 0;
+                if (value !== 0) {
+                    this._containerType = value;
+                }
+            }
+            return this._containerType || 0;
+        }
+
+        get layoutFrame() {
+            return this.is(CONTAINER_NODE.FRAME);
+        }
+        get layoutLinear() {
+            return this.is(CONTAINER_NODE.LINEAR);
+        }
+        get layoutRelative() {
+            return this.is(CONTAINER_NODE.RELATIVE);
+        }
+        get layoutConstraint() {
+            return this.is(CONTAINER_NODE.CONSTRAINT);
+        }
+
+        get support() {
+            return {
+                container: {
+                    positionRelative: this.layoutRelative || this.layoutConstraint
+                }
+            };
         }
 
         get inlineWidth() {

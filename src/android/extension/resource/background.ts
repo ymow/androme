@@ -1,6 +1,7 @@
 import { BackgroundImage, BackgroundGradient } from '../../template/resource/types/data';
 
 import { EXT_ANDROID } from '../../lib/constant';
+import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import LAYERLIST_TMPL from '../../template/resource/layer-list';
 import SHAPE_TMPL from '../../template/resource/shape';
@@ -355,7 +356,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }
                             }
                             if (hasBackgroundImage) {
-                                if (node.of($enum.NODE_CONTAINER.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                                if (node.of(CONTAINER_NODE.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
                                     node.android('src', `@drawable/${backgroundImage[0]}`);
                                     if (boxPosition.left > 0) {
                                         node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, boxPosition.left);
@@ -643,13 +644,13 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }
                             }
                             if (!node.has('width', $enum.CSS_STANDARD.UNIT)) {
-                                const width = node.bounds.width + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                                const width = node.bounds.width + (!node.is(CONTAINER_NODE.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
                                     node.css('width', $util.formatPX(width), true);
                                 }
                             }
                             if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
-                                const height = node.actualHeight + (!node.is($enum.NODE_CONTAINER.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                                const height = node.bounds.height + (!node.is(CONTAINER_NODE.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
                                     node.css('height', $util.formatPX(height), true);
                                     if (node.marginTop < 0) {

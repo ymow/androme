@@ -1,4 +1,5 @@
 import { AXIS_ANDROID, CONTAINER_ANDROID } from '../../lib/constant';
+import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import View from '../../view';
 
@@ -40,11 +41,11 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
         if (children.length > 1) {
             const container = this.application.controllerHandler.createNodeGroup(node, children, parent, replaceWith);
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
-            container.setControlType(RADIO_GROUP, $enum.NODE_CONTAINER.INLINE);
+            container.setControlType(RADIO_GROUP, CONTAINER_NODE.INLINE);
             container.inherit(node, 'alignment');
             container.each((item: T) => {
                 if (item !== node) {
-                    item.setControlType(CONTAINER_ANDROID.RADIO, $enum.NODE_CONTAINER.RADIO);
+                    item.setControlType(CONTAINER_ANDROID.RADIO, CONTAINER_NODE.RADIO);
                 }
                 item.positioned = true;
                 item.parent = container;

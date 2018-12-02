@@ -1,4 +1,4 @@
-import { NODE_ALIGNMENT, NODE_CONTAINER } from '../lib/enumeration';
+import { NODE_ALIGNMENT } from '../lib/enumeration';
 
 import Container from './container';
 import Node from './node';
@@ -40,7 +40,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         return a.htmlElement || !b.htmlElement ? -1 : 1;
                     }
                 }
-                if (a.containerType !== b.containerType && (a.containerType < NODE_CONTAINER.TEXT || b.containerType < NODE_CONTAINER.TEXT)) {
+                if (a.containerType !== b.containerType) {
                     if (a.textElement || a.imageElement) {
                         return -1;
                     }

@@ -1,4 +1,5 @@
 import { BOX_ANDROID, CONTAINER_ANDROID } from '../lib/constant';
+import { CONTAINER_NODE } from '../lib/enumeration';
 
 import Resource from '../resource';
 import View from '../view';
@@ -14,16 +15,43 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.extensions.List<T> {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        super.processNode(node, parent);
+        const layout = new $Layout(
+            parent,
+            node,
+            0,
+            0,
+            node.length,
+            node.children as T[]
+        );
+        let output = '';
+        if ($NodeList.linearY(layout.children)) {
+            layout.rowCount = node.length;
+            layout.columnCount = node.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2;
+            layout.setType(CONTAINER_NODE.GRID, $enum.NODE_ALIGNMENT.AUTO_LAYOUT);
+        }
+        else if ((<android.lib.base.Controller<T>> this.application.controllerHandler).checkRelativeHorizontal(layout)) {
+            layout.rowCount = 1;
+            layout.columnCount = layout.length;
+            layout.setType(CONTAINER_NODE.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
+        }
+        if (layout.containerType !== 0) {
+            output = this.application.renderNode(layout);
+        }
+        return { output, complete: output !== '' };
+    }
+
     public processChild(node: T, parent: T): ExtensionResult<T> {
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');
         let output = '';
         if (mainData) {
-            const controller = this.application.controllerHandler;
+            const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
             const parentLeft = $util.convertInt(parent.css('paddingLeft')) + $util.convertInt(parent.css('marginLeft'));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;
             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-            if (parent.is($enum.NODE_CONTAINER.GRID)) {
+            if (parent.is(CONTAINER_NODE.GRID)) {
                 columnCount = $util.convertInt(parent.android('columnCount'));
                 paddingLeft += parentLeft;
             }
@@ -37,15 +65,15 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             if (ordinal && mainData.ordinal === '') {
                 const layout = new $Layout(parent, ordinal);
                 if (ordinal.inlineText || ordinal.length === 0) {
-                    layout.containerType = $enum.NODE_CONTAINER.TEXT;
+                    layout.containerType = CONTAINER_NODE.TEXT;
                 }
                 else {
                     layout.retain(ordinal.children as T[]);
-                    if (this.application.controllerHandler.checkRelativeHorizontal(layout)) {
-                        layout.setType($enum.NODE_CONTAINER.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
+                    if (controller.checkRelativeHorizontal(layout)) {
+                        layout.setType(CONTAINER_NODE.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL);
                     }
                     else {
-                        layout.setType($enum.NODE_CONTAINER.CONSTRAINT, $enum.NODE_ALIGNMENT.UNKNOWN);
+                        layout.setType(CONTAINER_NODE.CONSTRAINT, $enum.NODE_ALIGNMENT.UNKNOWN);
                     }
                 }
                 ordinal.parent = parent;
@@ -174,7 +202,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 const layout = new $Layout(
                     parent,
                     node,
-                    $enum.NODE_CONTAINER.LINEAR,
+                    CONTAINER_NODE.LINEAR,
                     linearX ? $enum.NODE_ALIGNMENT.HORIZONTAL : $enum.NODE_ALIGNMENT.VERTICAL,
                     node.length,
                     node.children as T[]

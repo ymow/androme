@@ -98,3 +98,15 @@ interface ExtensionResult<T> {
     outputAs?: string;
     include?: boolean;
 }
+
+interface LayoutType {
+    containerType: number;
+    alignmentType: number;
+    renderType: number;
+}
+
+interface LayoutResult<T extends androme.lib.base.Node> {
+    layout: androme.lib.base.Layout<T>;
+    next?: boolean;
+    renderAs?: androme.lib.base.Node;
+}
