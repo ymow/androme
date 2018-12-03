@@ -10,6 +10,7 @@ export default class Layout<T extends Node> extends Container<T> implements andr
     public rowCount = 0;
     public columnCount = 0;
     public renderType = 0;
+    public renderPosition = false;
 
     private _floated: Set<string> | undefined;
     private _cleared: Map<T, string> | undefined;

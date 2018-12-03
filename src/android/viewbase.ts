@@ -476,7 +476,7 @@ export default (Base: Constructor<T>) => {
                     }
                 }
                 if (!hasWidth) {
-                    if (children.filter(node => !node.autoMargin.horizontal && $util.isUnit(node.cssInitial('width'))).some(node => node.bounds.width >= this.box.width)) {
+                    if (children.filter(node => (node.inlineStatic || $util.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
@@ -503,12 +503,9 @@ export default (Base: Constructor<T>) => {
                             );
                             if (!wrap || this.blockStatic && !this.has('maxWidth')) {
                                 if (this.linear.width >= parent.box.width ||
-                                    this.layoutVertical && !this.floating && !this.autoMargin.horizontal ||
-                                    this.groupElement && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width) ||
-                                    this.htmlElement && this.blockStatic && (
-                                        parent.documentBody ||
-                                        parent.blockStatic && this.alignedVertically(this.previousSiblings())
-                                   ))
+                                    this.layoutVertical && !this.autoMargin.horizontal ||
+                                    this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && this.alignedVertically(this.previousSiblings())) ||
+                                    this.groupElement && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
                                 {
                                     this.android('layout_width', 'match_parent');
                                 }
@@ -911,13 +908,8 @@ export default (Base: Constructor<T>) => {
                             }
                         }
                     }
-                    else {
-                        if (this.layoutVertical) {
-                            this.each((node: View) => setLineHeight(node, lineHeight), true);
-                        }
-                        else if (this.layoutHorizontal && !this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE)) {
-                            setMinHeight();
-                        }
+                    else if (this.layoutVertical) {
+                        this.each((node: View) => !node.layoutHorizontal && setLineHeight(node, lineHeight), true);
                     }
                 }
             }

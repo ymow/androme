@@ -43,6 +43,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             container.alignmentType |= $enum.NODE_ALIGNMENT.HORIZONTAL | (parent.length !== children.length ? $enum.NODE_ALIGNMENT.SEGMENTED : 0);
             container.setControlType(RADIO_GROUP, CONTAINER_NODE.INLINE);
             container.inherit(node, 'alignment');
+            container.css('verticalAlign', 'text-bottom');
             container.each((item: T) => {
                 if (item !== node) {
                     item.setControlType(CONTAINER_ANDROID.RADIO, CONTAINER_NODE.RADIO);
@@ -51,7 +52,6 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
                 item.parent = container;
             });
             pending.forEach(item => item.hide());
-            container.css('verticalAlign', 'text-bottom');
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
             container.render(target ? container : parent);
             this.subscribers.add(container);

@@ -1125,7 +1125,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get lineHeight() {
         if (this._cached.lineHeight === undefined) {
-            this._cached.lineHeight = this.toInt('lineHeight');
+            this._cached.lineHeight = this.textElement || this.length === 0 ? this.toInt('lineHeight') : convertInt(this.cssParent('lineHeight', true));
         }
         return this._cached.lineHeight;
     }
@@ -1386,10 +1386,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (this._cached.autoMargin === undefined) {
             if (!this.pageFlow || this.blockStatic) {
                 const styleMap = this.initial.styleMap;
-                const left = styleMap.marginLeft === 'auto';
-                const right = styleMap.marginRight === 'auto';
-                const top = styleMap.marginTop === 'auto';
-                const bottom = styleMap.marginBottom === 'auto';
+                const left = styleMap.marginLeft === 'auto' && (this.pageFlow ? true : this.has('right'));
+                const right = styleMap.marginRight === 'auto' && (this.pageFlow ? true : this.has('left'));
+                const top = styleMap.marginTop === 'auto' && (this.pageFlow ? true : this.has('bottom'));
+                const bottom = styleMap.marginBottom === 'auto' && (this.pageFlow ? true : this.has('top'));
                 this._cached.autoMargin = {
                     horizontal: left || right,
                     left: left && !right,
@@ -1443,7 +1443,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             let value = '';
             if (element) {
                 if (element instanceof HTMLElement) {
-                    value = element.innerText || element.innerHTML;
+                    value = element.textContent || element.innerText;
                 }
                 else if (this.plainText) {
                     value = element.textContent || '';
@@ -1573,7 +1573,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         let current = this.actualParent;
         if (!this.pageFlow) {
             while (current && current.id !== 0) {
-                if (!current.positionStatic || current.positionRelative) {
+                const position = current.cssInitial('position', false, true);
+                if (position !== 'static' && position !== 'initial' && position !== 'unset') {
                     return current;
                 }
                 current = current.actualParent;

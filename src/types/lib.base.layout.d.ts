@@ -10,6 +10,7 @@ declare global {
             cleared: Map<T, string>;
             linearX: boolean;
             linearY: boolean;
+            renderPosition: boolean;
             readonly visible: T[];
             init(): void;
             initParent(): void;

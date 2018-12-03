@@ -6,6 +6,7 @@ const settings: UserSettingsAndroid = {
         'androme.sprite',
         'androme.css-grid',
         'androme.flexbox',
+        'androme.origin',
         'androme.table',
         'androme.list',
         'androme.grid',

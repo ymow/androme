@@ -374,7 +374,7 @@ export function hasFreeFormText(element: Element, whiteSpace = true) {
                     return true;
                 }
             }
-            else if (child instanceof HTMLElement && hasVisibleDimensions(child) && child.childNodes.length && findFreeForm(Array.from(child.childNodes))) {
+            else if (child instanceof HTMLElement && withinViewportOrigin(child) && child.childNodes.length && findFreeForm(Array.from(child.childNodes))) {
                 return true;
             }
             return false;
@@ -414,21 +414,20 @@ export function isPlainText(element: Element, whiteSpace = false) {
     return false;
 }
 
-export function hasLineBreak(element: Element, trim = false) {
+export function hasLineBreak(element: Element, lineBreak = false, trimString = false) {
     if (element) {
-        const node = getElementAsNode<T>(element);
-        const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         let value = element.textContent || '';
-        if (trim) {
+        if (trimString) {
             value = value.trim();
         }
-        return (
-            (element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR')) ||
-            (/\n/.test(value) && (
-                ['pre', 'pre-wrap'].includes(whiteSpace) ||
-                (element.nodeName === '#text' && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
-            ))
-        );
+        if (element instanceof HTMLElement && element.children.length && Array.from(element.children).some(item => item.tagName === 'BR')) {
+            return true;
+        }
+        else if (!lineBreak && /\n/.test(value)) {
+            const node = getElementAsNode<T>(element);
+            const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
+            return ['pre', 'pre-wrap'].includes(whiteSpace) || element.nodeName === '#text' && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap');
+        }
     }
     return false;
 }
@@ -499,7 +498,7 @@ export function hasComputedStyle(element: Element | null): element is HTMLElemen
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
-export function hasVisibleDimensions(element: Element) {
+export function withinViewportOrigin(element: Element) {
     const bounds = element.getBoundingClientRect();
     if (bounds.width !== 0 && bounds.height !== 0) {
         return !(bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
@@ -515,7 +514,7 @@ export function isElementIncluded(element: Element) {
         if (hasValue(element.dataset.import)) {
             return true;
         }
-        else if (hasVisibleDimensions(element)) {
+        else if (withinViewportOrigin(element)) {
             return true;
         }
         else {

@@ -33,7 +33,7 @@ declare global {
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);
             addRenderQueue(id: string, templates: string[]): void;
             addImagePreload(element: HTMLImageElement): void;
-            setRenderPosition(parent: T, node?: T): void;
+            setRenderPosition(parent: T): void;
             getExtension(name: string): Extension<T> | null;
             getExtensionOptionValue(name: string, attr: string): any;
             getExtensionOptionValueAsObject(name: string, attr: string): {} | null;

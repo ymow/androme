@@ -17,6 +17,11 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static baseline<T extends Node>(list: T[], text = false) {
+        const baseline = list.filter(item => item.textElement || (item.verticalAlign !== 'text-top' && item.verticalAlign !== 'text-bottom'));
+        if (baseline.length) {
+            list = baseline;
+        }
+        list = list.filter(item => !item.floating);
         if (text) {
             list = list.filter(item => item.baseElement && !item.imageElement && getStyle(item.baseElement).display !== 'none');
         }
@@ -156,7 +161,9 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     }
                     const boxLeft = minArray(nodes.map(node => node.linear.left));
                     const boxRight = maxArray(nodes.map(node => node.linear.right));
-                    for (let i = 0, j = 0, k = 0; i < nodes.length; i++) {
+                    const floatLeft =  maxArray(nodes.filter(node => node.float === 'left').map(node => node.linear.right));
+                    const floatRight =  minArray(nodes.filter(node => node.float === 'right').map(node => node.linear.left));
+                    for (let i = 0, j = 0, k = 0, l = 0, m = 0; i < nodes.length; i++) {
                         const item = nodes[i];
                         if (Math.floor(item.linear.left) <= boxLeft) {
                             j++;
@@ -164,10 +171,18 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         if (Math.ceil(item.linear.right) >= boxRight) {
                             k++;
                         }
+                        if (!item.floating) {
+                            if (item.linear.left === floatLeft) {
+                                l++;
+                            }
+                            if (item.linear.right === floatRight) {
+                                m++;
+                            }
+                        }
                         if (i === 0) {
                             continue;
                         }
-                        if (j === 2 || k === 2) {
+                        if (j === 2 || k === 2 || l === 2 || m === 2) {
                             return false;
                         }
                         const previous = nodes[i - 1];
@@ -176,8 +191,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         }
                         else if (item.floating) {
                             const direction = item.float;
-                            for (let l = 0; l < i; l++) {
-                                const sibling = nodes[l];
+                            for (let n = 0; n < i; n++) {
+                                const sibling = nodes[n];
                                 if (withinFraction(item.linear[direction], sibling.linear[direction])) {
                                     return false;
                                 }
@@ -287,9 +302,9 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static sortByAlignment<T extends Node>(list: T[], alignmentType: number) {
-        if (hasBit(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT, alignmentType)) {
+        if (hasBit(NODE_ALIGNMENT.FLOAT, alignmentType)) {
             function sortHorizontal(nodes: T[]) {
-                if (nodes.some(node => node.floating) && !nodes.every(node => node.float === 'right')) {
+                if (nodes.some(node => node.floating)) {
                     nodes.sort((a, b) => {
                         if (a.floating && !b.floating) {
                             return a.float === 'left' ? -1 : 1;
@@ -307,14 +322,13 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                         }
                         return 0;
                     });
+                    return true;
                 }
-                else {
-                    nodes.sort(NodeList.siblingIndex);
-                }
-                return nodes;
+                return false;
             }
-            sortHorizontal(list);
+            return sortHorizontal(list);
         }
+        return false;
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {

@@ -100,7 +100,8 @@ export default abstract class NodeGroup extends Node {
     }
 
     get baseline() {
-        return this.every(node => node.baseline);
+        const value = this.cssInitial('verticalAlign', true);
+        return value !== '' ? value === 'baseline' : this.every(node => node.baseline);
     }
 
     get multiLine() {

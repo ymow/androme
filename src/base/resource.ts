@@ -506,10 +506,18 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     else if (node.inlineText) {
                         name = node.textContent.trim();
-                        value = replaceEntity(element.children.length || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
+                        if (element.tagName === 'CODE') {
+                            value = replaceEntity(element.innerHTML);
+                        }
+                        else if (hasLineBreak(element, true)) {
+                            value = replaceEntity(element.innerHTML);
+                            value = value.replace(/\s*<br[^>]*>\s*/g, '\\n');
+                            value = value.replace(/(<([^>]+)>)/ig, '');
+                        }
+                        else {
+                            value = replaceEntity(node.textContent);
+                        }
                         [value, inlineTrim] = replaceWhiteSpace(node, value);
-                        value = value.replace(/\s*<br[^>]*>\s*/g, '\\n');
-                        value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
                     else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(node.data(Resource.KEY_NAME, 'boxStyle'))) {
                         value = replaceEntity(element.innerText);
@@ -527,7 +535,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         const previousSibling = node.previousSiblings().pop();
                         const nextSibling = node.nextSiblings().shift();
                         let previousSpaceEnd = false;
-                        if (previousSibling === undefined || previousSibling.multiLine || previousSibling.lineBreak) {
+                        if (previousSibling === undefined || previousSibling.multiLine || previousSibling.lineBreak || previousSibling.plainText && /\s+$/.test(previousSibling.textContent)) {
                             value = value.replace(/^\s+/, '');
                         }
                         else {
@@ -553,7 +561,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         (node.multiLine && hasLineBreak(element))
                                     ) ? '' : '&#160;'
                                 );
-                                value = value.replace(/\s+$/, node.css('display') === 'table-cell' || (nextSibling && nextSibling.lineBreak) ? '' : '&#160;');
+                                value = value.replace(/\s+$/, node.display === 'table-cell' || nextSibling && nextSibling.lineBreak || node.blockStatic ? '' : '&#160;');
                             }
                             else if (value.length) {
                                 value = '&#160;' + value.substring(1);

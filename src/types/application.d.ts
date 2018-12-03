@@ -35,6 +35,7 @@ interface ControllerSettings {
         tagName: Set<string>
     };
     relative: {
+        boxWidthWordWrapPercent: number;
         superscriptFontScale: number;
         subscriptFontScale: number;
     };

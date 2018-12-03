@@ -578,9 +578,11 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                     else {
                                         const hasInset = width > 1 && (border.style === 'groove' || border.style === 'ridge');
                                         const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
-                                        let hideWidth = `-${$util.formatPX(getHideWidth(outsetWidth))}`;
+                                        const baseWidth = getHideWidth(outsetWidth);
+                                        let hideWidth = `-${$util.formatPX(baseWidth)}`;
+                                        let hideTopWidth = `-${$util.formatPX(baseWidth + (visibleAll ? 1 : 0))}`;
                                         data['7'].push({
-                                            top:  i === 0 ? '' : hideWidth,
+                                            top:  i === 0 ? '' : hideTopWidth,
                                             right: i === 1 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                             bottom: i === 2 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                             left: i === 3 ? '' : hideWidth,
@@ -589,8 +591,9 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                         });
                                         if (hasInset) {
                                             hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
+                                            hideTopWidth = `-${$util.formatPX(width + (visibleAll ? 1 : 0))}`;
                                             data['7'].unshift({
-                                                top:  i === 0 ? '' : hideWidth,
+                                                top:  i === 0 ? '' : hideTopWidth,
                                                 right: i === 1 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                                 bottom: i === 2 ? (!visibleAll && border.width === '1px' ? border.width : '') : hideWidth,
                                                 left: i === 3 ? '' : hideWidth,
