@@ -100,7 +100,7 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
             else if (main.closed) {
                 if (confirm('ERROR: Document is closed. Reset and rerun?')) {
                     main.reset();
-                    parseDocument.apply(null, arguments).then(callback);
+                    parseDocument.call(null, ...arguments).then(callback);
                 }
             }
         }

@@ -1,6 +1,9 @@
+import { UserSettingsAndroid } from './module';
+
 declare global {
     namespace android.lib.base {
         export interface Controller<T extends View> extends androme.lib.base.Controller<T> {
+            readonly userSettings: UserSettingsAndroid;
             checkFrameHorizontal(data: androme.lib.base.Layout<T>): boolean;
             checkConstraintFloat(data: androme.lib.base.Layout<T>): boolean;
             checkConstraintHorizontal(data: androme.lib.base.Layout<T>): boolean;

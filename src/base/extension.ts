@@ -12,7 +12,6 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return null;
     }
 
-    public application: Application<T>;
     public tagNames: string[] = [];
     public documentRoot = false;
     public eventOnly = false;
@@ -22,6 +21,8 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
+
+    private _application: Application<T> | undefined;
 
     protected constructor(
         public readonly name: string,
@@ -115,7 +116,14 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public afterProcedure() {}
     public afterFinalize() {}
 
-    public get installed() {
-        return this.application ? this.application.extensions.has(this) : false;
+    set application(value) {
+        this._application = value;
+    }
+    get application() {
+        return this._application || {} as Application<T>;
+    }
+
+    get installed() {
+        return this.application instanceof Application ? this.application.extensions.has(this) : false;
     }
 }

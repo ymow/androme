@@ -10,6 +10,7 @@ declare global {
             readonly layoutLinear: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
+            readonly singleChild: boolean;
             readonly localSettings: LocalSettings;
             android(attr: string, value?: string, overwrite?: boolean);
             app(attr: string, value?: string, overwrite?: boolean);

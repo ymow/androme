@@ -1,9 +1,9 @@
 declare global {
     namespace androme.lib.base {
-        export interface Controller<T extends Node> extends AppCurrent<T> {
+        export interface Controller<T extends Node> extends AppHandler<T> {
             application: Application<T>;
             cache: NodeList<T>;
-            userSettings: UserSettings;
+            readonly userSettings: UserSettings;
             readonly localSettings: ControllerSettings;
             readonly containerTypeHorizontal: LayoutType;
             readonly containerTypeVertical: LayoutType;
@@ -15,7 +15,7 @@ declare global {
             processUnknownChild(layout: Layout<T>): LayoutResult<T>;
             processTraverseHorizontal(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
             processTraverseVertical(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
-            processLayoutHorizontal(layout: Layout<T>): LayoutResult<T>;
+            processLayoutHorizontal(layout: Layout<T>, strictMode?: boolean): LayoutResult<T>;
             setConstraints(): void;
             renderNode(layout: Layout<T>);
             renderNodeGroup(layout: Layout<T>);
@@ -27,7 +27,9 @@ declare global {
             hasAppendProcessing(id: number): boolean;
         }
 
-        export class Controller<T extends Node> implements Controller<T> {}
+        export class Controller<T extends Node> implements Controller<T> {
+            constructor(application: Application<T>);
+        }
     }
 }
 

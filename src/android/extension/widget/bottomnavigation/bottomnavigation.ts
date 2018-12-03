@@ -66,16 +66,18 @@ export default class BottomNavigation<T extends $View> extends androme.lib.base.
     }
 
     private setStyleTheme() {
-        const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
-        $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
-        const data = {
-            'appTheme': options.appTheme,
-            'parentTheme': options.parentTheme,
-            'items': []
-        };
-        $util.defaultWhenNull(options, 'output', 'path', 'res/values');
-        $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_GENERIC_TMPL, data, options);
+        if (this.application.resourceHandler.fileHandler) {
+            const options: ExternalData = Object.assign({}, this.options.resource);
+            $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
+            $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+            const data = {
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                'items': []
+            };
+            $util.defaultWhenNull(options, 'output', 'path', 'res/values');
+            $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
+            (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_GENERIC_TMPL, data, options);
+        }
     }
 }

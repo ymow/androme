@@ -60,10 +60,10 @@ export default (Base: Constructor<T>) => {
         };
 
         protected _namespaces = new Set(['android', 'app']);
-        protected _controlName: string;
-        protected _renderParent: View;
-        protected _documentParent: View;
-        protected _fontSize: number;
+        protected _controlName = '';
+        protected _renderParent: View | undefined;
+        protected _documentParent: View | undefined;
+        protected _fontSize = 0;
         protected readonly _boxAdjustment: BoxModel = $dom.newBoxModel();
         protected readonly _boxReset: BoxModel = $dom.newBoxModel();
 
@@ -1069,6 +1069,10 @@ export default (Base: Constructor<T>) => {
         }
         get blockHeight() {
             return this.android('layout_height') === 'match_parent';
+        }
+
+        get singleChild() {
+            return this.renderParent ? this.renderParent.length === 1 : this.parent ? this.parent.length === 1 : false;
         }
 
         get dpi() {

@@ -1,12 +1,14 @@
 declare global {
     namespace androme.lib.base {
-        export interface Resource<T extends Node> extends AppCurrent<T> {
+        export interface Resource<T extends Node> extends AppHandler<T> {
             application: Application<T>;
             cache: NodeList<T>;
-            fileHandler: File<T>;
-            userSettings: UserSettings;
+            fileHandler: File<T> | undefined;
+            readonly userSettings: UserSettings;
+            readonly stored: ResourceStoredMap;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
+            registerFile(handler: File<T>): void;
             setBoxSpacing(): void;
             setBoxStyle(): void;
             setFontStyle(): void;
@@ -23,7 +25,7 @@ declare global {
             public static isBorderVisible(border: BorderAttribute | undefined): boolean;
             public static isBackgroundVisible<T extends Node>(node: T): boolean;
             public static hasDrawableBackground(object: BoxStyle | undefined): boolean;
-            constructor(fileHandler: File<T>);
+            constructor(application: Application<T>);
         }
     }
 }

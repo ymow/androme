@@ -42,7 +42,7 @@ function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element
 
 function checkPositionStatic<T extends Node>(node: T, parent: T) {
     const nextSiblings = node.nextSiblings();
-    if (node.positionAuto && (node.element === getLastChildElement(parent.element) || nextSiblings.length && nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded))) {
+    if (node.positionAuto && (node.element === getLastChildElement(parent.element) || nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded))) {
         node.css({
             'position': 'static',
             'display': 'inline-block',
@@ -57,7 +57,6 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
     public controllerHandler: Controller<T>;
     public resourceHandler: Resource<T>;
-    public nodeConstructor: Constructor<T>;
     public initialized = false;
     public closed = false;
 
@@ -80,25 +79,32 @@ export default class Application<T extends Node> implements androme.lib.base.App
         excluded: new NodeList<T>()
     };
 
-    private _userSettings: UserSettings;
+    private _userSettings: UserSettings | undefined;
     private _renderPosition = new Map<number, { parent: T; children: T[] }>();
 
     private readonly _views: FileAsset[] = [];
     private readonly _includes: FileAsset[] = [];
 
-    constructor(public readonly framework: number) {
+    constructor(
+        public framework: number,
+        controllerConstructor: Constructor<T>,
+        resourceConstructor: Constructor<T>,
+        public nodeConstructor: Constructor<T>)
+    {
+        this.controllerHandler = (<unknown> new controllerConstructor(this, this.processing.cache)) as Controller<T>;
+        this.resourceHandler = (<unknown> new resourceConstructor(this, this.processing.cache)) as Resource<T>;
     }
 
-    public registerController(controller: Controller<T>) {
-        controller.application = this;
-        controller.cache = this.processing.cache;
-        this.controllerHandler = controller;
+    public registerController(handler: Controller<T>) {
+        handler.application = this;
+        handler.cache = this.processing.cache;
+        this.controllerHandler = handler;
     }
 
-    public registerResource(resource: Resource<T>) {
-        resource.application = this;
-        resource.cache = this.processing.cache;
-        this.resourceHandler = resource;
+    public registerResource(handler: Resource<T>) {
+        handler = handler;
+        handler.application = this;
+        this.resourceHandler.cache = this.processing.cache;
     }
 
     public installExtension(ext: Extension<T>) {
@@ -160,7 +166,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public saveAllToDisk() {
-        this.resourceHandler.fileHandler.saveAllToDisk(this.sessionData);
+        if (this.resourceHandler.fileHandler) {
+            this.resourceHandler.fileHandler.saveAllToDisk(this.sessionData);
+        }
     }
 
     public reset() {
@@ -334,9 +342,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             return this.controllerHandler.renderNode(layout);
         }
         else {
-            if (layout.renderPosition) {
-                this.setRenderPosition(layout.node);
-            }
+            this.setRenderPosition(layout.node, layout.renderPosition);
             return this.controllerHandler.renderNodeGroup(layout);
         }
     }
@@ -445,7 +451,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    public setRenderPosition(parent: T) {
+    public setRenderPosition(parent: T, required: boolean) {
         let children: T[];
         if (parent.groupElement && parent.parent) {
             const id = parent.parent.id;
@@ -466,15 +472,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
             }
         }
-        const renderMap = this._renderPosition.get(parent.id);
-        if (renderMap) {
-            children = renderMap.children.filter(item => !parent.contains(item));
-            children.push(...parent.children as T[]);
+        if (required) {
+            const renderMap = this._renderPosition.get(parent.id);
+            if (renderMap) {
+                children = renderMap.children.filter(item => !parent.contains(item));
+                children.push(...parent.children as T[]);
+            }
+            else {
+                children = parent.duplicate() as T[];
+            }
+            this._renderPosition.set(parent.id, { parent, children });
         }
-        else {
-            children = parent.duplicate() as T[];
-        }
-        this._renderPosition.set(parent.id, { parent, children });
     }
 
     public getExtension(name: string) {
@@ -661,10 +669,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                             else if (this.userSettings.supportNegativeLeftTop) {
                                 const absoluteParent = node.absoluteParent;
-                                let documentParent: T | null = null;
+                                let documentParent: T | undefined;
                                 let outside = false;
                                 while (parent && (parent !== nodeRoot || parent.id !== 0)) {
-                                    if (documentParent === null) {
+                                    if (documentParent === undefined) {
                                         if (absoluteParent === parent) {
                                             documentParent = parent as T;
                                             if (parent.css('overflow') === 'hidden') {
@@ -698,7 +706,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    if (!node.pageFlow && (parent === null || parent.id === 0)) {
+                    if (!node.pageFlow && (parent === undefined || parent.id === 0)) {
                         parent = nodeRoot;
                     }
                     if (parent) {
@@ -1095,38 +1103,24 @@ export default class Application<T extends Node> implements androme.lib.base.App
             for (const [key, templates] of this.processing.depthMap.entries()) {
                 const id = parseInt(key.split(':')[0]);
                 const renderPosition = this._renderPosition.get(id);
-                if (renderPosition && !renderPosition.parent.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT)) {
-                    const ordered: T[] = [];
-                    const below: T[] = [];
-                    const middle: T[] = [];
-                    const above: T[] = [];
-                    for (const item of renderPosition.children) {
-                        const zIndex = item.toInt('zIndex');
-                        if (item.pageFlow || item.actualParent !== renderPosition.parent) {
-                            middle.push(item);
-                        }
-                        else {
-                            if (zIndex >= 0) {
-                                above.push(item);
-                            }
-                            else {
-                                below.push(item);
-                            }
-                        }
-                    }
-                    ordered.push(...sortAsc(below, 'style.zIndex', 'id'));
-                    ordered.push(...middle);
-                    ordered.push(...sortAsc(above, 'style.zIndex', 'id'));
+                let children: T[];
+                if (renderPosition) {
+                    children = this.controllerHandler.sortRenderPosition(renderPosition.parent, renderPosition.children);
+                }
+                else {
+                    const parent = this.processing.cache.find('id', id);
+                    children = parent ? this.controllerHandler.sortRenderPosition(parent, parent.children as T[]) : [];
+                }
+                if (children.length) {
                     const sorted = new Map<number, string>();
-                    let i = 0;
-                    ordered.forEach(node => {
+                    children.forEach(node => {
                         const result = templates.get(node.id);
                         if (result) {
-                            node.renderIndex = i++;
                             sorted.set(node.id, result);
                         }
                     });
                     if (sorted.size === templates.size) {
+                        children.forEach((node, index) => node.renderIndex = index);
                         this.processing.depthMap.set(key, sorted);
                     }
                 }
@@ -1904,28 +1898,19 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     set appName(value) {
-        if (this.resourceHandler) {
+        if (this.resourceHandler.fileHandler) {
             this.resourceHandler.fileHandler.appName = value;
         }
     }
     get appName() {
-        return this.resourceHandler ? this.resourceHandler.fileHandler.appName : '';
+        return this.resourceHandler.fileHandler ? this.resourceHandler.fileHandler.appName : '';
     }
 
     set userSettings(value) {
-        if (typeof value !== 'object') {
-            value = {} as UserSettings;
-        }
         this._userSettings = value;
-        if (this.controllerHandler) {
-            this.controllerHandler.userSettings = value;
-        }
-        if (this.resourceHandler) {
-            this.resourceHandler.userSettings = value;
-        }
     }
     get userSettings() {
-        return this._userSettings;
+        return this._userSettings || {} as UserSettings;
     }
 
     get viewData() {

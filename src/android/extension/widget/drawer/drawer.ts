@@ -107,16 +107,18 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     }
 
     private setStyleTheme(api: number) {
-        const options: ExternalData = Object.assign({}, this.options.resource);
-        $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
-        $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-        const data = {
-            'appTheme': options.appTheme,
-            'parentTheme': options.parentTheme,
-            'items': []
-        };
-        $util.defaultWhenNull(options, 'output', 'path', `res/values${api >= 21 ? '' : '-v21'}`);
-        $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
+        if (this.application.resourceHandler.fileHandler) {
+            const options: ExternalData = Object.assign({}, this.options.resource);
+            $util.defaultWhenNull(options, 'appTheme', getAppTheme(this.application.resourceHandler.fileHandler.assets) || 'AppTheme');
+            $util.defaultWhenNull(options, 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
+            const data = {
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                'items': []
+            };
+            $util.defaultWhenNull(options, 'output', 'path', `res/values${api >= 21 ? '' : '-v21'}`);
+            $util.defaultWhenNull(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
+            (<android.lib.base.Resource<T>> this.application.resourceHandler).addStyleTheme(EXTENSION_DRAWER_TMPL, data, options);
+        }
     }
 }

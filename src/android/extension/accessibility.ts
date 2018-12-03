@@ -19,7 +19,7 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
                             [$dom.getPreviousElementSibling(element), $dom.getNextElementSibling(element)].some((sibling: HTMLLabelElement | null) => {
                                 if (sibling) {
                                     const label = $dom.getElementAsNode<T>(sibling);
-                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : null;
+                                    const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : undefined;
                                     if (label && label.visible && label.pageFlow) {
                                         if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             label.android('labelFor', node.stringId);

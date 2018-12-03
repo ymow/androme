@@ -1,4 +1,4 @@
-export enum BUILD_ANDROID {
+export const enum BUILD_ANDROID {
     PIE = 28,
     OREO_1 = 27,
     OREO = 26,
@@ -18,7 +18,7 @@ export enum BUILD_ANDROID {
     LATEST = 28
 }
 
-export enum DENSITY_ANDROID {
+export const enum DENSITY_ANDROID {
     LDPI = 120,
     MDPI = 160,
     HDPI = 240,

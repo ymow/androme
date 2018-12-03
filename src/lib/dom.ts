@@ -494,7 +494,7 @@ export function getNextElementSibling(element: Element) {
     return null;
 }
 
-export function hasComputedStyle(element: Element | null): element is HTMLElement {
+export function hasComputedStyle(element: UndefNull<Element>): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
@@ -557,6 +557,6 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getElementAsNode<T>(element: Element): T | null {
-    return getElementCache(element, 'node') || null;
+export function getElementAsNode<T>(element: Element): T | undefined {
+    return getElementCache(element, 'node');
 }

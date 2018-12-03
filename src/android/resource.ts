@@ -328,10 +328,8 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return '';
     }
 
-    public userSettings: UserSettingsAndroid;
-
     public addStyleTheme(template: string, data: ExternalData, options: ThemeTemplate) {
-        if (options.items && $util.isArray(data['items'])) {
+        if (options.items && $util.isArray(data['items']) && this.application) {
             const items = Resource.formatOptions(options.items, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
             for (const name in items) {
                 data['items'].push({
@@ -341,6 +339,12 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
             }
         }
         const xml = $xml.createTemplate($xml.parseTemplate(template), data);
-        this.fileHandler.addAsset(options.output.path, options.output.file, xml);
+        if (this.fileHandler) {
+            this.fileHandler.addAsset(options.output.path, options.output.file, xml);
+        }
+    }
+
+    get userSettings() {
+        return this.application.userSettings as UserSettingsAndroid;
     }
 }

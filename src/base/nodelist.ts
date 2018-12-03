@@ -1,10 +1,8 @@
-import { NODE_ALIGNMENT } from '../lib/enumeration';
-
 import Container from './container';
 import Node from './node';
 
 import { getElementAsNode, getStyle } from '../lib/dom';
-import { convertInt, hasBit, maxArray, minArray, withinFraction } from '../lib/util';
+import { convertInt, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -21,7 +19,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         if (baseline.length) {
             list = baseline;
         }
-        list = list.filter(item => !item.floating);
+        list = list.filter(item => !item.floating && !['absolute', 'fixed'].includes(item.cssInitial('position')));
         if (text) {
             list = list.filter(item => item.baseElement && !item.imageElement && getStyle(item.baseElement).display !== 'none');
         }
@@ -299,36 +297,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             }
         }
         return preferred.length ? preferred : result;
-    }
-
-    public static sortByAlignment<T extends Node>(list: T[], alignmentType: number) {
-        if (hasBit(NODE_ALIGNMENT.FLOAT, alignmentType)) {
-            function sortHorizontal(nodes: T[]) {
-                if (nodes.some(node => node.floating)) {
-                    nodes.sort((a, b) => {
-                        if (a.floating && !b.floating) {
-                            return a.float === 'left' ? -1 : 1;
-                        }
-                        else if (!a.floating && b.floating) {
-                            return b.float === 'left' ? 1 : -1;
-                        }
-                        else if (a.floating && b.floating) {
-                            if (a.float !== b.float) {
-                                return a.float === 'left' ? -1 : 1;
-                            }
-                            else if (a.float === 'right' && b.float === 'right') {
-                                return -1;
-                            }
-                        }
-                        return 0;
-                    });
-                    return true;
-                }
-                return false;
-            }
-            return sortHorizontal(list);
-        }
-        return false;
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {

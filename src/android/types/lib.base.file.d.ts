@@ -11,6 +11,8 @@ declare global {
             resourceDimenToXml(saveToDisk?: boolean);
             resourceDrawableToXml(saveToDisk?: boolean);
         }
+
+        export class File<T extends View> implements File<T> {}
     }
 }
 

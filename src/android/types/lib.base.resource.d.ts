@@ -1,8 +1,10 @@
+import { UserSettingsAndroid } from './module';
 import { BackgroundGradient } from '../template/resource/types/data';
 
 declare global {
     namespace android.lib.base {
         export interface Resource<T extends View> extends androme.lib.base.Resource<T> {
+            readonly userSettings: UserSettingsAndroid;
             addStyleTheme(template: string, data: ExternalData, options: ExternalData): void;
         }
 

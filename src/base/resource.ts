@@ -111,16 +111,21 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         );
     }
 
-    public abstract userSettings: UserSettings;
+    public fileHandler: File<T> | undefined;
 
-    public application: Application<T>;
-    public cache: NodeList<T>;
-
-    protected constructor(public fileHandler: File<T>) {
-        fileHandler.stored = Resource.STORED;
+    protected constructor(
+        public application: Application<T>,
+        public cache: NodeList<T>)
+    {
     }
 
+    public abstract get userSettings(): UserSettings;
+
     public finalize(data: SessionData<NodeList<T>>) {}
+
+    public registerFile(handler: File<T>) {
+        this.fileHandler = handler;
+    }
 
     public reset() {
         for (const name in Resource.ASSETS) {
@@ -129,7 +134,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         for (const name in Resource.STORED) {
             Resource.STORED[name] = new Map();
         }
-        this.fileHandler.reset();
+        if (this.fileHandler) {
+            this.fileHandler.reset();
+        }
     }
 
     public setBoxStyle() {
@@ -574,5 +581,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
             }
         }
+    }
+
+    get stored() {
+        return Resource.STORED;
     }
 }

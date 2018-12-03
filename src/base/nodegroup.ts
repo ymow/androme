@@ -42,7 +42,7 @@ export default abstract class NodeGroup extends Node {
         else if (this.initial.children.length > 0) {
             return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
         }
-        return null;
+        return undefined;
     }
 
     public lastChild() {
@@ -53,7 +53,7 @@ export default abstract class NodeGroup extends Node {
         else if (this.initial.children.length > 0) {
             return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
         }
-        return null;
+        return undefined;
     }
 
     get inline() {

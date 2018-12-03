@@ -61,10 +61,6 @@ function caseInsensitive(a: string | string[], b: string | string[]) {
 }
 
 export default class File<T extends View> extends androme.lib.base.File<T> implements android.lib.base.File<T> {
-    constructor(public userSettings: UserSettingsAndroid) {
-        super();
-    }
-
     public saveAllToDisk(data: SessionData<$NodeList<T>>) {
         const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
@@ -311,5 +307,9 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
             }
         }
         return xml;
+    }
+
+    get userSettings() {
+        return this.resource.userSettings as UserSettingsAndroid;
     }
 }

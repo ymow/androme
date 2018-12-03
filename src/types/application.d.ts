@@ -58,10 +58,10 @@ interface AppBase<T extends androme.lib.base.Node> {
     userSettings: UserSettings;
 }
 
-interface AppCurrent<T extends androme.lib.base.Node> {
+interface AppHandler<T extends androme.lib.base.Node> {
     application: androme.lib.base.Application<T>;
     cache: androme.lib.base.NodeList<T>;
-    userSettings: UserSettings;
+    readonly userSettings: UserSettings;
 }
 
 interface AppSession<T extends androme.lib.base.Node, U> {

@@ -1,11 +1,11 @@
 declare global {
     namespace androme.lib.base {
         export interface Extension<T extends Node> {
-            application: Application<T>;
             tagNames: string[];
             documentRoot: boolean;
             eventOnly: boolean;
             preloaded: boolean;
+            application: Application<T>;
             readonly framework: number;
             readonly name: string;
             readonly options: ExternalData;

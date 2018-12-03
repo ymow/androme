@@ -206,13 +206,11 @@ const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
         userSettings = Object.assign({}, SETTINGS);
-        fileHandler = new File<T>(userSettings);
-        application = new androme.lib.base.Application(framework);
-        controllerHandler = new Controller<T>();
-        resourceHandler = new Resource<T>(fileHandler);
-        application.registerController(controllerHandler);
-        application.registerResource(resourceHandler);
-        application.nodeConstructor = View;
+        application = new androme.lib.base.Application(framework, Controller, Resource, View);
+        controllerHandler = application.controllerHandler as Controller<T>;
+        resourceHandler = application.resourceHandler as Resource<T>;
+        fileHandler = new File(resourceHandler);
+        resourceHandler.registerFile(fileHandler);
         Object.assign(application.builtInExtensions, {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),

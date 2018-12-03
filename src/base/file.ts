@@ -1,5 +1,6 @@
 import Node from './node';
 import NodeList from './nodelist';
+import Resource from './resource';
 
 import { lastIndexOf, trimString } from '../lib/util';
 
@@ -30,14 +31,15 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         setTimeout(() => window.URL.revokeObjectURL(url), 1);
     }
 
-    public abstract userSettings: UserSettings;
-
     public appName = '';
-    public stored: ResourceStoredMap;
 
     public readonly assets: FileAsset[] = [];
 
+    protected constructor(public resource: Resource<T>) {
+    }
+
     public abstract saveAllToDisk(data: SessionData<NodeList<T>>): void;
+    public abstract get userSettings(): UserSettings;
 
     public addAsset(pathname: string, filename: string, content = '', uri: string = '') {
         if (content !== '' || uri !== '') {
@@ -95,5 +97,9 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
             })
             .catch(err => alert(`ERROR: ${err}`));
         }
+    }
+
+    get stored() {
+        return this.resource.stored;
     }
 }

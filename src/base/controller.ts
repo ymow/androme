@@ -4,27 +4,30 @@ import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
-    public abstract userSettings: UserSettings;
-
     public abstract readonly localSettings: ControllerSettings;
-
-    public application: Application<T>;
-    public cache: NodeList<T>;
 
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
+
+    protected constructor(
+        public application: Application<T>,
+        public cache: NodeList<T>)
+    {
+    }
 
     public abstract processUnknownParent(layout: Layout<T>): LayoutResult<T>;
     public abstract processUnknownChild(layout: Layout<T>): LayoutResult<T>;
     public abstract processTraverseHorizontal(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
     public abstract processTraverseVertical(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
-    public abstract processLayoutHorizontal(layout: Layout<T>): LayoutResult<T>;
+    public abstract processLayoutHorizontal(layout: Layout<T>, strictMode?: boolean): LayoutResult<T>;
+    public abstract sortRenderPosition(parent: T, children: T[]): T[];
     public abstract renderNode(layout: Layout<T>): string;
     public abstract renderNodeGroup(layout: Layout<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract setConstraints(): void;
     public abstract finalize(data: SessionData<NodeList<T>>);
     public abstract createNodeGroup(node: T, children: T[], parent: T): T;
+    public abstract get userSettings(): UserSettings;
     public abstract get containerTypeHorizontal(): LayoutType;
     public abstract get containerTypeVertical(): LayoutType;
     public abstract get containerTypeVerticalMargin(): LayoutType;

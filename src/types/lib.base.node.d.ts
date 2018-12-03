@@ -84,7 +84,6 @@ declare global {
             readonly block: boolean;
             readonly blockStatic: boolean;
             readonly blockDimension: boolean;
-            readonly absoluteParent: Node | null;
             readonly autoMargin: AutoMargin;
             readonly pageFlow: boolean;
             readonly floating: boolean;
@@ -104,13 +103,13 @@ declare global {
             readonly blockWidth: boolean;
             readonly blockHeight: boolean;
             readonly support: Support;
-            readonly actualParent: Node | null;
+            readonly absoluteParent: Node | undefined;
+            readonly actualParent: Node | undefined;
             readonly actualChildren: Node[];
             readonly actualBoxParent: Node;
             readonly actualHeight: number;
             readonly dir: string;
             readonly nodes: Node[];
-            readonly singleChild: boolean;
             readonly center: Point;
             parent: Node | undefined;
             documentParent: Node;
@@ -175,8 +174,8 @@ declare global {
             actualRight(dimension?: string): number;
             previousSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
             nextSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
-            firstChild(element?: HTMLElement): Node | null;
-            lastChild(element?: HTMLElement): Node | null;
+            firstChild(element?: HTMLElement): Node | undefined;
+            lastChild(element?: HTMLElement): Node | undefined;
         }
 
         export class Node implements Node {}

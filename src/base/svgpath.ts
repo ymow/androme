@@ -39,21 +39,21 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0` : '';
     }
 
-    public name: string;
+    public name = '';
     public visibility = true;
-    public d: string;
-    public color: string;
-    public fillRule: string;
-    public fill: string;
-    public fillOpacity: number;
-    public stroke: string;
-    public strokeWidth: string;
-    public strokeOpacity: number;
-    public strokeLinecap: string;
-    public strokeLinejoin: string;
-    public strokeMiterlimit: string;
-    public clipPath: string;
-    public clipRule: string;
+    public d = '';
+    public color = '';
+    public fillRule = '';
+    public fill = '';
+    public fillOpacity = 1;
+    public stroke = '';
+    public strokeWidth = '';
+    public strokeOpacity = 1;
+    public strokeLinecap = '';
+    public strokeLinejoin = '';
+    public strokeMiterlimit = '';
+    public clipPath = '';
+    public clipRule = '';
 
     private _element: SVGGraphicsElement | undefined;
 

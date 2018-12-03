@@ -1,6 +1,7 @@
 declare global {
     namespace androme.lib.base {
         export interface Application<T extends Node> {
+            framework: number;
             controllerHandler: Controller<T>;
             resourceHandler: Resource<T>;
             nodeConstructor: Constructor<T>;
@@ -8,7 +9,6 @@ declare global {
             initialized: boolean;
             closed: boolean;
             appName: string;
-            readonly framework: number;
             readonly builtInExtensions: ObjectMap<Extension<T>>;
             readonly session: AppSession<T, NodeList<T>>;
             readonly parseElements: Set<Element>;
@@ -18,22 +18,22 @@ declare global {
             readonly sessionData: SessionData<NodeList<T>>;
             readonly nextId: number;
             readonly size: number;
-            registerController(controller: Controller<T>): void;
-            registerResource(resource: Resource<T>): void;
+            registerController(handler?: Controller<T>): void;
+            registerResource(handler?: Resource<T>): void;
             installExtension(ext: Extension<T>): boolean;
             removeExtension(ext: Extension<T>): boolean;
             finalize(): void;
             saveAllToDisk(): void;
             reset(): void;
             parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void>;
-            renderNode(data: Layout<T>): string;
-            renderLayout(data: Layout<T>, node: T): string;
+            renderNode(layout: Layout<T>): string;
+            renderLayout(layout: Layout<T>, node: T): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
             addRenderTemplate(node: T, parent: T, output: string, group: boolean);
             addRenderQueue(id: string, templates: string[]): void;
             addImagePreload(element: HTMLImageElement): void;
-            setRenderPosition(parent: T): void;
+            setRenderPosition(parent: T, required: boolean): void;
             getExtension(name: string): Extension<T> | null;
             getExtensionOptionValue(name: string, attr: string): any;
             getExtensionOptionValueAsObject(name: string, attr: string): {} | null;
@@ -44,7 +44,7 @@ declare global {
         }
 
         export class Application<T extends Node> implements Application<T> {
-            constructor(framework: number);
+            constructor(framework: number, controllerConstructor: Constructor<Controller<T>>, resourceConstructor: Constructor<Resource<T>>, nodeConstructor: Constructor<T>);
         }
     }
 }

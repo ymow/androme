@@ -58,13 +58,13 @@ declare global {
             export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
             export function getPreviousElementSibling(element: Element): Element | null;
             export function getNextElementSibling(element: Element): Element | null;
-            export function hasComputedStyle(element: Element | null): element is HTMLElement;
+            export function hasComputedStyle(element: UndefNull<Element>): element is HTMLElement;
             export function hasVisibleDimensions(element: Element): boolean;
             export function isElementIncluded(element: Element, hideOffScreen: boolean): boolean;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
-            export function getElementAsNode<T>(element: Element): T | null;
+            export function getElementAsNode<T>(element: Element): T | undefined;
         }
 
         namespace svg {

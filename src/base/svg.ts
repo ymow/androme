@@ -21,7 +21,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         return result;
     }
 
-    public name: string;
+    public name = '';
     public dpi = 0;
     public fontSize = 0;
 

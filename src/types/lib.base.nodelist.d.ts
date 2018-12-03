@@ -20,7 +20,6 @@ declare global {
             public static linearY<T>(list: T[]): boolean;
             public static partitionRows<T>(list: T[], parent?: T): T[][];
             public static nextAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number): T[];
-            public static sortByAlignment<T>(list: T[], alignmentType: number): boolean;
             public static siblingIndex(): number;
             constructor(children?: T[]);
         }

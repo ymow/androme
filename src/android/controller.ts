@@ -20,6 +20,36 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
+function sortByAlignment<T extends View>(list: T[], alignmentType: number) {
+    if ($util.hasBit($enum.NODE_ALIGNMENT.HORIZONTAL | $enum.NODE_ALIGNMENT.FLOAT, alignmentType)) {
+        function sortHorizontal(nodes: T[]) {
+            if (nodes.some(node => node.floating) && !($util.hasBit($enum.NODE_ALIGNMENT.HORIZONTAL, alignmentType) && nodes.every(node => node.float === 'right'))) {
+                nodes.sort((a, b) => {
+                    if (a.floating && !b.floating) {
+                        return a.float === 'left' ? -1 : 1;
+                    }
+                    else if (!a.floating && b.floating) {
+                        return b.float === 'left' ? 1 : -1;
+                    }
+                    else if (a.floating && b.floating) {
+                        if (a.float !== b.float) {
+                            return a.float === 'left' ? -1 : 1;
+                        }
+                        else if (a.float === 'right' && b.float === 'right') {
+                            return -1;
+                        }
+                    }
+                    return 0;
+                });
+                return true;
+            }
+            return false;
+        }
+        return sortHorizontal(list);
+    }
+    return false;
+}
+
 function adjustBaseline<T extends View>(baseline: T, nodes: T[]) {
     if (nodes.length) {
         const baselineImage: T | undefined = nodes.filter(item => item.imageElement).sort((a, b) => a.actualHeight >= b.actualHeight ? 1 : -1)[0];
@@ -46,6 +76,19 @@ function checkSingleLine<T extends View>(node: T, nowrap = false) {
     if (node.textElement && node.cssParent('textAlign', true) !== 'center' && (nowrap || (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 0))) {
         node.android('singleLine', 'true');
     }
+}
+
+function adjustDocumentRootOffset<T extends View>(value: number, parent: T, direction: string, boxReset = false) {
+    if (value > 0) {
+        if (!boxReset) {
+            value -= parent[`padding${direction}`];
+        }
+        if (parent.documentBody) {
+            value -= parent[`margin${direction}`];
+        }
+        return Math.max(value, 0);
+    }
+    return value;
 }
 
 function adjustFloatingNegativeMargin<T extends View>(node: T, previous: T) {
@@ -212,8 +255,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         constraintMinMax(node, 'Height');
     }
 
-    public userSettings: UserSettingsAndroid;
-
     public readonly localSettings: ControllerSettings = {
         baseTemplate: BASE_TMPL,
         layout: {
@@ -345,7 +386,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     else {
                         layout.setType(CONTAINER_NODE.LINEAR);
                         if (layout.floated.size) {
-                            layout.renderPosition = $NodeList.sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
+                            layout.renderPosition = sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
                         }
                     }
                     layout.add($enum.NODE_ALIGNMENT.HORIZONTAL);
@@ -435,7 +476,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return { layout };
     }
 
-    public processLayoutHorizontal(layout: $Layout<T>) {
+    public processLayoutHorizontal(layout: $Layout<T>, strictMode = false) {
         let containerType = 0;
         if (this.checkConstraintFloat(layout)) {
             layout.setType(CONTAINER_NODE.CONSTRAINT);
@@ -446,10 +487,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         else if (this.checkRelativeHorizontal(layout)) {
             containerType = CONTAINER_NODE.RELATIVE;
         }
-        else if (layout.linearX && !layout.floated.has('right')) {
+        else if (!strictMode || layout.linearX && !layout.floated.has('right')) {
             containerType = CONTAINER_NODE.LINEAR;
             if (layout.floated.size) {
-                layout.renderPosition = $NodeList.sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
+                layout.renderPosition = sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
             }
         }
         if (containerType !== 0) {
@@ -458,11 +499,39 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return { layout };
     }
 
+    public sortRenderPosition(parent: T, children: T[]) {
+        if (parent.layoutConstraint && children.some(item => !item.pageFlow)) {
+            const ordered: T[] = [];
+            const below: T[] = [];
+            const middle: T[] = [];
+            const above: T[] = [];
+            for (const item of children) {
+                const zIndex = item.toInt('zIndex');
+                if (item.pageFlow || item.actualParent !== parent) {
+                    middle.push(item);
+                }
+                else {
+                    if (zIndex >= 0) {
+                        above.push(item);
+                    }
+                    else {
+                        below.push(item);
+                    }
+                }
+            }
+            ordered.push(...$util.sortAsc(below, 'style.zIndex', 'id'));
+            ordered.push(...middle);
+            ordered.push(...$util.sortAsc(above, 'style.zIndex', 'id'));
+            return ordered;
+        }
+        return [];
+    }
+
     public checkFrameHorizontal(layout: $Layout<T>) {
-        if (layout.floated.size === 2 || layout.cleared.size > 0 || layout.some(node => node.pageFlow && node.autoMargin.horizontal)) {
+        const [floating, sibling] = layout.partition(node => node.floating);
+        if (layout.floated.size === 2 || layout.cleared.size || layout.some(node => node.pageFlow && node.autoMargin.horizontal)) {
             return true;
         }
-        const [floating, sibling] = layout.partition(node => node.floating);
         if (sibling.length) {
             if (layout.floated.has('right')) {
                 return true;
@@ -504,7 +573,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         const boxParent = node.actualBoxParent as T;
                         const bottomParent = absolute.length ? Math.max($util.maxArray(node.renderChildren.map(item => item.linear.bottom)), node.box.bottom) : node.box.bottom;
                         for (const item of absolute) {
-                            if (!item.positionAuto && item.documentParent === item.absoluteParent) {
+                            if (!item.positionAuto && (item.documentParent === item.absoluteParent || item.position === 'fixed')) {
                                 if (item.autoMargin.horizontal) {
                                     if (item.has('left') && item.autoMargin.right) {
                                         item.anchor('left', 'parent');
@@ -524,11 +593,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     const hasLeft = item.has('left');
                                     if (hasLeft) {
                                         item.anchor('left', 'parent');
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, Math.max(item.left - boxParent.paddingLeft, 0));
+                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, adjustDocumentRootOffset(item.left, item.documentParent as T, 'Left'));
                                     }
                                     if ((!item.hasWidth || !hasLeft) && item.has('right')) {
                                         item.anchor('right', 'parent');
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, Math.max(item.right - boxParent.paddingRight, 0));
+                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, adjustDocumentRootOffset(item.right, item.documentParent as T, 'Right'));
                                     }
                                 }
                                 if (item.autoMargin.vertical) {
@@ -551,12 +620,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     if (hasTop) {
                                         const reset = boxParent.valueBox($enum.BOX_STANDARD.PADDING_TOP);
                                         item.anchor('top', 'parent');
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.max(item.top - (reset[0] ? 0 : boxParent.paddingTop), 0));
+                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, adjustDocumentRootOffset(item.top, item.documentParent as T, 'Top', reset[0] === 1));
                                     }
                                     if ((!item.hasHeight || !hasTop) && item.has('bottom')) {
                                         const reset = boxParent.valueBox($enum.BOX_STANDARD.PADDING_BOTTOM);
                                         item.anchor('bottom', 'parent');
-                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.max(item.bottom - (reset[0] ? 0 : boxParent.paddingBottom), 0));
+                                        item.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, adjustDocumentRootOffset(item.bottom, item.documentParent as T, 'Bottom', reset[0] === 1));
                                     }
                                 }
                                 item.positioned = true;
@@ -614,8 +683,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
     }
 
-    public renderNodeGroup(data: $Layout<T>) {
-        const [node, parent, containerType, alignmentType] = [data.node, data.parent, data.containerType, data.alignmentType];
+    public renderNodeGroup(layout: $Layout<T>) {
+        const [node, parent, containerType, alignmentType] = [layout.node, layout.parent, layout.containerType, layout.alignmentType];
         const options = createAttribute();
         let valid = false;
         switch (containerType) {
@@ -631,8 +700,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 break;
             }
             case CONTAINER_NODE.GRID: {
-                options.android.rowCount = data.rowCount ? data.rowCount.toString() : '';
-                options.android.columnCount = data.columnCount ? data.columnCount.toString() : '2';
+                options.android.rowCount = layout.rowCount ? layout.rowCount.toString() : '';
+                options.android.columnCount = layout.columnCount ? layout.columnCount.toString() : '2';
                 valid = true;
                 break;
             }
@@ -655,8 +724,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return '';
     }
 
-    public renderNode(data: $Layout<T>) {
-        const [node, parent, containerType, alignmentType] = [data.node, data.parent, data.containerType, data.alignmentType];
+    public renderNode(layout: $Layout<T>) {
+        const [node, parent, containerType, alignmentType] = [layout.node, layout.parent, layout.containerType, layout.alignmentType];
         node.alignmentType |= alignmentType;
         const controlName = View.getControlName(containerType);
         node.setControlType(controlName, containerType);
@@ -1039,14 +1108,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 const guideline = parent.constraint.guideline || {};
                 if (!node.pageFlow) {
                     if (horizontal) {
-                        if (documentParent.documentBody) {
-                            location -= documentParent.marginLeft + documentParent.paddingLeft;
-                        }
+                        location = adjustDocumentRootOffset(location, documentParent as T, 'Left');
                     }
                     else {
-                        if (documentParent.documentBody) {
-                            location -= documentParent.marginTop + documentParent.paddingTop;
-                        }
+                        location = adjustDocumentRootOffset(location, documentParent as T, 'Top');
                     }
                 }
                 else {
@@ -1586,7 +1651,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return $util.withinRange(bottom + this.localSettings.constraint.withinParentBottomOffset, boxBottom);
     }
 
-    public get containerTypeHorizontal(): LayoutType {
+    get userSettings() {
+        return this.application.userSettings as UserSettingsAndroid;
+    }
+
+    get containerTypeHorizontal(): LayoutType {
         return {
             containerType: CONTAINER_NODE.LINEAR,
             alignmentType: $enum.NODE_ALIGNMENT.HORIZONTAL,
@@ -1594,7 +1663,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         };
     }
 
-    public get containerTypeVertical(): LayoutType {
+    get containerTypeVertical(): LayoutType {
         return {
             containerType: CONTAINER_NODE.LINEAR,
             alignmentType: $enum.NODE_ALIGNMENT.VERTICAL,
@@ -1602,15 +1671,15 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         };
     }
 
-    public get containerTypeVerticalMargin(): LayoutType {
+    get containerTypeVerticalMargin(): LayoutType {
         return {
             containerType: CONTAINER_NODE.FRAME,
-            alignmentType: 0,
+            alignmentType: $enum.NODE_ALIGNMENT.COLUMN,
             renderType: 0
         };
     }
 
-    public get delegateNodeInit(): SelfWrapped<T, void> {
+    get delegateNodeInit(): SelfWrapped<T, void> {
         const settings = this.userSettings;
         return (self: T) => {
             self.localSettings = {
