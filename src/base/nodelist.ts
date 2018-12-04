@@ -187,17 +187,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return false;
                         }
                         const previous = nodes[i - 1];
-                        if (withinFraction(item.linear.left, previous.linear.left)) {
+                        if (previous.floating && item.linear.top >= previous.linear.bottom || withinFraction(item.linear.left, previous.linear.left)) {
                             return false;
-                        }
-                        else if (item.floating) {
-                            const direction = item.float;
-                            for (let n = 0; n < i; n++) {
-                                const sibling = nodes[n];
-                                if (withinFraction(item.linear[direction], sibling.linear[direction])) {
-                                    return false;
-                                }
-                            }
                         }
                     }
                     return true;
@@ -271,35 +262,6 @@ export default class NodeList<T extends Node> extends Container<T> implements an
             }
         }
         return result;
-    }
-
-    public static nextAboveBottom<T extends Node>(list: T[], node: T, maxBottom?: number) {
-        const result: T[] = [];
-        const preferred: T[] = [];
-        if (maxBottom) {
-            list = list.filter(item => item.linear.bottom === maxBottom);
-        }
-        for (let i = 0; i < list.length; i++) {
-            const above = list[i];
-            if (node.intersectY(above.linear)) {
-                if (maxBottom === undefined) {
-                    if (node.linear.top >= above.linear.bottom) {
-                        result.push(above);
-                    }
-                }
-                else {
-                    if (maxBottom === above.linear.bottom) {
-                        preferred.push(above);
-                    }
-                }
-            }
-            else {
-                if (maxBottom === above.linear.bottom) {
-                    result.push(above);
-                }
-            }
-        }
-        return preferred.length ? preferred : result;
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {

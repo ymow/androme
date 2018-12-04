@@ -366,7 +366,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     layout.setType(CONTAINER_NODE.LINEAR, $enum.NODE_ALIGNMENT.VERTICAL, $enum.NODE_ALIGNMENT.UNKNOWN);
                 }
                 else if (this.checkConstraintFloat(layout)) {
-                    layout.setType(CONTAINER_NODE.CONSTRAINT);
+                    layout.setType(CONTAINER_NODE.CONSTRAINT, $enum.NODE_ALIGNMENT.NOWRAP);
                 }
                 else if (layout.linearX) {
                     if (this.checkFrameHorizontal(layout)) {
@@ -474,7 +474,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public processLayoutHorizontal(layout: $Layout<T>, strictMode = false) {
         let containerType = 0;
         if (this.checkConstraintFloat(layout)) {
-            layout.setType(CONTAINER_NODE.CONSTRAINT);
+            layout.setType(CONTAINER_NODE.CONSTRAINT, $enum.NODE_ALIGNMENT.NOWRAP);
         }
         else if (this.checkConstraintHorizontal(layout)) {
             containerType = CONTAINER_NODE.CONSTRAINT;
@@ -541,7 +541,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkConstraintFloat(layout: $Layout<T>) {
-        return layout.floated.size === 1 && layout.every(node => node.pageFlow && node.floating && node.marginLeft >= 0 && node.marginRight >= 0 && node.css('width') !== '100%');
+        return layout.floated.size === 1 && layout.every(node => node.pageFlow && node.floating && node.marginLeft >= 0 && node.marginRight >= 0);
     }
 
     public checkConstraintHorizontal(layout: $Layout<T>) {
@@ -789,11 +789,13 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 $dom.createElement(parent.actualBoxParent.baseElement),
                                 this.delegateNodeInit
                             ) as T;
+                            if (parent.layoutConstraint) {
+                                container.companion = node;
+                            }
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                             container.init();
                             container.inherit(node, 'base');
                             container.css('zIndex', node.css('zIndex'));
-                            container.companion = node;
                             container.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
                             parent.appendTry(node, container);
                             this.cache.append(container);
@@ -845,14 +847,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     node.android('scrollHorizontally', 'true');
                 }
                 if (!node.cssInitial('verticalAlign')) {
-                    node.css('verticalAlign', 'text-bottom');
+                    node.css('verticalAlign', 'text-bottom', true);
                 }
                 break;
             }
             case 'SELECT': {
                 const element = <HTMLSelectElement> node.element;
                 if (element.size > 1 && !node.cssInitial('verticalAlign')) {
-                    node.css('verticalAlign', 'text-bottom');
+                    node.css('verticalAlign', 'text-bottom', true);
                 }
                 break;
             }
@@ -948,7 +950,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 break;
             case CONTAINER_ANDROID.BUTTON:
                 if (!node.cssInitial('verticalAlign')) {
-                    node.css('verticalAlign', 'text-bottom');
+                    node.css('verticalAlign', 'text-bottom', true);
                 }
                 break;
             case CONTAINER_ANDROID.LINE:
@@ -1525,10 +1527,16 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             columnStart.push(first);
             column.forEach(item => {
+                let percent = 0;
                 if (item.has('width', $enum.CSS_STANDARD.PERCENT)) {
-                    const percent = item.toInt('width');
+                    percent = item.toInt('width') / 100;
+                }
+                else {
+                    percent = (1 / columnCount) - percentGap;
+                }
+                if (percent > 0) {
                     item.android('layout_width', '0px');
-                    item.app('layout_constraintWidth_percent', (percent ? percent / 100 : ((1 / columnCount) - percentGap)).toFixed(2));
+                    item.app('layout_constraintWidth_percent', percent.toFixed(2));
                 }
             });
             chainVertical.push(column);
@@ -1573,47 +1581,69 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     protected processConstraintChain(node: T, children: T[], boxParent: T, bottomParent: number) {
-        const actualParent = $NodeList.actualParent(children);
         const chainHorizontal = $NodeList.partitionRows(children);
+        const floating = node.hasAlign($enum.NODE_ALIGNMENT.FLOAT);
+        const nowrap = node.hasAlign($enum.NODE_ALIGNMENT.NOWRAP);
+        const cleared = chainHorizontal.length > 1 && nowrap ? $NodeList.clearedAll(boxParent) : new Map<T, string>();
         let reverse = false;
         if (chainHorizontal.length > 1) {
             node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
         }
-        if (node.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
+        if (floating) {
             reverse = node.hasAlign($enum.NODE_ALIGNMENT.RIGHT);
             if (children.some(item => item.has('width', $enum.CSS_STANDARD.PERCENT))) {
                 node.android('layout_width', 'match_parent');
             }
         }
         for (const item of children) {
-            if (item.rightAligned) {
-                if ($util.withinFraction(item.linear.right, boxParent.box.right) || item.linear.right > boxParent.box.right) {
-                    item.anchor('right', 'parent');
+            if (!floating) {
+                if (item.rightAligned) {
+                    if ($util.withinFraction(item.linear.right, boxParent.box.right) || item.linear.right > boxParent.box.right) {
+                        item.anchor('right', 'parent');
+                    }
                 }
-            }
-            else if ($util.withinFraction(item.linear.left, boxParent.box.left) || item.linear.left < boxParent.box.left) {
-                item.anchor('left', 'parent');
+                else if ($util.withinFraction(item.linear.left, boxParent.box.left) || item.linear.left < boxParent.box.left) {
+                    item.anchor('left', 'parent');
+                }
             }
             if ($util.withinFraction(item.linear.top, boxParent.box.top) || item.linear.top < boxParent.box.top) {
                 item.anchor('top', 'parent');
             }
-            if (actualParent && !actualParent.documentBody && this.withinParentBottom(item.linear.bottom, bottomParent)) {
+            if (!boxParent.documentBody && this.withinParentBottom(item.linear.bottom, bottomParent)) {
                 item.anchor('bottom', 'parent');
             }
         }
+        const previousSiblings: T[] = [];
+        const anchorStart = 'left';
+        const anchorEnd = 'right';
+        const chainStart = 'leftRight';
+        const chainEnd = 'rightLeft';
         chainHorizontal.forEach((segment, index) => {
+            if (reverse) {
+                segment.reverse();
+            }
             const rowStart = segment[0];
             const rowEnd = segment.length > 1 ? segment[segment.length - 1] : null;
-            rowStart.anchor(reverse ? 'right' : 'left', 'parent');
+            rowStart.anchor(reverse && rowEnd === null ? anchorEnd : anchorStart, 'parent');
             if (rowEnd) {
-                if (actualParent && actualParent.css('textAlign') === 'center') {
+                if (boxParent.css('textAlign') === 'center') {
                     rowStart.app('layout_constraintHorizontal_chainStyle', 'spread');
                 }
                 else {
                     rowStart.app('layout_constraintHorizontal_chainStyle', 'packed');
                     rowStart.app('layout_constraintHorizontal_bias', reverse || node.rightAligned ? '1' : '0');
                 }
-                rowEnd.anchor(reverse ? 'left' : 'right', 'parent');
+                rowEnd.anchor(anchorEnd, 'parent');
+            }
+            let previousRowBottom: T | undefined;
+            if (index > 0) {
+                const previousRow = chainHorizontal[index - 1];
+                previousRowBottom = previousRow[0];
+                for (let i = 1; i < previousRow.length; i++) {
+                    if (previousRow[i].linear.bottom > previousRowBottom.linear.bottom) {
+                        previousRowBottom = previousRow[i];
+                    }
+                }
             }
             for (let i = 0; i < segment.length; i++) {
                 const chain = segment[i];
@@ -1624,35 +1654,58 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 else {
                     if (previous) {
-                        chain.anchor(reverse ? 'rightLeft' : 'leftRight', previous.stringId);
+                        chain.anchor(chainStart, previous.stringId);
                     }
                     if (next) {
-                        chain.anchor(reverse ? 'leftRight' : 'rightLeft', next.stringId);
+                        chain.anchor(chainEnd, next.stringId);
                     }
                 }
                 Controller.dimensionConstraint(chain);
                 if (index > 0) {
-                    const abovePrevious = $NodeList.nextAboveBottom(chainHorizontal[index - 1], chain);
-                    if (abovePrevious.length) {
-                        const stringId = abovePrevious[0].stringId;
-                        chain.anchor('topBottom', stringId);
+                    const previousRow = chainHorizontal[index - 1];
+                    if (floating && nowrap && !cleared.has(reverse ? rowEnd as T : rowStart)) {
+                        if (previousRow.length) {
+                            const aboveEnd = reverse ? previousRow[0] : previousRow[previousRow.length - 1];
+                            chain.anchor('topBottom', aboveEnd.stringId);
+                            if (!aboveEnd.alignSibling('bottomTop')) {
+                                aboveEnd.anchor('bottomTop', chain.stringId);
+                            }
+                            for (let j = previousSiblings.length - 2; j >= 0; j--) {
+                                const aboveBefore = previousSiblings[j];
+                                if (aboveBefore.linear.bottom > aboveEnd.linear.bottom) {
+                                    const offset = reverse ? Math.ceil(aboveBefore.linear[anchorStart]) - Math.floor(boxParent.box[anchorStart]) : Math.ceil(boxParent.box[anchorEnd]) - Math.floor(aboveBefore.linear[anchorEnd]);
+                                    if (offset >= chain.linear.width) {
+                                        chain.anchor(reverse ? chainEnd : chainStart, aboveBefore.stringId);
+                                        chain.anchorDelete(reverse ? chainStart : chainEnd);
+                                        if (chain === rowStart) {
+                                            chain.anchorDelete(anchorStart);
+                                            chain.delete('app', 'layout_constraintHorizontal_chainStyle', 'layout_constraintHorizontal_bias');
+                                        }
+                                        else if (chain === rowEnd) {
+                                            chain.anchorDelete(anchorEnd);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    else if (i > 0) {
-                        chain.anchor('top', segment[0].stringId);
-                        chain.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, segment[0].marginTop * -1);
-                    }
-                }
-                const rowNext = chainHorizontal[index + 1];
-                if (rowNext) {
-                    for (let j = 0; j < rowNext.length; j++) {
-                        if (chain.intersectY(rowNext[j].linear)) {
-                            chain.anchor('bottomTop', rowNext[j].stringId);
-                            break;
+                    else if (previousRowBottom) {
+                        if (i > 0) {
+                            chain.anchor('top', rowStart.stringId);
+                            chain.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, rowStart.marginTop * -1);
+                        }
+                        else {
+                            chain.anchor('topBottom', previousRowBottom.stringId);
+                            previousRowBottom.anchor('bottomTop', chain.stringId);
                         }
                     }
                 }
-                if (index === chainHorizontal.length - 1 && node.groupParent && chain.actualParent && !chain.actualParent.documentBody) {
-                    chain.anchor('bottom', 'parent');
+                if (reverse) {
+                    previousSiblings.unshift(chain);
+                }
+                else {
+                    previousSiblings.push(chain);
                 }
             }
         });
@@ -1660,7 +1713,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     private withinParentBottom(bottom: number, boxBottom: number) {
-        return $util.withinRange(bottom + this.localSettings.constraint.withinParentBottomOffset, boxBottom);
+        return $util.withinRange(bottom, boxBottom, this.localSettings.constraint.withinParentBottomOffset);
     }
 
     get userSettings() {

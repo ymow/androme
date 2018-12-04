@@ -139,6 +139,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                 const inverse = horizontal ? 1 : 0;
                 partition.forEach(segment => {
                     const HW = CHAIN_MAP.widthHeight[inverse];
+                    const HWL = HW.toLowerCase();
                     const [LT, TL] = [CHAIN_MAP.leftTop[index], CHAIN_MAP.leftTop[inverse]];
                     const [RB, BR] = [CHAIN_MAP.rightBottom[index], CHAIN_MAP.rightBottom[inverse]];
                     const maxSize = $util.maxArray(segment.map(item => item.flexElement ? 0 : item.bounds[HW.toLowerCase()]));
@@ -184,7 +185,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                     break;
                                 default:
                                     chain.anchor(mainData.wrapReverse ? BR : TL, 'parent');
-                                    if (!chain[`has${HW}`] && chain.initial.bounds[HW.toLowerCase()] < maxSize) {
+                                    if (!chain[`has${HW}`] && !chain.has(HWL, $enum.CSS_STANDARD.PERCENT) && chain.initial.bounds[HWL] < maxSize) {
                                         chain.android(`layout_${HW.toLowerCase()}`, '0px');
                                         chain.anchor(mainData.wrapReverse ? TL : BR, 'parent');
                                     }

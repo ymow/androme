@@ -347,7 +347,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 if (cleared && cleared.has(this)) {
                     return true;
                 }
+                const previous = siblings[siblings.length - 1];
                 if (this.floating && (
+                        this.linear.top >= previous.linear.bottom ||
                         this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0 ||
                         this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0
                    ))

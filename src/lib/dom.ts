@@ -1,7 +1,7 @@
 import { REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
-import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, isPercent, maxArray, minArray, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, isPercent, isString, maxArray, minArray, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -558,5 +558,5 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
 }
 
 export function getElementAsNode<T>(element: Element): T | undefined {
-    return element.className && element.className.startsWith('androme') ? undefined : getElementCache(element, 'node');
+    return isString(element.className) && element.className.startsWith('androme') ? undefined : getElementCache(element, 'node');
 }

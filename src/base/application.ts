@@ -453,23 +453,37 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public setRenderPosition(parent: T, required: boolean) {
         let children: T[];
-        if (parent.groupParent && parent.parent) {
-            const id = parent.parent.id;
-            const parentMap = this._renderPosition.get(id);
-            if (parentMap) {
-                const previous = parentMap.children.filter(item => !parent.contains(item));
-                if (parent.siblingIndex < previous.length) {
-                    previous.splice(parent.siblingIndex, 0, parent);
-                    if (parent.length > 1) {
+        if (parent.groupParent) {
+            const baseParent = parent.parent;
+            if (baseParent) {
+                const id = baseParent.id;
+                const parentMap = this._renderPosition.get(id);
+                let reviseIndex: T[] | undefined;
+                if (parentMap) {
+                    const previous = parentMap.children.filter(item => !parent.contains(item)) as T[];
+                    if (parent.siblingIndex < previous.length) {
+                        previous.splice(parent.siblingIndex, 0, parent);
                         for (let i = parent.siblingIndex + 1; i < previous.length; i++) {
-                            previous[i].siblingIndex -= parent.length - 1;
+                            previous[i].siblingIndex = i;
+                        }
+                        reviseIndex = previous;
+                    }
+                    else {
+                        parent.siblingIndex = previous.length;
+                        previous.push(parent);
+                    }
+                    this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
+                }
+                else {
+                    reviseIndex = baseParent.children as T[];
+                }
+                if (reviseIndex) {
+                    for (let i = parent.siblingIndex + 1; i < reviseIndex.length; i++) {
+                        if (reviseIndex[i]) {
+                            reviseIndex[i].siblingIndex = i;
                         }
                     }
                 }
-                else {
-                    previous.push(parent);
-                }
-                this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
             }
         }
         if (required) {
@@ -1114,7 +1128,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (children.length) {
                     const sorted = new Map<number, string>();
                     children.forEach(node => {
-                        const result = templates.get(node.id);
+                        const result = templates.get(node.id) || (node.companion ? templates.get(node.companion.id) : null);
                         if (result) {
                             sorted.set(node.id, result);
                         }

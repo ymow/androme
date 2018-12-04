@@ -42,25 +42,27 @@ import * as enumeration from './lib/enumeration';
 import * as util from './lib/util';
 
 type T = View;
+type Application = androme.lib.base.Application<T>;
 
 function autoClose() {
-    const main = controllerHandler.application;
-    if (main.userSettings.autoCloseOnWrite && !main.initialized && !main.closed) {
-        main.finalize();
+    if (application && application.userSettings.autoCloseOnWrite && !application.initialized && !application.closed) {
+        application.finalize();
         return true;
     }
     return false;
 }
 
+function checkApplication(main?: Application): main is Application {
+    return initialized && !!main && (main.closed || autoClose());
+}
+
 let initialized = false;
 
-let application: androme.lib.base.Application<T>;
-let controllerHandler: Controller<T>;
-let resourceHandler: Resource<T>;
+let application: Application;
 let fileHandler: File<T>;
 let userSettings: UserSettingsAndroid;
 
-const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
+const framework = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const lib = {
     base: {
@@ -122,119 +124,91 @@ const appBase: AppFramework<T> = {
             XMLNS_ANDROID[name] = uri;
         },
         writeLayoutAllXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.layoutAllToXml(main.sessionData, saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.layoutAllToXml(application.sessionData, saveToDisk);
             }
             return '';
         },
         writeResourceAllXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceAllToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceAllToXml(saveToDisk);
             }
             return '';
         },
         writeResourceStringXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceStringToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceStringToXml(saveToDisk);
             }
             return '';
         },
         writeResourceArrayXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceStringArrayToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceStringArrayToXml(saveToDisk);
             }
             return '';
         },
         writeResourceFontXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceFontToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceFontToXml(saveToDisk);
             }
             return '';
         },
         writeResourceColorXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceColorToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceColorToXml(saveToDisk);
             }
             return '';
         },
         writeResourceStyleXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceStyleToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceStyleToXml(saveToDisk);
             }
             return '';
         },
         writeResourceDimenXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceDimenToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceDimenToXml(saveToDisk);
             }
             return '';
         },
         writeResourceDrawableXml(saveToDisk = false) {
-            if (initialized) {
-                const main = controllerHandler.application;
-                if (main.closed || autoClose()) {
-                    return fileHandler.resourceDrawableToXml(saveToDisk);
-                }
+            if (fileHandler && checkApplication(application)) {
+                return fileHandler.resourceDrawableToXml(saveToDisk);
             }
             return '';
         }
     },
     create() {
-        const EXT_NAME = androme.lib.constant.EXT_NAME;
+        const EN = androme.lib.constant.EXT_NAME;
+        const EA = EXT_ANDROID;
         application = new androme.lib.base.Application(framework, Controller, Resource, View);
-        controllerHandler = application.controllerHandler as Controller<T>;
-        resourceHandler = application.resourceHandler as Resource<T>;
-        fileHandler = new File(resourceHandler);
+        fileHandler = new File(application.resourceHandler);
         userSettings = Object.assign({}, SETTINGS);
         Object.assign(application.builtInExtensions, {
-            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
-            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
-            [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
-            [EXT_NAME.CSS_GRID]: new CssGrid(EXT_NAME.CSS_GRID, framework),
-            [EXT_NAME.FLEXBOX]: new Flexbox(EXT_NAME.FLEXBOX, framework),
-            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
-            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
-            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework),
-            [EXT_NAME.RELATIVE]: new Relative(EXT_NAME.RELATIVE, framework),
-            [EXT_NAME.VERTICAL_ALIGN]: new VerticalAlign(EXT_NAME.VERTICAL_ALIGN, framework),
-            [EXT_NAME.WHITESPACE]: new WhiteSpace(EXT_NAME.WHITESPACE, framework),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
-            [EXT_ANDROID.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EXT_ANDROID.CONSTRAINT_GUIDELINE, framework),
-            [EXT_ANDROID.DELEGATE_ELEMENT]: new DelegateElement(EXT_ANDROID.DELEGATE_ELEMENT, framework),
-            [EXT_ANDROID.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EXT_ANDROID.DELEGATE_RADIOGROUP, framework),
-            [EXT_ANDROID.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EXT_ANDROID.DELEGATE_SCROLLBAR, framework),
-            [EXT_ANDROID.RESOURCE_INCLUDES]: new ResourceIncludes(EXT_ANDROID.RESOURCE_INCLUDES, framework),
-            [EXT_ANDROID.RESOURCE_BACKGROUND]: new ResourceBackground(EXT_ANDROID.RESOURCE_BACKGROUND, framework),
-            [EXT_ANDROID.RESOURCE_SVG]: new ResourceSvg(EXT_ANDROID.RESOURCE_SVG, framework),
-            [EXT_ANDROID.RESOURCE_STRINGS]: new ResourceStrings(EXT_ANDROID.RESOURCE_STRINGS, framework),
-            [EXT_ANDROID.RESOURCE_FONTS]: new ResourceFonts(EXT_ANDROID.RESOURCE_FONTS, framework),
-            [EXT_ANDROID.RESOURCE_DIMENS]: new ResourceDimens(EXT_ANDROID.RESOURCE_DIMENS, framework),
-            [EXT_ANDROID.RESOURCE_STYLES]: new ResourceStyles(EXT_ANDROID.RESOURCE_STYLES, framework)
+            [EN.EXTERNAL]: new External(EN.EXTERNAL, framework),
+            [EN.ORIGIN]: new Origin(EN.ORIGIN, framework),
+            [EN.SPRITE]: new Sprite(EN.SPRITE, framework),
+            [EN.CSS_GRID]: new CssGrid(EN.CSS_GRID, framework),
+            [EN.FLEXBOX]: new Flexbox(EN.FLEXBOX, framework),
+            [EN.TABLE]: new Table(EN.TABLE, framework, ['TABLE']),
+            [EN.LIST]: new List(EN.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
+            [EN.GRID]: new Grid(EN.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+            [EN.PERCENT]: new Percent(EN.PERCENT, framework),
+            [EN.RELATIVE]: new Relative(EN.RELATIVE, framework),
+            [EN.VERTICAL_ALIGN]: new VerticalAlign(EN.VERTICAL_ALIGN, framework),
+            [EN.WHITESPACE]: new WhiteSpace(EN.WHITESPACE, framework),
+            [EN.ACCESSIBILITY]: new Accessibility(EN.ACCESSIBILITY, framework),
+            [EA.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EA.CONSTRAINT_GUIDELINE, framework),
+            [EA.DELEGATE_ELEMENT]: new DelegateElement(EA.DELEGATE_ELEMENT, framework),
+            [EA.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EA.DELEGATE_RADIOGROUP, framework),
+            [EA.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EA.DELEGATE_SCROLLBAR, framework),
+            [EA.RESOURCE_INCLUDES]: new ResourceIncludes(EA.RESOURCE_INCLUDES, framework),
+            [EA.RESOURCE_BACKGROUND]: new ResourceBackground(EA.RESOURCE_BACKGROUND, framework),
+            [EA.RESOURCE_SVG]: new ResourceSvg(EA.RESOURCE_SVG, framework),
+            [EA.RESOURCE_STRINGS]: new ResourceStrings(EA.RESOURCE_STRINGS, framework),
+            [EA.RESOURCE_FONTS]: new ResourceFonts(EA.RESOURCE_FONTS, framework),
+            [EA.RESOURCE_DIMENS]: new ResourceDimens(EA.RESOURCE_DIMENS, framework),
+            [EA.RESOURCE_STYLES]: new ResourceStyles(EA.RESOURCE_STYLES, framework)
         });
         initialized = true;
         return {
