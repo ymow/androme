@@ -36,6 +36,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     public readonly assets: FileAsset[] = [];
 
     protected constructor(public resource: Resource<T>) {
+        resource.fileHandler = this;
     }
 
     public abstract saveAllToDisk(data: SessionData<NodeList<T>>): void;

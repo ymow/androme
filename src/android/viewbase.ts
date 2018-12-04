@@ -1,6 +1,6 @@
 import { Constraint, LocalSettings } from './types/module';
 
-import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, ELEMENT_ANDROID, LAYOUT_ANDROID, RESERVED_JAVA } from './lib/constant';
+import { AXIS_ANDROID, CONTAINER_ANDROID, ELEMENT_ANDROID, LAYOUT_ANDROID, RESERVED_JAVA } from './lib/constant';
 import { API_ANDROID, DEPRECATED_ANDROID, FunctionResult } from './customizations';
 import { BUILD_ANDROID, CONTAINER_NODE } from './lib/enumeration';
 
@@ -274,35 +274,6 @@ export default (Base: Constructor<T>) => {
             return 0.5;
         }
 
-        public modifyBox(region: number | string, offset: number | null, negative = true) {
-            if (offset !== 0) {
-                const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
-                if (name !== '' || $util.isString(region)) {
-                    const attr = $util.isString(region) ? region : name.replace('layout_', '');
-                    if (this._boxReset[attr] !== undefined) {
-                        if (offset === null) {
-                            this._boxReset[attr] = 1;
-                        }
-                        else {
-                            this._boxAdjustment[attr] += offset;
-                            if (!negative && this._boxAdjustment[attr] < 0) {
-                                this._boxAdjustment[attr] = 0;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        public valueBox(region: number): [number, number] {
-            const name = $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID);
-            if (name !== '') {
-                const attr = name.replace('layout_', '');
-                return [this._boxReset[attr] || 0, this._boxAdjustment[attr] || 0];
-            }
-            return [0, 0];
-        }
-
         public supported(obj: string, attr: string, result = {}) {
             if (this.localSettings.targetAPI > 0 && this.localSettings.targetAPI < BUILD_ANDROID.LATEST) {
                 const deprecated: ObjectMap<FunctionResult> = DEPRECATED_ANDROID[obj];
@@ -470,6 +441,8 @@ export default (Base: Constructor<T>) => {
                     const value = this.convertPX(this.css('maxWidth'));
                     if (this.textElement) {
                         this.android('maxWidth', value, false);
+                        this.android('layout_width', 'wrap_content', false);
+                        hasWidth = true;
                     }
                     else if (this.layoutVertical && !this.documentBody) {
                         children.forEach(node => node.textElement && !node.has('maxWidth') && node.android('maxWidth', value, false));
@@ -505,7 +478,7 @@ export default (Base: Constructor<T>) => {
                                 if (this.linear.width >= parent.box.width ||
                                     this.layoutVertical && !this.autoMargin.horizontal ||
                                     this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && this.alignedVertically(this.previousSiblings())) ||
-                                    this.groupElement && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
+                                    this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
                                 {
                                     this.android('layout_width', 'match_parent');
                                 }
@@ -546,6 +519,8 @@ export default (Base: Constructor<T>) => {
                     const value = this.convertPX(this.css('maxHeight'), false);
                     if (this.textElement) {
                         this.android('maxHeight', value, false);
+                        this.android('layout_width', 'wrap_content', false);
+                        hasHeight = true;
                     }
                     else if (this.layoutVertical && !this.documentBody) {
                         children.forEach(node => node.textElement && !node.has('maxHeight') && node.android('maxHeight', value, false));

@@ -64,8 +64,6 @@ interface ListData {
 }
 
 interface VerticalAlignData<T> {
-    marginTop: number;
-    idMap: ObjectIndex<number>;
     aboveBaseline: T[];
     belowBaseline: T[];
 }

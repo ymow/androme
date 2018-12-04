@@ -123,10 +123,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public finalize(data: SessionData<NodeList<T>>) {}
 
-    public registerFile(handler: File<T>) {
-        this.fileHandler = handler;
-    }
-
     public reset() {
         for (const name in Resource.ASSETS) {
             Resource.ASSETS[name] = new Map();

@@ -453,7 +453,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public setRenderPosition(parent: T, required: boolean) {
         let children: T[];
-        if (parent.groupElement && parent.parent) {
+        if (parent.groupParent && parent.parent) {
             const id = parent.parent.id;
             const parentMap = this._renderPosition.get(id);
             if (parentMap) {

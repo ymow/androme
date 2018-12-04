@@ -558,5 +558,5 @@ export function deleteElementCache(element: Element, ...attrs: string[]) {
 }
 
 export function getElementAsNode<T>(element: Element): T | undefined {
-    return getElementCache(element, 'node');
+    return element.className && element.className.startsWith('androme') ? undefined : getElementCache(element, 'node');
 }

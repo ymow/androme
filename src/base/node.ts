@@ -11,8 +11,16 @@ import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, hasBi
 
 type T = Node;
 
-const BOX_MARGIN = ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'];
-const BOX_PADDING = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'];
+const BOX_SPACING = new Map<number, string>([
+    [BOX_STANDARD.MARGIN_TOP, 'marginTop'],
+    [BOX_STANDARD.MARGIN_RIGHT, 'marginRight'],
+    [BOX_STANDARD.MARGIN_BOTTOM, 'marginBottom'],
+    [BOX_STANDARD.MARGIN_LEFT, 'marginLeft'],
+    [BOX_STANDARD.PADDING_TOP, 'paddingTop'],
+    [BOX_STANDARD.PADDING_RIGHT, 'paddingRight'],
+    [BOX_STANDARD.PADDING_BOTTOM, 'paddingBottom'],
+    [BOX_STANDARD.PADDING_LEFT, 'paddingLeft']
+]);
 
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
     public abstract readonly localSettings: EnvironmentSettings;
@@ -88,8 +96,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract setAlignment(): void;
     public abstract applyOptimizations(): void;
     public abstract applyCustomizations(): void;
-    public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
-    public abstract valueBox(region: number): [number, number];
     public abstract alignParent(position: string): boolean;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, children?: boolean): T;
@@ -221,6 +227,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         break;
                     case 'height':
                         this._cached.hasHeight = undefined;
+                        break;
+                    case 'verticalAlign':
+                        this._cached.baseline = undefined;
                         break;
                 }
                 this._cached[attr] = undefined;
@@ -676,37 +685,70 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public resetBox(region: number, node?: T, fromParent = false) {
-        [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
-            if (index === 0 && hasBit(region, BOX_STANDARD.MARGIN) ||
-                index === 1 && hasBit(region, BOX_STANDARD.PADDING))
-            {
-                for (let i = 0; i < item.length; i++) {
-                    const attr = item[i];
+    public modifyBox(region: number, offset: number | null, negative = true) {
+        if (offset !== 0) {
+            const attr = BOX_SPACING.get(region);
+            if (attr) {
+                if (offset === null) {
                     this._boxReset[attr] = 1;
-                    if (node) {
-                        node.modifyBox(fromParent ? BOX_MARGIN[i] : BOX_PADDING[i], this[index === 0 ? BOX_MARGIN[i] : BOX_PADDING[i]]);
-                    }
                 }
-            }
-        });
-    }
-
-    public inheritBox(region: number, node: T) {
-        [BOX_MARGIN, BOX_PADDING].forEach((item, index) => {
-            if (index === 0 && hasBit(region, BOX_STANDARD.MARGIN) ||
-                index === 1 && hasBit(region, BOX_STANDARD.PADDING))
-            {
-                for (let i = 0; i < item.length; i++) {
-                    const attr = item[i];
-                    const value = this._boxAdjustment[attr];
-                    if (value > 0) {
-                        node.modifyBox(attr, this._boxAdjustment[attr], false);
+                else {
+                    this._boxAdjustment[attr] += offset;
+                    if (!negative && this._boxAdjustment[attr] < 0) {
                         this._boxAdjustment[attr] = 0;
                     }
                 }
             }
-        });
+        }
+    }
+
+    public valueBox(region: number): [number, number] {
+        const attr = BOX_SPACING.get(region);
+        if (attr) {
+            return [this._boxReset[attr], this._boxAdjustment[attr]];
+        }
+        return [0, 0];
+    }
+
+    public resetBox(region: number, node?: T, fromParent = false) {
+        const keys = Array.from(BOX_SPACING.keys());
+        const applyReset = (start: number, end: number, margin: boolean) => {
+            let i = 0;
+            for (const attr of Array.from(BOX_SPACING.values()).slice(start, end)) {
+                this._boxReset[attr] = 1;
+                if (node) {
+                    node.modifyBox(fromParent ? keys[i] : keys[i + 4], this[margin ? keys[i] : keys[i + 4]]);
+                }
+                i++;
+            }
+        };
+        if (hasBit(region, BOX_STANDARD.MARGIN)) {
+            applyReset(0, 4, true);
+        }
+        if (hasBit(region, BOX_STANDARD.PADDING)) {
+            applyReset(4, 8, false);
+        }
+    }
+
+    public inheritBox(region: number, node: T) {
+        const keys = Array.from(BOX_SPACING.keys());
+        const applyReset = (start: number, end: number, margin: boolean) => {
+            let i = margin ? 0 : 4;
+            for (const attr of Array.from(BOX_SPACING.values()).slice(start, end)) {
+                const value: number = this._boxAdjustment[attr];
+                if (value > 0) {
+                    node.modifyBox(keys[i], this._boxAdjustment[attr], false);
+                    this._boxAdjustment[attr] = 0;
+                }
+                i++;
+            }
+        };
+        if (hasBit(region, BOX_STANDARD.MARGIN)) {
+            applyReset(0, 4, true);
+        }
+        if (hasBit(region, BOX_STANDARD.PADDING)) {
+            applyReset(4, 8, false);
+        }
     }
 
     public previousSiblings(lineBreak = true, excluded = true, visible = false) {
@@ -792,7 +834,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public actualRight(dimension = 'linear') {
-        return this.companion && !this.companion.visible && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
+        const node = this.companion && !this.companion.visible && this.companion[dimension].right > this[dimension].right ? this.companion : this;
+        return node[dimension].right - (node.marginRight < 0 ? node.marginRight : 0);
     }
 
     protected setDimensions(dimension: string) {
@@ -847,7 +890,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (value) {
             if (!value.contains(this)) {
                 value.append(this);
-                if (this.groupElement && value.siblingIndex !== Number.MAX_VALUE) {
+                if (this.groupParent && value.siblingIndex !== Number.MAX_VALUE) {
                     this.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                 }
             }
@@ -931,8 +974,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this.tagName === 'TABLE' || this.display === 'table';
     }
 
-    get groupElement() {
-        return this._element === null && this.length > 0;
+    get groupParent() {
+        return false;
     }
 
     get plainText() {
@@ -1606,7 +1649,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             if (this.htmlElement) {
                 this._cached.actualChildren = flatMap(Array.from(this.element.childNodes), (element: Element) => getElementAsNode(element) as T) as T[];
             }
-            else if (this.groupElement) {
+            else if (this.groupParent) {
                 this._cached.actualChildren = this.initial.children.slice() as T[];
             }
             else {

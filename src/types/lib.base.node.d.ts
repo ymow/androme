@@ -39,7 +39,7 @@ declare global {
             readonly gridElement: boolean;
             readonly textElement: boolean;
             readonly tableElement: boolean;
-            readonly groupElement: boolean;
+            readonly groupParent: boolean;
             readonly documentBody: boolean;
             readonly dataset: DOMStringMap;
             readonly extension: string;
@@ -125,7 +125,7 @@ declare global {
             setAlignment(): void;
             applyOptimizations(): void;
             applyCustomizations(): void;
-            modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
+            modifyBox(region: number, offset: number | null, negative?: boolean): void;
             valueBox(region: number): [number, number];
             alignParent(position: string): boolean;
             localizeString(value: string): string;

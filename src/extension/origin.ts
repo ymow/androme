@@ -6,14 +6,15 @@ import NodeList from '../base/nodelist';
 
 import { formatPX, maxArray } from '../lib/util';
 
+function modifyMarginLeft<T extends Node>(node: T, offset: number, parent = false) {
+    node.bounds.left -= offset;
+    node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
+    node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))), true);
+    node.setBounds(true);
+}
+
 export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
-        function modifyMarginLeft(node: T, offset: number, parent = false) {
-            node.bounds.left -= offset;
-            node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
-            node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))), true);
-            node.setBounds(true);
-        }
         for (const node of this.application.processing.cache.elements) {
             const outside = node.some((item, index) => {
                 if (item.pageFlow) {
@@ -25,11 +26,9 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                     );
                 }
                 else {
-                    const left = item.toInt('left');
-                    const right = item.toInt('right');
                     return (
-                        left < 0 && (index === 0 && node.marginLeft > 0 || node.marginLeft >= Math.abs(left)) ||
-                        right < 0 && Math.abs(right) >= item.bounds.width
+                        item.left < 0 && (index === 0 && node.marginLeft > 0 || node.marginLeft >= Math.abs(item.left)) ||
+                        item.right < 0 && Math.abs(item.right) >= item.bounds.width
                     );
                 }
             });

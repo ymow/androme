@@ -70,18 +70,18 @@ export default class <T extends View> extends androme.lib.extensions.Table<T> {
                         node.css('width', $util.formatPX(node.bounds.width), true);
                     }
                 }
-                const layout = new $Layout(
-                    parent,
-                    node,
-                    CONTAINER_NODE.GRID,
-                    $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
-                    node.length,
-                    node.children as T[]
-                );
-                layout.rowCount = mainData.rowCount;
-                layout.columnCount = mainData.columnCount;
-                output = this.application.renderNode(layout);
             }
+            const layout = new $Layout(
+                parent,
+                node,
+                CONTAINER_NODE.GRID,
+                $enum.NODE_ALIGNMENT.AUTO_LAYOUT,
+                node.length,
+                node.children as T[]
+            );
+            layout.rowCount = mainData.rowCount;
+            layout.columnCount = mainData.columnCount;
+            output = this.application.renderNode(layout);
         }
         return { output, complete: output !== '' };
     }

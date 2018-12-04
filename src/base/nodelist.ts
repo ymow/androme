@@ -1,8 +1,8 @@
 import Container from './container';
 import Node from './node';
 
-import { getElementAsNode, getStyle } from '../lib/dom';
-import { convertInt, maxArray, minArray, withinFraction } from '../lib/util';
+import { getElementAsNode } from '../lib/dom';
+import { convertInt, isUnit, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -15,21 +15,24 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static baseline<T extends Node>(list: T[], text = false) {
-        const baseline = list.filter(item => item.textElement || (item.verticalAlign !== 'text-top' && item.verticalAlign !== 'text-bottom'));
+        let baseline = list.filter(item => !item.floating && !isUnit(item.verticalAlign) && !['absolute', 'fixed'].includes(item.cssInitial('position')));
         if (baseline.length) {
             list = baseline;
         }
-        list = list.filter(item => !item.floating && !['absolute', 'fixed'].includes(item.cssInitial('position')));
+        baseline = list.filter(item => item.textElement || item.verticalAlign !== 'text-top' && item.verticalAlign !== 'text-bottom');
+        if (baseline.length) {
+            list = baseline;
+        }
         if (text) {
-            list = list.filter(item => item.baseElement && !item.imageElement && getStyle(item.baseElement).display !== 'none');
+            list = list.filter(item => item.baseElement && !item.imageElement);
         }
         const lineHeight = maxArray(list.map(node => node.lineHeight));
         const boundsHeight = maxArray(list.map(node => node.bounds.height));
         return list.filter(item => lineHeight > boundsHeight ? item.lineHeight === lineHeight : item.bounds.height === boundsHeight).sort((a, b) => {
-            if (a.groupElement || (!a.baseline && b.baseline)) {
+            if (a.groupParent || (!a.baseline && b.baseline)) {
                 return 1;
             }
-            else if (b.groupElement || (a.baseline && !b.baseline)) {
+            else if (b.groupParent || (a.baseline && !b.baseline)) {
                 return -1;
             }
             if (!a.imageElement || !b.imageElement) {

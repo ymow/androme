@@ -131,10 +131,10 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
                             const topParent = topEnd.visible ? topEnd.renderParent : undefined;
                             const offset = top - bottom;
                             if (offset > 0) {
-                                if (topParent && topParent.groupElement && topParent.firstChild() === topEnd) {
+                                if (topParent && topParent.groupParent && topParent.firstChild() === topEnd) {
                                     topParent.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
                                 }
-                                else if (bottomParent && bottomParent.groupElement && bottomParent.lastChild() === bottomStart) {
+                                else if (bottomParent && bottomParent.groupParent && bottomParent.lastChild() === bottomStart) {
                                     bottomParent.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset);
                                 }
                                 else {
