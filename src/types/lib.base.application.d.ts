@@ -30,7 +30,7 @@ declare global {
             renderLayout(layout: Layout<T>, node: T): string;
             addLayoutFile(filename: string, content: string, pathname?: string, documentRoot?: boolean): void;
             addIncludeFile(filename: string, content: string): void;
-            addRenderTemplate(node: T, parent: T, output: string, group: boolean);
+            addRenderTemplate(node: T, parent: T, output: string, group: boolean): void;
             addRenderQueue(id: string, templates: string[]): void;
             addImagePreload(element: HTMLImageElement): void;
             setRenderPosition(parent: T, required: boolean): void;

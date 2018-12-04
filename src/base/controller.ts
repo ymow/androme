@@ -25,7 +25,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract renderNodeGroup(layout: Layout<T>): string;
     public abstract renderNodeStatic(controlName: string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract setConstraints(): void;
-    public abstract finalize(data: SessionData<NodeList<T>>);
+    public abstract finalize(data: SessionData<NodeList<T>>): void;
     public abstract createNodeGroup(node: T, children: T[], parent: T): T;
     public abstract get userSettings(): UserSettings;
     public abstract get containerTypeHorizontal(): LayoutType;

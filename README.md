@@ -1088,6 +1088,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
                         android:checkedButton="@+id/c2"
+                        android:layout_alignBottom="@+id/c4"
                         android:layout_alignParentStart="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
@@ -1105,7 +1106,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
-                        android:layout_alignBaseline="@+id/radiogroup_1"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"

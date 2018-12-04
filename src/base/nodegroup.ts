@@ -124,8 +124,8 @@ export default abstract class NodeGroup extends Node {
         return true;
     }
 
-    get actualBoxParent() {
-        return NodeList.actualParent(this.cascade(true)) || this;
+    get actualBoxParent(): T {
+        return NodeList.actualParent(this.cascade(true)) || super.actualBoxParent;
     }
 
     private outerRegion() {

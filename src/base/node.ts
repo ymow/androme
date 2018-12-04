@@ -1,6 +1,6 @@
 import { CachedValue, InitialData, Support } from '../types/lib.base.types.node';
 
-import { ELEMENT_BLOCK, ELEMENT_INLINE, REGEX_PATTERN } from '../lib/constant';
+import { CSS_SPACING, ELEMENT_BLOCK, ELEMENT_INLINE, REGEX_PATTERN } from '../lib/constant';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE } from '../lib/enumeration';
 
 import Container from './container';
@@ -10,17 +10,6 @@ import { assignBounds, deleteElementCache, getElementCache, getElementAsNode, ge
 import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
-
-const BOX_SPACING = new Map<number, string>([
-    [BOX_STANDARD.MARGIN_TOP, 'marginTop'],
-    [BOX_STANDARD.MARGIN_RIGHT, 'marginRight'],
-    [BOX_STANDARD.MARGIN_BOTTOM, 'marginBottom'],
-    [BOX_STANDARD.MARGIN_LEFT, 'marginLeft'],
-    [BOX_STANDARD.PADDING_TOP, 'paddingTop'],
-    [BOX_STANDARD.PADDING_RIGHT, 'paddingRight'],
-    [BOX_STANDARD.PADDING_BOTTOM, 'paddingBottom'],
-    [BOX_STANDARD.PADDING_LEFT, 'paddingLeft']
-]);
 
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
     public abstract readonly localSettings: EnvironmentSettings;
@@ -687,7 +676,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public modifyBox(region: number, offset: number | null, negative = true) {
         if (offset !== 0) {
-            const attr = BOX_SPACING.get(region);
+            const attr = CSS_SPACING.get(region);
             if (attr) {
                 if (offset === null) {
                     this._boxReset[attr] = 1;
@@ -703,7 +692,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public valueBox(region: number): [number, number] {
-        const attr = BOX_SPACING.get(region);
+        const attr = CSS_SPACING.get(region);
         if (attr) {
             return [this._boxReset[attr], this._boxAdjustment[attr]];
         }
@@ -711,10 +700,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public resetBox(region: number, node?: T, fromParent = false) {
-        const keys = Array.from(BOX_SPACING.keys());
+        const keys = Array.from(CSS_SPACING.keys());
         const applyReset = (start: number, end: number, margin: boolean) => {
             let i = 0;
-            for (const attr of Array.from(BOX_SPACING.values()).slice(start, end)) {
+            for (const attr of Array.from(CSS_SPACING.values()).slice(start, end)) {
                 this._boxReset[attr] = 1;
                 if (node) {
                     node.modifyBox(fromParent ? keys[i] : keys[i + 4], this[margin ? keys[i] : keys[i + 4]]);
@@ -731,10 +720,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public inheritBox(region: number, node: T) {
-        const keys = Array.from(BOX_SPACING.keys());
+        const keys = Array.from(CSS_SPACING.keys());
         const applyReset = (start: number, end: number, margin: boolean) => {
             let i = margin ? 0 : 4;
-            for (const attr of Array.from(BOX_SPACING.values()).slice(start, end)) {
+            for (const attr of Array.from(CSS_SPACING.values()).slice(start, end)) {
                 const value: number = this._boxAdjustment[attr];
                 if (value > 0) {
                     node.modifyBox(keys[i], this._boxAdjustment[attr], false);
@@ -1659,7 +1648,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._cached.actualChildren;
     }
 
-    get actualBoxParent() {
+    get actualBoxParent(): T {
         return this;
     }
 

@@ -12,8 +12,8 @@ declare global {
             readonly layoutConstraint: boolean;
             readonly singleChild: boolean;
             readonly localSettings: LocalSettings;
-            android(attr: string, value?: string, overwrite?: boolean);
-            app(attr: string, value?: string, overwrite?: boolean);
+            android(attr: string, value?: string, overwrite?: boolean): string;
+            app(attr: string, value?: string, overwrite?: boolean): string;
             formatted(value: string, overwrite?: boolean): void;
             mergeGravity(attr: string, ...alignment: string[]): string;
             anchor(position: string, stringId?: string, overwrite?: boolean): void;

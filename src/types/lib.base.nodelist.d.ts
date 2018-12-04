@@ -10,7 +10,7 @@ declare global {
         }
 
         export class NodeList<T extends Node> implements NodeList<T> {
-            public static actualParent<T>(list: T[]): T | null;
+            public static actualParent<T>(list: T[]): T | undefined;
             public static baseline<T>(list: T[], text?: boolean): T[];
             public static floated<T>(list: T[]): Set<string>;
             public static cleared<T>(list: T[], parent?: boolean): Map<T, string>;

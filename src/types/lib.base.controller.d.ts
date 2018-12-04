@@ -17,8 +17,8 @@ declare global {
             processTraverseVertical(layout: Layout<T>, siblings?: T[]): LayoutResult<T>;
             processLayoutHorizontal(layout: Layout<T>, strictMode?: boolean): LayoutResult<T>;
             setConstraints(): void;
-            renderNode(layout: Layout<T>);
-            renderNodeGroup(layout: Layout<T>);
+            renderNode(layout: Layout<T>): string;
+            renderNodeGroup(layout: Layout<T>): string;
             renderNodeStatic(controlName: string, depth: number, options?: ExternalData, width?: string, height?: string, node?: T, children?: boolean): string;
             createNodeGroup(node: T, children: T[], parent?: T, replaceWith?: T): T;
             replaceRenderQueue(output: string): string;

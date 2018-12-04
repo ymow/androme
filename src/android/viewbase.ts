@@ -274,7 +274,7 @@ export default (Base: Constructor<T>) => {
             return 0.5;
         }
 
-        public supported(obj: string, attr: string, result = {}) {
+        public supported(obj: string, attr: string, result = {}): boolean {
             if (this.localSettings.targetAPI > 0 && this.localSettings.targetAPI < BUILD_ANDROID.LATEST) {
                 const deprecated: ObjectMap<FunctionResult> = DEPRECATED_ANDROID[obj];
                 if (deprecated && typeof deprecated[attr] === 'function') {

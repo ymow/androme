@@ -70,7 +70,7 @@ export enum NODE_PROCEDURE {
     ALL = 510
 }
 
-export enum BOX_STANDARD {
+export const enum BOX_STANDARD {
     MARGIN_TOP = 2,
     MARGIN_RIGHT = 4,
     MARGIN_BOTTOM = 8,

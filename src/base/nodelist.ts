@@ -11,7 +11,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                 return node.actualParent as T;
             }
         }
-        return null;
+        return undefined;
     }
 
     public static baseline<T extends Node>(list: T[], text = false) {

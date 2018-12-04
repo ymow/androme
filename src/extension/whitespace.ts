@@ -14,7 +14,7 @@ function setMinHeight<T extends Node>(node: T, offset: number) {
 function applyMarginCollapse<T extends Node>(parent: T, node: T, direction: string) {
     if (!node.lineBreak && !node.plainText && node === parent.renderChildren[direction === 'Top' ? 0 : parent.renderChildren.length - 1]) {
         if (parent[`margin${direction}`] > 0 && parent[`padding${direction}`] === 0 && parent[`border${direction}Width`] === 0) {
-            node.modifyBox(BOX_STANDARD[`MARGIN_${direction.toUpperCase()}`], null);
+            node.modifyBox(direction === 'Top' ? BOX_STANDARD.MARGIN_TOP : BOX_STANDARD.MARGIN_BOTTOM, null);
         }
     }
 }
