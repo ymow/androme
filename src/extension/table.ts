@@ -166,13 +166,13 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 if (td.length || td.inlineText) {
                     rowWidth[i] += td.bounds.width + horizontal;
                 }
-                columnIndex[i] += element.colSpan;
                 td.css({
                     marginTop: i === 0 ? '0px' : spacingHeight,
                     marginRight: j < tr.length - 1 ? spacingWidth : '0px',
                     marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                     marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
                 }, '', true);
+                columnIndex[i] += element.colSpan;
             }
         }
         if (node.has('width', CSS_STANDARD.UNIT) && mapWidth.some(value => isPercent(value))) {

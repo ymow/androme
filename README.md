@@ -64,6 +64,7 @@ Library files are in the /dist folder. A minimum of *two* files are required to 
 There are babel minified versions for production (ES5) and non-babel versions for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 
 NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" promise method "then" to set a callback for your commands.
+
 ```javascript
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -75,12 +76,11 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
     });
 </script>
 ```
-### User settings
+### ALL: User Settings (example: android)
 
 These settings are available in the global variable "androme" to customize your desired output structure. Each framework shares a common set of settings and also a subset of their own settings.
 
 ```javascript
-// android settings
 androme.settings = {
     builtInExtensions: [
         'androme.external',
@@ -131,7 +131,7 @@ androme.settings = {
 ```
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
-### Standard
+### ALL: Extension Standard
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for SVG and most of the common floating techniques.
 
@@ -145,15 +145,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/gradient.png" alt="gradient: linear | radial" />
 
-### Extensions: Standard
-
 <img src="demos/android/table.png" alt="extension: table" />
 
 <img src="demos/android/grid.png" alt="extension: grid - balance columns" />
 
 <img src="demos/android/list.png" alt="extension: list" />
 
-### Extensions: Widgets
+### ANDROID: Extension Widgets
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
@@ -176,7 +174,7 @@ Most of the Android support library extensions can be configured using the same 
 
 <img src="demos/android/menu.png" alt="toolbar: menu" />
 
-### Extensions: Configuration (example)
+### ALL: Extension Configuration (example)
 
 ```javascript
 <script src="/dist/extensions/android.widget.coordinator.min.js"></script>
@@ -184,12 +182,12 @@ Most of the Android support library extensions can be configured using the same 
 <script src="/dist/extensions/android.widget.toolbar.min.js"></script>
 <script>
     // required when handleExtensionsAsync = false
-    androme.installExtension(android.widget.coordinator);
-    androme.installExtension(android.widget.menu);
-    androme.installExtension(android.widget.toolbar);
+    androme.include(android.widget.coordinator);
+    androme.include(android.widget.menu);
+    androme.include(android.widget.toolbar);
 
     // configure an extension
-    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is usually provided
+    androme.configure('android.widget.toolbar', { // optional: default configuration is usually provided
         'elementId': { // HTML DOM
             appBar: {
                 android: {
@@ -209,10 +207,10 @@ Most of the Android support library extensions can be configured using the same 
 
     // third-party: install an extension
     var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
-    androme.installExtension(sample);
+    androme.include(sample);
 </script>
 ```
-### API: Public properties and methods
+### ALL: Public Properties and Methods
 
 There is no official documentation as this project is still in early development. The entire source code is available on GitHub if you need further clarification.
 
@@ -231,11 +229,17 @@ saveAllToDisk() // download entire project as zip archive - requires Node.js and
 
 toString() // main layout file contents
 
-configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
-installExtension(extension: androme.lib.base.Extension) // see extension configuration section | same: ext(extension: {})
-getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
+include(extension: androme.lib.base.Extension) // see extension configuration section | same: ext(extension: {})
+exclude(name: string) // remove an extension by namespace or control
+retrieve(name: string) // retrieve an extension by namespace or control | same: ext(name: string)
+configure(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
+```
+### ANDROID: Public System Methods
 
-// android internal methods
+You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
+
+```javascript
+system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views
 system.addXmlNs(name: string, uri: string) // add global namespaces for third-party controls
 system.writeLayoutAllXml(saveToDisk: boolean) // output generated xml
 system.writeResourceAllXml(saveToDisk: boolean)
@@ -246,9 +250,7 @@ system.writeResourceDrawableXml(saveToDisk: boolean)
 system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
-system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views
 ```
-You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
 ```javascript
 <script>
     // targetAPI: 0 - ALL, 26 - OREO
@@ -259,35 +261,11 @@ You can use the "system.customize" method to create default settings for the spe
         }
     });
 </script>
-````
-### Redirecting output location
-
-It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
-
-```xml
-<div>
-    <span>Item 1</span>
-    <span data-target="location">Item 2</span>
-<div>
-<ul id="location">
-    <li>Item 3</li>
-    <!-- span -->
-</ul>
 ```
-```xml
-<LinearLayout>
-    <TextView>Item 1</TextView>
-</LinearLayout>
-<LinearLayout>
-    <TextView>Item 3</TextView>
-    <TextView>Item 2</TextView>
-</LinearLayout>
-```
-Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
-
-### Excluding procedures and applied attributes
+### ALL: Excluding Procedures / Applied Attributes
 
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
+
 ```xml
 <div data-exclude-section="DOM_TRAVERSE | EXTENSION | RENDER | ALL"
      data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | LOCALIZATION | ALL"
@@ -304,40 +282,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
     data-attr-app="layout_scrollFlags::scroll|exitUntilCollapsed">
 </div>
 ```
-### Using layout includes with merge tag
-
-Some applications can benefit from using includes and merge tags in order share common templates. Nested includes are also supported.
-
-```xml
-<div>
-    <div>Item 1</div>
-    <div data-include="filename1" data-include-merge="true">Item 2</div>
-    <div>Item 3</div>
-    <div data-include-end="true">Item 4</div>
-    <div data-include="filename2" data-include-end="true">Item 5</div>
-</div>
-```
-```xml
-<LinearLayout>
-    <TextView>Item 1</TextView>
-    <include layout="@layout/filename1" />
-    <include layout="@layout/filename2" />
-</LinearLayout>
-<!-- res/layout/activity_main.xml -->
-
-<merge>
-    <TextView>Item 2</TextView>
-    <TextView>Item 3</TextView>
-    <TextView>Item 4</TextView>
-</merge>
-<!-- res/layout/filename1.xml -->
-
-<TextView>Item 5</TextView>
-<!-- res/layout/filename2.xml -->
-```
-The attributes "include" and "include-end" can only be applied to elements which share the same parent container. See /demos/gradient.html for usage instructions.
-
-### Generated from HTML and CSS
+### SAMPLE: Generated from HTML and CSS
 
 <img src="demos/android/form.png" alt="form" />
 
@@ -871,7 +816,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_5"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -925,7 +870,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_6"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -1088,7 +1033,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
                         android:checkedButton="@+id/c2"
-                        android:layout_alignBottom="@+id/c4"
                         android:layout_alignParentStart="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
@@ -1106,6 +1050,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
+                        android:layout_alignBottom="@+id/radiogroup_1"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
@@ -1517,6 +1462,64 @@ The attributes "include" and "include-end" can only be applied to elements which
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
+### ALL: Redirecting output location
+
+It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
+
+```xml
+<div>
+    <span>Item 1</span>
+    <span data-target="location">Item 2</span>
+<div>
+<ul id="location">
+    <li>Item 3</li>
+    <!-- span -->
+</ul>
+```
+```xml
+<LinearLayout>
+    <TextView>Item 1</TextView>
+</LinearLayout>
+<LinearLayout>
+    <TextView>Item 3</TextView>
+    <TextView>Item 2</TextView>
+</LinearLayout>
+```
+Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
+
+### ANDROID: Layout Includes / Merge Tag
+
+Some applications can benefit from using includes or merge tags to share common templates. Nested includes are also supported.
+
+```xml
+<div>
+    <div>Item 1</div>
+    <div data-android-include="filename1" data-android-include-merge="true">Item 2</div>
+    <div>Item 3</div>
+    <div data-android-include-end="true">Item 4</div>
+    <div data-android-include="filename2" data-android-include-end="true">Item 5</div>
+</div>
+```
+```xml
+<LinearLayout>
+    <TextView>Item 1</TextView>
+    <include layout="@layout/filename1" />
+    <include layout="@layout/filename2" />
+</LinearLayout>
+<!-- res/layout/activity_main.xml -->
+
+<merge>
+    <TextView>Item 2</TextView>
+    <TextView>Item 3</TextView>
+    <TextView>Item 4</TextView>
+</merge>
+<!-- res/layout/filename1.xml -->
+
+<TextView>Item 5</TextView>
+<!-- res/layout/filename2.xml -->
+```
+The attributes "android-include" and "android-include-end" can only be applied to elements which share the same parent container. See /demos/gradient.html for usage instructions.
+
 ### User Written HTML
 
 Using excessive DIV tags are not required for mobile devices which can cause additional FrameLayouts or LinearLayouts to be generated. Block level elements are almost always rendered to preserve any CSS styles which are applied to the tag.

@@ -67,7 +67,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
     public postBaseLayout(node: T) {
         node.some((item: T) => {
             if ((<HTMLInputElement> item.element).checked) {
-                node.android('checkedButton', item.stringId);
+                node.android('checkedButton', item.documentId);
                 return true;
             }
             return false;

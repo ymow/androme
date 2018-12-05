@@ -5,7 +5,7 @@ import Coordinator from './coodinator';
 const coordinator = new Coordinator(WIDGET_NAME.COORDINATOR, FRAMEWORK.ANDROID);
 
 if (androme) {
-    androme.installExtensionAsync(coordinator);
+    androme.includeAsync(coordinator);
 }
 
 export default coordinator;

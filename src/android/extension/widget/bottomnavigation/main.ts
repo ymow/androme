@@ -5,7 +5,7 @@ import BottomNavigation from './bottomnavigation';
 const bottomNavigation = new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, FRAMEWORK.ANDROID);
 
 if (androme) {
-    androme.installExtensionAsync(bottomNavigation);
+    androme.includeAsync(bottomNavigation);
 }
 
 export default bottomNavigation;

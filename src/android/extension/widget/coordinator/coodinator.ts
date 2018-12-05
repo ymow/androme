@@ -20,7 +20,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         const output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.COORDINATOR,
             node.renderDepth,
-            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')),
             '',
             '',
             node,
@@ -30,7 +30,7 @@ export default class Coordinator<T extends $View> extends androme.lib.base.Exten
         if (element) {
             const toolbar = $dom.getElementAsNode<T>(element);
             if (toolbar) {
-                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
+                const ext = this.application.retrieveExtension(WIDGET_NAME.TOOLBAR);
                 if (ext) {
                     const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
                     if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {

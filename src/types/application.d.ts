@@ -73,7 +73,7 @@ interface AppSession<T extends androme.lib.base.Node, U> {
 
 interface AppProcessing<T extends androme.lib.base.Node, U> {
     cache: U;
-    depthMap: Map<string, Map<number, string>>;
+    depthMap: Map<number, Map<string, string>>;
     node: T | null;
     layout: FileAsset | null;
     excluded: androme.lib.base.NodeList<T>;

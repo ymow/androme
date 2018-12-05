@@ -17,7 +17,7 @@ export interface LocalSettings extends EnvironmentSettings {
 }
 
 export interface Constraint {
-    current: ObjectMap<{ stringId: string; horizontal: boolean; }>;
+    current: ObjectMap<{ documentId: string; horizontal: boolean; }>;
     horizontal: boolean;
     vertical: boolean;
     minWidth?: boolean;

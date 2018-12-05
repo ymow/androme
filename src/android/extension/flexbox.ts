@@ -34,7 +34,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
         layout.rowCount = mainData.rowCount;
         layout.columnCount = mainData.columnCount;
         if (node.filter(item => !item.pageFlow).length > 0 ||
-            (mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight)) ||
+            mainData.rowDirection && (mainData.rowCount === 1 || node.hasHeight) ||
             mainData.columnDirection && mainData.columnCount === 1)
         {
             layout.containerType = CONTAINER_NODE.CONSTRAINT;
@@ -126,6 +126,9 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                     }
                 }
                 else {
+                    if (!node.hasHeight) {
+                        node.android('layout_height', 'match_parent');
+                    }
                     if (mainData.directionReverse) {
                         chainVertical[0] = mainData.children.reverse();
                     }
@@ -149,10 +152,10 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                         const previous = segment[i - 1];
                         const next = segment[i + 1];
                         if (next) {
-                            chain.anchor(CHAIN_MAP.rightLeftBottomTop[index], next.stringId);
+                            chain.anchor(CHAIN_MAP.rightLeftBottomTop[index], next.documentId);
                         }
                         if (previous) {
-                            chain.anchor(CHAIN_MAP.leftRightTopBottom[index], previous.stringId);
+                            chain.anchor(CHAIN_MAP.leftRightTopBottom[index], previous.documentId);
                         }
                         if (segment !== basicHorizontal && segment !== basicVertical) {
                             switch (chain.flexbox.alignSelf) {
@@ -171,7 +174,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                         }
                                         if (baseline) {
                                             if (chain !== baseline) {
-                                                chain.anchor('baseline', baseline.stringId);
+                                                chain.anchor('baseline', baseline.documentId);
                                                 chain.constraint.vertical = true;
                                             }
                                             else {

@@ -3,23 +3,12 @@ import { NODE_ALIGNMENT } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-type T = Node;
-
 export default abstract class NodeGroup extends Node {
     public setBounds(calibrate = false) {
         if (!calibrate) {
             if (this.length) {
-                const nodes = this.outerRegion();
-                this._bounds = {
-                    top: nodes.top[0].linear.top,
-                    right: nodes.right[0].linear.right,
-                    bottom: nodes.bottom[0].linear.bottom,
-                    left: nodes.left[0].linear.left,
-                    width: 0,
-                    height: 0
-                };
-                this.bounds.width = this.bounds.right - this.bounds.left;
-                this.bounds.height = this.bounds.bottom - this.bounds.top;
+                const bounds = this.outerRegion;
+                this._bounds = Object.assign({ width: bounds.right - bounds.left, height: bounds.bottom - bounds.top }, bounds);
             }
         }
     }
@@ -39,7 +28,7 @@ export default abstract class NodeGroup extends Node {
         if (actualParent) {
             return super.firstChild(<HTMLElement> actualParent.element);
         }
-        else if (this.initial.children.length > 0) {
+        else if (this.initial.children.length) {
             return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
         }
         return undefined;
@@ -50,7 +39,7 @@ export default abstract class NodeGroup extends Node {
         if (actualParent) {
             return super.lastChild(<HTMLElement> actualParent.element);
         }
-        else if (this.initial.children.length > 0) {
+        else if (this.initial.children.length) {
             return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
         }
         return undefined;
@@ -124,52 +113,33 @@ export default abstract class NodeGroup extends Node {
         return true;
     }
 
-    get actualBoxParent(): T {
-        return NodeList.actualParent(this.cascade(true)) || super.actualBoxParent;
-    }
-
-    private outerRegion() {
-        let top: T[] = [];
-        let right: T[] = [];
-        let bottom: T[] = [];
-        let left: T[] = [];
+    private get outerRegion(): BoxRect {
         const nodes = this.children.slice();
-        this.each(node => node.companion && nodes.push(node.companion as T));
-        for (let i = 0; i < nodes.length; i++) {
+        let top = nodes[0];
+        let right = top;
+        let bottom = top;
+        let left = top;
+        this.each(node => node.companion && !node.companion.visible && nodes.push(node.companion));
+        for (let i = 1; i < nodes.length; i++) {
             const node = nodes[i];
-            if (i === 0) {
-                top.push(node);
-                right.push(node);
-                bottom.push(node);
-                left.push(node);
+            if (node.linear.top < top.linear.top) {
+                top = node;
             }
-            else {
-                if (top[0].linear.top === node.linear.top) {
-                    top.push(node);
-                }
-                else if (node.linear.top < top[0].linear.top) {
-                    top = [node];
-                }
-                if (right[0].linear.right === node.linear.right) {
-                    right.push(node);
-                }
-                else if (node.linear.right > right[0].linear.right) {
-                    right = [node];
-                }
-                if (bottom[0].linear.bottom === node.linear.bottom) {
-                    bottom.push(node);
-                }
-                else if (node.linear.bottom > bottom[0].linear.bottom) {
-                    bottom = [node];
-                }
-                if (left[0].linear.left === node.linear.left) {
-                    left.push(node);
-                }
-                else if (node.linear.left < left[0].linear.left) {
-                    left = [node];
-                }
+            if (node.linear.right > right.linear.right) {
+                right = node;
+            }
+            if (node.linear.bottom > bottom.linear.bottom) {
+                bottom = node;
+            }
+            if (node.linear.left < left.linear.left) {
+                left = node;
             }
         }
-        return { top, right, bottom, left };
+        return {
+            top: top.linear.top,
+            right: right.linear.right,
+            bottom: bottom.linear.bottom,
+            left: left.linear.left
+        };
     }
 }

@@ -20,7 +20,7 @@ export function formatPlaceholder(id: string | number, symbol = ':') {
 }
 
 export function removePlaceholderAll(value: string) {
-    return value.replace(/{[<:@>]\d+(:\d+)?}/g, '').trim();
+    return value.replace(/{[<:@>]\d+(\^\d+)?}/g, '').trim();
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {

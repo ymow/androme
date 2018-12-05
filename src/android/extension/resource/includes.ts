@@ -19,13 +19,13 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
             const open: NodeRenderIndex[] = [];
             const close: NodeRenderIndex[] = [];
             node.each((item: T, index) => {
-                const openTag = $util.hasValue(item.dataset.include);
-                const closeTag = item.dataset.includeEnd === 'true';
+                const openTag = $util.hasValue(item.dataset.androidInclude);
+                const closeTag = item.dataset.androidIncludeEnd === 'true';
                 if (openTag || closeTag) {
-                    const merge = item.dataset.includeMerge === 'true';
+                    const merge = item.dataset.androidIncludeMerge === 'true';
                     const data: NodeRenderIndex = {
                         item,
-                        name: (item.dataset.include || '').trim(),
+                        name: (item.dataset.androidInclude || '').trim(),
                         index,
                         merge
                     };
@@ -47,41 +47,40 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                     for (let j = 0; j < close.length; j++) {
                         const closeData = close[j];
                         if (closeData.index >= openData.index) {
-                            const location = new Map<string, T[]>();
+                            const location = new Map<number, T[]>();
                             let valid = true;
                             for (let k = openData.index; k <= closeData.index; k++) {
                                 const item = node.renderChildren[k] as T;
-                                const key = node.id.toString() + (item.renderPosition !== -1 ? `:${item.renderPosition}` : '');
-                                const depthMap = processing.depthMap.get(key);
-                                if (depthMap && depthMap.has(item.id)) {
-                                    const items = location.get(key) || [];
+                                const depthMap = processing.depthMap.get(node.id);
+                                if (depthMap && depthMap.has(item.renderPositionId)) {
+                                    const items = location.get(node.id) || [];
                                     items.push(item);
-                                    location.set(key, items);
+                                    location.set(node.id, items);
                                 }
                                 else {
                                     valid = false;
                                 }
                             }
                             if (valid) {
-                                const content = new Map<number, string>();
+                                const content = new Map<string, string>();
                                 const group: T[] = [];
                                 let k = 0;
-                                for (const [key, templates] of processing.depthMap.entries()) {
-                                    const parent = location.get(key);
+                                for (const [id, templates] of processing.depthMap.entries()) {
+                                    const parent = location.get(id);
                                     if (parent) {
-                                        const deleteIds: number[] = [];
-                                        for (const [id, template] of templates.entries()) {
-                                            const item = parent.find(sibling => sibling.id === id);
+                                        const deleteIds: string[] = [];
+                                        for (const [key, template] of templates.entries()) {
+                                            const item = parent.find(sibling => sibling.renderPositionId === key);
                                             if (item) {
                                                 if (k === 0) {
                                                     const xml = this.application.controllerHandler.renderNodeStatic('include', item.renderDepth, { layout: `@layout/${openData.name}` });
-                                                    templates.set(id, xml);
+                                                    templates.set(key, xml);
                                                     k++;
                                                 }
                                                 else {
-                                                    deleteIds.push(id);
+                                                    deleteIds.push(key);
                                                 }
-                                                content.set(id, template);
+                                                content.set(key, template);
                                                 group.push(item);
                                             }
                                         }
@@ -93,10 +92,11 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     const depth = merge ? 1 : 0;
                                     for (const item of group) {
                                         if (item.renderDepth !== depth) {
-                                            let output = content.get(item.id);
+                                            const key = item.renderPositionId;
+                                            let output = content.get(key);
                                             if (output) {
                                                 output = $xml.replaceIndent(output, depth);
-                                                content.set(item.id, output);
+                                                content.set(key, output);
                                                 item.renderDepth = depth;
                                             }
                                         }

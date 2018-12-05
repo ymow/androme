@@ -511,7 +511,7 @@ export function isElementIncluded(element: Element) {
         return false;
     }
     else if (hasComputedStyle(element)) {
-        if (hasValue(element.dataset.import)) {
+        if (hasValue(element.dataset.include)) {
             return true;
         }
         else if (withinViewportOrigin(element)) {

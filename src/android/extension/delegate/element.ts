@@ -29,7 +29,7 @@ export default class Element<T extends View> extends androme.lib.base.Extension<
         if (data.tagChild) {
             node.each(item => {
                 if (item.styleElement) {
-                    item.dataset.import = this.name;
+                    item.dataset.include = this.name;
                     item.dataset.androidDelegateElementTag = data.tagChild;
                 }
             });
@@ -39,6 +39,6 @@ export default class Element<T extends View> extends androme.lib.base.Extension<
 
     public postProcedure(node: T) {
         const options: ExternalData = Object.assign({}, this.options[node.element.id]);
-        node.apply(Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')));
+        node.apply(Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')));
     }
 }

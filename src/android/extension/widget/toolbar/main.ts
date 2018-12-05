@@ -5,7 +5,7 @@ import Toolbar from './toolbar';
 const toolbar = new Toolbar(WIDGET_NAME.TOOLBAR, FRAMEWORK.ANDROID);
 
 if (androme) {
-    androme.installExtensionAsync(toolbar);
+    androme.includeAsync(toolbar);
 }
 
 export default toolbar;

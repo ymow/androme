@@ -118,7 +118,7 @@ function deleteStyleAttribute(sorted: AttributeMap[], attrs: string, ids: number
 
 export default class ResourceFonts<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
-        useFontAlias: true
+        fontResourceValue: true
     };
 
     public readonly eventOnly = true;
@@ -151,11 +151,11 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                     let fontStyle = '';
                     let fontWeight = '';
                     stored.color = Resource.addColor(stored.color);
-                    if (this.options.useFontAlias && FONTREPLACE_ANDROID[fontFamily]) {
+                    if (this.options.fontResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
                     if (FONT_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[fontFamily] ||
-                        this.options.useFontAlias && FONTALIAS_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])
+                        this.options.fontResourceValue && FONTALIAS_ANDROID[fontFamily] && node.localSettings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])
                     {
                         system = true;
                         stored.fontFamily = fontFamily;

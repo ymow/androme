@@ -136,7 +136,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
                 container = new View(
                     this.application.nextId,
-                    $dom.createElement(parent.actualBoxParent.baseElement),
+                    $dom.createElement(node.absoluteParent.baseElement),
                     this.application.controllerHandler.delegateNodeInit
                 ) as T;
                 container.tagName = node.tagName;

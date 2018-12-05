@@ -121,7 +121,7 @@ export default class Guideline<T extends View> extends androme.lib.base.Extensio
                         else {
                             degrees = center1.x > center2.x ? 90 : 270;
                         }
-                        item.app('layout_constraintCircle', anchor.stringId);
+                        item.app('layout_constraintCircle', anchor.documentId);
                         item.app('layout_constraintCircleRadius', $util.formatPX(radius));
                         item.app('layout_constraintCircleAngle', degrees.toString());
                     }

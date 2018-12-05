@@ -8,7 +8,7 @@ import $xml = androme.lib.xml;
 
 export default class ResourceStrings<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
-        useNumberAlias: false
+        numberResourceValue: false
     };
 
     public readonly eventOnly = true;
@@ -19,13 +19,13 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                 if (node.baseElement instanceof HTMLSelectElement) {
                     const [stringArray, numberArray] = Resource.getOptionArray(node.baseElement);
                     const result: string[] = [];
-                    if (!this.options.useNumberAlias && numberArray && numberArray.length) {
+                    if (!this.options.numberResourceValue && numberArray && numberArray.length) {
                         result.push(...numberArray);
                     }
                     else {
                         result.push(
                             ...$util.flatMap(stringArray || numberArray || [], value => {
-                                value = Resource.addString($xml.replaceCharacter(value), '', this.options.useNumberAlias);
+                                value = Resource.addString($xml.replaceCharacter(value), '', this.options.numberResourceValue);
                                 return value !== '' ? `@string/${value}` : '';
                             })
                         );
@@ -90,7 +90,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                                 }
                             }
                         }
-                        const name = Resource.addString(stored.value, stored.name, this.options.useNumberAlias);
+                        const name = Resource.addString(stored.value, stored.name, this.options.numberResourceValue);
                         if (name !== '') {
                             node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, node.renderExtension.size === 0);
                         }

@@ -61,7 +61,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.configureExtension('android.constraint.guideline', { circlePosition: true });
+            androme.configure('android.constraint.guideline', { circlePosition: true });
             addView();
             closeDocument();
         });
@@ -95,7 +95,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui" data-import="android.constraint.guideline">
+    <div id="androme_ui" data-include="android.constraint.guideline">
         <span>1</span>
         <span>2</span>
         <span>3</span>

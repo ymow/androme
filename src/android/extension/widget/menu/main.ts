@@ -5,7 +5,7 @@ import Menu from './menu';
 const menu = new Menu(WIDGET_NAME.MENU, FRAMEWORK.ANDROID, ['NAV']);
 
 if (androme) {
-    androme.installExtensionAsync(menu);
+    androme.includeAsync(menu);
 }
 
 export default menu;

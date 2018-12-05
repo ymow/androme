@@ -31,8 +31,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length) {
             Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !$util.includes(item.dataset.import, $const.EXT_NAME.EXTERNAL)) {
-                    item.dataset.import = ($util.hasValue(item.dataset.import) ? `${item.dataset.import}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                if (item.tagName === 'NAV' && !$util.includes(item.dataset.include, $const.EXT_NAME.EXTERNAL)) {
+                    item.dataset.include = ($util.hasValue(item.dataset.include) ? `${item.dataset.include}, ` : '') + $const.EXT_NAME.EXTERNAL;
                 }
             });
             this.application.parseElements.add(element);
@@ -61,7 +61,7 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
         const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.DRAWER,
             0,
-            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')),
             'match_parent',
             'match_parent',
             node,
@@ -82,17 +82,17 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
             $util.defaultWhenNull(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
         }
         if (menu !== '' || headerLayout !== '') {
-            $util.defaultWhenNull(options, 'android', 'id', `${node.stringId}_navigation`);
+            $util.defaultWhenNull(options, 'android', 'id', `${node.documentId}_navigation`);
             $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
             $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
             const output = application.controllerHandler.renderNodeStatic(
                 $android_const.SUPPORT_ANDROID.NAVIGATION_VIEW,
                 1,
-                $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias')),
+                $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')),
                 'wrap_content',
                 'match_parent'
             );
-            application.addRenderQueue(node.id.toString(), [output]);
+            application.addRenderQueue(node.id.toString(), output);
         }
     }
 

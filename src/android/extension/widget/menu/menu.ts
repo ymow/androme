@@ -201,7 +201,7 @@ export default class Menu<T extends $View> extends androme.lib.base.Extension<T>
                 break;
         }
         if (title !== '') {
-            const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'useNumberAlias'));
+            const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue'));
             options.android.title = name !== '' ? `@string/${name}` : title;
         }
         node.setControlType(controlName, $android_enum.CONTAINER_NODE.INLINE);

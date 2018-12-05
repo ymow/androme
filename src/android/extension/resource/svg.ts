@@ -25,7 +25,7 @@ function setPivotXY(data: ExternalData, origin: RectPosition | undefined) {
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
-        useColorAlias: true
+        vectorColorResourceValue: true
     };
 
     public readonly eventOnly = true;
@@ -100,7 +100,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         if (item[value].charAt(0) === '@') {
                                             const gradient = svg.defs.gradient.get(item[value]);
                                             if (gradient) {
-                                                const gradients = Resource.createBackgroundGradient(node, [gradient], this.options.useColorAlias);
+                                                const gradients = Resource.createBackgroundGradient(node, [gradient], this.options.vectorColorResourceValue);
                                                 item[value] = [{ gradients }];
                                                 namespace.add('aapt');
                                                 return;
@@ -109,7 +109,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                 item[value] = item.color;
                                             }
                                         }
-                                        if (this.options.useColorAlias) {
+                                        if (this.options.vectorColorResourceValue) {
                                             const colorValue = Resource.addColor(item[value]);
                                             if (colorValue !== '') {
                                                 item[value] = `@color/${colorValue}`;

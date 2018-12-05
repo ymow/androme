@@ -33,7 +33,7 @@
             androme = result;
             System.import('/build/android/main.js').then(result => {
                 androme.setFramework(result['default']);
-                androme.configureExtension('android.constraint.guideline', { circlePosition: true });
+                androme.configure('android.constraint.guideline', { circlePosition: true });
                 addView();
                 closeDocument();
             });
@@ -67,7 +67,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui" data-import="android.constraint.guideline">
+    <div id="androme_ui" data-include="android.constraint.guideline">
         <span>1</span>
         <span>2</span>
         <span>3</span>

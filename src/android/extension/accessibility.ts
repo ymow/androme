@@ -22,11 +22,11 @@ export default class <T extends View> extends androme.lib.extensions.Accessibili
                                     const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getElementAsNode<T>(sibling.parentElement) : undefined;
                                     if (label && label.visible && label.pageFlow) {
                                         if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
-                                            label.android('labelFor', node.stringId);
+                                            label.android('labelFor', node.documentId);
                                             return true;
                                         }
                                         else if (label.textElement && labelParent) {
-                                            labelParent.android('labelFor', node.stringId);
+                                            labelParent.android('labelFor', node.documentId);
                                             return true;
                                         }
                                     }

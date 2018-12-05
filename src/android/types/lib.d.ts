@@ -26,8 +26,6 @@ declare global {
             }
 
             namespace util {
-                export function resetId(): void;
-                export function generateId(section: string, name: string, start: number): string;
                 export function stripId(value: string): string;
                 export function createAttribute(options?: ExternalData): ViewAttribute;
                 export function validateString(value: string): string;

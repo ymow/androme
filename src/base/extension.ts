@@ -7,7 +7,7 @@ import { includes } from '../lib/util';
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public static findNestedByName(element: Element, name: string) {
         if (hasComputedStyle(element)) {
-            return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.import, name)) as HTMLElement || null;
+            return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.include, name)) as HTMLElement || null;
         }
         return null;
     }
@@ -50,13 +50,13 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public included(element: HTMLElement) {
-        return includes(element.dataset.import, this.name);
+        return includes(element.dataset.include, this.name);
     }
 
     public beforeInit(element: HTMLElement, recursive = false) {
         if (!recursive && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
-                const ext = this.application.getExtension(item.name);
+                const ext = this.application.retrieveExtension(item.name);
                 if (ext && !ext.preloaded) {
                     ext.beforeInit(element, true);
                     ext.preloaded = true;
@@ -72,7 +72,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public afterInit(element: HTMLElement, recursive = false) {
         if (!recursive && this.included(element)) {
             this.dependencies.filter(item => item.preload).forEach(item => {
-                const ext = this.application.getExtension(item.name);
+                const ext = this.application.retrieveExtension(item.name);
                 if (ext && ext.preloaded) {
                     ext.afterInit(element, true);
                     ext.preloaded = false;
@@ -83,7 +83,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public condition(node: T, parent?: T) {
         if (hasComputedStyle(node.element)) {
-            const ext = node.dataset.import;
+            const ext = node.dataset.include;
             if (!ext) {
                 return this.tagNames.length > 0;
             }

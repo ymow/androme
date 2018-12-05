@@ -138,18 +138,18 @@ export default (Base: Constructor<T>) => {
             }
         }
 
-        public anchor(position: string, stringId = '', overwrite?: boolean) {
+        public anchor(position: string, documentId = '', overwrite?: boolean) {
             const renderParent = this.renderParent as View;
             if (renderParent) {
                 if (renderParent.layoutConstraint) {
-                    if (stringId === undefined || this.constraint.current[position] === undefined || overwrite) {
-                        if (stringId && overwrite === undefined) {
-                            overwrite = stringId === 'parent';
+                    if (documentId === undefined || this.constraint.current[position] === undefined || overwrite) {
+                        if (documentId && overwrite === undefined) {
+                            overwrite = documentId === 'parent';
                         }
                         const attr: string = LAYOUT_ANDROID.constraint[position];
                         if (attr) {
-                            this.app(this.localizeString(attr), stringId, overwrite);
-                            if (stringId === 'parent') {
+                            this.app(this.localizeString(attr), documentId, overwrite);
+                            if (documentId === 'parent') {
                                 switch (position) {
                                     case 'left':
                                     case 'right':
@@ -163,18 +163,18 @@ export default (Base: Constructor<T>) => {
                                 }
                             }
                             this.constraint.current[position] = {
-                                stringId,
+                                documentId,
                                 horizontal: $util.indexOf(position.toLowerCase(), 'left', 'right') !== -1
                             };
                         }
                     }
                 }
                 else if (renderParent.layoutRelative) {
-                    if (stringId && overwrite === undefined) {
-                        overwrite = stringId === 'true';
+                    if (documentId && overwrite === undefined) {
+                        overwrite = documentId === 'true';
                     }
-                    const attr: string = LAYOUT_ANDROID[stringId === 'true' ? 'relativeParent' : 'relative'][position];
-                    this.android(this.localizeString(attr), stringId, overwrite);
+                    const attr: string = LAYOUT_ANDROID[documentId === 'true' ? 'relativeParent' : 'relative'][position];
+                    this.android(this.localizeString(attr), documentId, overwrite);
                 }
             }
         }
@@ -244,7 +244,7 @@ export default (Base: Constructor<T>) => {
                 if (renderParent.is(CONTAINER_NODE.CONSTRAINT)) {
                     const attr: string = LAYOUT_ANDROID.constraint[position];
                     const value = this.app(this.localizeString(attr)) || this.app(attr);
-                    return value !== 'parent' && value !== renderParent.stringId ? value : '';
+                    return value !== 'parent' && value !== renderParent.documentId ? value : '';
                 }
                 else if (renderParent.is(CONTAINER_NODE.RELATIVE)) {
                     const attr = LAYOUT_ANDROID.relative[position];
@@ -387,12 +387,12 @@ export default (Base: Constructor<T>) => {
                     }
                 }
                 this.controlId = $util.convertWord($Resource.generateId('android', name || $util.lastIndexOf(this.controlName, '.').toLowerCase(), name ? 0 : 1));
-                this.android('id', this.stringId);
+                this.android('id', this.documentId);
             }
         }
 
         public setLayout() {
-            const parent = this.absoluteParent || this.documentParent;
+            const parent = this.absoluteParent;
             const children = this.renderChildren;
             const renderParent = this.renderParent;
             const autoLayout = !!renderParent && renderParent.is($enum.NODE_ALIGNMENT.AUTO_LAYOUT);
@@ -471,7 +471,8 @@ export default (Base: Constructor<T>) => {
                                 !this.pageFlow ||
                                 this.inlineFlow ||
                                 this.tableElement ||
-                                parent.flexElement ||
+                                parent.flexElement || this.flexElement ||
+                                parent.gridElement || this.gridElement ||
                                 !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
                             );
                             if (!wrap || this.blockStatic && !this.has('maxWidth')) {
@@ -986,7 +987,7 @@ export default (Base: Constructor<T>) => {
             }
         }
 
-        get stringId() {
+        get documentId() {
             return this.controlId ? `@+id/${this.controlId}` : '';
         }
 
@@ -1046,6 +1047,10 @@ export default (Base: Constructor<T>) => {
             return this.android('layout_height') === 'match_parent';
         }
 
+        get absoluteParent() {
+            return super.absoluteParent || $dom.getElementAsNode(document.body) || super.documentParent;
+        }
+
         get singleChild() {
             return this.renderParent ? this.renderParent.length === 1 : this.parent ? this.parent.length === 1 : false;
         }
@@ -1055,7 +1060,7 @@ export default (Base: Constructor<T>) => {
         }
 
         get fontSize() {
-            if (this._fontSize === undefined) {
+            if (this._fontSize === 0) {
                 this._fontSize = parseInt($util.convertPX(this.css('fontSize'), this.dpi, 0)) || 16;
             }
             return this._fontSize;
