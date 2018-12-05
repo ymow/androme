@@ -470,6 +470,24 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return result;
     }
 
+    public cssSort(attr: string, desc = false, duplicate = false) {
+        const children = (duplicate ? this.duplicate() :  this.children);
+        children.sort((a, b) => {
+            const valueA = a.toInt(attr);
+            const valueB = b.toInt(attr);
+            if (valueA === valueB) {
+                return 0;
+            }
+            if (desc) {
+                return valueA > valueB ? -1 : 1;
+            }
+            else {
+                return valueA < valueB ? -1 : 1;
+            }
+        });
+        return children;
+    }
+
     public cssTry(attr: string, value: string) {
         if (this.styleElement) {
             const element = <HTMLElement> this._element;
@@ -669,12 +687,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return true;
         }
         return false;
-    }
-
-    public renderChild(node: T) {
-        if (this.renderChildren.indexOf(node) === -1) {
-            this.renderChildren.push(node);
-        }
     }
 
     public modifyBox(region: number, offset: number | null, negative = true) {
@@ -1118,13 +1130,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (this._cached.hasWidth === undefined) {
             const value = this.cssInitial('width', true);
             this._cached.hasWidth = (() => {
-                if (this.inlineStatic || convertInt(value) === 0) {
+                if (this.inlineStatic) {
                     return false;
                 }
                 else if (isPercent(value)) {
                     return value !== '0%';
                 }
-                else if (isUnit(value) && value !== '0px' || this.toInt('minHeight') > 0) {
+                else if (isUnit(value) && value !== '0px' || this.toInt('minWidth') > 0) {
                     return true;
                 }
                 return false;
@@ -1136,7 +1148,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (this._cached.hasHeight === undefined) {
             const value = this.cssInitial('height', true);
             this._cached.hasHeight = (() => {
-                if (this.inlineStatic || convertInt(value) === 0) {
+                if (this.inlineStatic) {
                     return false;
                 }
                 else if (isPercent(value)) {
@@ -1616,8 +1628,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     set renderParent(value) {
         if (value) {
-            if (value !== this) {
-                value.renderChild(this);
+            if (value !== this && value.renderChildren.indexOf(this) === -1) {
+                value.renderChildren.push(this);
             }
             this._renderParent = value;
         }

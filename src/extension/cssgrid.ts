@@ -4,7 +4,7 @@ import { BOX_STANDARD } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { convertInt, isNumber, isUnit, trimString, withinFraction } from '../lib/util';
+import { convertInt, isNumber, isUnit, maxArray, trimString, withinFraction } from '../lib/util';
 
 type GridPosition = {
     placement: number[],
@@ -21,13 +21,9 @@ const REGEX_PARTIAL = {
 };
 
 const PATTERN_GRID = {
-    UNIT: new RegExp(`^${REGEX_PARTIAL.UNIT}$`),
+    UNIT: new RegExp(`^(${REGEX_PARTIAL.UNIT})$`),
     NAMED: new RegExp(`\\s*(${REGEX_PARTIAL.NAMED}|${REGEX_PARTIAL.REPEAT}|${REGEX_PARTIAL.MINMAX}|${REGEX_PARTIAL.FIT_CONTENT}|${REGEX_PARTIAL.UNIT})\\s*`, 'g')
 };
-
-function cssOrder<T extends Node>(a: T, b: T) {
-    return a.toInt('order') >= b.toInt('order') ? 1 : -1;
-}
 
 export default class CssGrid<T extends Node> extends Extension<T> {
     public static createDataAttribute(): CssGridDataAttribute {
@@ -88,7 +84,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         function convertUnit(value: string) {
             return isUnit(value) ? node.convertPX(value) : value;
         }
-        [node.cssInitial('gridTemplateRows', false, true), node.cssInitial('gridTemplateColumns', false, true), node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
+        [node.cssInitial('gridTemplateRows', true), node.cssInitial('gridTemplateColumns', true), node.css('gridAutoRows'), node.css('gridAutoColumns')].forEach((value, index) => {
             if (value && value !== 'none' && value !== 'auto') {
                 let i = 1;
                 let match: RegExpMatchArray | null;
@@ -127,6 +123,21 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                     i++;
                                 }
                             }
+                            else if (match[4].charAt(0) === '[') {
+                                const nameUnit = match[4].split(' ');
+                                if (nameUnit.length === 2) {
+                                    const attr = nameUnit[0].substring(1, nameUnit[0].length - 1);
+                                    if (data.name[attr] === undefined) {
+                                        data.name[attr] = [];
+                                    }
+                                    for (let j = 0; j < iterations; j++) {
+                                        data.name[attr].push(i);
+                                        data.unit.push(nameUnit[1]);
+                                        data.unitMin.push('');
+                                        i++;
+                                    }
+                                }
+                            }
                         }
                         else if (PATTERN_GRID.UNIT.test(match[1])) {
                             data.unit.push(convertUnit(match[1]));
@@ -140,11 +151,11 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
             }
         });
-        if (!node.has('gridTemplateAreas') && node.every(item => item.css('gridRow') === 'auto / auto' && item.css('gridColumn') === 'auto / auto')) {
+        if (!node.has('gridTemplateAreas') && node.every(item => item.css('gridRowStart') === 'auto' && item.css('gridRowEnd') === 'auto' && item.css('gridColumnStart') === 'auto' && item.css('gridColumnEnd') === 'auto')) {
             let row = 0;
             let column = 0;
             const direction = horizontal ? 'left' : 'top';
-            node.sort(cssOrder).each((item: T, index) => {
+            node.cssSort('order').forEach((item, index) => {
                 if (withinFraction(item.linear[direction], node.box[direction])) {
                     row++;
                     column = 1;
@@ -176,7 +187,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     }
                 });
             });
-            node.sort(cssOrder).each((item: T, index) => {
+            node.cssSort('order').forEach((item, index) => {
                 const positions = [
                     item.css('gridRowStart'),
                     item.css('gridColumnStart'),
@@ -274,8 +285,10 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                 placement[i] = data.name[alias[1]][parseInt(alias[0]) - 1] + (alias[1] === positions[i - 2] ? 1 : 0);
                             }
                         }
+                        if (!placement[i]) {
+                            setPlacement(value, i);
+                        }
                     }
-                    item.css('gridArea').split(/\s*\/\s*/).forEach((value, position) => !placement[position] && setPlacement(value, position));
                 }
                 gridPosition[index] = <GridPosition> {
                     placement,
@@ -290,18 +303,27 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             for (let i = 0; i < gridPosition.length; i++) {
                 const item = gridPosition[i];
                 if (item) {
-                    data.count = Math.max(
+                    data.count = maxArray([
                         data.count,
+                        horizontal ? item.columnSpan : item.rowSpan,
                         item.placement[horizontal ? 1 : 0] || 0,
-                        horizontal ? item.columnSpan : item.rowSpan, (item.placement[horizontal ? 3 : 2] || 0) - 1
-                    );
+                        (item.placement[horizontal ? 3 : 2] || 0) - 1
+                    ]);
                 }
             }
-            const unitRepeat = data.unit[data.unit.length - 1] || 'auto';
             if (data.autoFill || data.autoFit) {
+                const unit = data.unit[data.unit.length - 1] || 'auto';
                 for (let i = data.unit.length; i < data.count; i++) {
-                    data.unit[i] = unitRepeat;
-                    data.unitMin[i] = '';
+                    data.unit[i] = unit;
+                }
+                if (data.unitMin.length) {
+                    let unitMin = '';
+                    for (let i = 0; i < data.count; i++) {
+                        if (data.unitMin[i]) {
+                            unitMin = data.unitMin[i];
+                        }
+                        data.unitMin[i] = unitMin;
+                    }
                 }
             }
         }
@@ -466,7 +488,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                         }
                     }
                 }
-                node.retain(Array.from(mainData.children).sort((a, b) => a.toInt('zIndex') >= b.toInt('zIndex') ? 1 : -1));
+                node.retain(Array.from(mainData.children));
+                node.cssSort('zIndex');
                 node.data(EXT_NAME.CSS_GRID, 'mainData', mainData);
             }
         }

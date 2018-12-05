@@ -404,8 +404,8 @@ export default (Base: Constructor<T>) => {
                     this.android('layout_height', 'match_parent', false);
                 }
             }
+            let hasWidth = false;
             if (!this.android('layout_width')) {
-                let hasWidth = false;
                 if (this.hasWidth || this.toInt('width') > 0 && !this.cssInitial('width')) {
                     const width = this.css('width');
                     if ($util.isPercent(width)) {
@@ -431,66 +431,66 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                 }
-                if (this.has('minWidth') && !this.constraint.minWidth) {
-                    const value = this.convertPX(this.css('minWidth'));
+            }
+            if (this.has('minWidth') && !this.constraint.minWidth) {
+                const value = this.convertPX(this.css('minWidth'));
+                this.android('layout_width', 'wrap_content', false);
+                this.android('minWidth', value, false);
+                hasWidth = true;
+            }
+            if (this.has('maxWidth')) {
+                const value = this.convertPX(this.css('maxWidth'));
+                if (this.textElement) {
+                    this.android('maxWidth', value, false);
                     this.android('layout_width', 'wrap_content', false);
-                    this.android('minWidth', value, false);
                     hasWidth = true;
                 }
-                if (this.has('maxWidth')) {
-                    const value = this.convertPX(this.css('maxWidth'));
-                    if (this.textElement) {
-                        this.android('maxWidth', value, false);
-                        this.android('layout_width', 'wrap_content', false);
-                        hasWidth = true;
-                    }
-                    else if (this.layoutVertical && !this.documentBody) {
-                        children.forEach(node => node.textElement && !node.has('maxWidth') && node.android('maxWidth', value, false));
-                    }
+                else if (this.layoutVertical && !this.documentBody) {
+                    children.forEach(node => node.textElement && !node.has('maxWidth') && node.android('maxWidth', value, false));
                 }
-                if (!hasWidth) {
-                    if (children.filter(node => (node.inlineStatic || $util.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
-                        this.android('layout_width', 'wrap_content');
+            }
+            if (!hasWidth) {
+                if (children.filter(node => (node.inlineStatic || $util.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
+                    this.android('layout_width', 'wrap_content', !autoLayout);
+                }
+                else {
+                    if (this.plainText) {
+                        this.android('layout_width', renderParent && this.bounds.width > renderParent.box.width && this.multiLine && this.alignParent('left') ? 'match_parent' : 'wrap_content', !autoLayout);
+                    }
+                    else if (
+                        !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
+                        this.layoutFrame && (
+                            $NodeList.floated(children).size === 2 ||
+                            children.some(node => node.blockStatic && (node.autoMargin.leftRight || node.rightAligned))
+                        ))
+                    {
+                        this.android('layout_width', 'match_parent', !autoLayout);
                     }
                     else {
-                        if (this.plainText) {
-                            this.android('layout_width', renderParent && this.bounds.width > renderParent.box.width && this.multiLine && this.alignParent('left') ? 'match_parent' : 'wrap_content');
-                        }
-                        else if (
-                            !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
-                            this.layoutFrame && (
-                                $NodeList.floated(children).size === 2 ||
-                                children.some(node => node.blockStatic && (node.autoMargin.leftRight || node.rightAligned))
-                           ))
-                        {
-                            this.android('layout_width', 'match_parent');
-                        }
-                        else {
-                            const wrap = (
-                                this.containerType < CONTAINER_NODE.INLINE ||
-                                !this.pageFlow ||
-                                this.inlineFlow ||
-                                this.tableElement ||
-                                parent.flexElement || this.flexElement ||
-                                parent.gridElement || this.gridElement ||
-                                !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
-                            );
-                            if (!wrap || this.blockStatic && !this.has('maxWidth')) {
-                                if (this.linear.width >= parent.box.width ||
-                                    this.layoutVertical && !this.autoMargin.horizontal ||
-                                    this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && this.alignedVertically(this.previousSiblings())) ||
-                                    this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
-                                {
-                                    this.android('layout_width', 'match_parent');
-                                }
+                        const wrap = (
+                            this.containerType < CONTAINER_NODE.INLINE ||
+                            !this.pageFlow ||
+                            this.inlineFlow ||
+                            this.tableElement ||
+                            parent.flexElement ||
+                            parent.gridElement ||
+                            !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
+                        );
+                        if (!wrap || this.blockStatic && !this.has('maxWidth')) {
+                            if (this.linear.width >= parent.box.width ||
+                                this.layoutVertical && !this.autoMargin.horizontal ||
+                                this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings()))) ||
+                                this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
+                            {
+                                this.android('layout_width', 'match_parent', !autoLayout);
                             }
-                            this.android('layout_width', 'wrap_content', false);
                         }
+                        this.android('layout_width', 'wrap_content', false);
                     }
                 }
             }
+            let hasHeight = false;
             if (!this.android('layout_height')) {
-                let hasHeight = false;
                 if (this.hasHeight || this.toInt('height') > 0 && !this.cssInitial('height')) {
                     const height = this.css('height');
                     if ($util.isPercent(height)) {
@@ -510,26 +510,26 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                 }
-                if (this.has('minHeight') && !this.constraint.minHeight) {
-                    const value = this.convertPX(this.css('minHeight'), false);
+            }
+            if (this.has('minHeight') && !this.constraint.minHeight) {
+                const value = this.convertPX(this.css('minHeight'), false);
+                this.android('layout_height', 'wrap_content', false);
+                this.android('minHeight', value, false);
+                hasHeight = true;
+            }
+            if (this.has('maxHeight')) {
+                const value = this.convertPX(this.css('maxHeight'), false);
+                if (this.textElement) {
+                    this.android('maxHeight', value, false);
                     this.android('layout_height', 'wrap_content', false);
-                    this.android('minHeight', value, false);
                     hasHeight = true;
                 }
-                if (this.has('maxHeight')) {
-                    const value = this.convertPX(this.css('maxHeight'), false);
-                    if (this.textElement) {
-                        this.android('maxHeight', value, false);
-                        this.android('layout_width', 'wrap_content', false);
-                        hasHeight = true;
-                    }
-                    else if (this.layoutVertical && !this.documentBody) {
-                        children.forEach(node => node.textElement && !node.has('maxHeight') && node.android('maxHeight', value, false));
-                    }
+                else if (this.layoutVertical && !this.documentBody) {
+                    children.forEach(node => node.textElement && !node.has('maxHeight') && node.android('maxHeight', value, false));
                 }
-                if (!hasHeight) {
-                    this.android('layout_height', 'wrap_content');
-                }
+            }
+            if (!hasHeight) {
+                this.android('layout_height', 'wrap_content', false);
             }
         }
 

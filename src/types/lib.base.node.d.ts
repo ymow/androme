@@ -157,6 +157,7 @@ declare global {
             css(attr: object | string, value?: string, cache?: boolean): string;
             cssInitial(attr: string, modified?: boolean, computed?: boolean): string;
             cssParent(attr: string, childStart?: boolean, visible?: boolean): string;
+            cssSort(attr: string, duplicate?: boolean): Node[];
             cssTry(attr: string, value: string): boolean;
             cssFinally(attr: string): boolean;
             appendTry(node: Node, withNode: Node, append?: boolean): void;
@@ -169,7 +170,6 @@ declare global {
             exclude(options: { section?: number, procedure?: number, resource?: number }): void;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
-            renderChild(node: Node, append?: boolean): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
             actualRight(dimension?: string): number;

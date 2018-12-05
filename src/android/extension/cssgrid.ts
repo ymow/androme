@@ -122,13 +122,14 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 }
                 if (minSize > 0 && !item.has(minDimension)) {
                     item.css(minDimension, $util.formatPX(minSize));
+                    item.unsetCache(dimension);
                 }
                 if (sizeWeight > 0) {
                     item.android(`layout_${dimension}`, '0px');
                     item.android(`layout_${direction}Weight`, sizeWeight.toString());
                 }
                 else if (size > 0 && !item.has(dimension)) {
-                    item.css(dimension, $util.formatPX(size));
+                    item.css(dimension, $util.formatPX(size), true);
                 }
             }
             const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
@@ -147,10 +148,10 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 parent.appendTry(node, container);
                 container.render(parent);
                 this.application.processing.cache.append(container, false);
-                applyLayout(container, 'column', 'width');
-                applyLayout(container, 'row', 'height');
                 node.parent = container;
                 node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
+                applyLayout(container, 'column', 'width');
+                applyLayout(container, 'row', 'height');
                 let inlineWidth = false;
                 if (justifyItems.endsWith('start') || justifyItems.endsWith('left') || justifyItems.endsWith('baseline')) {
                     node.mergeGravity('layout_gravity', 'left');
@@ -165,7 +166,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     inlineWidth = true;
                 }
                 if (!node.hasWidth) {
-                    node.android('layout_width', inlineWidth ? 'wrap_content' : 'match_parent');
+                    node.android('layout_width', inlineWidth ? 'wrap_content' : 'match_parent', false);
                 }
                 if (alignItems.endsWith('start') || alignItems.endsWith('baseline')) {
                     node.mergeGravity('layout_gravity', 'top');
@@ -177,7 +178,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     node.mergeGravity('layout_gravity', 'center_vertical');
                 }
                 else if (!node.hasHeight) {
-                    node.mergeGravity('layout_height', 'match_parent');
+                    node.android('layout_height', 'match_parent', false);
                 }
                 container.mergeGravity('layout_gravity', 'fill_vertical');
                 output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
@@ -194,20 +195,22 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
         if (mainData) {
             const columnGap = !mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
-            if (columnGap > 0) {
-                let width = $util.convertInt(node.android('layout_width'));
-                if (width > 0) {
-                    width += columnGap;
-                    node.android('layout_width', $util.formatPX(width));
+            if (node.renderParent && !node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
+                if (columnGap > 0) {
+                    let width = $util.convertInt(node.android('layout_width'));
+                    if (width > 0) {
+                        width += columnGap;
+                        node.android('layout_width', $util.formatPX(width));
+                    }
+                    let minWidth = $util.convertInt(node.android('minWidth'));
+                    if (minWidth > 0) {
+                        minWidth += columnGap;
+                        node.android('minWidth', $util.formatPX(minWidth));
+                    }
                 }
-                else if (node.has('maxWidth') && node.inlineWidth) {
-                    node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
-                }
-                let minWidth = $util.convertInt(node.android('minWidth'));
-                if (minWidth > 0) {
-                    minWidth += columnGap;
-                    node.android('minWidth', $util.formatPX(minWidth));
-                }
+            }
+            if (node.inlineWidth && node.has('maxWidth')) {
+                node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
             }
         }
     }
