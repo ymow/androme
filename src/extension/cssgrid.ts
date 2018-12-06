@@ -4,7 +4,7 @@ import { BOX_STANDARD } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { convertInt, isNumber, isUnit, maxArray, trimString, withinFraction } from '../lib/util';
+import { convertInt, isNumber, isUnit, maxArray, trimString } from '../lib/util';
 
 type GridPosition = {
     placement: number[],
@@ -43,7 +43,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         return node.gridElement && node.length > 0;
     }
 
-    public processNode(node: T, parent: T): ExtensionResult<T> {
+    public processNode(node: T): ExtensionResult<T> {
         const mainData = <CssGridData<T>> {
             children: new Set(),
             rowData: [],
@@ -151,21 +151,68 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
             }
         });
-        if (!node.has('gridTemplateAreas') && node.every(item => item.css('gridRowStart') === 'auto' && item.css('gridRowEnd') === 'auto' && item.css('gridColumnStart') === 'auto' && item.css('gridColumnEnd') === 'auto')) {
+        node.cssSort('order');
+        if (!node.has('gridTemplateAreas') && node.every(item => item.css('gridRowStart') === 'auto' && item.css('gridColumnStart') === 'auto')) {
+            const direction = horizontal ? ['top', 'bottom'] : ['left', 'right'];
             let row = 0;
             let column = 0;
-            const direction = horizontal ? 'left' : 'top';
-            node.cssSort('order').forEach((item, index) => {
-                if (withinFraction(item.linear[direction], node.box[direction])) {
+            let previous: T | undefined;
+            let columnMax = 0;
+            node.each((item: T, index) => {
+                if (previous === undefined || item.linear[direction[0]] >= previous.linear[direction[1]]) {
+                    columnMax = Math.max(column, columnMax);
                     row++;
                     column = 1;
                 }
+                const rowEnd = item.css('gridRowEnd');
+                const columnEnd = item.css('gridColumnEnd');
+                let rowSpan = 1;
+                let columnSpan = 1;
+                if (rowEnd.startsWith('span')) {
+                    rowSpan = parseInt(rowEnd.split(' ')[1]);
+                }
+                else if (isNumber(rowEnd)) {
+                    rowSpan = parseInt(rowEnd) - row;
+                }
+                if (columnEnd.startsWith('span')) {
+                    columnSpan = parseInt(columnEnd.split(' ')[1]);
+                }
+                else if (isNumber(columnEnd)) {
+                    columnSpan = parseInt(columnEnd) - column;
+                }
+                if (column === 1 && columnMax > 0) {
+                    const available = new Array(columnMax - 1).fill(1);
+                    const startIndex = horizontal ? [2, 1, 3] : [3, 0, 2];
+                    for (const position of gridPosition) {
+                        const placement = position.placement;
+                        if (placement[startIndex[0]] > row) {
+                            for (let i = placement[startIndex[1]]; i < placement[startIndex[2]]; i++) {
+                                available[i - 1] = 0;
+                            }
+                        }
+                    }
+                    for (let i = 0, j = 0, k = 0; i < available.length; i++) {
+                        if (available[i]) {
+                            if (j === 0) {
+                                k = i;
+                            }
+                            if (++j === columnSpan) {
+                                column = k + 1;
+                                break;
+                            }
+                        }
+                        else {
+                            j = 0;
+                        }
+                    }
+                }
                 gridPosition[index] = <GridPosition> {
-                    placement: horizontal ? [row, column, row + 1, column + 1] : [column, row, column + 1, row + 1],
-                    rowSpan: 1,
-                    columnSpan: 1
+                    placement: horizontal ? [row, column, row + rowSpan, column + columnSpan] : [column, row, column + columnSpan, row + rowSpan],
+                    rowSpan,
+                    columnSpan
                 };
-                column++;
+                column += columnSpan;
+                previous = item;
             });
         }
         else {
@@ -187,7 +234,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     }
                 });
             });
-            node.cssSort('order').forEach((item, index) => {
+            node.each((item, index) => {
                 const positions = [
                     item.css('gridRowStart'),
                     item.css('gridColumnStart'),
@@ -340,11 +387,23 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             while (!placement[0] || !placement[1]) {
                 const PLACEMENT = placement.slice();
                 if (!PLACEMENT[rowA]) {
-                    for (let i = 0, j = 0; i < rowData.length; i++) {
-                        if (!rowInvalid[i] && cellsPerRow[i] < COLUMN_COUNT) {
-                            if (++j === ROW_SPAN) {
-                                PLACEMENT[rowA] = i + 1;
-                                break;
+                    let l = rowData.length;
+                    for (let i = 0, j = 0, k = -1; i < l; i++) {
+                        if (!rowInvalid[i]) {
+                            if (cellsPerRow[i] === undefined || cellsPerRow[i] < COLUMN_COUNT) {
+                                if (j === 0) {
+                                    k = i;
+                                    l = Math.max(l, i + ROW_SPAN);
+                                }
+                                if (++j === ROW_SPAN) {
+                                    PLACEMENT[rowA] = k + 1;
+                                    break;
+                                }
+                            }
+                            else {
+                                j = 0;
+                                k = -1;
+                                l = rowData.length;
                             }
                         }
                     }

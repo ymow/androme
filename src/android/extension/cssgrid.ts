@@ -112,6 +112,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     else {
                         minSize += value;
                     }
+                    minUnitSize += value;
                 }
                 if (minUnitSize > 0) {
                     minSize = minUnitSize;
@@ -127,6 +128,9 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 if (sizeWeight > 0) {
                     item.android(`layout_${dimension}`, '0px');
                     item.android(`layout_${direction}Weight`, sizeWeight.toString());
+                    if (direction === 'column') {
+                        item.mergeGravity('layout_gravity', 'fill_horizontal');
+                    }
                 }
                 else if (size > 0 && !item.has(dimension)) {
                     item.css(dimension, $util.formatPX(size), true);
