@@ -113,7 +113,7 @@ function getShapeAttribute(boxStyle: BoxStyle, name: string, direction = -1, has
             }
             return false;
         case 'backgroundColor':
-            return $util.isString(boxStyle.backgroundColor) ? [{ color: boxStyle.backgroundColor }] : false;
+            return $util.hasValue(boxStyle.backgroundColor) ? [{ color: boxStyle.backgroundColor }] : false;
         case 'radius':
             if (boxStyle.borderRadius) {
                 if (boxStyle.borderRadius.length === 1) {
@@ -666,7 +666,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                         }
                     }
                 }
-                else if (!node.data(Resource.KEY_NAME, 'fontStyle') && $util.isString(stored.backgroundColor)) {
+                else if (!node.data(Resource.KEY_NAME, 'fontStyle') && $util.hasValue(stored.backgroundColor)) {
                     node.android('background', `@color/${stored.backgroundColor}`, node.renderExtension.size === 0);
                 }
             }

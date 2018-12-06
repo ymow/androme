@@ -1,4 +1,4 @@
-/* android.widget 2.2.2
+/* android.widget 2.3.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -6,20 +6,13 @@ this.android.widget = this.android.widget || {};
 this.android.widget.menu = (function () {
     'use strict';
 
-    var WIDGET_NAME = {
-        __FRAMEWORK: 2,
-        FAB: 'android.widget.floatingactionbutton',
-        MENU: 'android.widget.menu',
-        COORDINATOR: 'android.widget.coordinator',
-        TOOLBAR: 'android.widget.toolbar',
-        DRAWER: 'android.widget.drawer',
-        BOTTOM_NAVIGATION: 'android.widget.bottomnavigation'
-    };
-
-    var $enum = androme.lib.enumeration;
+    var $Resource = android.lib.base.Resource;
+    var $const = androme.lib.constant;
     var $dom = androme.lib.dom;
-    var $android_Resource = android.lib.base.Resource;
+    var $enum = androme.lib.enumeration;
+    var $util = androme.lib.util;
     var $android_const = android.lib.constant;
+    var $android_enum = android.lib.enumeration;
     var $android_util = android.lib.util;
     const VIEW_NAVIGATION = {
         MENU: 'menu',
@@ -54,6 +47,7 @@ this.android.widget.menu = (function () {
         menuCategory: /^(container|system|secondary|alternative)$/,
         orderInCategory: /^[0-9]+$/
     };
+    const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
     function hasInputType(node, value) {
         return node.some(item => item.element.type === value);
     }
@@ -63,146 +57,165 @@ this.android.widget.menu = (function () {
             if (value && validator[attr]) {
                 const match = value.match(validator[attr]);
                 if (match) {
-                    options['android'][attr] = Array.from(new Set(match)).join('|');
+                    options[NAMESPACE_APP.includes(attr) ? 'app' : 'android'][attr] = Array.from(new Set(match)).join('|');
                 }
             }
         }
     }
-    class Menu extends androme.lib.base.extensions.Nav {
-        condition() {
-            return this.included();
+    function getTitle(element) {
+        if (element.title !== '') {
+            return element.title;
         }
-        processNode() {
-            const node = this.node;
-            const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+        else {
+            for (const node of $util.flatMap(Array.from(element.childNodes), (item) => $dom.getElementAsNode(item))) {
+                if (node.textElement) {
+                    return node.textContent.trim();
+                }
+            }
+        }
+        return '';
+    }
+    class Menu extends androme.lib.base.Extension {
+        constructor(name, framework, tagNames, options) {
+            super(name, framework, tagNames, options);
+            this.require($const.EXT_NAME.EXTERNAL, true);
+        }
+        init(element) {
+            if (this.included(element)) {
+                let valid = false;
+                if (element.children.length) {
+                    const tagName = element.children[0].tagName;
+                    valid = Array.from(element.children).every(item => item.tagName === tagName);
+                    let current = element.parentElement;
+                    while (current) {
+                        if (current.tagName === 'NAV' && this.application.parseElements.has(current)) {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                }
+                if (valid) {
+                    Array.from(element.querySelectorAll('NAV')).forEach((item) => {
+                        if ($dom.getStyle(element).display === 'none') {
+                            $dom.setElementCache(item, 'andromeExternalDisplay', 'none');
+                            item.style.display = 'block';
+                        }
+                    });
+                    this.application.parseElements.add(element);
+                }
+            }
+            return false;
+        }
+        condition(node) {
+            return this.included(node.element);
+        }
+        processNode(node) {
             node.documentRoot = true;
-            node.nodeType = $enum.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum.NODE_RESOURCE.ALL;
-            node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-            node.rendered = true;
+            node.alignmentType |= 4 /* AUTO_LAYOUT */;
+            node.setControlType(VIEW_NAVIGATION.MENU, $android_enum.CONTAINER_NODE.INLINE);
+            node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
+            const output = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
             node.cascade().forEach(item => this.subscribersChild.add(item));
             return { output, complete: true };
         }
-        processChild() {
-            const node = this.node;
-            const parent = this.parent;
+        processChild(node, parent) {
             if (node.plainText) {
                 node.hide();
-                return { output: '', complete: true, next: true };
+                return { output: '', next: true };
             }
+            const options = $android_util.createAttribute();
             const element = node.element;
-            const options = $android_util.createViewAttribute();
-            let nodeName = VIEW_NAVIGATION.ITEM;
+            let controlName;
             let title = '';
-            let next = false;
             let layout = false;
-            if (node.some(item => (!item.inlineElement || !item.blockStatic) && item.length > 0)) {
+            if (node.tagName === 'NAV') {
+                controlName = VIEW_NAVIGATION.MENU;
+                title = getTitle(element);
+                layout = true;
+            }
+            else if (node.some(item => item.length > 0)) {
                 if (node.some(item => item.tagName === 'NAV')) {
-                    if (element.title !== '') {
-                        title = element.title;
-                    }
-                    else {
-                        Array.from(node.element.childNodes).some((item) => {
-                            if (item.nodeName === '#text') {
-                                if (item.textContent) {
-                                    title = item.textContent.trim();
-                                    if (title !== '') {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            }
-                            else if (item.tagName !== 'NAV') {
-                                title = item.innerText.trim();
-                                return true;
-                            }
-                            return false;
-                        });
-                    }
+                    controlName = VIEW_NAVIGATION.ITEM;
                     node.each(item => item.tagName !== 'NAV' && item.hide());
                 }
-                else if (node.tagName === 'NAV') {
-                    nodeName = VIEW_NAVIGATION.MENU;
-                    next = true;
-                }
                 else {
-                    nodeName = VIEW_NAVIGATION.GROUP;
-                    let checkable = '';
+                    controlName = VIEW_NAVIGATION.GROUP;
                     if (node.every((item) => hasInputType(item, 'radio'))) {
-                        checkable = 'single';
+                        options.android.checkableBehavior = 'single';
                     }
                     else if (node.every((item) => hasInputType(item, 'checkbox'))) {
-                        checkable = 'all';
+                        options.android.checkableBehavior = 'all';
                     }
-                    options['android'].checkableBehavior = checkable;
                 }
+                title = getTitle(element);
                 layout = true;
             }
             else {
-                if (parent.android('checkableBehavior') === '') {
-                    if (hasInputType(node, 'checkbox')) {
-                        options['android'].checkable = 'true';
-                    }
-                }
+                controlName = VIEW_NAVIGATION.ITEM;
                 title = (element.title || element.innerText).trim();
+                if (hasInputType(node, 'checkbox') && !parent.android('checkableBehavior')) {
+                    options.android.checkable = 'true';
+                }
             }
-            switch (nodeName) {
+            switch (controlName) {
+                case VIEW_NAVIGATION.MENU:
+                    node.alignmentType |= 4 /* AUTO_LAYOUT */;
+                    break;
+                case VIEW_NAVIGATION.GROUP:
+                    node.alignmentType |= 4 /* AUTO_LAYOUT */;
+                    parseDataSet(VALIDATE_GROUP, element, options);
+                    break;
                 case VIEW_NAVIGATION.ITEM:
                     parseDataSet(VALIDATE_ITEM, element, options);
-                    if (node.android('icon') === '') {
+                    if (!$util.hasValue(options.android.icon)) {
                         const style = $dom.getStyle(element);
-                        let src = $android_Resource.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $android_const.DRAWABLE_PREFIX.MENU);
+                        let src = $Resource.addImageUrl((style.backgroundImage !== 'none' ? style.backgroundImage : style.background), $android_const.PREFIX_ANDROID.MENU);
                         if (src !== '') {
-                            options['android'].icon = `@drawable/${src}`;
+                            options.android.icon = `@drawable/${src}`;
                         }
                         else {
                             const image = node.find(item => item.imageElement);
                             if (image) {
-                                src = $android_Resource.addImageSrcSet(image.element, $android_const.DRAWABLE_PREFIX.MENU);
+                                src = $Resource.addImageSrcSet(image.element, $android_const.PREFIX_ANDROID.MENU);
                                 if (src !== '') {
-                                    options['android'].icon = `@drawable/${src}`;
+                                    options.android.icon = `@drawable/${src}`;
                                 }
                             }
                         }
                     }
                     break;
-                case VIEW_NAVIGATION.GROUP:
-                    parseDataSet(VALIDATE_GROUP, element, options);
-                    break;
             }
-            if (node.android('title') === '') {
-                if (title !== '') {
-                    const name = $android_Resource.addString(title, '', this.application.settings);
-                    if (name !== '') {
-                        title = `@string/${name}`;
-                    }
-                    options['android'].title = title;
-                }
+            if (title !== '') {
+                const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue'));
+                options.android.title = name !== '' ? `@string/${name}` : title;
             }
-            if (!options['android'].id) {
-                node.setNodeType(nodeName);
-            }
-            else {
-                node.controlName = nodeName;
-            }
-            const output = this.application.viewController.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
-            node.excludeResource |= $enum.NODE_RESOURCE.ALL;
-            node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
-            node.rendered = true;
-            return { output, complete: true, next };
+            node.setControlType(controlName, $android_enum.CONTAINER_NODE.INLINE);
+            node.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
+            node.render(parent);
+            const output = this.application.controllerHandler.renderNodeStatic(controlName, node.renderDepth, options, '', '', node, layout);
+            return { output, complete: true, next: controlName === VIEW_NAVIGATION.MENU };
         }
-        afterRender() {
-            const node = this.node;
-            super.afterRender();
+        postBaseLayout(node) {
             if (this.included(node.element)) {
-                this.application.layoutProcessing.pathname = 'res/menu';
+                Array.from(node.element.querySelectorAll('NAV')).forEach((item) => {
+                    const display = $dom.getElementCache(item, 'andromeExternalDisplay');
+                    if (display) {
+                        item.style.display = display;
+                        $dom.deleteElementCache(item, 'andromeExternalDisplay');
+                    }
+                });
+                const processing = this.application.processing;
+                if (node === processing.node && processing.layout) {
+                    processing.layout.pathname = 'res/menu';
+                }
             }
         }
     }
 
-    const menu = new Menu(WIDGET_NAME.MENU, WIDGET_NAME.__FRAMEWORK, ['NAV']);
+    const menu = new Menu("android.widget.menu" /* MENU */, 2 /* ANDROID */, ['NAV']);
     if (androme) {
-        androme.registerExtensionAsync(menu);
+        androme.includeAsync(menu);
     }
 
     return menu;

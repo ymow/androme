@@ -405,9 +405,20 @@ export default (Base: Constructor<T>) => {
             }
             let hasWidth = false;
             if (!this.android('layout_width')) {
-                if (this.hasWidth || this.toInt('width') > 0 && !this.cssInitial('width')) {
+                if (!this.inlineStatic && this.has('width') || this.toInt('width') > 0 && !this.cssInitial('width')) {
                     const width = this.css('width');
-                    if ($util.isPercent(width)) {
+                    if ($util.isUnit(width)) {
+                        const widthParent = renderParent ? $util.convertInt((renderParent as View).android('layout_width')) : 0;
+                        const value = this.convertPX(width);
+                        if (parent === renderParent && widthParent > 0 && $util.convertInt(value) >= widthParent) {
+                            this.android('layout_width', 'match_parent');
+                        }
+                        else {
+                            this.android('layout_width', value);
+                        }
+                        hasWidth = true;
+                    }
+                    else if ($util.isPercent(width)) {
                         if (width === '100%') {
                             this.android('layout_width', 'match_parent');
                         }
@@ -415,19 +426,6 @@ export default (Base: Constructor<T>) => {
                             this.android('layout_width', this.convertPercent(width, true));
                         }
                         hasWidth = true;
-                    }
-                    else {
-                        const widthParent = renderParent ? $util.convertInt((renderParent as View).android('layout_width')) : 0;
-                        const value = this.convertPX(width);
-                        if ($util.isUnit(value)) {
-                            if (parent === renderParent && widthParent > 0 && $util.convertInt(value) >= widthParent) {
-                                this.android('layout_width', 'match_parent');
-                            }
-                            else {
-                                this.android('layout_width', value);
-                            }
-                            hasWidth = true;
-                        }
                     }
                 }
             }
@@ -491,9 +489,14 @@ export default (Base: Constructor<T>) => {
             }
             let hasHeight = false;
             if (!this.android('layout_height')) {
-                if (this.hasHeight || this.toInt('height') > 0 && !this.cssInitial('height')) {
+                if (!this.inlineStatic && this.has('height') || this.toInt('height') > 0 && !this.cssInitial('height')) {
                     const height = this.css('height');
-                    if ($util.isPercent(height)) {
+                    if ($util.isUnit(height)) {
+                        const value = this.convertPX(height, false);
+                        this.android('layout_height', this.css('overflow') === 'hidden' && parseInt(value) < Math.floor(this.box.height) ? 'wrap_content' : value);
+                        hasHeight = true;
+                    }
+                    else if ($util.isPercent(height)) {
                         if (height === '100%') {
                             this.android('layout_height', 'match_parent');
                         }
@@ -501,13 +504,6 @@ export default (Base: Constructor<T>) => {
                             this.android('layout_height', $util.formatPX(Math.ceil(this.bounds.height) - this.contentBoxHeight));
                         }
                         hasHeight = true;
-                    }
-                    else {
-                        const value = this.convertPX(height, false);
-                        if ($util.isUnit(value)) {
-                            this.android('layout_height', this.css('overflow') === 'hidden' && parseInt(value) < Math.floor(this.box.height) ? 'wrap_content' : value);
-                            hasHeight = true;
-                        }
                     }
                 }
             }

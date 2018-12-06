@@ -8,7 +8,7 @@ import NodeList from './nodelist';
 
 import { parseRGBA } from '../lib/color';
 import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
-import { convertInt, hasValue, isNumber, isString } from '../lib/util';
+import { convertInt, hasValue, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -282,7 +282,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 const opacity = node.css('opacity');
                                 for (let i = 0; i < stopMatch.length; i += 3) {
                                     const rgba = stopMatch[i + 1];
-                                    if (isString(rgba)) {
+                                    if (rgba) {
                                         const color = parseRGBA(rgba, opacity);
                                         if (color && color.visible) {
                                             gradient.colorStop.push({

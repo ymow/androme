@@ -342,7 +342,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 else if (
                     this.userSettings.collapseUnattributedElements &&
                     node.positionStatic &&
-                    !$util.hasValue(node.element.id) &&
+                    node.baseElement && !$util.hasValue(node.baseElement.id) &&
                     !$util.hasValue(node.dataset.include) &&
                     !$util.hasValue(node.dataset.target) &&
                     !node.hasWidth &&
@@ -351,8 +351,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     !node.has('textAlign') && !node.has('verticalAlign') &&
                     node.toInt('lineHeight') > 0 &&
                     !node.rightAligned && !node.autoMargin.horizontal &&
-                    !child.hasWidth &&
-                    !child.visibleStyle.borderWidth &&
+                    !node.groupParent &&
+                    !node.companion &&
                     !this.hasAppendProcessing(node.id))
                 {
                     child.documentRoot = node.documentRoot;

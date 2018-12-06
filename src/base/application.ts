@@ -8,7 +8,7 @@ import NodeList from './nodelist';
 import Resource from './resource';
 
 import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isElementIncluded, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache } from '../lib/dom';
-import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isString, maxArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
@@ -1070,7 +1070,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     if (result.parent) {
                                         parentY = result.parent as T;
                                     }
-                                    if (isString(result.output) || result.include === true) {
+                                    if (result.output !== '' || result.include === true) {
                                         item.subscribers.add(nodeY);
                                         nodeY.renderExtension.add(item);
                                     }

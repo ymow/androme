@@ -1,4 +1,4 @@
-/* android.widget 2.2.2
+/* android.widget 2.3.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -6,50 +6,62 @@ this.android.widget = this.android.widget || {};
 this.android.widget.coordinator = (function () {
     'use strict';
 
-    var WIDGET_NAME = {
-        __FRAMEWORK: 2,
-        FAB: 'android.widget.floatingactionbutton',
-        MENU: 'android.widget.menu',
-        COORDINATOR: 'android.widget.coordinator',
-        TOOLBAR: 'android.widget.toolbar',
-        DRAWER: 'android.widget.drawer',
-        BOTTOM_NAVIGATION: 'android.widget.bottomnavigation'
-    };
-
-    var $enum = androme.lib.enumeration;
+    var $Resource = android.lib.base.Resource;
     var $dom = androme.lib.dom;
+    var $enum = androme.lib.enumeration;
     var $android_const = android.lib.constant;
+    var $android_enum = android.lib.enumeration;
+    var $android_util = android.lib.util;
     class Coordinator extends androme.lib.base.Extension {
-        processNode() {
-            const node = this.node;
-            const output = this.application.viewController.renderGroup(node, this.parent, $android_const.VIEW_SUPPORT.COORDINATOR);
-            node.apply(this.options[node.element.id]);
-            node.nodeType = $enum.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
-            const toolbar = $dom.getNodeFromElement($dom.getNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
-            if (toolbar) {
-                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
-                if (ext) {
-                    const options = ext.options[toolbar.element.id];
-                    if (typeof options === 'object' && options.hasOwnProperty('collapsingToolbar')) {
-                        node.android('fitsSystemWindows', 'true');
+        processNode(node, parent) {
+            const controller = this.application.controllerHandler;
+            const options = $android_util.createAttribute(this.options[node.element.id]);
+            node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $android_enum.CONTAINER_NODE.BLOCK);
+            node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
+            node.render(parent);
+            const output = controller.renderNodeStatic($android_const.SUPPORT_ANDROID.COORDINATOR, node.renderDepth, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), '', '', node, true);
+            const element = Coordinator.findNestedByName(node.element, "android.widget.toolbar" /* TOOLBAR */);
+            if (element) {
+                const toolbar = $dom.getElementAsNode(element);
+                if (toolbar) {
+                    const ext = this.application.retrieveExtension("android.widget.toolbar" /* TOOLBAR */);
+                    if (ext) {
+                        const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
+                        if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {
+                            node.android('fitsSystemWindows', 'true');
+                        }
                     }
                 }
             }
-            return { output, complete: false };
+            return { output };
         }
-        afterInsert() {
-            const node = this.node;
+        postProcedure(node) {
             if (node.documentRoot) {
-                node.android('layout_width', 'match_parent');
-                node.android('layout_height', 'match_parent');
+                if (node.inlineWidth) {
+                    node.some((item) => {
+                        if (item.rightAligned) {
+                            node.android('layout_width', 'match_parent', true);
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+                if (node.inlineHeight) {
+                    node.some((item) => {
+                        if (item.bottomAligned) {
+                            node.android('layout_height', 'match_parent', true);
+                            return true;
+                        }
+                        return false;
+                    });
+                }
             }
         }
     }
 
-    const coordinator = new Coordinator(WIDGET_NAME.COORDINATOR, WIDGET_NAME.__FRAMEWORK);
+    const coordinator = new Coordinator("android.widget.coordinator" /* COORDINATOR */, 2 /* ANDROID */);
     if (androme) {
-        androme.registerExtensionAsync(coordinator);
+        androme.includeAsync(coordinator);
     }
 
     return coordinator;
