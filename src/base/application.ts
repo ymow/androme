@@ -569,7 +569,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.parseElements.has(element)) {
                 prioritizeExtensions(documentRoot, element, Array.from(this.extensions)).some(item => item.init(element));
-                if (!this.parseElements.has(element) && !localSettings.unsupported.tagName.has(element.tagName)) {
+                if (!this.parseElements.has(element) && !(
+                        localSettings.unsupported.tagName.has(element.tagName) ||
+                        element instanceof HTMLInputElement && localSettings.unsupported.tagName.has(`${element.tagName}:${element.type}`)
+                   ))
+                {
                     let valid = true;
                     let current = element.parentElement;
                     while (current && current !== documentRoot) {
@@ -1467,7 +1471,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             const layout = new Layout(data.parent, data.node, 0, rightAbove.length + rightBelow.length === data.length ? NODE_ALIGNMENT.RIGHT : 0);
             if (settings.floatOverlapDisabled) {
-                if (data.parent.layoutVertical) {
+                if (data.node.groupParent && data.parent.layoutVertical) {
                     data.node.alignmentType |= layout.alignmentType;
                     output = formatPlaceholder(data.node.id);
                     data.node.render(data.parent);
@@ -1475,11 +1479,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 else {
                     const vertical = this.controllerHandler.containerTypeVertical;
-                    layout.itemCount = (inlineAbove.length ? 1 : 0) + (leftAbove.length + rightAbove.length ? 1 : 0) + (inlineBelow.length ? 1 : 0);
                     layout.setType(vertical.containerType, vertical.alignmentType);
                     output = this.renderNode(layout);
                 }
-                layerIndex.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
+                layerIndex.push(inlineAbove, [leftAbove, rightAbove], [leftBelow, rightBelow], inlineBelow);
+                layout.itemCount = layerIndex.length;
             }
             else {
                 if (inlineAbove.length) {

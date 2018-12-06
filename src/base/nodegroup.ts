@@ -78,7 +78,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     get floating() {
-        return this.hasAlign(NODE_ALIGNMENT.FLOAT) || this.some(node => node.floating);
+        return this.every(node => node.floating);
     }
 
     get float() {

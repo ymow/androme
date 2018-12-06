@@ -129,11 +129,9 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
-Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
-
 ### ALL: Extension Standard
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for SVG and most of the common floating techniques.
+CSS Grid and Flexbox layouts are mostly supported. There is also support for SVG and most of the common floating techniques.
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 

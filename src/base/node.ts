@@ -221,6 +221,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     case 'verticalAlign':
                         this._cached.baseline = undefined;
                         break;
+                    default:
+                        if (attr.startsWith('margin')) {
+                            this._cached.autoMargin = undefined;
+                        }
+                        break;
                 }
                 this._cached[attr] = undefined;
             }
@@ -1427,7 +1432,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get autoMargin() {
         if (this._cached.autoMargin === undefined) {
-            if (!this.pageFlow || this.blockStatic) {
+            if (!this.pageFlow || this.blockStatic || this.display === 'table') {
                 const styleMap = this.initial.styleMap;
                 const left = styleMap.marginLeft === 'auto' && (this.pageFlow ? true : this.has('right'));
                 const right = styleMap.marginRight === 'auto' && (this.pageFlow ? true : this.has('left'));

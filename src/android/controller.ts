@@ -265,7 +265,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         },
         unsupported: {
             excluded: new Set(['BR']),
-            tagName: new Set(['OPTION', 'MAP', 'AREA', 'IFRAME', 'svg'])
+            tagName: new Set(['OPTION', 'INPUT:hidden', 'MAP', 'AREA', 'IFRAME', 'svg'])
         },
         relative: {
             boxWidthWordWrapPercent: 0.9,

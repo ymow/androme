@@ -395,7 +395,6 @@ export default (Base: Constructor<T>) => {
             const parent = this.absoluteParent;
             const children = this.renderChildren;
             const renderParent = this.renderParent;
-            const autoLayout = !!renderParent && renderParent.is($enum.NODE_ALIGNMENT.AUTO_LAYOUT);
             if (this.documentBody) {
                 if (!this.hasWidth && children.some(node => node.alignParent('right'))) {
                     this.android('layout_width', 'match_parent', false);
@@ -410,10 +409,10 @@ export default (Base: Constructor<T>) => {
                     const width = this.css('width');
                     if ($util.isPercent(width)) {
                         if (width === '100%') {
-                            this.android('layout_width', 'match_parent', !autoLayout);
+                            this.android('layout_width', 'match_parent');
                         }
                         else {
-                            this.android('layout_width', this.convertPercent(width, true), !autoLayout);
+                            this.android('layout_width', this.convertPercent(width, true));
                         }
                         hasWidth = true;
                     }
@@ -422,10 +421,10 @@ export default (Base: Constructor<T>) => {
                         const value = this.convertPX(width);
                         if ($util.isUnit(value)) {
                             if (parent === renderParent && widthParent > 0 && $util.convertInt(value) >= widthParent) {
-                                this.android('layout_width', 'match_parent', !autoLayout);
+                                this.android('layout_width', 'match_parent');
                             }
                             else {
-                                this.android('layout_width', value, !autoLayout);
+                                this.android('layout_width', value);
                             }
                             hasWidth = true;
                         }
@@ -450,41 +449,42 @@ export default (Base: Constructor<T>) => {
                 }
             }
             if (!hasWidth) {
-                if (children.filter(node => (node.inlineStatic || $util.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
-                    this.android('layout_width', 'wrap_content', !autoLayout);
+                if (this.plainText) {
+                    this.android('layout_width', renderParent && this.bounds.width > renderParent.box.width && this.multiLine && this.alignParent('left') ? 'match_parent' : 'wrap_content', false);
+                }
+                else if (children.filter(node => (node.inlineStatic || $util.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
+                    this.android('layout_width', 'wrap_content', false);
+                }
+                else if (
+                    !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
+                    this.layoutFrame && (
+                        $NodeList.floated(children).size === 2 ||
+                        children.some(node => node.blockStatic && (node.autoMargin.leftRight || node.rightAligned))
+                   ))
+                {
+                    this.android('layout_width', 'match_parent', false);
                 }
                 else {
-                    if (this.plainText) {
-                        this.android('layout_width', renderParent && this.bounds.width > renderParent.box.width && this.multiLine && this.alignParent('left') ? 'match_parent' : 'wrap_content', !autoLayout);
-                    }
-                    else if (
-                        !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
-                        this.layoutFrame && (
-                            $NodeList.floated(children).size === 2 ||
-                            children.some(node => node.blockStatic && (node.autoMargin.leftRight || node.rightAligned))
+                    const wrap = (
+                        this.containerType < CONTAINER_NODE.INLINE ||
+                        !this.pageFlow ||
+                        this.inlineFlow ||
+                        this.tableElement ||
+                        this.flexElement ||
+                        parent.flexElement ||
+                        parent.gridElement ||
+                        !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
+                    );
+                    if ((!wrap || this.blockStatic && !this.has('maxWidth')) && (
+                            this.linear.width >= parent.box.width ||
+                            this.layoutVertical && !this.autoMargin.horizontal ||
+                            this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings()))) ||
+                            this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width)
                         ))
                     {
-                        this.android('layout_width', 'match_parent', !autoLayout);
+                        this.android('layout_width', 'match_parent', false);
                     }
                     else {
-                        const wrap = (
-                            this.containerType < CONTAINER_NODE.INLINE ||
-                            !this.pageFlow ||
-                            this.inlineFlow ||
-                            this.tableElement ||
-                            parent.flexElement ||
-                            parent.gridElement ||
-                            !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
-                        );
-                        if (!wrap || this.blockStatic && !this.has('maxWidth')) {
-                            if (this.linear.width >= parent.box.width ||
-                                this.layoutVertical && !this.autoMargin.horizontal ||
-                                this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings()))) ||
-                                this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))
-                            {
-                                this.android('layout_width', 'match_parent', !autoLayout);
-                            }
-                        }
                         this.android('layout_width', 'wrap_content', false);
                     }
                 }
@@ -495,17 +495,17 @@ export default (Base: Constructor<T>) => {
                     const height = this.css('height');
                     if ($util.isPercent(height)) {
                         if (height === '100%') {
-                            this.android('layout_height', 'match_parent', !autoLayout);
+                            this.android('layout_height', 'match_parent');
                         }
                         else {
-                            this.android('layout_height', $util.formatPX(Math.ceil(this.bounds.height) - this.contentBoxHeight), !autoLayout);
+                            this.android('layout_height', $util.formatPX(Math.ceil(this.bounds.height) - this.contentBoxHeight));
                         }
                         hasHeight = true;
                     }
                     else {
                         const value = this.convertPX(height, false);
                         if ($util.isUnit(value)) {
-                            this.android('layout_height', this.css('overflow') === 'hidden' && parseInt(value) < Math.floor(this.box.height) ? 'wrap_content' : value, !autoLayout);
+                            this.android('layout_height', this.css('overflow') === 'hidden' && parseInt(value) < Math.floor(this.box.height) ? 'wrap_content' : value);
                             hasHeight = true;
                         }
                     }
@@ -541,26 +541,22 @@ export default (Base: Constructor<T>) => {
                 function setAutoMargin(node: View) {
                     if (!node.blockWidth) {
                         const alignment: string[] = [];
-                        const marginLeft = node.css('marginLeft') === 'auto';
-                        const marginRight = node.css('marginRight') === 'auto';
-                        const marginTop = node.css('marginTop') === 'auto';
-                        const marginBottom = node.css('marginBottom') === 'auto';
-                        if (marginLeft && marginRight) {
+                        if (node.autoMargin.leftRight) {
                             alignment.push('center_horizontal');
                         }
-                        else if (marginLeft && !marginRight) {
+                        else if (node.autoMargin.left) {
                             alignment.push(right);
                         }
-                        else if (!marginLeft && marginRight) {
+                        else if (node.autoMargin.right) {
                             alignment.push(left);
                         }
-                        if (marginTop && marginBottom) {
+                        if (node.autoMargin.topBottom) {
                             alignment.push('center_vertical');
                         }
-                        else if (marginTop && !marginBottom) {
+                        else if (node.autoMargin.top) {
                             alignment.push('bottom');
                         }
-                        else if (!marginTop && marginBottom) {
+                        else if (node.autoMargin.bottom) {
                             alignment.push('top');
                         }
                         if (alignment.length) {
@@ -593,6 +589,7 @@ export default (Base: Constructor<T>) => {
                 let textAlign = this.cssInitial('textAlign', true) || '';
                 let verticalAlign = '';
                 if (this.pageFlow) {
+                    const children = this.renderChildren;
                     let floating = '';
                     if (this.inlineVertical && renderParent.is(CONTAINER_NODE.LINEAR, CONTAINER_NODE.GRID)) {
                         switch (this.cssInitial('verticalAlign', true)) {
@@ -608,15 +605,20 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                     if (!this.blockWidth && (renderParent.layoutVertical || (this.documentRoot && this.layoutVertical))) {
-                        if (this.float === 'right') {
-                            this.mergeGravity('layout_gravity', right);
+                        if (this.floating) {
+                            this.mergeGravity('layout_gravity', this.float === 'right' ? right : left);
                         }
                         else {
                             setAutoMargin(this);
                         }
                     }
-                    if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.nodes.length && this.nodes.every(node => node.rightAligned))) {
-                        floating = right;
+                    if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
+                        if (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || children.length && children.every(node => node.rightAligned)) {
+                            floating = right;
+                        }
+                        else if (this.groupParent && !children.some(item => item.float === 'right')) {
+                            floating = left;
+                        }
                     }
                     if (renderParent.layoutFrame) {
                         if (!setAutoMargin(this)) {
@@ -637,13 +639,11 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                     else if (floating !== '') {
-                        if (this.layoutLinear) {
-                            if (this.blockWidth) {
-                                textAlign = setTextAlign(floating);
-                            }
-                            else {
-                                this.mergeGravity('layout_gravity', floating);
-                            }
+                        if (this.blockWidth) {
+                            textAlign = setTextAlign(floating);
+                        }
+                        else {
+                            this.mergeGravity('layout_gravity', floating);
                         }
                     }
                 }

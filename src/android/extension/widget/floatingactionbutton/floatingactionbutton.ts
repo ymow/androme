@@ -82,18 +82,18 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
             const layoutGravity = node.mergeGravity('layout_gravity', ...gravity);
             if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
                 if (horizontalBias < 0.5) {
-                    node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - documentParent.box.left)), true);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, node.linear.left - documentParent.box.left);
                 }
                 else {
-                    node.css('marginRight', $util.formatPX(Math.floor(documentParent.box.right - node.bounds.right)), true);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, documentParent.box.right - node.linear.right);
                 }
             }
             if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
                 if (verticalBias < 0.5) {
-                    node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - documentParent.box.top)), true);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.linear.top - documentParent.box.top);
                 }
                 else {
-                    node.css('marginBottom', $util.formatPX(Math.floor(documentParent.box.bottom - node.bounds.bottom)), true);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, documentParent.box.bottom - node.linear.bottom);
                 }
             }
             if (target) {
