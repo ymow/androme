@@ -11,7 +11,7 @@ export function stripId(value: string) {
 }
 
 export function createAttribute(options: ExternalData = {}): ViewAttribute {
-    return Object.assign({ android: {}, app: {} }, typeof options === 'object' && options ? options : {});
+    return Object.assign({ android: {}, app: {} }, options && typeof options === 'object' ? options : {});
 }
 
 export function validateString(value: string) {

@@ -1,4 +1,4 @@
-import { UserSettingsAndroid } from './module';
+import { UserSettingsAndroid, ViewAttribute } from './module';
 
 declare global {
     namespace android.lib.base {
@@ -8,7 +8,7 @@ declare global {
             checkConstraintFloat(data: androme.lib.base.Layout<T>): boolean;
             checkConstraintHorizontal(data: androme.lib.base.Layout<T>): boolean;
             checkRelativeHorizontal(data: androme.lib.base.Layout<T>): boolean;
-            renderSpace(depth: number, width: string, height?: string, columnSpan?: number, rowSpan?: number): string;
+            renderSpace(depth: number, width: string, height?: string, columnSpan?: number, rowSpan?: number, options?: ViewAttribute): string;
             addGuideline(node: T, parent: T, orientation?: string, percent?: boolean, opposite?: boolean): void;
         }
 

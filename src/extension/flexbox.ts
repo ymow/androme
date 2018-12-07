@@ -62,7 +62,7 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
                     items.push(item);
                     map.set(xy, items);
                 }
-                if (map.size > 0) {
+                if (map.size) {
                     let maxCount = 0;
                     Array.from(map.values()).forEach((segment, index) => {
                         const group = controller.createNodeGroup(segment[0], segment, node);

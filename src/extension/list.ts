@@ -37,10 +37,10 @@ export default abstract class List<T extends Node> extends Extension<T> {
         );
     }
 
-    public processNode(node: T, parent: T): ExtensionResult<T> {
+    public processNode(node: T): ExtensionResult<T> {
         let i = 0;
         node.each(item => {
-            const mainData: ListData = List.createDataAttribute();
+            const mainData = List.createDataAttribute();
             if (item.display === 'list-item' || item.has('listStyleType') || hasSingleImage(item)) {
                 let src = item.css('listStyleImage');
                 if (src && src !== 'none') {

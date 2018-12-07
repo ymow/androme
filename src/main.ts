@@ -210,7 +210,7 @@ export function ready() {
 }
 
 export function close() {
-    if (main && !main.initialized && main.size > 0) {
+    if (main && !main.initialized && main.size) {
         main.finalize();
     }
 }
@@ -222,7 +222,7 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (main && !main.initialized && main.size > 0) {
+    if (main && !main.initialized && main.size) {
         if (!main.closed) {
             main.finalize();
         }

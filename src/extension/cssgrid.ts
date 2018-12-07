@@ -26,7 +26,20 @@ const PATTERN_GRID = {
 };
 
 export default class CssGrid<T extends Node> extends Extension<T> {
-    public static createDataAttribute(): CssGridDataAttribute {
+    public static createDataAttribute<T extends Node>(): CssGridData<T> {
+        return {
+            children: new Set(),
+            rowData: [],
+            templateAreas: {},
+            row: CssGrid.createDataRowAttribute(),
+            column: CssGrid.createDataRowAttribute(),
+            emptyRows: [],
+            alignItems: '',
+            justifyItems: ''
+        };
+    }
+
+    public static createDataRowAttribute(): CssGridDirectionData {
         return {
             count: 0,
             gap: 0,
@@ -44,15 +57,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const mainData = <CssGridData<T>> {
-            children: new Set(),
-            rowData: [],
-            templateAreas: {},
-            row: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('rowGap'))) }),
-            column: Object.assign(CssGrid.createDataAttribute(), { gap: parseInt(node.convertPX(node.css('columnGap'))) }),
-            alignItems: node.css('alignItems'),
-            justifyItems: node.css('justifyItems')
-        };
+        const mainData = Object.assign(CssGrid.createDataAttribute(), { alignItems: node.css('alignItems'), justifyItems: node.css('justifyItems') });
         const gridAutoFlow = node.css('gridAutoFlow');
         const horizontal = gridAutoFlow.indexOf('row') !== -1;
         const dense = gridAutoFlow.indexOf('dense') !== -1;
@@ -60,6 +65,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const cellsPerRow: number[] = [];
         const gridPosition: GridPosition[] = [];
         let rowInvalid: ObjectIndex<boolean> = {};
+        mainData.row.gap = parseInt(node.convertPX(node.css('rowGap'), false));
+        mainData.column.gap = parseInt(node.convertPX(node.css('columnGap')));
         function setDataRows(item: T, placement: number[]) {
             if (placement.every(value => value > 0)) {
                 for (let i = placement[horizontal ? 0 : 1] - 1; i < placement[horizontal ? 2 : 3] - 1; i++) {
@@ -96,6 +103,11 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                 data.name[match[2]] = [];
                             }
                             data.name[match[2]].push(i);
+                        }
+                        else if (match[1].startsWith('minmax')) {
+                            data.unit.push(convertUnit(match[6]));
+                            data.unitMin.push(convertUnit(match[5]));
+                            i++;
                         }
                         else if (match[1].startsWith('repeat')) {
                             let iterations = 1;
@@ -181,30 +193,39 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     columnSpan = parseInt(columnEnd) - column;
                 }
                 if (column === 1 && columnMax > 0) {
-                    const available = new Array(columnMax - 1).fill(1);
                     const startIndex = horizontal ? [2, 1, 3] : [3, 0, 2];
-                    for (const position of gridPosition) {
-                        const placement = position.placement;
-                        if (placement[startIndex[0]] > row) {
-                            for (let i = placement[startIndex[1]]; i < placement[startIndex[2]]; i++) {
-                                available[i - 1] = 0;
+                    let valid = false;
+                    do {
+                        const available = new Array(columnMax - 1).fill(1);
+                        for (const position of gridPosition) {
+                            const placement = position.placement;
+                            if (placement[startIndex[0]] > row) {
+                                for (let i = placement[startIndex[1]]; i < placement[startIndex[2]]; i++) {
+                                    available[i - 1] = 0;
+                                }
                             }
+                        }
+                        for (let i = 0, j = 0, k = 0; i < available.length; i++) {
+                            if (available[i]) {
+                                if (j === 0) {
+                                    k = i;
+                                }
+                                if (++j === columnSpan) {
+                                    column = k + 1;
+                                    valid = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                j = 0;
+                            }
+                        }
+                        if (!valid) {
+                            mainData.emptyRows[row - 1] = available;
+                            row++;
                         }
                     }
-                    for (let i = 0, j = 0, k = 0; i < available.length; i++) {
-                        if (available[i]) {
-                            if (j === 0) {
-                                k = i;
-                            }
-                            if (++j === columnSpan) {
-                                column = k + 1;
-                                break;
-                            }
-                        }
-                        else {
-                            j = 0;
-                        }
-                    }
+                    while (!valid);
                 }
                 gridPosition[index] = <GridPosition> {
                     placement: horizontal ? [row, column, row + rowSpan, column + columnSpan] : [column, row, column + columnSpan, row + rowSpan],
@@ -328,8 +349,15 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                 alias[1] = alias[0];
                                 alias[0] = '1';
                             }
-                            if (data.name[alias[1]] && parseInt(alias[0]) <= data.name[alias[1]].length) {
-                                placement[i] = data.name[alias[1]][parseInt(alias[0]) - 1] + (alias[1] === positions[i - 2] ? 1 : 0);
+                            const nameIndex = parseInt(alias[0]);
+                            if (data.name[alias[1]]) {
+                                const nameLength = data.name[alias[1]].length;
+                                if (nameIndex <= nameLength) {
+                                    placement[i] = data.name[alias[1]][nameIndex - 1] + (alias[1] === positions[i - 2] ? 1 : 0);
+                                }
+                                else if (data.autoFill && nameIndex > nameLength) {
+                                    placement[i] = nameIndex + (alias[1] === positions[i - 2] ? 1 : 0);
+                                }
                             }
                         }
                         if (!placement[i]) {
@@ -530,7 +558,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                     for (let j = 0; j < mainData.column.count; j++) {
                         const column = mainData.rowData[i][j];
                         if (column) {
-                            column.forEach(item => {
+                            column.forEach((item: T) => {
                                 if (item && !modified.has(item)) {
                                     const cellData = <CssGridCellData> item.data(EXT_NAME.CSS_GRID, 'cellData');
                                     const x = j + (cellData ? cellData.columnSpan - 1 : 0);

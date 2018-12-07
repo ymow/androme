@@ -135,7 +135,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         }
                     }
                     const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
-                        namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
+                        namespace: namespace.size ? getXmlNs(...Array.from(namespace)) : '',
                         width: $util.formatPX(svg.width),
                         height: $util.formatPX(svg.height),
                         viewportWidth: svg.viewBoxWidth > 0 ? svg.viewBoxWidth.toString() : false,

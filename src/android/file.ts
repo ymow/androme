@@ -149,7 +149,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceStringArrayToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.arrays.size > 0) {
+        if (this.stored.arrays.size) {
             const data: ExternalData = { '1': [] };
             this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
             for (const [name, values] of this.stored.arrays.entries()) {
@@ -169,7 +169,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceFontToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.fonts.size > 0) {
+        if (this.stored.fonts.size) {
             const settings = this.userSettings;
             this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
             const namespace = settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
@@ -202,7 +202,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceColorToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.colors.size > 0) {
+        if (this.stored.colors.size) {
             const data: ExternalData = { '1': [] };
             this.stored.colors = new Map([...this.stored.colors.entries()].sort());
             for (const [name, value] of this.stored.colors.entries()) {
@@ -222,7 +222,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.styles.size > 0) {
+        if (this.stored.styles.size) {
             const settings = this.userSettings;
             const data: ExternalData = { '1': [] };
             const styles = (Array.from(this.stored.styles.values()) as Array<StringMap>).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
@@ -253,7 +253,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceDimenToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.dimens.size > 0) {
+        if (this.stored.dimens.size) {
             const settings = this.userSettings;
             const data: ExternalData = { '1': [] };
             this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
@@ -275,7 +275,7 @@ export default class File<T extends View> extends androme.lib.base.File<T> imple
 
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
+        if (this.stored.drawables.size || this.stored.images.size) {
             const settings = this.userSettings;
             const template = $xml.parseTemplate(DRAWABLE_TMPL);
             for (const [name, value] of this.stored.drawables.entries()) {

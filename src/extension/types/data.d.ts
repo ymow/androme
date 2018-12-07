@@ -4,15 +4,16 @@ interface Inheritable {
 
 interface CssGridData<T> {
     children: Set<T>;
-    row: CssGridDataAttribute;
-    column: CssGridDataAttribute;
+    row: CssGridDirectionData;
+    column: CssGridDirectionData;
+    emptyRows: Array<Undefined<number[]>>;
     rowData: T[][][];
     templateAreas: ObjectMap<CssGridCellData>;
     alignItems: string;
     justifyItems: string;
 }
 
-interface CssGridDataAttribute {
+interface CssGridDirectionData {
     count: number;
     gap: number;
     unit: string[];

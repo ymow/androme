@@ -115,21 +115,38 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         }
         const result = new Map<T, string>();
         const floated = new Set<string>();
+        const previous: ObjectMap<Null<T>> = {
+            left: null,
+            right: null
+        };
         for (const node of list) {
             if (node.pageFlow) {
                 const clear = node.css('clear');
-                if (floated.size > 0) {
+                if (floated.size) {
+                    const previousFloat = clear === 'both' ? [previous.left, previous.right]
+                                        : clear === 'left' ? [previous.left, null]
+                                        : clear === 'right' ? [null, previous.right] : [];
+                    previousFloat.forEach(item => {
+                        if (item && !node.floating && node.linear.top > item.linear.bottom && floated.has(item.float)) {
+                            floated.delete(item.float);
+                            previous[item.float] = null;
+                        }
+                    });
                     if (clear === 'both') {
                         result.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
                         floated.clear();
+                        previous.left = null;
+                        previous.right = null;
                     }
                     else if (floated.has(clear)) {
-                        floated.delete(clear);
                         result.set(node, clear);
+                        floated.delete(clear);
+                        previous[clear] = null;
                     }
                 }
                 if (node.floating) {
                     floated.add(node.float);
+                    previous[node.float] = node;
                 }
             }
         }

@@ -3,6 +3,8 @@ import { CONTAINER_NODE } from '../lib/enumeration';
 
 import View from '../view';
 
+import { createAttribute } from '../lib/util';
+
 import $Layout = androme.lib.base.Layout;
 
 import $const = androme.lib.constant;
@@ -39,7 +41,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         let container: T | undefined;
         if (mainData && cellData) {
             function applyLayout(item: T, direction: string, dimension: string) {
-                const data = <CssGridDataAttribute> mainData[direction];
+                const data = <CssGridDirectionData> mainData[direction];
                 const cellSpan = `${direction}Span`;
                 const cellStart = `${direction}Start`;
                 const minDimension = `min${$util.capitalize(dimension)}`;
@@ -106,13 +108,15 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 }
                 if (cellData[cellSpan] > 1) {
                     const value = (cellData[cellSpan] - 1) * data.gap;
-                    if (minSize === 0) {
+                    if (size > 0 && minSize === 0) {
                         size += value;
                     }
-                    else {
+                    else if (minSize > 0) {
                         minSize += value;
                     }
-                    minUnitSize += value;
+                    if (minUnitSize > 0) {
+                        minUnitSize += value;
+                    }
                 }
                 if (minUnitSize > 0) {
                     minSize = minUnitSize;
@@ -128,9 +132,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 if (sizeWeight > 0) {
                     item.android(`layout_${dimension}`, '0px');
                     item.android(`layout_${direction}Weight`, sizeWeight.toString());
-                    if (direction === 'column') {
-                        item.mergeGravity('layout_gravity', 'fill_horizontal');
-                    }
+                    item.mergeGravity('layout_gravity', direction === 'column' ? 'fill_horizontal' : 'fill_vertical');
                 }
                 else if (size > 0 && !item.has(dimension)) {
                     item.css(dimension, $util.formatPX(size), true);
@@ -184,13 +186,17 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 else if (!node.hasHeight) {
                     node.android('layout_height', 'match_parent', false);
                 }
-                container.mergeGravity('layout_gravity', 'fill_vertical');
                 output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             }
             const target = container || node;
             applyLayout(target, 'column', 'width');
             applyLayout(target, 'row', 'height');
-            target.mergeGravity('layout_gravity', 'fill_vertical');
+            if (!target.has('height')) {
+                target.mergeGravity('layout_gravity', 'fill_vertical');
+            }
+            if (!target.has('width')) {
+                target.mergeGravity('layout_gravity', 'fill_horizontal');
+            }
         }
         return { output, parent: container, complete: output !== '' };
     }
@@ -215,6 +221,33 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             }
             if (node.inlineWidth && node.has('maxWidth')) {
                 node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
+            }
+            for (let i = 0; i < mainData.emptyRows.length; i++) {
+                const item = mainData.emptyRows[i];
+                if (item) {
+                    for (let j = 0; j < item.length; j++) {
+                        if (item[j]) {
+                            const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
+                            controller.appendAfter(
+                                Array.from(mainData.children)[mainData.children.size - 1].id,
+                                controller.renderSpace(
+                                    node.renderDepth + 1,
+                                    'wrap_content',
+                                    $util.formatPX(mainData.row.gap),
+                                    0,
+                                    0,
+                                    createAttribute({
+                                        android: {
+                                            layout_row: i.toString(),
+                                            layout_column: j.toString()
+                                        }
+                                    })
+                                )
+                            );
+                            break;
+                        }
+                    }
+                }
             }
         }
     }

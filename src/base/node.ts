@@ -365,11 +365,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             for (const previous of previousSiblings) {
                 const vertical = (
-                    previous.blockStatic ||
+                    previous.blockStatic && !this.floating ||
                     this.blockStatic && (
                         !previous.inlineFlow ||
                         cleared && cleared.has(previous)
                     ) ||
+                    cleared && cleared.get(previous) === 'both' ||
                     !previous.floating && (
                         this.blockStatic ||
                         !this.inlineFlow && !this.floating

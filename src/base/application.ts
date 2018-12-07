@@ -938,30 +938,34 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     else if (previous) {
                                         if (hasFloat) {
                                             const startNewRow = item.alignedVertically(previousSiblings, undefined, cleared);
-                                            if (startNewRow ||
-                                                cleared.has(item) ||
-                                                settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatSegment.size === 2)
-                                            {
+                                            if (startNewRow || cleared.has(item) || settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatSegment.size === 2) {
                                                 if (horizontal.length) {
                                                     if (!settings.floatOverlapDisabled &&
-                                                        floatSegment.size > 0 &&
+                                                        floatSegment.size &&
                                                         !previousSiblings.some(node => node.lineBreak && !cleared.has(node)) &&
-                                                        ![...horizontal, item].some(node => cleared.get(node) === 'both') &&
-                                                        item.bounds.top < maxArray(horizontal.filter(node => node.floating).map(node => node.bounds.bottom)))
+                                                        cleared.get(item) !== 'both')
                                                     {
-                                                        const floated = NodeList.floated(horizontal);
-                                                        if (cleared.has(item)) {
-                                                            if (floatSegment.size < 2 && floated.size === 2 && !item.floating) {
-                                                                item.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
-                                                                verticalExtended = true;
-                                                                horizontal.push(item);
-                                                                continue;
+                                                        const floatBottom = maxArray(horizontal.filter(node => node.floating).map(node => node.linear.bottom));
+                                                        if (!item.floating || item.linear.top < floatBottom) {
+                                                            const floated = NodeList.floated(horizontal);
+                                                            if (cleared.has(item)) {
+                                                                if (!item.floating && floatSegment.size < 2 && floated.size === 2) {
+                                                                    item.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                                                    verticalExtended = true;
+                                                                    horizontal.push(item);
+                                                                    continue;
+                                                                }
+                                                                break domNested;
                                                             }
-                                                            break domNested;
-                                                        }
-                                                        else if (!startNewRow || floated.size === 1 && (!item.floating || floatSegment.has(item.float))) {
-                                                            horizontal.push(item);
-                                                            continue;
+                                                            else if (!startNewRow || floated.size === 1 && (!item.floating || floatSegment.has(item.float))) {
+                                                                horizontal.push(item);
+                                                                if (item.linear.bottom > floatBottom) {
+                                                                    break domNested;
+                                                                }
+                                                                else {
+                                                                    continue;
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                     break domNested;
@@ -1294,7 +1298,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 this.controllerHandler.processLayoutHorizontal(layout);
                 return this.renderNode(layout);
             }
-            else if (left.length === 0 || right.length === 0) {
+            else if ((left.length === 0 || right.length === 0) && (this.userSettings.floatOverlapDisabled || !inline.some(item => item.blockStatic))) {
                 const subgroup: T[] = [];
                 if (right.length === 0) {
                     subgroup.push(...left, ...inline);
@@ -1482,7 +1486,18 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     layout.setType(vertical.containerType, vertical.alignmentType);
                     output = this.renderNode(layout);
                 }
-                layerIndex.push(inlineAbove, [leftAbove, rightAbove], [leftBelow, rightBelow], inlineBelow);
+                if (inlineAbove.length) {
+                    layerIndex.push(inlineAbove);
+                }
+                if (leftAbove.length || rightAbove.length) {
+                    layerIndex.push([leftAbove, rightAbove]);
+                }
+                if (leftBelow.length || rightBelow.length) {
+                    layerIndex.push([leftBelow, rightBelow]);
+                }
+                if (inlineBelow.length) {
+                    layerIndex.push(inlineBelow);
+                }
                 layout.itemCount = layerIndex.length;
             }
             else {

@@ -1,4 +1,4 @@
-import { UserSettingsAndroid } from './types/module';
+import { UserSettingsAndroid, ViewAttribute } from './types/module';
 
 import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, XMLNS_ANDROID } from './lib/constant';
 import { CONTAINER_NODE } from './lib/enumeration';
@@ -539,7 +539,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             else {
                 const flowIndex = $util.minArray(sibling.map(node => node.siblingIndex));
                 const floatMap = floating.map(node => node.siblingIndex);
-                return layout.floated.has('left') && floatMap.some(value => value > flowIndex);
+                return layout.floated.has('left') && (
+                    floatMap.some(value => value > flowIndex) ||
+                    !this.userSettings.floatOverlapDisabled && floatMap.some(value => value < flowIndex) && sibling.some(node => node.blockStatic)
+                );
             }
         }
         return false;
@@ -993,7 +996,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return output;
     }
 
-    public renderSpace(depth: number, width: string, height = '', columnSpan = 0, rowSpan = 0) {
+    public renderSpace(depth: number, width: string, height = '', columnSpan = 0, rowSpan = 0, options?: ViewAttribute) {
         let percentWidth = '';
         let percentHeight = '';
         if ($util.isPercent(width)) {
@@ -1004,7 +1007,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             percentHeight = (parseInt(height) / 100).toFixed(2);
             height = '0px';
         }
-        const options = createAttribute();
+        options = createAttribute(options);
         if (columnSpan > 0) {
             options.android.layout_columnWeight = percentWidth;
             options.android.layout_columnSpan = columnSpan.toString();

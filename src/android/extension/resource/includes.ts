@@ -87,7 +87,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                         deleteIds.forEach(value => templates.delete(value));
                                     }
                                 }
-                                if (content.size > 0) {
+                                if (content.size) {
                                     const merge = openData.merge || content.size > 1;
                                     const depth = merge ? 1 : 0;
                                     for (const item of group) {
