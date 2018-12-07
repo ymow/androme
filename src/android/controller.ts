@@ -997,23 +997,23 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public renderSpace(depth: number, width: string, height = '', columnSpan = 0, rowSpan = 0, options?: ViewAttribute) {
+        options = createAttribute(options);
         let percentWidth = '';
         let percentHeight = '';
         if ($util.isPercent(width)) {
             percentWidth = (parseInt(width) / 100).toFixed(2);
+            options.android.layout_columnWeight = percentWidth;
             width = '0px';
         }
         if ($util.isPercent(height)) {
             percentHeight = (parseInt(height) / 100).toFixed(2);
+            options.android.layout_rowWeight = percentHeight;
             height = '0px';
         }
-        options = createAttribute(options);
         if (columnSpan > 0) {
-            options.android.layout_columnWeight = percentWidth;
             options.android.layout_columnSpan = columnSpan.toString();
         }
         if (rowSpan > 0) {
-            options.android.layout_rowWeight = percentHeight;
             options.android.layout_rowSpan = rowSpan.toString();
         }
         return this.renderNodeStatic(CONTAINER_ANDROID.SPACE, depth, options, width, $util.hasValue(height) ? height : 'wrap_content');

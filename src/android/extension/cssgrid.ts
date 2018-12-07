@@ -1,4 +1,4 @@
-import { CONTAINER_ANDROID } from '../lib/constant';
+import { BOX_ANDROID, CONTAINER_ANDROID } from '../lib/constant';
 import { CONTAINER_NODE } from '../lib/enumeration';
 
 import View from '../view';
@@ -119,7 +119,13 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     }
                 }
                 if (minUnitSize > 0) {
-                    minSize = minUnitSize;
+                    if (data.autoFill && size === 0 && mainData[direction === 'column' ? 'row' : 'column'].count === 1) {
+                        size = Math.max(node.bounds.width, minUnitSize);
+                        sizeWeight = 0;
+                    }
+                    else {
+                        minSize = minUnitSize;
+                    }
                 }
                 item.android(`layout_${direction}`, cellData[cellStart].toString());
                 if (cellData[cellSpan] > 1) {
@@ -192,6 +198,10 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             applyLayout(target, 'column', 'width');
             applyLayout(target, 'row', 'height');
             if (!target.has('height')) {
+                if (parent.hasHeight) {
+                    target.android('layout_height', '0px');
+                    target.android('layout_rowWeight', '1');
+                }
                 target.mergeGravity('layout_gravity', 'fill_vertical');
             }
             if (!target.has('width')) {
@@ -203,9 +213,12 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
 
     public postProcedure(node: T) {
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
-        if (mainData) {
-            const columnGap = !mainData.column.unit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
-            if (node.renderParent && !node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
+        if (mainData && node.renderParent) {
+            const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
+            const columnUnit = mainData.column.unit;
+            const columnGap = !columnUnit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
+            const lastChild = Array.from(mainData.children)[mainData.children.size - 1];
+            if (!node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
                 if (columnGap > 0) {
                     let width = $util.convertInt(node.android('layout_width'));
                     if (width > 0) {
@@ -222,14 +235,38 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             if (node.inlineWidth && node.has('maxWidth')) {
                 node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
             }
+            if (columnUnit.every(value => $util.isPercent(value))) {
+                const percentTotal = columnUnit.reduce((a, b) => a + parseInt(b), 0);
+                if (percentTotal < 100) {
+                    node.android('columnCount', (mainData.column.count + 1).toString());
+                    for (let i = 0; i < mainData.row.count; i++) {
+                        controller.appendAfter(
+                            lastChild.id,
+                            controller.renderSpace(
+                                node.renderDepth + 1,
+                                $util.formatPercent(100 - percentTotal),
+                                'wrap_content',
+                                0,
+                                0,
+                                createAttribute({
+                                    android: {
+                                        [node.localizeString(BOX_ANDROID.MARGIN_LEFT)]: $util.formatPX(mainData.column.gap),
+                                        layout_row: i.toString(),
+                                        layout_column: mainData.column.count.toString()
+                                    }
+                                })
+                            )
+                        );
+                    }
+                }
+            }
             for (let i = 0; i < mainData.emptyRows.length; i++) {
                 const item = mainData.emptyRows[i];
                 if (item) {
                     for (let j = 0; j < item.length; j++) {
                         if (item[j]) {
-                            const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
                             controller.appendAfter(
-                                Array.from(mainData.children)[mainData.children.size - 1].id,
+                                lastChild.id,
                                 controller.renderSpace(
                                     node.renderDepth + 1,
                                     'wrap_content',

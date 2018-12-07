@@ -3,14 +3,14 @@ import { UserSettingsAndroid } from './types/module';
 const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
+        'androme.origin',
         'androme.sprite',
+        'androme.percent',
         'androme.css-grid',
         'androme.flexbox',
-        'androme.origin',
         'androme.table',
         'androme.list',
         'androme.grid',
-        'androme.percent',
         'androme.relative',
         'androme.verticalalign',
         'androme.whitespace',

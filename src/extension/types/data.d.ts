@@ -21,6 +21,7 @@ interface CssGridDirectionData {
     auto: string[];
     autoFit: boolean;
     autoFill: boolean;
+    repeat: boolean[];
     name: ObjectMap<number[]>;
 }
 

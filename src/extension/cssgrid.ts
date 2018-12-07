@@ -45,6 +45,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             gap: 0,
             unit: [],
             unitMin: [],
+            repeat: [],
             auto: [],
             autoFill: false,
             autoFit: false,
@@ -65,8 +66,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const cellsPerRow: number[] = [];
         const gridPosition: GridPosition[] = [];
         let rowInvalid: ObjectIndex<boolean> = {};
-        mainData.row.gap = parseInt(node.convertPX(node.css('rowGap'), false));
-        mainData.column.gap = parseInt(node.convertPX(node.css('columnGap')));
+        mainData.row.gap = parseInt(node.convertPX(node.css('rowGap'), false, false));
+        mainData.column.gap = parseInt(node.convertPX(node.css('columnGap'), true, false));
         function setDataRows(item: T, placement: number[]) {
             if (placement.every(value => value > 0)) {
                 for (let i = placement[horizontal ? 0 : 1] - 1; i < placement[horizontal ? 2 : 3] - 1; i++) {
@@ -107,6 +108,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                         else if (match[1].startsWith('minmax')) {
                             data.unit.push(convertUnit(match[6]));
                             data.unitMin.push(convertUnit(match[5]));
+                            data.repeat.push(false);
                             i++;
                         }
                         else if (match[1].startsWith('repeat')) {
@@ -122,38 +124,49 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                                     iterations = convertInt(match[3]);
                                     break;
                             }
-                            const minmax = new RegExp(REGEX_PARTIAL.MINMAX).exec(match[4]);
-                            if (minmax) {
-                                data.unit.push(convertUnit(minmax[2]));
-                                data.unitMin.push(convertUnit(minmax[1]));
-                                i++;
-                            }
-                            else if (PATTERN_GRID.UNIT.test(match[4])) {
-                                for (let j = 0; j < iterations; j++) {
-                                    data.unit.push(match[4]);
-                                    data.unitMin.push('');
+                            if (match[4].startsWith('minmax')) {
+                                const minmax = new RegExp(REGEX_PARTIAL.MINMAX, 'g');
+                                let matchMM: RegExpMatchArray | null;
+                                while ((matchMM = minmax.exec(match[4])) !== null) {
+                                    data.unit.push(convertUnit(matchMM[2]));
+                                    data.unitMin.push(convertUnit(matchMM[1]));
+                                    data.repeat.push(true);
                                     i++;
                                 }
                             }
                             else if (match[4].charAt(0) === '[') {
-                                const nameUnit = match[4].split(' ');
-                                if (nameUnit.length === 2) {
-                                    const attr = nameUnit[0].substring(1, nameUnit[0].length - 1);
+                                const unitName = match[4].split(' ');
+                                if (unitName.length === 2) {
+                                    const attr = unitName[0].substring(1, unitName[0].length - 1);
                                     if (data.name[attr] === undefined) {
                                         data.name[attr] = [];
                                     }
                                     for (let j = 0; j < iterations; j++) {
                                         data.name[attr].push(i);
-                                        data.unit.push(nameUnit[1]);
+                                        data.unit.push(unitName[1]);
                                         data.unitMin.push('');
+                                        data.repeat.push(true);
                                         i++;
                                     }
                                 }
+                            }
+                            else {
+                                match[4].split(' ').forEach(unit => {
+                                    if (PATTERN_GRID.UNIT.test(unit)) {
+                                        for (let j = 0; j < iterations; j++) {
+                                            data.unit.push(unit);
+                                            data.unitMin.push('');
+                                            data.repeat.push(true);
+                                            i++;
+                                        }
+                                    }
+                                });
                             }
                         }
                         else if (PATTERN_GRID.UNIT.test(match[1])) {
                             data.unit.push(convertUnit(match[1]));
                             data.unitMin.push('');
+                            data.repeat.push(false);
                             i++;
                         }
                     }
@@ -387,19 +400,42 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                 }
             }
             if (data.autoFill || data.autoFit) {
-                const unit = data.unit[data.unit.length - 1] || 'auto';
-                for (let i = data.unit.length; i < data.count; i++) {
-                    data.unit[i] = unit;
+                if (data.unit.length === 0) {
+                    data.unit.push('auto');
+                    data.unitMin.push('');
+                    data.repeat.push(true);
                 }
-                if (data.unitMin.length) {
-                    let unitMin = '';
-                    for (let i = 0; i < data.count; i++) {
-                        if (data.unitMin[i]) {
-                            unitMin = data.unitMin[i];
+                function repeatUnit(dimension: string[]) {
+                    const unitPX: string[] = [];
+                    const unitRepeat: string[] = [];
+                    for (let i = 0; i < dimension.length; i++) {
+                        if (data.repeat[i]) {
+                            unitRepeat.push(dimension[i]);
                         }
-                        data.unitMin[i] = unitMin;
+                        else {
+                            unitPX.push(dimension[i]);
+                        }
                     }
+                    const repeatTotal = data.count - unitPX.length;
+                    const result: string[] = [];
+                    for (let i = 0; i < data.count; i++) {
+                        if (data.repeat[i]) {
+                            for (let j = 0, k = 0; j < repeatTotal; i++, j++, k++) {
+                                if (k === unitRepeat.length) {
+                                    k = 0;
+                                }
+                                result[i] = unitRepeat[k];
+                            }
+                            break;
+                        }
+                        else if (unitPX.length) {
+                            result[i] = unitPX.shift() as string;
+                        }
+                    }
+                    return result;
                 }
+                data.unit = repeatUnit(data.unit);
+                data.unitMin = repeatUnit(data.unitMin);
             }
         }
         node.each((item: T, index) => {

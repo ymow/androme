@@ -419,7 +419,11 @@ export default (Base: Constructor<T>) => {
                         hasWidth = true;
                     }
                     else if ($util.isPercent(width)) {
-                        if (width === '100%') {
+                        if (renderParent && renderParent.is(CONTAINER_NODE.GRID)) {
+                            this.android('layout_width', '0px', false);
+                            this.android('layout_columnWeight', (parseInt(width) / 100).toFixed(2), false);
+                        }
+                        else if (width === '100%') {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
@@ -680,7 +684,7 @@ export default (Base: Constructor<T>) => {
                     ['center', 'fill'].forEach(value => {
                         const horizontal = `${value}_horizontal`;
                         const vertical = `${value}_vertical`;
-                        if (direction.has(horizontal) && direction.has(vertical)) {
+                        if (direction.has(value) || direction.has(horizontal) && direction.has(vertical)) {
                             direction.delete(horizontal);
                             direction.delete(vertical);
                             direction.add(value);
