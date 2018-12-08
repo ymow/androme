@@ -10,7 +10,9 @@ interface CssGridData<T> {
     rowData: T[][][];
     templateAreas: ObjectMap<CssGridCellData>;
     alignItems: string;
+    alignContent: string;
     justifyItems: string;
+    justifyContent: string;
 }
 
 interface CssGridDirectionData {
@@ -23,6 +25,7 @@ interface CssGridDirectionData {
     autoFill: boolean;
     repeat: boolean[];
     name: ObjectMap<number[]>;
+    normal: boolean;
 }
 
 interface CssGridCellData {

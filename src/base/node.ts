@@ -7,7 +7,7 @@ import Container from './container';
 import Extension from './extension';
 
 import { assignBounds, deleteElementCache, getElementAsNode, getElementCache, getRangeClientRect, hasComputedStyle, hasFreeFormText, newRectDimensions, setElementCache } from '../lib/dom';
-import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
+import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, formatPX, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
 
@@ -492,6 +492,23 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
         });
         return children;
+    }
+
+    public cssPX(attr: string, value: number, negative = false, cache = false) {
+        const current = this._styleMap[attr];
+        if (current && current.endsWith('px') && isUnit(current)) {
+            value += parseInt(current);
+            if (!negative) {
+                value = Math.max(0, value);
+            }
+            const result = formatPX(value);
+            this.css(attr, result);
+            if (cache) {
+                this.unsetCache(attr);
+            }
+            return result;
+        }
+        return '';
     }
 
     public cssTry(attr: string, value: string) {

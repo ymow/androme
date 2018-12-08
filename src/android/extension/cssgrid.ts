@@ -13,6 +13,41 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
+function getRowData<T extends View>(mainData: CssGridData<T>, direction: string) {
+    const result: T[][][] = [];
+    if (direction === 'column') {
+        for (let i = 0; i < mainData.column.count; i++) {
+            result[i] = [];
+            for (let j = 0; j < mainData.row.count; j++) {
+                result[i].push(mainData.rowData[j][i]);
+            }
+        }
+    }
+    else {
+        for (let i = 0; i < mainData.row.count; i++) {
+            result.push(mainData.rowData[i]);
+        }
+    }
+    return result;
+}
+
+function getGridSize<T extends View>(mainData: CssGridData<T>, direction: string, node: T) {
+    const dimension = direction === 'column' ? 'width' : 'height';
+    let result = 0;
+    for (let i = 0; i < mainData[direction].count; i++) {
+        const unitPX = mainData[direction].unit[i];
+        if (unitPX.endsWith('px')) {
+            result += parseInt(unitPX);
+        }
+        else {
+            result += $util.minArray(mainData.rowData[i].map(item => item.length ? item[0].bounds[dimension] : 0));
+        }
+    }
+    result += (mainData[direction].count - 1) * mainData[direction].gap;
+    result = node[dimension] - result;
+    return result;
+}
+
 export default class <T extends View> extends androme.lib.extensions.CssGrid<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
         super.processNode(node, parent);
@@ -211,29 +246,131 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         return { output, parent: container, complete: output !== '' };
     }
 
+    public postBaseLayout(node: T) {
+        const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
+        if (mainData) {
+            function setContentSpacing(alignment: string, direction: string) {
+                const MARGIN_START = direction === 'column' ? $enum.BOX_STANDARD.MARGIN_LEFT : $enum.BOX_STANDARD.MARGIN_TOP;
+                const MARGIN_END = direction === 'column' ? $enum.BOX_STANDARD.MARGIN_RIGHT : $enum.BOX_STANDARD.MARGIN_BOTTOM;
+                const PADDING_START = direction === 'column' ? $enum.BOX_STANDARD.PADDING_LEFT : $enum.BOX_STANDARD.PADDING_TOP;
+                const data = <CssGridDirectionData> mainData[direction];
+                const rowData = alignment.startsWith('space') ? getRowData(mainData, direction) : [];
+                const sizeTotal = getGridSize(mainData, direction, node);
+                if (sizeTotal > 0) {
+                    const dimension = direction === 'column' ? 'width' : 'height';
+                    const itemCount = mainData[direction].count;
+                    const adjusted = new Set<T>();
+                    switch (alignment) {
+                        case 'center':
+                            node.modifyBox(PADDING_START, Math.floor(sizeTotal / 2));
+                            data.normal = false;
+                            break;
+                        case 'right':
+                            if (direction === 'row') {
+                                break;
+                            }
+                        case 'end':
+                        case 'flex-end':
+                            node.modifyBox(PADDING_START, sizeTotal);
+                            data.normal = false;
+                            break;
+                        case 'space-around': {
+                            const marginSize = Math.floor(sizeTotal / (itemCount * 2));
+                            for (let i = 0; i < itemCount; i++) {
+                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                    if (!adjusted.has(item)) {
+                                        item.modifyBox(MARGIN_START, marginSize);
+                                        if (i < itemCount - 1) {
+                                            item.modifyBox(MARGIN_END, marginSize);
+                                        }
+                                        adjusted.add(item);
+                                    }
+                                    else {
+                                        item.cssPX(dimension, marginSize * 2);
+                                    }
+                                });
+                            }
+                            data.normal = false;
+                            break;
+                        }
+                        case 'space-between': {
+                            const marginSize = Math.floor(sizeTotal / ((itemCount - 1) * 2));
+                            for (let i = 0; i < itemCount; i++) {
+                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                    if (!adjusted.has(item)) {
+                                        if (i > 0) {
+                                            item.modifyBox(MARGIN_START, marginSize);
+                                        }
+                                        if (i < itemCount - 1 && !rowData[itemCount - 1].some(column => column.some(subitem => subitem === item))) {
+                                            item.modifyBox(MARGIN_END, marginSize);
+                                        }
+                                        adjusted.add(item);
+                                    }
+                                    else {
+                                        item.cssPX(dimension, marginSize * 2);
+                                    }
+                                });
+                            }
+                            data.normal = false;
+                            break;
+                        }
+                        case 'space-evenly': {
+                            const marginSize = Math.floor(sizeTotal / (itemCount + 1));
+                            for (let i = 0; i < itemCount; i++) {
+                                const marginMiddle = Math.floor(marginSize / 2);
+                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                    if (!adjusted.has(item)) {
+                                        item.modifyBox(MARGIN_START, i === 0 ? marginSize : marginMiddle);
+                                        if (i < itemCount - 1 && !rowData[itemCount - 1].some(column => column.some(subitem => subitem === item))) {
+                                            item.modifyBox(MARGIN_END, marginMiddle);
+                                        }
+                                        adjusted.add(item);
+                                    }
+                                    else {
+                                        item.cssPX(dimension, marginSize);
+                                    }
+                                });
+                            }
+                            data.normal = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (node.hasWidth && mainData.justifyContent !== 'normal') {
+                setContentSpacing(mainData.justifyContent, 'column');
+            }
+            if (node.hasHeight && mainData.alignContent !== 'normal') {
+                setContentSpacing(mainData.alignContent, 'row');
+            }
+        }
+    }
+
     public postProcedure(node: T) {
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
         if (mainData && node.renderParent) {
             const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
             const columnUnit = mainData.column.unit;
-            const columnGap = !columnUnit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
             const lastChild = Array.from(mainData.children)[mainData.children.size - 1];
-            if (!node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
-                if (columnGap > 0) {
-                    let width = $util.convertInt(node.android('layout_width'));
-                    if (width > 0) {
-                        width += columnGap;
-                        node.android('layout_width', $util.formatPX(width));
-                    }
-                    let minWidth = $util.convertInt(node.android('minWidth'));
-                    if (minWidth > 0) {
-                        minWidth += columnGap;
-                        node.android('minWidth', $util.formatPX(minWidth));
+            if (mainData.column.normal) {
+                const columnGap = !columnUnit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
+                if (!node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
+                    if (columnGap > 0) {
+                        let width = $util.convertInt(node.android('layout_width'));
+                        if (width > 0) {
+                            width += columnGap;
+                            node.android('layout_width', $util.formatPX(width));
+                        }
+                        let minWidth = $util.convertInt(node.android('minWidth'));
+                        if (minWidth > 0) {
+                            minWidth += columnGap;
+                            node.android('minWidth', $util.formatPX(minWidth));
+                        }
                     }
                 }
-            }
-            if (node.inlineWidth && node.has('maxWidth')) {
-                node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
+                if (node.inlineWidth && node.has('maxWidth')) {
+                    node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
+                }
             }
             if (columnUnit.every(value => $util.isPercent(value))) {
                 const percentTotal = columnUnit.reduce((a, b) => a + parseInt(b), 0);

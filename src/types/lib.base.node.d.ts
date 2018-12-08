@@ -158,6 +158,7 @@ declare global {
             cssInitial(attr: string, modified?: boolean, computed?: boolean): string;
             cssParent(attr: string, childStart?: boolean, visible?: boolean): string;
             cssSort(attr: string, duplicate?: boolean): Node[];
+            cssPX(attr: string, value: number, negative?: boolean, cache?: boolean): string;
             cssTry(attr: string, value: string): boolean;
             cssFinally(attr: string): boolean;
             appendTry(node: Node, withNode: Node, append?: boolean): void;

@@ -35,7 +35,9 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             column: CssGrid.createDataRowAttribute(),
             emptyRows: [],
             alignItems: '',
-            justifyItems: ''
+            alignContent: '',
+            justifyItems: '',
+            justifyContent: ''
         };
     }
 
@@ -49,7 +51,8 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             auto: [],
             autoFill: false,
             autoFit: false,
-            name: {}
+            name: {},
+            normal: true
         };
     }
 
@@ -58,7 +61,12 @@ export default class CssGrid<T extends Node> extends Extension<T> {
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const mainData = Object.assign(CssGrid.createDataAttribute(), { alignItems: node.css('alignItems'), justifyItems: node.css('justifyItems') });
+        const mainData = Object.assign(CssGrid.createDataAttribute(), {
+            alignItems: node.css('alignItems'),
+            alignContent: node.css('alignContent'),
+            justifyItems: node.css('justifyItems'),
+            justifyContent: node.css('justifyContent')
+        });
         const gridAutoFlow = node.css('gridAutoFlow');
         const horizontal = gridAutoFlow.indexOf('row') !== -1;
         const dense = gridAutoFlow.indexOf('dense') !== -1;

@@ -97,9 +97,7 @@ export default abstract class Origin<T extends Node> extends Extension<T> {
                             modifyMarginLeft(item, node.marginLeft);
                         }
                     });
-                    if (node.has('width', CSS_STANDARD.UNIT)) {
-                        node.css('width', formatPX(node.toInt('width') + node.marginLeft), true);
-                    }
+                    node.cssPX('width', node.marginLeft, false, true);
                     modifyMarginLeft(node, node.marginLeft, true);
                 }
             }
