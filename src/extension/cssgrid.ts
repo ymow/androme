@@ -70,7 +70,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
         const gridAutoFlow = node.css('gridAutoFlow');
         const horizontal = gridAutoFlow.indexOf('row') !== -1;
         const dense = gridAutoFlow.indexOf('dense') !== -1;
-        const rowData: T[][][] = [];
+        const rowData: Undefined<T[]>[][] = [];
         const cellsPerRow: number[] = [];
         const gridPosition: GridPosition[] = [];
         let rowInvalid: ObjectIndex<boolean> = {};
@@ -90,7 +90,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
                             rowData[i][j] = [];
                             cellsPerRow[i]++;
                         }
-                        rowData[i][j].push(item);
+                        (rowData[i][j] as T[]).push(item);
                     }
                 }
                 return true;

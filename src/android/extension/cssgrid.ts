@@ -14,7 +14,7 @@ import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
 function getRowData<T extends View>(mainData: CssGridData<T>, direction: string) {
-    const result: T[][][] = [];
+    const result: Undefined<T[]>[][] = [];
     if (direction === 'column') {
         for (let i = 0; i < mainData.column.count; i++) {
             result[i] = [];
@@ -40,7 +40,7 @@ function getGridSize<T extends View>(mainData: CssGridData<T>, direction: string
             result += parseInt(unitPX);
         }
         else {
-            result += $util.minArray(mainData.rowData[i].map(item => item.length ? item[0].bounds[dimension] : 0));
+            result += $util.minArray(mainData.rowData[i].map(item => item && item.length ? item[0].bounds[dimension] : 0));
         }
     }
     result += (mainData[direction].count - 1) * mainData[direction].gap;
@@ -77,8 +77,9 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
         if (mainData && cellData) {
             function applyLayout(item: T, direction: string, dimension: string) {
                 const data = <CssGridDirectionData> mainData[direction];
-                const cellSpan = `${direction}Span`;
                 const cellStart = `${direction}Start`;
+                const cellSpan = `${direction}Span`;
+                const cellTotal = cellData[cellSpan] - cellData[cellStart];
                 const minDimension = `min${$util.capitalize(dimension)}`;
                 let size = 0;
                 let minSize = 0;
@@ -94,10 +95,10 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 }
                 for (let i = 0, j = 0; i < cellData[cellSpan]; i++) {
                     minUnitSize += parseInt(parent.convertPX(data.unitMin[cellData[cellStart] + i]));
-                    let value = data.unit[cellData[cellStart] + i];
-                    if (!$util.hasValue(value)) {
+                    let unit = data.unit[cellData[cellStart] + i];
+                    if (!$util.hasValue(unit)) {
                         if (data.auto[j]) {
-                            value = data.auto[j];
+                            unit = data.auto[j];
                             if (data.auto[j + 1]) {
                                 j++;
                             }
@@ -106,9 +107,9 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                             continue;
                         }
                     }
-                    if ($util.hasValue(value)) {
-                        if (value === 'auto' || value === 'min-content' || value === 'max-content') {
-                            if (parent.has(dimension) || value === 'min-content') {
+                    if ($util.hasValue(unit)) {
+                        if (unit === 'auto' || unit === 'min-content' || unit === 'max-content') {
+                            if (cellTotal < data.unit.length && (!parent.has(dimension) || data.unit.some(value => $util.isUnit(value)) || unit === 'min-content')) {
                                 size = node.bounds[dimension];
                                 minSize = 0;
                                 sizeWeight = 0;
@@ -120,18 +121,18 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                             }
                             break;
                         }
-                        else if ($util.isPercent(value)) {
-                            sizeWeight += parseInt(value) / 100;
+                        else if ($util.isPercent(unit)) {
+                            sizeWeight += parseInt(unit) / 100;
                             minSize = size;
                             size = 0;
                         }
-                        else if (value.endsWith('fr')) {
-                            sizeWeight += parseInt(value);
+                        else if (unit.endsWith('fr')) {
+                            sizeWeight += parseInt(unit);
                             minSize = size;
                             size = 0;
                         }
-                        else if (value.endsWith('px')) {
-                            const gap = parseInt(value);
+                        else if (unit.endsWith('px')) {
+                            const gap = parseInt(unit);
                             if (minSize === 0) {
                                 size += gap;
                             }
@@ -277,7 +278,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         case 'space-around': {
                             const marginSize = Math.floor(sizeTotal / (itemCount * 2));
                             for (let i = 0; i < itemCount; i++) {
-                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                new Set<T>($util.flatArray(rowData[i])).forEach(item => {
                                     if (!adjusted.has(item)) {
                                         item.modifyBox(MARGIN_START, marginSize);
                                         if (i < itemCount - 1) {
@@ -295,13 +296,14 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         }
                         case 'space-between': {
                             const marginSize = Math.floor(sizeTotal / ((itemCount - 1) * 2));
+                            const rowLast = $util.flatArray(rowData[itemCount - 1]);
                             for (let i = 0; i < itemCount; i++) {
-                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                new Set<T>($util.flatArray(rowData[i])).forEach(item => {
                                     if (!adjusted.has(item)) {
                                         if (i > 0) {
                                             item.modifyBox(MARGIN_START, marginSize);
                                         }
-                                        if (i < itemCount - 1 && !rowData[itemCount - 1].some(column => column.some(subitem => subitem === item))) {
+                                        if (i < itemCount - 1 && !rowLast.some(cell => cell === item)) {
                                             item.modifyBox(MARGIN_END, marginSize);
                                         }
                                         adjusted.add(item);
@@ -316,12 +318,13 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                         }
                         case 'space-evenly': {
                             const marginSize = Math.floor(sizeTotal / (itemCount + 1));
+                            const rowLast = $util.flatArray(rowData[itemCount - 1]);
                             for (let i = 0; i < itemCount; i++) {
                                 const marginMiddle = Math.floor(marginSize / 2);
-                                new Set<T>([].concat.apply([], rowData[i])).forEach(item => {
+                                new Set<T>($util.flatArray(rowData[i])).forEach(item => {
                                     if (!adjusted.has(item)) {
                                         item.modifyBox(MARGIN_START, i === 0 ? marginSize : marginMiddle);
-                                        if (i < itemCount - 1 && !rowData[itemCount - 1].some(column => column.some(subitem => subitem === item))) {
+                                        if (i < itemCount - 1 && !rowLast.some(cell => cell === item)) {
                                             item.modifyBox(MARGIN_END, marginMiddle);
                                         }
                                         adjusted.add(item);
@@ -343,37 +346,28 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
             if (node.hasHeight && mainData.alignContent !== 'normal') {
                 setContentSpacing(mainData.alignContent, 'row');
             }
+            if (mainData.column.normal && !mainData.column.unit.includes('auto')) {
+                const columnGap =  mainData.column.gap * (mainData.column.count - 1);
+                if (columnGap > 0) {
+                    if (node.renderParent && !node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
+                        node.cssPX('minWidth', columnGap);
+                        node.cssPX('width', columnGap, false, true);
+                    }
+                    if (!node.has('width') && node.has('maxWidth')) {
+                        node.css('width', $util.formatPX(node.bounds.width + columnGap), true);
+                    }
+                }
+            }
         }
     }
 
     public postProcedure(node: T) {
         const mainData: CssGridData<T> = node.data($const.EXT_NAME.CSS_GRID, 'mainData');
-        if (mainData && node.renderParent) {
+        if (mainData) {
             const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
-            const columnUnit = mainData.column.unit;
             const lastChild = Array.from(mainData.children)[mainData.children.size - 1];
-            if (mainData.column.normal) {
-                const columnGap = !columnUnit.includes('auto') ? mainData.column.gap * (mainData.column.count - 1) : 0;
-                if (!node.renderParent.hasAlign($enum.NODE_ALIGNMENT.AUTO_LAYOUT)) {
-                    if (columnGap > 0) {
-                        let width = $util.convertInt(node.android('layout_width'));
-                        if (width > 0) {
-                            width += columnGap;
-                            node.android('layout_width', $util.formatPX(width));
-                        }
-                        let minWidth = $util.convertInt(node.android('minWidth'));
-                        if (minWidth > 0) {
-                            minWidth += columnGap;
-                            node.android('minWidth', $util.formatPX(minWidth));
-                        }
-                    }
-                }
-                if (node.inlineWidth && node.has('maxWidth')) {
-                    node.android('layout_width', $util.formatPX(node.bounds.width + columnGap));
-                }
-            }
-            if (columnUnit.every(value => $util.isPercent(value))) {
-                const percentTotal = columnUnit.reduce((a, b) => a + parseInt(b), 0);
+            if (mainData.column.unit.every(value => $util.isPercent(value))) {
+                const percentTotal = mainData.column.unit.reduce((a, b) => a + parseInt(b), 0);
                 if (percentTotal < 100) {
                     node.android('columnCount', (mainData.column.count + 1).toString());
                     for (let i = 0; i < mainData.row.count; i++) {
@@ -401,7 +395,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 const item = mainData.emptyRows[i];
                 if (item) {
                     for (let j = 0; j < item.length; j++) {
-                        if (item[j]) {
+                        if (item[j] === 1) {
                             controller.appendAfter(
                                 lastChild.id,
                                 controller.renderSpace(

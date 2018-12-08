@@ -51,6 +51,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _parent: T | undefined;
     private _renderAs: T | undefined;
     private _renderDepth = -1;
+    private _renderPositionId: string | undefined;
     private _data = {};
     private _excludeSection = 0;
     private _excludeProcedure = 0;
@@ -221,6 +222,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     case 'verticalAlign':
                         this._cached.baseline = undefined;
                         break;
+                    case 'display':
+                        this._cached.inline = undefined;
+                        this._cached.inlineVertical = undefined;
+                        this._cached.inlineFlow = undefined;
+                        this._cached.block = undefined;
+                        this._cached.blockDimension = undefined;
+                        this._cached.blockStatic = undefined;
+                        this._cached.autoMargin = undefined;
+                        break;
                     default:
                         if (attr.startsWith('margin')) {
                             this._cached.autoMargin = undefined;
@@ -343,7 +353,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public alignedVertically(previousSiblings: T[], siblings?: T[], cleared?: Map<T, string>) {
+    public alignedVertically(previousSiblings: T[], siblings?: T[], cleared?: Map<T, string>, checkFloat = true) {
         if (this.lineBreak) {
             return true;
         }
@@ -353,19 +363,21 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 if (cleared && cleared.has(this)) {
                     return true;
                 }
-                const previous = siblings[siblings.length - 1];
-                if (this.floating && (
-                        this.linear.top >= previous.linear.bottom ||
-                        this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0 ||
-                        this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0
-                   ))
-                {
-                    return true;
+                if (checkFloat) {
+                    const previous = siblings[siblings.length - 1];
+                    if (this.floating && (
+                            this.linear.top >= previous.linear.bottom ||
+                            this.float === 'left' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.left, node.linear.left)).length > 0 ||
+                            this.float === 'right' && siblings.filter(node => node.siblingIndex < this.siblingIndex && withinFraction(this.linear.right, node.linear.right)).length > 0
+                       ))
+                    {
+                        return true;
+                    }
                 }
             }
             for (const previous of previousSiblings) {
                 const vertical = (
-                    previous.blockStatic && !this.floating ||
+                    previous.blockStatic ||
                     this.blockStatic && (
                         !previous.inlineFlow ||
                         cleared && cleared.has(previous)
@@ -1661,8 +1673,11 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._renderParent;
     }
 
+    set renderPositionId(value) {
+        this._renderPositionId = value;
+    }
     get renderPositionId() {
-        return this.id + (this.renderPosition !== -1 ? `^${this.renderPosition}` : '');
+        return this._renderPositionId || this.id + (this.renderPosition !== -1 ? `^${this.renderPosition}` : '');
     }
 
     get actualParent() {

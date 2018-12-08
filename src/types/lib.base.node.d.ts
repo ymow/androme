@@ -27,6 +27,7 @@ declare global {
             controlName: string;
             renderAs: Node | undefined;
             renderDepth: number;
+            renderPositionId: string;
             multiLine: number;
             overflow: number;
             readonly localSettings: EnvironmentSettings;
@@ -117,7 +118,6 @@ declare global {
             readonly actualChildren: Node[];
             readonly actualHeight: number;
             readonly documentId: string;
-            readonly renderPositionId: string;
             readonly dir: string;
             readonly nodes: Node[];
             readonly center: Point;
@@ -147,7 +147,7 @@ declare global {
             ascend(generated?: boolean, levels?: number): Node[];
             cascade(element?: boolean): Node[];
             inherit(node: Node, ...props: string[]): void;
-            alignedVertically(previousSiblings: Node[], siblings?: Node[], cleared?: Map<Node, string>): boolean;
+            alignedVertically(previousSiblings: Node[], siblings?: Node[], cleared?: Map<Node, string>, checkFloat?: boolean): boolean;
             intersectX(rect: RectDimensions, dimension?: string): boolean;
             intersectY(rect: RectDimensions, dimension?: string): boolean;
             withinX(rect: RectDimensions, dimension?: string): boolean;

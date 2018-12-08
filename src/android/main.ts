@@ -16,7 +16,6 @@ import Flexbox from './extension/flexbox';
 import Grid from './extension/grid';
 import List from './extension/list';
 import Origin from './extension/origin';
-import Percent from './extension/percent';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
@@ -26,6 +25,8 @@ import WhiteSpace from './extension/whitespace';
 import ConstraintGuideline from './extension/constraint/guideline';
 
 import DelegateElement from './extension/delegate/element';
+import DelegateMaxDimension from './extension/delegate/maxdimension';
+import DelegatePercent from './extension/delegate/percent';
 import DelegateRadioGroup from './extension/delegate/radiogroup';
 import DelegateScrollBar from './extension/delegate/scrollbar';
 
@@ -79,7 +80,6 @@ const lib = {
         Grid,
         List,
         Origin,
-        Percent,
         Relative,
         Sprite,
         Table,
@@ -90,8 +90,10 @@ const lib = {
         },
         delegate: {
             Element: DelegateElement,
+            MaxDimension: DelegateMaxDimension,
+            Percent: DelegatePercent,
             RadioGroup: DelegateRadioGroup,
-            ScrollBar: DelegateScrollBar,
+            ScrollBar: DelegateScrollBar
         },
         resource: {
             Background: ResourceBackground,
@@ -193,13 +195,14 @@ const appBase: AppFramework<T> = {
             [EN.TABLE]: new Table(EN.TABLE, framework, ['TABLE']),
             [EN.LIST]: new List(EN.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EN.GRID]: new Grid(EN.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [EN.PERCENT]: new Percent(EN.PERCENT, framework),
             [EN.RELATIVE]: new Relative(EN.RELATIVE, framework),
             [EN.VERTICAL_ALIGN]: new VerticalAlign(EN.VERTICAL_ALIGN, framework),
             [EN.WHITESPACE]: new WhiteSpace(EN.WHITESPACE, framework),
             [EN.ACCESSIBILITY]: new Accessibility(EN.ACCESSIBILITY, framework),
             [EA.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EA.CONSTRAINT_GUIDELINE, framework),
             [EA.DELEGATE_ELEMENT]: new DelegateElement(EA.DELEGATE_ELEMENT, framework),
+            [EA.DELEGATE_PERCENT]: new DelegatePercent(EA.DELEGATE_PERCENT, framework),
+            [EA.DELEGATE_MAXDIMENSION]: new DelegateMaxDimension(EA.DELEGATE_MAXDIMENSION, framework),
             [EA.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EA.DELEGATE_RADIOGROUP, framework),
             [EA.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EA.DELEGATE_SCROLLBAR, framework),
             [EA.RESOURCE_INCLUDES]: new ResourceIncludes(EA.RESOURCE_INCLUDES, framework),

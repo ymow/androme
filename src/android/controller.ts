@@ -347,6 +347,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     !$util.hasValue(node.dataset.target) &&
                     !node.hasWidth &&
                     !node.hasHeight &&
+                    !node.has('maxWidth') &&
+                    !node.has('maxHeight') &&
                     !node.visibleStyle.background &&
                     !node.has('textAlign') && !node.has('verticalAlign') &&
                     node.toInt('lineHeight') > 0 &&
@@ -660,6 +662,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 if (this.withinParentBottom(item.linear.bottom, bottomParent) && item.actualParent && !item.actualParent.documentBody) {
                                     item.anchor('bottom', 'parent');
                                 }
+                                Controller.dimensionConstraint(item);
                             }
                         }
                         Controller.evaluateAnchors(pageFlow);
@@ -845,7 +848,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 if (!node.hasWidth) {
                     if (element.cols) {
-                        node.css('width', $util.formatPX(element.cols * 10), true);
+                        node.css('width', $util.formatPX(element.cols * 8), true);
                     }
                 }
                 node.android('hint', element.placeholder);
@@ -903,7 +906,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     case 'email':
                     case 'password':
                         if (!node.hasWidth && element.size > 0) {
-                            node.css('width', $util.formatPX(element.size * 10), true);
+                            node.css('width', $util.formatPX(element.size * 8), true);
                         }
                         break;
                 }
@@ -1206,6 +1209,34 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         }
         this.cache.append(group);
         return group;
+    }
+
+    public createNodeWrapper(node: T, parent: T, controlName: string, containerType?: number) {
+        const container = new View(
+            this.application.nextId,
+            $dom.createElement(node.absoluteParent.baseElement, node.block),
+            this.application.controllerHandler.delegateNodeInit
+        ) as T;
+        if (node.documentRoot) {
+            container.documentRoot = true;
+            node.documentRoot = false;
+        }
+        container.inherit(node, 'base', 'alignment');
+        container.setControlType(controlName, containerType);
+        container.exclude({
+            section: $enum.APP_SECTION.ALL,
+            procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION,
+            resource: $enum.NODE_RESOURCE.ALL
+        });
+        container.siblingIndex = node.siblingIndex;
+        parent.appendTry(node, container);
+        node.siblingIndex = 0;
+        if (node.renderPosition !== -1) {
+            container.renderPositionId = node.renderPositionId;
+            node.renderPosition = -1;
+        }
+        this.application.processing.cache.append(container, false);
+        return container;
     }
 
     protected processRelativeHorizontal(node: T, children: T[]) {

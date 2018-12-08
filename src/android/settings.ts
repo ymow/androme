@@ -4,8 +4,9 @@ const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
+        'android.delegate.maxdimension',
+        'android.delegate.percent',
         'androme.sprite',
-        'androme.percent',
         'androme.css-grid',
         'androme.flexbox',
         'androme.table',

@@ -470,6 +470,14 @@ export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>
     return [valid, invalid];
 }
 
+export function flatArray<T>(list: any[]): T[] {
+    let current = list;
+    while (current.some(item => Array.isArray(item))) {
+        current = [].concat.apply([], current.filter(item => item));
+    }
+    return current;
+}
+
 export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[] {
     return list.map((item: T, index) => predicate(item, index)).filter((item: U) => hasValue(item));
 }

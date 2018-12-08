@@ -2,6 +2,8 @@ import { CONTAINER_NODE } from './enumeration';
 
 export const EXT_ANDROID = {
     DELEGATE_ELEMENT: 'android.delegate.element',
+    DELEGATE_MAXDIMENSION: 'android.delegate.maxdimension',
+    DELEGATE_PERCENT: 'android.delegate.percent',
     DELEGATE_RADIOGROUP: 'android.delegate.radiogroup',
     DELEGATE_SCROLLBAR: 'android.delegate.scrollbar',
     DELEGATE_VERTICALALIGN: 'android.delegate.verticalalign',
@@ -25,10 +27,8 @@ export const CONTAINER_ANDROID = {
     TEXT: 'TextView',
     IMAGE: 'ImageView',
     BUTTON: 'Button',
-    INLINE: 'FrameLayout',
     LINE: 'View',
     SPACE: 'Space',
-    BLOCK: 'LinearLayout',
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     GRID: 'GridLayout',

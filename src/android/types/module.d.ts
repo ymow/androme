@@ -3,6 +3,7 @@ export interface UserSettingsAndroid extends UserSettings {
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     autoSizePaddingAndBorderWidth: boolean;
+    collapseUnattributedElements: boolean;
     customizationsOverwritePrivilege: boolean;
     convertPixels: string;
     showAttributes: boolean;

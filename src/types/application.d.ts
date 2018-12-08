@@ -14,7 +14,6 @@ interface UserSettings extends EnvironmentSettings {
     preloadImages: boolean;
     supportNegativeLeftTop: boolean;
     floatOverlapDisabled: boolean;
-    collapseUnattributedElements: boolean;
     insertSpaces: number;
     handleExtensionsAsync: boolean;
     autoCloseOnWrite: boolean;

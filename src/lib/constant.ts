@@ -97,7 +97,6 @@ export const EXT_NAME = {
     GRID: 'androme.grid',
     LIST: 'androme.list',
     ORIGIN: 'androme.origin',
-    PERCENT: 'androme.percent',
     RELATIVE: 'androme.relative',
     SPRITE: 'androme.sprite',
     TABLE: 'androme.table',

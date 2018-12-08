@@ -937,8 +937,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     }
                                     else if (previous) {
                                         if (hasFloat) {
-                                            const startNewRow = item.alignedVertically(previousSiblings, undefined, cleared);
-                                            if (startNewRow || cleared.has(item) || settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatSegment.size === 2) {
+                                            const startNewRow = item.alignedVertically(previousSiblings, [...horizontal, ...vertical, item], cleared, false);
+                                            if (startNewRow || settings.floatOverlapDisabled && previous.floating && item.blockStatic && floatSegment.size === 2) {
                                                 if (horizontal.length) {
                                                     if (!settings.floatOverlapDisabled &&
                                                         floatSegment.size &&
@@ -1043,7 +1043,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (parentY.renderExtension.size || extensionsChild.length) {
                             for (const ext of [...parentY.renderExtension, ...extensionsChild.filter(item => item.subscribersChild.has(nodeY))]) {
                                 const result = ext.processChild(nodeY, parentY);
-                                if (result.output !== '') {
+                                if (result.output) {
                                     this.addRenderTemplate(parentY, nodeY, result.output);
                                 }
                                 if (result.renderAs && result.outputAs) {
@@ -1065,7 +1065,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             prioritizeExtensions(<HTMLElement> documentRoot.element, <HTMLElement> nodeY.element, extensions).some(item => {
                                 if (item.is(nodeY) && item.condition(nodeY, parentY)) {
                                     const result =  item.processNode(nodeY, parentY, mapX, mapY);
-                                    if (result.output !== '') {
+                                    if (result.output) {
                                         this.addRenderTemplate(parentY, nodeY, result.output);
                                     }
                                     if (result.renderAs && result.outputAs) {
@@ -1074,7 +1074,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     if (result.parent) {
                                         parentY = result.parent as T;
                                     }
-                                    if (result.output !== '' || result.include === true) {
+                                    if (result.output || result.include === true) {
                                         item.subscribers.add(nodeY);
                                         nodeY.renderExtension.add(item);
                                     }
