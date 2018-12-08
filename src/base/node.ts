@@ -435,12 +435,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public outsideX(rect: RectDimensions, dimension = 'linear') {
         const self: RectDimensions = this[dimension];
-        return Math.ceil(self.left) < Math.floor(rect.left) || Math.floor(self.left) >= Math.ceil(rect.right);
+        return Math.ceil(self.left) < Math.floor(rect.left) || Math.ceil(self.left) >= Math.floor(rect.right);
     }
 
     public outsideY(rect: RectDimensions, dimension = 'linear') {
         const self: RectDimensions = this[dimension];
-        return Math.ceil(self.top) < Math.floor(rect.top) || Math.floor(self.top) >= Math.ceil(rect.bottom);
+        return Math.ceil(self.top) < Math.floor(rect.top) || Math.ceil(self.top) >= Math.floor(rect.bottom);
     }
 
     public css(attr: object | string, value = '', cache = false): string {

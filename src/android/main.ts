@@ -15,7 +15,6 @@ import External from './extension/external';
 import Flexbox from './extension/flexbox';
 import Grid from './extension/grid';
 import List from './extension/list';
-import Origin from './extension/origin';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
@@ -79,7 +78,6 @@ const lib = {
         Flexbox,
         Grid,
         List,
-        Origin,
         Relative,
         Sprite,
         Table,
@@ -188,7 +186,6 @@ const appBase: AppFramework<T> = {
         userSettings = Object.assign({}, SETTINGS);
         Object.assign(application.builtInExtensions, {
             [EN.EXTERNAL]: new External(EN.EXTERNAL, framework),
-            [EN.ORIGIN]: new Origin(EN.ORIGIN, framework),
             [EN.SPRITE]: new Sprite(EN.SPRITE, framework),
             [EN.CSS_GRID]: new CssGrid(EN.CSS_GRID, framework),
             [EN.FLEXBOX]: new Flexbox(EN.FLEXBOX, framework),

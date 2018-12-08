@@ -96,7 +96,6 @@ export const EXT_NAME = {
     FLEXBOX: 'androme.flexbox',
     GRID: 'androme.grid',
     LIST: 'androme.list',
-    ORIGIN: 'androme.origin',
     RELATIVE: 'androme.relative',
     SPRITE: 'androme.sprite',
     TABLE: 'androme.table',

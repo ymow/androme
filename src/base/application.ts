@@ -625,15 +625,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         return false;
                     });
-                    if (node.pageFlow) {
-                        ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'].forEach(attr => {
-                            const value = node.style[attr];
-                            if (parseInt(value) < 0) {
-                                reset[attr] = value;
-                                element.style[attr] = '0px';
-                            }
-                        });
-                    }
                     if (node.positionRelative && !node.positionStatic) {
                         ['top', 'right', 'bottom', 'left'].forEach(attr => {
                             if (node.has(attr)) {
@@ -697,7 +688,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 break;
                                             }
                                             else {
-                                                if (node.left < 0 && node.outsideX(parent.box) || node.top < 0 && node.outsideY(parent.box)) {
+                                                if (node.left < 0 && node.outsideX(parent.box) ||
+                                                    !node.has('left') && node.right < 0 && node.outsideX(parent.box) ||
+                                                    node.top < 0 && node.outsideY(parent.box) ||
+                                                    !node.has('top') && node.bottom < 0 && node.outsideX(parent.box))
+                                                {
                                                     outside = true;
                                                 }
                                                 else {

@@ -12,10 +12,6 @@ declare global {
 
         export class List<T extends View> extends androme.lib.extensions.List<T> {}
 
-        export class Origin<T extends View> extends androme.lib.extensions.Origin<T> {}
-
-        export class Percent<T extends View> extends androme.lib.extensions.Percent<T> {}
-
         export class Sprite<T extends View> extends androme.lib.extensions.Sprite<T> {}
 
         export class Table<T extends View> extends androme.lib.extensions.Table<T> {}

@@ -14,10 +14,6 @@ declare global {
 
         export class List<T extends Node> extends androme.lib.base.Extension<T> {}
 
-        export class Origin<T extends Node> extends androme.lib.base.Extension<T> {}
-
-        export class Percent<T extends Node> extends androme.lib.base.Extension<T> {}
-
         export class Relative<T extends Node> extends androme.lib.base.Extension<T> {}
 
         export class Sprite<T extends Node> extends androme.lib.base.Extension<T> {}

@@ -3,7 +3,6 @@ import { UserSettingsAndroid } from './types/module';
 const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
-        'androme.origin',
         'android.delegate.maxdimension',
         'android.delegate.percent',
         'androme.sprite',

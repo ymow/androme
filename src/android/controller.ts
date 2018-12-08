@@ -1132,11 +1132,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 const guideline = parent.constraint.guideline || {};
                 if (!node.pageFlow) {
-                    if (horizontal) {
-                        location = adjustDocumentRootOffset(location, documentParent as T, 'Left');
-                    }
-                    else {
-                        location = adjustDocumentRootOffset(location, documentParent as T, 'Top');
+                    if (node.absoluteParent === documentParent) {
+                        if (horizontal) {
+                            location = adjustDocumentRootOffset(location, documentParent as T, 'Left');
+                        }
+                        else {
+                            const reset = documentParent.valueBox($enum.BOX_STANDARD.PADDING_TOP);
+                            location = adjustDocumentRootOffset(location, documentParent as T, 'Top', reset[0] === 1);
+                        }
                     }
                 }
                 else {
@@ -1151,8 +1154,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     node.anchor(LT, 'parent', true);
                 }
                 else if (
-                    horizontal && documentParent.hasWidth && location + node[dimension].width >= documentParent.box.right ||
-                    !horizontal && documentParent.hasHeight && location + node[dimension].height >= documentParent.box.bottom)
+                    horizontal && documentParent.hasWidth && !node.has('right') && location + node[dimension].width >= documentParent.box.right ||
+                    !horizontal && documentParent.hasHeight && !node.has('bottom') && location + node[dimension].height >= documentParent.box.bottom)
                 {
                     node.anchor(RB, 'parent', true);
                 }

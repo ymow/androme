@@ -84,14 +84,14 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     builtInExtensions: [
         'androme.external',
-        'androme.origin',
+        'android.delegate.maxdimension',
+        'android.delegate.percent',
         'androme.sprite',
         'androme.css-grid',
         'androme.flexbox',
         'androme.table',
         'androme.list',
         'androme.grid',
-        'androme.percent',
         'androme.relative',
         'androme.verticalalign',
         'androme.whitespace',
