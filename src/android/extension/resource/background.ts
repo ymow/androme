@@ -172,7 +172,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
     public readonly eventOnly = true;
 
     public afterResources() {
-        const vectorColorAlias = this.application.getExtensionOptionValue(EXT_ANDROID.RESOURCE_SVG, 'vectorColorResourceValue');
+        const vectorColorAlias = this.application.extensionManager.optionValueAsBoolean(EXT_ANDROID.RESOURCE_SVG, 'vectorColorResourceValue');
         this.application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {

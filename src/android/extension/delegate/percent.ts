@@ -12,14 +12,15 @@ export default class Percent<T extends View> extends androme.lib.base.Extension<
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const container = (<android.lib.base.Controller<T>> this.application.controllerHandler).createNodeWrapper(node, parent, CONTAINER_ANDROID.CONSTRAINT);
+        const controller = (<android.lib.base.Controller<T>> this.application.controllerHandler);
+        const container = controller.createNodeWrapper(node, parent, CONTAINER_ANDROID.CONSTRAINT);
         container.android('layout_width', 'match_parent');
         container.android('layout_height', 'wrap_content');
         container.render(parent);
         if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
             node.css('height', $util.formatPX(node.bounds.height), true);
         }
-        const outputAs = $xml.getEnclosingTag(CONTAINER_ANDROID.CONSTRAINT, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+        const outputAs = controller.getEnclosingTag(CONTAINER_ANDROID.CONSTRAINT, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
         return { output: '', parent: container, renderAs: container, outputAs };
     }
 }

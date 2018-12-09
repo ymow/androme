@@ -8,6 +8,7 @@ declare global {
             readonly containerTypeHorizontal: LayoutType;
             readonly containerTypeVertical: LayoutType;
             readonly containerTypeVerticalMargin: LayoutType;
+            readonly outputIndentPrefix: RegExp;
             readonly delegateNodeInit: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
@@ -25,6 +26,7 @@ declare global {
             prependBefore(id: number, output: string, index?: number): void;
             appendAfter(id: number, output: string, index?: number): void;
             hasAppendProcessing(id: number): boolean;
+            getEnclosingTag(controlName: string, id: number, depth: number, xml?: string): string;
         }
 
         export class Controller<T extends Node> implements Controller<T> {

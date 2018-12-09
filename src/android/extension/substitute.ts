@@ -12,6 +12,6 @@ export default class Substitute<T extends View> extends androme.lib.extensions.S
 
     public postProcedure(node: T) {
         const options: ExternalData = Object.assign({}, this.options[node.element.id]);
-        node.apply(Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')));
+        node.apply(Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean(EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')));
     }
 }

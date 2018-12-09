@@ -2,6 +2,7 @@ import Application from './base/application';
 import Container from './base/container';
 import Controller from './base/controller';
 import Extension from './base/extension';
+import ExtensionManager from './base/extensionmanager';
 import File from './base/file';
 import Layout from './base/layout';
 import Node from './base/node';
@@ -71,7 +72,7 @@ export function setFramework(value: AppFramework<T>, cached = false) {
                     }
                 }
             }
-            register.forEach(item => main.includeExtension(item));
+            register.forEach(item => main.extensionManager.include(item));
         }
         framework = value;
         system = value.system;
@@ -82,7 +83,7 @@ export function setFramework(value: AppFramework<T>, cached = false) {
 export function parseDocument(...elements: Undefined<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
         if (settings.handleExtensionsAsync) {
-            extensionsAsync.forEach(item => main.includeExtension(item));
+            extensionsAsync.forEach(item => main.extensionManager.include(item));
             for (const [name, options] of optionsAsync.entries()) {
                 configure(name, options);
             }
@@ -109,13 +110,13 @@ export function parseDocument(...elements: Undefined<string | Element>[]): Funct
 export function include(value: Extension<T> | string) {
     if (main) {
         if (value instanceof Extension) {
-            return main.includeExtension(value);
+            return main.extensionManager.include(value);
         }
         else if (util.isString(value)) {
             value = value.trim();
             const ext = main.builtInExtensions[value] || retrieve(value);
             if (ext) {
-                return main.includeExtension(ext);
+                return main.extensionManager.include(ext);
             }
         }
     }
@@ -140,18 +141,18 @@ export function exclude(value: Extension<T> | string) {
         if (value instanceof Extension) {
             if (extensionsAsync.has(value)) {
                 extensionsAsync.delete(value);
-                main.excludeExtension(value);
+                main.extensionManager.exclude(value);
                 return true;
             }
             else {
-                return main.excludeExtension(value);
+                return main.extensionManager.exclude(value);
             }
         }
         else if (util.isString(value)) {
             value = value.trim();
-            const ext = main.retrieveExtension(value);
+            const ext = main.extensionManager.retrieve(value);
             if (ext) {
-                return main.excludeExtension(ext);
+                return main.extensionManager.exclude(ext);
             }
         }
     }
@@ -167,7 +168,7 @@ export function configure(value: Extension<T> | string, options: {}) {
         else if (util.isString(value)) {
             if (main) {
                 value = value.trim();
-                const ext = main.retrieveExtension(value) || Array.from(extensionsAsync).find(item => item.name === value);
+                const ext = main.extensionManager.retrieve(value) || Array.from(extensionsAsync).find(item => item.name === value);
                 if (ext) {
                     Object.assign(ext.options, options);
                     return true;
@@ -201,7 +202,7 @@ export function ext(value: Extension<T> | string, options?: ExternalData) {
 }
 
 export function retrieve(value: string) {
-    return main && main.retrieveExtension(value);
+    return main && main.extensionManager.retrieve(value);
 }
 
 export function ready() {
@@ -239,6 +240,7 @@ const lib = {
         Container,
         Controller,
         Extension,
+        ExtensionManager,
         File,
         Layout,
         Node,

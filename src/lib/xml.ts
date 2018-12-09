@@ -1,26 +1,7 @@
 import { isArray, isString, repeat, trimEnd } from './util';
 
-export function getEnclosingTag(controlName: string, id: number, depth: number, xml = '') {
-    const indent = repeat(Math.max(0, depth));
-    let output = `{<${id}}`;
-    if (xml !== '') {
-        output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
-                           xml +
-                  indent + `</${controlName}>\n`;
-    }
-    else {
-        output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
-    }
-    output += `{>${id}}`;
-    return output;
-}
-
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
-}
-
-export function removePlaceholderAll(value: string) {
-    return value.replace(/{[<:@>]\d+(\^\d+)?}/g, '').trim();
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
@@ -28,11 +9,11 @@ export function replacePlaceholder(value: string, id: string | number, content: 
     return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
 }
 
-export function replaceIndent(value: string, depth: number) {
+export function replaceIndent(value: string, depth: number, pattern: RegExp) {
     if (depth >= 0) {
         let indent = -1;
         return value.split('\n').map(line => {
-            const match = /^({.*?})(\t*)(<.*)/.exec(line);
+            const match = pattern.exec(line);
             if (match) {
                 if (indent === -1) {
                     indent = match[2].length;

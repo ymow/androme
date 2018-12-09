@@ -230,7 +230,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 else if (!node.hasHeight) {
                     node.android('layout_height', 'match_parent', false);
                 }
-                output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+                output = this.application.controllerHandler.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             }
             const target = container || node;
             applyLayout(target, 'column', 'width');

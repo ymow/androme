@@ -2,6 +2,7 @@ import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, USER_AGENT }
 
 import Controller from './controller';
 import Extension from './extension';
+import ExtensionManager from './extensionmanager';
 import Layout from './layout';
 import Node from './node';
 import NodeList from './nodelist';
@@ -56,6 +57,7 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
     public controllerHandler: Controller<T>;
     public resourceHandler: Resource<T>;
+    public extensionManager: ExtensionManager<T>;
     public initialized = false;
     public closed = false;
 
@@ -88,10 +90,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
         public framework: number,
         controllerConstructor: Constructor<T>,
         resourceConstructor: Constructor<T>,
+        extensionManagerHandler: Constructor<T>,
         public nodeConstructor: Constructor<T>)
     {
         this.controllerHandler = (<unknown> new controllerConstructor(this, this.processing.cache)) as Controller<T>;
         this.resourceHandler = (<unknown> new resourceConstructor(this, this.processing.cache)) as Resource<T>;
+        this.extensionManager = (<unknown> new extensionManagerHandler(this, this.processing.cache)) as ExtensionManager<T>;
     }
 
     public registerController(handler: Controller<T>) {
@@ -372,7 +376,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (view) {
                             const indent = node.renderDepth + 1;
                             if (item.renderDepth !== indent) {
-                                view = replaceIndent(view, indent);
+                                view = replaceIndent(view, indent, this.controllerHandler.outputIndentPrefix);
                                 item.renderDepth = indent;
                             }
                             templates.set(key, view);
@@ -433,7 +437,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (baseParent) {
                 const id = baseParent.id;
                 const parentMap = this._renderPosition.get(id);
-                let reviseIndex: T[] | undefined;
+                let revised: T[] | undefined;
                 if (parentMap) {
                     const previous = parentMap.children.filter(item => !parent.contains(item)) as T[];
                     if (parent.siblingIndex < previous.length) {
@@ -441,7 +445,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         for (let i = parent.siblingIndex + 1; i < previous.length; i++) {
                             previous[i].siblingIndex = i;
                         }
-                        reviseIndex = previous;
+                        revised = previous;
                     }
                     else {
                         parent.siblingIndex = previous.length;
@@ -450,12 +454,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
                 }
                 else {
-                    reviseIndex = baseParent.children as T[];
+                    revised = baseParent.children as T[];
                 }
-                if (reviseIndex) {
-                    for (let i = parent.siblingIndex + 1; i < reviseIndex.length; i++) {
-                        if (reviseIndex[i]) {
-                            reviseIndex[i].siblingIndex = i;
+                if (revised) {
+                    for (let i = parent.siblingIndex + 1; i < revised.length; i++) {
+                        if (revised[i]) {
+                            revised[i].siblingIndex = i;
                         }
                     }
                 }
@@ -472,64 +476,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             this._renderPosition.set(parent.id, { parent, children });
         }
-    }
-
-    public includeExtension(ext: Extension<T>) {
-        const found = this.retrieveExtension(ext.name);
-        if (found) {
-            if (Array.isArray(ext.tagNames)) {
-                found.tagNames = ext.tagNames;
-            }
-            Object.assign(found.options, ext.options);
-            return true;
-        }
-        else {
-            if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => !!this.retrieveExtension(item.name))) {
-                ext.application = this;
-                this.extensions.add(ext);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public excludeExtension(ext: Extension<T>) {
-        return this.extensions.delete(ext);
-    }
-
-    public retrieveExtension(name: string) {
-        return Array.from(this.extensions).find(item => item.name === name) || null;
-    }
-
-    public getExtensionOptionValue(name: string, attr: string) {
-        const ext = this.retrieveExtension(name);
-        if (ext && typeof ext.options === 'object') {
-            return ext.options[attr];
-        }
-        return undefined;
-    }
-
-    public getExtensionOptionValueAsObject(name: string, attr: string) {
-        const value = this.getExtensionOptionValue(name, attr);
-        if (typeof value === 'object') {
-            return value as object;
-        }
-        return null;
-    }
-
-    public getExtensionOptionValueAsString(name: string, attr: string) {
-        const value = this.getExtensionOptionValue(name, attr);
-        return typeof value === 'string' ? value : '';
-    }
-
-    public getExtensionOptionValueAsNumber(name: string, attr: string) {
-        const value = this.getExtensionOptionValue(name, attr);
-        return typeof value === 'number' ? value : 0;
-    }
-
-    public getExtensionOptionValueAsBoolean(name: string, attr: string) {
-        const value = this.getExtensionOptionValue(name, attr);
-        return typeof value === 'boolean' ? value : false;
     }
 
     public toString() {
@@ -1232,7 +1178,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 const target = this.session.cache.find('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
-                    output = replaceIndent(output, depth);
+                    output = replaceIndent(output, depth, this.controllerHandler.outputIndentPrefix);
                     const pattern = /{@(\d+)}/g;
                     let match: RegExpExecArray | null;
                     let i = 0;

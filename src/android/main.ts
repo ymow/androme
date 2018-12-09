@@ -5,6 +5,7 @@ import { API_ANDROID } from './customizations';
 import SETTINGS from './settings';
 
 import Controller from './controller';
+import ExtensionManager from './extensionmanager';
 import File from './file';
 import Resource from './resource';
 import View from './view';
@@ -182,7 +183,7 @@ const appBase: AppFramework<T> = {
     create() {
         const EN = androme.lib.constant.EXT_NAME;
         const EA = EXT_ANDROID;
-        application = new androme.lib.base.Application(framework, Controller, Resource, View);
+        application = new androme.lib.base.Application(framework, Controller, Resource, ExtensionManager, View);
         fileHandler = new File(application.resourceHandler);
         userSettings = Object.assign({}, SETTINGS);
         Object.assign(application.builtInExtensions, {

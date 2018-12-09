@@ -92,7 +92,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             item.unsetCache();
             this.application.processing.cache.append(item);
             item.render(i === 0 ? (target ? item : parent) : previous);
-            const xml = $xml.getEnclosingTag(item.controlName, item.id, target ? (i === 0 ? -1 : 0) : item.renderDepth, $xml.formatPlaceholder(item.id));
+            const xml = this.application.controllerHandler.getEnclosingTag(item.controlName, item.id, target ? (i === 0 ? -1 : 0) : item.renderDepth, $xml.formatPlaceholder(item.id));
             if (i === 0) {
                 output = xml;
             }

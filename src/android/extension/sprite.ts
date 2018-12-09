@@ -29,7 +29,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             parent.appendTry(node, container);
             this.application.processing.cache.append(container, false);
             container.render(parent);
-            output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+            output = this.application.controllerHandler.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             node.setControlType(CONTAINER_ANDROID.IMAGE, CONTAINER_NODE.IMAGE);
             node.exclude({
                 procedure: $enum.NODE_PROCEDURE.AUTOFIT,

@@ -88,6 +88,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     }
                                 }
                                 if (content.size) {
+                                    const controller = this.application.controllerHandler;
                                     const merge = openData.merge || content.size > 1;
                                     const depth = merge ? 1 : 0;
                                     for (const item of group) {
@@ -95,7 +96,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                             const key = item.renderPositionId;
                                             let output = content.get(key);
                                             if (output) {
-                                                output = $xml.replaceIndent(output, depth);
+                                                output = $xml.replaceIndent(output, depth, controller.outputIndentPrefix);
                                                 content.set(key, output);
                                                 item.renderDepth = depth;
                                             }
@@ -103,7 +104,7 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     }
                                     let xml = Array.from(content.values()).join('');
                                     if (merge) {
-                                        xml = $xml.getEnclosingTag('merge', 0, 0, xml);
+                                        xml = controller.getEnclosingTag('merge', 0, 0, xml);
                                     }
                                     else if (!openData.item.documentRoot) {
                                         const placeholder = $xml.formatPlaceholder(openData.item.id, '@');

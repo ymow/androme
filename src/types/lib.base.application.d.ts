@@ -4,6 +4,7 @@ declare global {
             framework: number;
             controllerHandler: Controller<T>;
             resourceHandler: Resource<T>;
+            extensionManager: ExtensionManager<T>;
             nodeConstructor: Constructor<T>;
             userSettings: UserSettings;
             initialized: boolean;
@@ -32,19 +33,17 @@ declare global {
             addRenderQueue(id: string, template: string): void;
             addImagePreload(element: HTMLImageElement): void;
             saveRenderPosition(parent: T, required: boolean): void;
-            includeExtension(ext: Extension<T>): boolean;
-            excludeExtension(ext: Extension<T>): boolean;
-            retrieveExtension(name: string): Extension<T> | null;
-            getExtensionOptionValue(name: string, attr: string): any;
-            getExtensionOptionValueAsObject(name: string, attr: string): {} | null;
-            getExtensionOptionValueAsString(name: string, attr: string): string;
-            getExtensionOptionValueAsNumber(name: string, attr: string): number;
-            getExtensionOptionValueAsBoolean(name: string, attr: string): boolean;
             toString(): string;
         }
 
         export class Application<T extends Node> implements Application<T> {
-            constructor(framework: number, controllerConstructor: Constructor<Controller<T>>, resourceConstructor: Constructor<Resource<T>>, nodeConstructor: Constructor<T>);
+            constructor(
+                framework: number,
+                controllerConstructor: Constructor<Controller<T>>,
+                resourceConstructor: Constructor<Resource<T>>,
+                extensionManagerConstructor: Constructor<ExtensionManager<T>>,
+                nodeConstructor: Constructor<T>
+            );
         }
     }
 }

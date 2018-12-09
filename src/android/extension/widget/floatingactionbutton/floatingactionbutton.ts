@@ -123,7 +123,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         const output = this.application.controllerHandler.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON,
             target ? -1 : node.renderDepth,
-            $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')),
+            $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')),
             'wrap_content',
             'wrap_content',
             node

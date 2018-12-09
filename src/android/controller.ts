@@ -162,6 +162,10 @@ function isTargeted<T extends View>(node: T, parent: T) {
     return false;
 }
 
+function removePlaceholderAll(value: string) {
+    return value.replace(/{[<:@>]\d+(\^\d+)?}/g, '').trim();
+}
+
 export default class Controller<T extends View> extends androme.lib.base.Controller<T> implements android.lib.base.Controller<T> {
     public static evaluateAnchors<T extends View>(nodes: T[]) {
         const horizontal = nodes.filter(item => item.constraint.horizontal);
@@ -317,7 +321,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         for (const value of [...data.views, ...data.includes]) {
             value.content = replaceUnit(value.content, settings.resolutionDPI, settings.convertPixels);
             value.content = replaceTab(value.content, settings.insertSpaces);
-            value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
+            value.content = removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
         }
     }
 
@@ -725,7 +729,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             node.setControlType(controlName, containerType);
             node.render(target ? node : parent);
             node.apply(options);
-            return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id));
+            return this.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth, $xml.formatPlaceholder(node.id));
         }
         return '';
     }
@@ -829,11 +833,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.top);
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, node.left);
                             node.render(container);
-                            return $xml.getEnclosingTag(
+                            return this.getEnclosingTag(
                                 CONTAINER_ANDROID.FRAME,
                                 container.id,
                                 target ? -1 : container.renderDepth,
-                                $xml.getEnclosingTag(controlName, node.id, target ? 0 : node.renderDepth)
+                                this.getEnclosingTag(controlName, node.id, target ? 0 : node.renderDepth)
                             );
                         }
                     }
@@ -974,7 +978,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 break;
         }
         node.render(target ? node : parent);
-        return $xml.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth);
+        return this.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth);
     }
 
     public renderNodeStatic(controlName: string, depth: number, options: ExternalData = {}, width = '', height = '', node?: T, children?: boolean) {
@@ -992,7 +996,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         if (node.containerType === 0 || node.controlName === '') {
             node.setControlType(controlName);
         }
-        let output = $xml.getEnclosingTag(controlName, node.id, !node.documentRoot && depth === 0 ? -1 : depth, children ? $xml.formatPlaceholder(node.id) : '');
+        let output = this.getEnclosingTag(controlName, node.id, !node.documentRoot && depth === 0 ? -1 : depth, children ? $xml.formatPlaceholder(node.id) : '');
         if (this.userSettings.showAttributes && node.id === 0) {
             const indent = $util.repeat(renderDepth + 1);
             const attrs = node.combine().map(value => `\n${indent + value}`).join('');

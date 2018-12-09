@@ -3,6 +3,8 @@ import Layout from './layout';
 import Node from './node';
 import NodeList from './nodelist';
 
+import { repeat } from '../lib/util';
+
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
     public abstract readonly localSettings: ControllerSettings;
 
@@ -74,5 +76,24 @@ export default abstract class Controller<T extends Node> implements androme.lib.
 
     public hasAppendProcessing(id: number) {
         return this._before[id] !== undefined || this._after[id] !== undefined;
+    }
+
+    public getEnclosingTag(controlName: string, id: number, depth: number, xml = '') {
+        const indent = repeat(Math.max(0, depth));
+        let output = `{<${id}}`;
+        if (xml !== '') {
+            output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
+                            xml +
+                    indent + `</${controlName}>\n`;
+        }
+        else {
+            output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
+        }
+        output += `{>${id}}`;
+        return output;
+    }
+
+    get outputIndentPrefix() {
+        return /^({.*?})(\t*)(<.*)/;
     }
 }

@@ -143,7 +143,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             }
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
-        const numberResourceValue = application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue');
+        const numberResourceValue = application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue');
         node.setControlType($android_const.SUPPORT_ANDROID.TOOLBAR, $android_enum.CONTAINER_NODE.BLOCK);
         output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.TOOLBAR,

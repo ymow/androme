@@ -10,7 +10,8 @@ export default class MaxWidthHeight<T extends View> extends androme.lib.base.Ext
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const container = (<android.lib.base.Controller<T>> this.application.controllerHandler).createNodeWrapper(node, parent, CONTAINER_ANDROID.FRAME);
+        const controller = (<android.lib.base.Controller<T>> this.application.controllerHandler);
+        const container = controller.createNodeWrapper(node, parent, CONTAINER_ANDROID.FRAME);
         container.css('display', 'block', true);
         if (node.has('maxWidth')) {
             container.css('width', node.css('maxWidth'), true);
@@ -22,7 +23,7 @@ export default class MaxWidthHeight<T extends View> extends androme.lib.base.Ext
         }
         container.render(parent);
         node.parent = container;
-        const outputAs = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+        const outputAs = controller.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
         return { output: '', parent: container, renderAs: container, outputAs };
     }
 }
