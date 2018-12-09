@@ -11,7 +11,6 @@ import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $xml = androme.lib.xml;
 
 function getRowData<T extends View>(mainData: CssGridData<T>, direction: string) {
     const result: Undefined<T[]>[][] = [];
@@ -198,7 +197,6 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 parent.appendTry(node, container);
                 container.render(parent);
                 this.application.processing.cache.append(container, false);
-                node.parent = container;
                 node.inheritBox($enum.BOX_STANDARD.MARGIN, container);
                 applyLayout(container, 'column', 'width');
                 applyLayout(container, 'row', 'height');
@@ -230,7 +228,16 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 else if (!node.hasHeight) {
                     node.android('layout_height', 'match_parent', false);
                 }
-                output = this.application.controllerHandler.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
+                node.parent = container;
+                const layout = new $Layout(
+                    parent,
+                    container,
+                    CONTAINER_NODE.FRAME,
+                    $enum.NODE_ALIGNMENT.SINGLE,
+                    1,
+                    container.children as T[]
+                );
+                output = this.application.renderLayout(layout);
             }
             const target = container || node;
             applyLayout(target, 'column', 'width');

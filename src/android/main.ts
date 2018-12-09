@@ -25,7 +25,7 @@ import WhiteSpace from './extension/whitespace';
 
 import ConstraintGuideline from './extension/constraint/guideline';
 
-import DelegateElement from './extension/substitute';
+import DelegateFixed from './extension/delegate/fixed';
 import DelegateMaxWidthHeight from './extension/delegate/max-width-height';
 import DelegatePercent from './extension/delegate/percent';
 import DelegateRadioGroup from './extension/delegate/radiogroup';
@@ -89,7 +89,7 @@ const lib = {
             Guideline: ConstraintGuideline
         },
         delegate: {
-            Element: DelegateElement,
+            Fixed: DelegateFixed,
             MaxWidthHeight: DelegateMaxWidthHeight,
             Percent: DelegatePercent,
             RadioGroup: DelegateRadioGroup,
@@ -200,9 +200,9 @@ const appBase: AppFramework<T> = {
             [EN.WHITESPACE]: new WhiteSpace(EN.WHITESPACE, framework),
             [EN.ACCESSIBILITY]: new Accessibility(EN.ACCESSIBILITY, framework),
             [EA.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EA.CONSTRAINT_GUIDELINE, framework),
-            [EA.DELEGATE_ELEMENT]: new DelegateElement(EA.DELEGATE_ELEMENT, framework),
-            [EA.DELEGATE_PERCENT]: new DelegatePercent(EA.DELEGATE_PERCENT, framework),
+            [EA.DELEGATE_FIXED]: new DelegateFixed(EA.DELEGATE_FIXED, framework),
             [EA.DELEGATE_MAXWIDTHHEIGHT]: new DelegateMaxWidthHeight(EA.DELEGATE_MAXWIDTHHEIGHT, framework),
+            [EA.DELEGATE_PERCENT]: new DelegatePercent(EA.DELEGATE_PERCENT, framework),
             [EA.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EA.DELEGATE_RADIOGROUP, framework),
             [EA.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EA.DELEGATE_SCROLLBAR, framework),
             [EA.RESOURCE_INCLUDES]: new ResourceIncludes(EA.RESOURCE_INCLUDES, framework),

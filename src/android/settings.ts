@@ -3,6 +3,7 @@ import { UserSettingsAndroid } from './types/module';
 const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
+        'android.delegate.fixed',
         'android.delegate.max-width-height',
         'android.delegate.percent',
         'android.delegate.radiogroup',

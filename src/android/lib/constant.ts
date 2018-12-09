@@ -1,7 +1,7 @@
 import { CONTAINER_NODE } from './enumeration';
 
 export const EXT_ANDROID = {
-    DELEGATE_ELEMENT: 'androme.substitute',
+    DELEGATE_FIXED: 'android.delegate.fixed',
     DELEGATE_MAXWIDTHHEIGHT: 'android.delegate.max-width-height',
     DELEGATE_PERCENT: 'android.delegate.percent',
     DELEGATE_RADIOGROUP: 'android.delegate.radiogroup',

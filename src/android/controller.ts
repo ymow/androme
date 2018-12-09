@@ -1215,7 +1215,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         return group;
     }
 
-    public createNodeWrapper(node: T, parent: T, controlName: string, containerType?: number) {
+    public createNodeWrapper(node: T, parent?: T, controlName?: string, containerType?: number) {
         const container = new View(
             this.application.nextId,
             $dom.createElement(node.absoluteParent.baseElement, node.block),
@@ -1226,20 +1226,25 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             node.documentRoot = false;
         }
         container.inherit(node, 'base', 'alignment');
-        container.setControlType(controlName, containerType);
+        if (controlName) {
+            container.setControlType(controlName, containerType);
+        }
         container.exclude({
             section: $enum.APP_SECTION.ALL,
             procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION,
             resource: $enum.NODE_RESOURCE.ALL
         });
         container.siblingIndex = node.siblingIndex;
-        parent.appendTry(node, container);
-        node.siblingIndex = 0;
-        if (node.renderPosition !== -1) {
-            container.renderPositionId = node.renderPositionId;
-            node.renderPosition = -1;
+        if (parent) {
+            parent.appendTry(node, container);
+            node.siblingIndex = 0;
+            if (node.renderPosition !== -1) {
+                container.renderPositionId = node.renderPositionId;
+                node.renderPosition = -1;
+            }
         }
-        this.application.processing.cache.append(container, false);
+        this.application.processing.cache.append(container, parent ? false : true);
+        node.unsetCache();
         return container;
     }
 

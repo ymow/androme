@@ -61,7 +61,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             container.resetBox($enum.BOX_STANDARD.PADDING);
             return container;
         }) as T[];
-        let output = '';
+        let outputAs = '';
         for (let i = 0; i < scrollView.length; i++) {
             const item = scrollView[i];
             const previous = scrollView[i - 1];
@@ -92,12 +92,17 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
             item.unsetCache();
             this.application.processing.cache.append(item);
             item.render(i === 0 ? (target ? item : parent) : previous);
-            const xml = this.application.controllerHandler.getEnclosingTag(item.controlName, item.id, target ? (i === 0 ? -1 : 0) : item.renderDepth, $xml.formatPlaceholder(item.id));
+            const xml = this.application.controllerHandler.getEnclosingTag(
+                item.controlName,
+                item.id,
+                target ? (i === 0 ? -1 : 0) : item.renderDepth,
+                $xml.formatPlaceholder(item.id)
+            );
             if (i === 0) {
-                output = xml;
+                outputAs = xml;
             }
             else {
-                output = $xml.replacePlaceholder(output, previous.id, xml);
+                outputAs = $xml.replacePlaceholder(outputAs, previous.id, xml);
             }
         }
         if (scrollView.length === 2) {
@@ -121,6 +126,6 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
         }
         node.resetBox($enum.BOX_STANDARD.MARGIN);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
-        return { output: '', parent: node.parent, renderAs: scrollView[0], outputAs: output };
+        return { output: '', parent: node.parent, renderAs: scrollView[0], outputAs };
     }
 }

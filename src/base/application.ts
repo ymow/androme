@@ -1031,7 +1031,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     }
                     if (!nodeY.rendered && !nodeY.hasBit('excludeSection', APP_SECTION.RENDER)) {
-                        let layout = new Layout(parentY, nodeY, nodeY.containerType, nodeY.alignmentType, nodeY.length, nodeY.children as T[]);
+                        let layout = new Layout(
+                            parentY,
+                            nodeY,
+                            nodeY.containerType,
+                            nodeY.alignmentType, nodeY.length, nodeY.children as T[]
+                        );
                         if (layout.containerType === 0) {
                             let result: LayoutResult<T>;
                             if (nodeY.length) {
@@ -1232,7 +1237,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     inline.push(node);
                 }
             }
-            const layout = new Layout(data.parent, data.node, 0, 0, data.itemCount, data.children);
+            const layout = new Layout(
+                data.parent,
+                data.node,
+                0,
+                0,
+                data.itemCount,
+                data.children
+            );
             layout.init();
             if (inline.length === layout.itemCount || left.length === layout.itemCount || right.length === layout.itemCount) {
                 this.controllerHandler.processLayoutHorizontal(layout);
@@ -1413,7 +1425,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
             else if (rightBelow.length) {
                 rightSub = rightBelow;
             }
-            const layout = new Layout(data.parent, data.node, 0, rightAbove.length + rightBelow.length === data.length ? NODE_ALIGNMENT.RIGHT : 0);
+            const layout = new Layout(
+                data.parent,
+                data.node,
+                0,
+                rightAbove.length + rightBelow.length === data.length ? NODE_ALIGNMENT.RIGHT : 0
+            );
             if (settings.floatOverlapDisabled) {
                 if (data.node.groupParent && data.parent.layoutVertical) {
                     data.node.alignmentType |= layout.alignmentType;

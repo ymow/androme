@@ -163,7 +163,7 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
                         }
                     }
                     else if (actualParent && actualParent.visible) {
-                        if (!actualParent.documentRoot && previousSiblings.length) {
+                        if (!actualParent.documentBody && previousSiblings.length) {
                             const previousStart = previousSiblings[previousSiblings.length - 1];
                             const offset = actualParent.box.bottom - previousStart.linear[previousStart.lineBreak || previousStart.excluded ? 'top' : 'bottom'];
                             if (offset > 0) {

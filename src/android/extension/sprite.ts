@@ -4,10 +4,11 @@ import { CONTAINER_NODE } from '../lib/enumeration';
 import Resource from '../resource';
 import View from '../view';
 
+import $Layout = androme.lib.base.Layout;
+
 import $const = androme.lib.constant;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
-import $xml = androme.lib.xml;
 
 export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -28,8 +29,6 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             });
             parent.appendTry(node, container);
             this.application.processing.cache.append(container, false);
-            container.render(parent);
-            output = this.application.controllerHandler.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
             node.setControlType(CONTAINER_ANDROID.IMAGE, CONTAINER_NODE.IMAGE);
             node.exclude({
                 procedure: $enum.NODE_PROCEDURE.AUTOFIT,
@@ -64,6 +63,15 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             node.unsetCache();
             node.android('src', `@drawable/${Resource.addImage({ mdpi: mainData.uri })}`);
             node.parent = container;
+            const layout = new $Layout(
+                parent,
+                container,
+                CONTAINER_NODE.FRAME,
+                $enum.NODE_ALIGNMENT.SINGLE,
+                1,
+                container.children as T[]
+            );
+            output = this.application.renderLayout(layout);
         }
         return { output, parent: container, complete: true };
     }

@@ -84,6 +84,7 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     builtInExtensions: [
         'androme.external',
+        'android.delegate.fixed',
         'android.delegate.max-width-height',
         'android.delegate.percent',
         'android.delegate.radiogroup',

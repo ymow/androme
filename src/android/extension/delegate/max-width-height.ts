@@ -1,8 +1,10 @@
-import { CONTAINER_ANDROID } from '../../lib/constant';
+import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import View from '../../view';
 
-import $xml = androme.lib.xml;
+import $Layout = androme.lib.base.Layout;
+
+import $enum = androme.lib.enumeration;
 
 export default class MaxWidthHeight<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
@@ -11,7 +13,7 @@ export default class MaxWidthHeight<T extends View> extends androme.lib.base.Ext
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const controller = (<android.lib.base.Controller<T>> this.application.controllerHandler);
-        const container = controller.createNodeWrapper(node, parent, CONTAINER_ANDROID.FRAME);
+        const container = controller.createNodeWrapper(node, parent);
         container.css('display', 'block', true);
         if (node.has('maxWidth')) {
             container.css('width', node.css('maxWidth'), true);
@@ -21,9 +23,15 @@ export default class MaxWidthHeight<T extends View> extends androme.lib.base.Ext
             container.css('height', node.css('maxHeight'), true);
             node.css('maxHeight', 'auto');
         }
-        container.render(parent);
         node.parent = container;
-        const outputAs = controller.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
-        return { output: '', parent: container, renderAs: container, outputAs };
+        const layout = new $Layout(
+            parent,
+            container,
+            CONTAINER_NODE.FRAME,
+            $enum.NODE_ALIGNMENT.SINGLE,
+            1,
+            container.children as T[]
+        );
+        return { output: '', parent: container, renderAs: container, outputAs: this.application.renderLayout(layout) };
     }
 }

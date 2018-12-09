@@ -58,8 +58,12 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
             container.render(target ? container : parent);
             this.subscribers.add(container);
-            const output = this.application.controllerHandler.getEnclosingTag(RADIO_GROUP, container.id, target ? -1 : container.renderDepth, $xml.formatPlaceholder(container.id));
-            return { output: '', complete: true, parent: container, renderAs: container, outputAs: output };
+            const outputAs = this.application.controllerHandler.getEnclosingTag(
+                RADIO_GROUP,
+                container.id,
+                target ? -1 : container.renderDepth, $xml.formatPlaceholder(container.id)
+            );
+            return { output: '', complete: true, parent: container, renderAs: container, outputAs };
         }
         return { output: '' };
     }
