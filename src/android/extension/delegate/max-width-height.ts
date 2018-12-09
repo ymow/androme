@@ -4,7 +4,7 @@ import View from '../../view';
 
 import $xml = androme.lib.xml;
 
-export default class MaxDimension<T extends View> extends androme.lib.base.Extension<T> {
+export default class MaxWidthHeight<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         return node.has('maxWidth') || node.has('maxHeight');
     }

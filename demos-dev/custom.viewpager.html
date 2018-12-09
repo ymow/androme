@@ -73,7 +73,7 @@
                             appBar: {}
                         }
                     });
-                    androme.ext('android.delegate.element', {
+                    androme.ext('androme.substitute', {
                         viewpager_demo: {
                             android: {
                                 layout_height: 'match_parent'
@@ -115,8 +115,8 @@
             </nav>
         </div>
         <div id="viewpager_demo"
-            data-include="android.delegate.element"
-            data-android-delegate-element-tag="android.support.v4.view.ViewPager"
+            data-include="androme.substitute"
+            data-androme-substitute-tag="android.support.v4.view.ViewPager"
             data-exclude-resource="BOX_STYLE | FONT_STYLE">
             <div style="padding: 20px;" data-include="androme.external" data-filename="fragment_main.xml">
                 <h3>title</h3>

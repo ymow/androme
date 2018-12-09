@@ -1,7 +1,3 @@
-interface Inheritable {
-    inherit: boolean;
-}
-
 interface CssGridData<T> {
     children: Set<T>;
     row: CssGridDirectionData;
@@ -51,7 +47,7 @@ interface GridData extends BoxPadding {
     columnCount: number;
 }
 
-interface GridCellData<T> extends Inheritable {
+interface GridCellData<T> {
     rowSpan: number;
     columnSpan: number;
     index: number;

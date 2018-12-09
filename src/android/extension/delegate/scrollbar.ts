@@ -48,33 +48,29 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 this.application.nextId,
                 $dom.createElement(node.absoluteParent.baseElement, node.block),
                 this.application.controllerHandler.delegateNodeInit
-            ) as T;
+            );
             container.setControlType(value, CONTAINER_NODE.BLOCK);
             if (index === 0) {
-                container.inherit(node, 'initial', 'base', 'style', 'styleMap');
+                container.inherit(node, 'initial', 'base', 'styleMap');
                 parent.appendTry(node, container);
-                container.render(parent);
             }
             else {
-                container.init();
-                container.tagName = node.tagName;
-                container.documentParent = node.documentParent;
-                container.inherit(node, 'initial', 'dimensions', 'styleMap');
+                container.inherit(node, 'dimensions');
                 container.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
             }
             container.resetBox($enum.BOX_STANDARD.PADDING);
             return container;
-        });
+        }) as T[];
         let output = '';
         for (let i = 0; i < scrollView.length; i++) {
             const item = scrollView[i];
             const previous = scrollView[i - 1];
             switch (item.controlName) {
                 case SCROLL_VERTICAL: {
-                    const value = item.css('height');
-                    item.android('layout_height', item.convertPX(value, false));
+                    const value = node.css('height');
+                    node.android('layout_width', 'wrap_content');
+                    item.android('layout_height', node.convertPX(value, false));
                     item.css({
-                        width: 'auto',
                         overflow: 'scroll visible',
                         overflowX: 'visible',
                         overflowY: 'scroll'
@@ -82,10 +78,10 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                     break;
                 }
                 case SCROLL_HORIZONTAL: {
-                    const value = item.css('width');
-                    item.android('layout_width', item.convertPX(value));
+                    const value = node.css('width');
+                    item.android('layout_width', node.convertPX(value));
+                    node.android('layout_height', 'wrap_content');
                     item.css({
-                        height: 'auto',
                         overflow: 'visible scroll',
                         overflowX: 'scroll',
                         overflowY: 'visible'

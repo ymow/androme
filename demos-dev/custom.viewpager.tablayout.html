@@ -100,7 +100,7 @@
                             appBar: {}
                         }
                     });
-                    androme.ext('android.delegate.element', {
+                    androme.ext('androme.substitute', {
                         viewpager_demo: {
                             android: {
                                 layout_height: 'match_parent'
@@ -140,9 +140,9 @@
                     <img src="../demos/images/icons8-browse-page-24.png" />
                 </div>
             </nav>
-            <ul data-include="android.delegate.element"
-                data-android-delegate-element-tag="android.support.design.widget.TabLayout"
-                data-android-delegate-element-tag-child="android.support.design.widget.TabItem"
+            <ul data-include="androme.substitute"
+                data-androme-substitute-tag="android.support.design.widget.TabLayout"
+                data-androme-substitute-tag-child="android.support.design.widget.TabItem"
                 data-target-module="appBar"
                 data-exclude-resource-child="BOX_STYLE | BOX_SPACING | FONT_STYLE">
                 <li>TAB 1</li>
@@ -151,8 +151,8 @@
             </ul>
         </div>
         <div id="viewpager_demo"
-            data-include="android.delegate.element"
-            data-android-delegate-element-tag="android.support.v4.view.ViewPager"
+            data-include="androme.substitute"
+            data-androme-substitute-tag="android.support.v4.view.ViewPager"
             data-exclude-section="DOM_TRAVERSE"
             data-exclude-resource="BOX_STYLE | FONT_STYLE">
             <div style="padding: 20px;" data-include="androme.external" data-filename="fragment_main.xml">

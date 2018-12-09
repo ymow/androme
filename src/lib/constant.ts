@@ -98,6 +98,7 @@ export const EXT_NAME = {
     LIST: 'androme.list',
     RELATIVE: 'androme.relative',
     SPRITE: 'androme.sprite',
+    SUBSTITUTE: 'androme.substitute',
     TABLE: 'androme.table',
     VERTICAL_ALIGN: 'androme.verticalalign',
     WHITESPACE: 'androme.whitespace'

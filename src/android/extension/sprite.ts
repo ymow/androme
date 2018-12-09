@@ -20,16 +20,21 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
                 node.baseElement,
                 this.application.controllerHandler.delegateNodeInit
             ) as T;
-            container.inherit(node, 'initial', 'base', 'style', 'styleMap');
+            container.inherit(node, 'initial', 'base', 'styleMap');
             container.setControlType(CONTAINER_ANDROID.FRAME);
-            container.exclude({ procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.IMAGE_SOURCE });
+            container.exclude({
+                procedure: $enum.NODE_PROCEDURE.CUSTOMIZATION,
+                resource: $enum.NODE_RESOURCE.IMAGE_SOURCE
+            });
             parent.appendTry(node, container);
-            container.render(parent);
             this.application.processing.cache.append(container, false);
+            container.render(parent);
             output = $xml.getEnclosingTag(CONTAINER_ANDROID.FRAME, container.id, container.renderDepth, $xml.formatPlaceholder(container.id));
-            node.parent = container;
             node.setControlType(CONTAINER_ANDROID.IMAGE, CONTAINER_NODE.IMAGE);
-            node.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT, resource: $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE });
+            node.exclude({
+                procedure: $enum.NODE_PROCEDURE.AUTOFIT,
+                resource: $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE
+            });
             node.css({
                 position: 'static',
                 top: 'auto',
@@ -58,6 +63,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             });
             node.unsetCache();
             node.android('src', `@drawable/${Resource.addImage({ mdpi: mainData.uri })}`);
+            node.parent = container;
         }
         return { output, parent: container, complete: true };
     }

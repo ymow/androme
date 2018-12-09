@@ -17,14 +17,15 @@ import Grid from './extension/grid';
 import List from './extension/list';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
+import Substitute from './extension/substitute';
 import Table from './extension/table';
 import VerticalAlign from './extension/verticalalign';
 import WhiteSpace from './extension/whitespace';
 
 import ConstraintGuideline from './extension/constraint/guideline';
 
-import DelegateElement from './extension/delegate/element';
-import DelegateMaxDimension from './extension/delegate/maxdimension';
+import DelegateElement from './extension/substitute';
+import DelegateMaxWidthHeight from './extension/delegate/max-width-height';
 import DelegatePercent from './extension/delegate/percent';
 import DelegateRadioGroup from './extension/delegate/radiogroup';
 import DelegateScrollBar from './extension/delegate/scrollbar';
@@ -88,7 +89,7 @@ const lib = {
         },
         delegate: {
             Element: DelegateElement,
-            MaxDimension: DelegateMaxDimension,
+            MaxWidthHeight: DelegateMaxWidthHeight,
             Percent: DelegatePercent,
             RadioGroup: DelegateRadioGroup,
             ScrollBar: DelegateScrollBar
@@ -186,6 +187,7 @@ const appBase: AppFramework<T> = {
         userSettings = Object.assign({}, SETTINGS);
         Object.assign(application.builtInExtensions, {
             [EN.EXTERNAL]: new External(EN.EXTERNAL, framework),
+            [EN.SUBSTITUTE]: new Substitute(EN.SUBSTITUTE, framework),
             [EN.SPRITE]: new Sprite(EN.SPRITE, framework),
             [EN.CSS_GRID]: new CssGrid(EN.CSS_GRID, framework),
             [EN.FLEXBOX]: new Flexbox(EN.FLEXBOX, framework),
@@ -199,7 +201,7 @@ const appBase: AppFramework<T> = {
             [EA.CONSTRAINT_GUIDELINE]: new ConstraintGuideline(EA.CONSTRAINT_GUIDELINE, framework),
             [EA.DELEGATE_ELEMENT]: new DelegateElement(EA.DELEGATE_ELEMENT, framework),
             [EA.DELEGATE_PERCENT]: new DelegatePercent(EA.DELEGATE_PERCENT, framework),
-            [EA.DELEGATE_MAXDIMENSION]: new DelegateMaxDimension(EA.DELEGATE_MAXDIMENSION, framework),
+            [EA.DELEGATE_MAXWIDTHHEIGHT]: new DelegateMaxWidthHeight(EA.DELEGATE_MAXWIDTHHEIGHT, framework),
             [EA.DELEGATE_RADIOGROUP]: new DelegateRadioGroup(EA.DELEGATE_RADIOGROUP, framework),
             [EA.DELEGATE_SCROLLBAR]: new DelegateScrollBar(EA.DELEGATE_SCROLLBAR, framework),
             [EA.RESOURCE_INCLUDES]: new ResourceIncludes(EA.RESOURCE_INCLUDES, framework),

@@ -1,8 +1,8 @@
 import { CONTAINER_NODE } from './enumeration';
 
 export const EXT_ANDROID = {
-    DELEGATE_ELEMENT: 'android.delegate.element',
-    DELEGATE_MAXDIMENSION: 'android.delegate.maxdimension',
+    DELEGATE_ELEMENT: 'androme.substitute',
+    DELEGATE_MAXWIDTHHEIGHT: 'android.delegate.max-width-height',
     DELEGATE_PERCENT: 'android.delegate.percent',
     DELEGATE_RADIOGROUP: 'android.delegate.radiogroup',
     DELEGATE_SCROLLBAR: 'android.delegate.scrollbar',

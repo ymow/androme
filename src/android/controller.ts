@@ -807,7 +807,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             container.init();
                             container.inherit(node, 'base');
                             container.css('zIndex', node.css('zIndex'));
-                            container.exclude({ procedure: $enum.NODE_PROCEDURE.ALL, resource: $enum.NODE_RESOURCE.ALL });
+                            container.exclude({
+                                procedure: $enum.NODE_PROCEDURE.ALL,
+                                resource: $enum.NODE_RESOURCE.ALL
+                            });
                             parent.appendTry(node, container);
                             this.cache.append(container);
                             if (width > 0) {
@@ -1047,9 +1050,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     if (node.positionRelative && node.left < 0) {
                         offset = node.left;
                     }
-                    if (node.marginLeft < 0) {
-                        offset -= node.marginLeft;
-                    }
                 }
                 else {
                     LT = !opposite ? 'top' : 'bottom';
@@ -1058,9 +1058,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     RBLT = !opposite ? 'bottomTop' : 'topBottom';
                     if (node.positionRelative && node.top < 0) {
                         offset = node.top;
-                    }
-                    if (node.marginTop < 0) {
-                        offset -= node.marginTop;
                     }
                 }
                 let beginPercent = 'layout_constraintGuide_';

@@ -22,6 +22,7 @@ import Grid from './extension/grid';
 import List from './extension/list';
 import Relative from './extension/relative';
 import Sprite from './extension/sprite';
+import Substitute from './extension/substitute';
 import Table from './extension/table';
 import VerticalAlign from './extension/verticalalign';
 import WhiteSpace from './extension/whitespace';
@@ -259,6 +260,7 @@ const lib = {
         List,
         Relative,
         Sprite,
+        Substitute,
         Table,
         VerticalAlign,
         WhiteSpace

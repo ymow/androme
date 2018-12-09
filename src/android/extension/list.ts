@@ -58,10 +58,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
             else if (parent.item(0) === node) {
                 paddingLeft += parentLeft;
             }
-            const ordinal = node.find(item => {
-                const marginLeft = $util.convertInt(item.cssInitial('marginLeft') || item.css('marginLeft'));
-                return item.float === 'left' && marginLeft < 0 && Math.abs(marginLeft) <= $util.convertInt(item.documentParent.cssInitial('marginLeft'));
-            }) as T | undefined;
+            const ordinal = node.find(item => item.float === 'left' && item.marginLeft < 0 && Math.abs(item.marginLeft) <= $util.convertInt(item.documentParent.cssInitial('marginLeft'))) as T | undefined;
             if (ordinal && mainData.ordinal === '') {
                 const layout = new $Layout(parent, ordinal);
                 if (ordinal.inlineText || ordinal.length === 0) {
@@ -82,10 +79,10 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     node.android('layout_columnSpan', '2');
                 }
                 paddingLeft += ordinal.marginLeft;
-                ordinal.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                if (!ordinal.hasWidth && paddingLeft > 0) {
+                if (paddingLeft > 0 && !ordinal.hasWidth) {
                     ordinal.android('minWidth', $util.formatPX(paddingLeft));
                 }
+                ordinal.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
             }
             else {
                 const columnWeight = columnCount > 0 ? '0' : '';
@@ -176,7 +173,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         this.application.controllerHandler.delegateNodeInit
                     ) as T;
                     companion.tagName = `${node.tagName}_ORDINAL`;
-                    companion.inherit(node, 'style');
+                    companion.inherit(node, 'textStyle');
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                         companion.css('fontSize', '12px');
                     }
@@ -247,7 +244,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
     }
 
     public postProcedure(node: T) {
-        if (node.blockStatic && !node.has('width')) {
+        if (node.blockStatic && node.inlineWidth) {
             node.android('layout_width', 'match_parent');
         }
     }

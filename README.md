@@ -84,8 +84,11 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     builtInExtensions: [
         'androme.external',
-        'android.delegate.maxdimension',
+        'android.delegate.max-width-height',
         'android.delegate.percent',
+        'android.delegate.radiogroup',
+        'android.delegate.scrollbar',
+        'androme.substitute',
         'androme.sprite',
         'androme.css-grid',
         'androme.flexbox',
@@ -97,9 +100,6 @@ androme.settings = {
         'androme.whitespace',
         'androme.accessibility',
         'android.constraint.guideline',
-        'android.delegate.element',
-        'android.delegate.radiogroup',
-        'android.delegate.scrollbar',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',

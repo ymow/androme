@@ -47,8 +47,7 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
             'position': 'static',
             'display': 'inline-block',
             'verticalAlign': 'top'
-        });
-        node.unsetCache();
+        }, '', true);
         return true;
     }
     return false;
@@ -1789,7 +1788,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
                 if (parent) {
-                    node.inherit(parent, 'style');
+                    node.inherit(parent, 'textStyle');
                 }
                 else {
                     node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');

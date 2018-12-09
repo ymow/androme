@@ -8,9 +8,13 @@ declare global {
 
         export class External<T extends View> extends androme.lib.extensions.External<T> {}
 
+        export class Flexbox<T extends View> extends androme.lib.extensions.Flexbox<T> {}
+
         export class Grid<T extends View> extends androme.lib.extensions.Grid<T> {}
 
         export class List<T extends View> extends androme.lib.extensions.List<T> {}
+
+        export class Relative<T extends View> extends androme.lib.extensions.Relative<T> {}
 
         export class Sprite<T extends View> extends androme.lib.extensions.Sprite<T> {}
 

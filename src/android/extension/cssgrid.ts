@@ -168,8 +168,7 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                     item.android(`layout_${direction}Span`, cellData[cellSpan].toString());
                 }
                 if (minSize > 0 && !item.has(minDimension)) {
-                    item.css(minDimension, $util.formatPX(minSize));
-                    item.unsetCache(dimension);
+                    item.css(minDimension, $util.formatPX(minSize), true);
                 }
                 if (sizeWeight > 0) {
                     item.android(`layout_${dimension}`, '0px');
@@ -192,7 +191,10 @@ export default class <T extends View> extends androme.lib.extensions.CssGrid<T> 
                 container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                 container.inherit(node, 'initial', 'base');
                 container.resetBox($enum.BOX_STANDARD.MARGIN | $enum.BOX_STANDARD.PADDING);
-                container.exclude({ procedure: $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION, resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET });
+                container.exclude({
+                    procedure: $enum.NODE_PROCEDURE.AUTOFIT | $enum.NODE_PROCEDURE.CUSTOMIZATION,
+                    resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET
+                });
                 parent.appendTry(node, container);
                 container.render(parent);
                 this.application.processing.cache.append(container, false);

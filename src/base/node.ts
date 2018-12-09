@@ -206,6 +206,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 }
             }
         }
+        else if (value === null) {
+            delete this._data[obj];
+        }
         return this._data[obj] === undefined || this._data[obj][attr] === undefined ? undefined : this._data[obj][attr];
     }
 
@@ -213,10 +216,15 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (attrs.length) {
             for (const attr of attrs) {
                 switch (attr) {
+                    case 'position':
+                        this._cached = {};
+                        return;
                     case 'width':
+                    case 'minWidth':
                         this._cached.hasWidth = undefined;
                         break;
                     case 'height':
+                    case 'minHeight':
                         this._cached.hasHeight = undefined;
                         break;
                     case 'verticalAlign':
@@ -305,7 +313,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         }
                     });
                     break;
-                case 'style':
+                case 'textStyle':
                     const style = { whiteSpace: node.css('whiteSpace') };
                     for (const attr in node.style) {
                         if (attr.startsWith('font') || attr.startsWith('color')) {
@@ -317,37 +325,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     break;
                 case 'styleMap':
                     assignWhenNull(this._styleMap, node.unsafe('styleMap'));
-                    break;
-                case 'data':
-                    for (const obj in this._data) {
-                        for (const name in this._data[obj]) {
-                            const source = this._data[obj][name];
-                            if (typeof source === 'object' && source.inherit === true) {
-                                const destination = node.data(obj, name);
-                                if (destination) {
-                                    for (const attr in source) {
-                                        switch (typeof source[attr]) {
-                                            case 'number':
-                                                destination[attr] += source[attr];
-                                                break;
-                                            case 'boolean':
-                                                if (source[attr] === true) {
-                                                    destination[attr] = true;
-                                                }
-                                                break;
-                                            default:
-                                                destination[attr] = source[attr];
-                                                break;
-                                        }
-                                    }
-                                }
-                                else {
-                                    node.data(obj, name, source);
-                                }
-                                delete this._data[obj][name];
-                            }
-                        }
-                    }
                     break;
             }
         }
@@ -874,7 +851,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     public actualRight(dimension = 'linear') {
         const node = this.companion && !this.companion.visible && this.companion[dimension].right > this[dimension].right ? this.companion : this;
-        return node[dimension].right - (node.marginRight < 0 ? node.marginRight : 0);
+        return node[dimension].right as number;
     }
 
     private setDimensions(dimension: string) {

@@ -9,6 +9,35 @@ import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
+function transferData<T extends View>(parent: T, siblings: T[])  {
+    let destination: GridCellData<T> | undefined;
+    for (let i = 0; i < siblings.length; i++) {
+        const item = siblings[i];
+        if (destination === undefined) {
+            destination = item.data($const.EXT_NAME.GRID, 'cellData');
+        }
+        else if (destination) {
+            const source: GridCellData<T> = item.data($const.EXT_NAME.GRID, 'cellData');
+            if (source) {
+                for (const attr in source) {
+                    switch (typeof source[attr]) {
+                        case 'number':
+                            destination[attr] += source[attr];
+                            break;
+                        case 'boolean':
+                            if (source[attr] === true) {
+                                destination[attr] = true;
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+        item.data($const.EXT_NAME.GRID, 'cellData', null);
+    }
+    parent.data($const.EXT_NAME.GRID, 'cellData', destination);
+}
+
 export default class <T extends View> extends androme.lib.extensions.Grid<T> {
     public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
         super.processNode(node, parent, mapX);
@@ -64,7 +93,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                     layout.node = result.layout.node;
                 }
                 if (layout.containerType !== 0) {
-                    siblings.forEach(item => item.inherit(layout.node, 'data'));
+                    transferData(layout.node, siblings);
                     const output = this.application.renderNode(layout);
                     return { output, parent: layout.node, complete: true };
                 }

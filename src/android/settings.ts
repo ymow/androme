@@ -3,8 +3,11 @@ import { UserSettingsAndroid } from './types/module';
 const settings: UserSettingsAndroid = {
     builtInExtensions: [
         'androme.external',
-        'android.delegate.maxdimension',
+        'android.delegate.max-width-height',
         'android.delegate.percent',
+        'android.delegate.radiogroup',
+        'android.delegate.scrollbar',
+        'androme.substitute',
         'androme.sprite',
         'androme.css-grid',
         'androme.flexbox',
@@ -16,9 +19,6 @@ const settings: UserSettingsAndroid = {
         'androme.whitespace',
         'androme.accessibility',
         'android.constraint.guideline',
-        'android.delegate.element',
-        'android.delegate.radiogroup',
-        'android.delegate.scrollbar',
         'android.resource.includes',
         'android.resource.background',
         'android.resource.svg',

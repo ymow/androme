@@ -352,7 +352,7 @@ export default (Base: Constructor<T>) => {
             if (children) {
                 node.retain(this.duplicate());
             }
-            node.inherit(this, 'initial', 'base', 'style', 'styleMap');
+            node.inherit(this, 'initial', 'base', 'styleMap');
             return node;
         }
 
@@ -825,21 +825,41 @@ export default (Base: Constructor<T>) => {
         }
 
         private alignHorizontalLayout() {
-            if (this.layoutLinear && this.layoutHorizontal) {
-                const children = this.renderChildren;
-                let baseline: View | undefined;
-                if (children.some(node => node.floating) && !children.some(node => node.imageElement && node.baseline)) {
-                    this.android('baselineAligned', 'false');
-                }
-                else {
-                    baseline = $NodeList.baseline(children.filter(node => node.baseline && !node.layoutRelative && !node.layoutConstraint), true )[0];
-                    if (baseline) {
-                        this.android('baselineAlignedChildIndex', children.indexOf(baseline).toString());
+            if (this.layoutHorizontal) {
+                if (this.layoutLinear) {
+                    const children = this.renderChildren;
+                    let baseline: View | undefined;
+                    if (children.some(node => node.floating) && !children.some(node => node.imageElement && node.baseline)) {
+                        this.android('baselineAligned', 'false');
+                    }
+                    else {
+                        baseline = $NodeList.baseline(children.filter(node => node.baseline && !node.layoutRelative && !node.layoutConstraint), true)[0];
+                        if (baseline) {
+                            this.android('baselineAlignedChildIndex', children.indexOf(baseline).toString());
+                        }
+                    }
+                    const lineHeight = Math.max(this.lineHeight, $util.maxArray(this.renderChildren.map(node => node.lineHeight)));
+                    if (lineHeight > 0) {
+                        setLineHeight(this, lineHeight);
                     }
                 }
-                const lineHeight = Math.max(this.lineHeight, $util.maxArray(this.renderChildren.map(node => node.lineHeight)));
-                if (lineHeight > 0) {
-                    setLineHeight(this, lineHeight);
+                if (!this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE) && !this.hasAlign($enum.NODE_ALIGNMENT.RIGHT)) {
+                    const firstChild = this.find(node => node.float === 'left') || this.renderChildren[0];
+                    if (firstChild && firstChild.marginLeft < 0) {
+                        const value = Math.abs(firstChild.marginLeft);
+                        if (value === this.marginLeft) {
+                            this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                            firstChild.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                        }
+                        else if (value < this.marginLeft) {
+                            this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, firstChild.marginLeft);
+                            firstChild.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                        }
+                        else {
+                            this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                            firstChild.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, this.marginLeft);
+                        }
+                    }
                 }
             }
         }

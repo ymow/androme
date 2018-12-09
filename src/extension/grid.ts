@@ -20,7 +20,6 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
 
     public static createDataCellAttribute<T extends Node>(): GridCellData<T> {
         return {
-            inherit: true,
             rowSpan: 0,
             columnSpan: 0,
             index: -1,

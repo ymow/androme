@@ -14,7 +14,7 @@ const RADIO_GROUP = 'RadioGroup';
 export default class ScrollView<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         const element = <HTMLInputElement> node.element;
-        return element.tagName === 'INPUT' && element.type === 'radio' && element.name !== '';
+        return element.tagName === 'INPUT' && element.type === 'radio' && $util.hasValue(element.name);
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
@@ -59,7 +59,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             container.render(target ? container : parent);
             this.subscribers.add(container);
             const output = $xml.getEnclosingTag(RADIO_GROUP, container.id, target ? -1 : container.renderDepth, $xml.formatPlaceholder(container.id));
-            return { output: '', parent: container, renderAs: container, outputAs: output };
+            return { output: '', complete: true, parent: container, renderAs: container, outputAs: output };
         }
         return { output: '' };
     }

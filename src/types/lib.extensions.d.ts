@@ -18,6 +18,8 @@ declare global {
 
         export class Sprite<T extends Node> extends androme.lib.base.Extension<T> {}
 
+        export class Substitute<T extends Node> extends androme.lib.base.Extension<T> {}
+
         export class Table<T extends Node> extends androme.lib.base.Extension<T> {}
 
         export class VerticalAlign<T extends Node> extends androme.lib.base.Extension<T> {}
