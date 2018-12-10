@@ -39,8 +39,8 @@ function transferData<T extends View>(parent: T, siblings: T[])  {
 }
 
 export default class <T extends View> extends androme.lib.extensions.Grid<T> {
-    public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
-        super.processNode(node, parent, mapX);
+    public processNode(node: T, parent: T): ExtensionResult<T> {
+        super.processNode(node, parent);
         const mainData: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
         let output = '';
         if (mainData) {

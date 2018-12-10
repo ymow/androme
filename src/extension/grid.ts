@@ -3,9 +3,10 @@ import { BOX_STANDARD } from '../lib/enumeration';
 
 import Extension from '../base/extension';
 import Node from '../base/node';
+import NodeList from '../base/nodelist';
 
 import { getElementAsNode } from '../lib/dom';
-import { flatMap, sortAsc, withinFraction } from '../lib/util';
+import { flatMap, maxArray, minArray, sortAsc, withinFraction } from '../lib/util';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public static createDataAttribute(): GridData {
@@ -36,21 +37,16 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     };
 
     public condition(node: T) {
-        return (
-            this.included(<HTMLElement> node.element) ||
-            node.length > 1 && !node.flexElement && !node.gridElement && (
-                node.every(item => item.pageFlow && !item.visibleStyle.background && (!item.inlineFlow || item.blockStatic)) && (
-                    node.css('listStyle') === 'none' ||
-                    node.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                    node.some(item => item.length > 1) && !node.some(item => item.textElement || item.display === 'list-item')
-                ) ||
-                node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))
-            )
+        return node.length > 1 && !node.flexElement && !node.gridElement && !node.has('listStyle') && (
+            node.every(item => item.pageFlow && !item.visibleStyle.background && (!item.inlineFlow || item.blockStatic)) && (
+                node.some(item => item.length > 1) && node.every(item => item.length > 0 && NodeList.linearX(item.children)) ||
+                node.every(item => item.display === 'list-item' && !item.has('listStyleType'))
+            ) ||
+            node.display === 'table' && node.every(item => item.display === 'table-row' && item.every(child => child.display === 'table-cell'))
         );
     }
 
-    public processNode(node: T, parent: T, mapX: LayoutMapX<T>): ExtensionResult<T> {
-        const mainData = Grid.createDataAttribute();
+    public processNode(node: T): ExtensionResult<T> {
         const columnEnd: number[] = [];
         const columnBalance = this.options.columnBalanceEqual;
         let columns: T[][] = [];
@@ -133,68 +129,69 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
         }
         else {
-            function getRowIndex(current: T) {
-                return (
-                    columns[0].findIndex(item => withinFraction(item.linear.top, current.linear.top) ||
-                    current.linear.top >= item.linear.top && current.linear.bottom <= item.linear.bottom)
-                );
+            function getRowIndex(rowItem: T) {
+                for (const column of columns) {
+                    const index = column.findIndex(item => withinFraction(rowItem.linear.top, item.linear.top) || rowItem.linear.top > item.linear.top && rowItem.linear.top < item.linear.bottom);
+                    if (index !== -1) {
+                        return index;
+                    }
+                }
+                return -1;
             }
-            const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
-            const nextCoordsX = nextMapX ? Object.keys(nextMapX) : [];
-            if (nextCoordsX.length > 1) {
+            const nextMapX: ObjectIndex<T[]> = {};
+            node.each(item => {
+                item.each((subitem: T) => {
+                    const x = Math.floor(subitem.linear.left);
+                    if (nextMapX[x] === undefined) {
+                        nextMapX[x] = [];
+                    }
+                    nextMapX[x].push(subitem);
+                });
+            });
+            const nextCoordsX = Object.keys(nextMapX);
+            if (nextCoordsX.length) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
-                    const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.documentParent.documentParent.id === node.id), 'linear.top');
+                    const nextAxisX = nextMapX[nextCoordsX[l]];
                     if (l === 0 && nextAxisX.length === 0) {
                         return { output: '' };
                     }
                     columnRight[l] = l === 0 ? 0 : columnRight[l - 1];
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
-                        let [left, right] = [nextX.linear.left, nextX.linear.right];
-                        let index = l;
-                        if (nextX.float === 'right' && nextX.cssTry('float', 'none')) {
-                            const bounds = nextX.element.getBoundingClientRect();
-                            if (bounds.left - nextX.marginLeft !== left) {
-                                [left, right] = [bounds.left - nextX.marginLeft, bounds.right + nextX.marginRight];
-                                for (let n = 1; n < columnRight.length; n++) {
-                                    index = n;
-                                    if (left > columnRight[n - 1]) {
-                                        break;
-                                    }
-                                }
+                        const [left, right] = [nextX.linear.left, nextX.linear.right];
+                        if (l === 0 || left >= columnRight[l - 1]) {
+                            if (columns[l] === undefined) {
+                                columns[l] = [];
                             }
-                            nextX.cssFinally('float');
-                        }
-                        if (index === 0 || left >= columnRight[index - 1]) {
-                            if (columns[index] === undefined) {
-                                columns[index] = [];
-                            }
-                            if (index === 0 || columns[0].length === nextAxisX.length) {
-                                columns[index][m] = nextX;
+                            if (l === 0 || columns[0].length === nextAxisX.length) {
+                                columns[l][m] = nextX;
                             }
                             else {
-                                const row = getRowIndex(nextX);
-                                if (row !== -1) {
-                                    columns[index][row] = nextX;
+                                const index = getRowIndex(nextX);
+                                if (index !== -1) {
+                                    columns[l][index] = nextX;
+                                }
+                                else {
+                                    return { output: '' };
                                 }
                             }
                         }
                         else {
                             const current = columns.length - 1;
                             if (columns[current]) {
-                                const minLeft = columns[current].reduce((a, b) => Math.min(a, b.linear.left), Number.MAX_VALUE);
-                                const maxRight = columns[current].reduce((a, b) => Math.max(a, b.linear.right), Number.MAX_VALUE * -1);
+                                const minLeft = minArray(columns[current].map(item => item.linear.left));
+                                const maxRight = maxArray(columns[current].map(item => item.linear.right));
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
-                                    const rowIndex = getRowIndex(nextX);
-                                    if (rowIndex !== -1 && filtered[filtered.length - 1][rowIndex] === undefined) {
+                                    const index = getRowIndex(nextX);
+                                    if (index !== -1 && filtered[filtered.length - 1][index] === undefined) {
                                         columns[current].length = 0;
                                     }
                                 }
                             }
                         }
-                        columnRight[l] = Math.max(nextX.linear.right, columnRight[l]);
+                        columnRight[l] = Math.max(right, columnRight[l]);
                     }
                 }
                 for (let l = 0, m = -1; l < columnRight.length; l++) {
@@ -230,7 +227,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             columnEnd.push(node.box.right);
         }
         if (columns.length > 1 && columns[0].length === node.length) {
-            mainData.columnCount = columnBalance ? columns[0].length : columns.length;
+            const mainData = Object.assign(Grid.createDataAttribute(), { columnCount: columnBalance ? columns[0].length : columns.length });
             node.duplicate().forEach(item => node.remove(item) && item.hide());
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;

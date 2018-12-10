@@ -1,10 +1,3 @@
-interface LayoutMapX<T> {
-    [key: number]: ObjectIndex<T[]>;
-    length: number;
-}
-
-type LayoutMapY<T> = Map<number, Map<number, T>>;
-
 interface EnvironmentSettings {
     resolutionDPI: number;
 }

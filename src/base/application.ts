@@ -12,6 +12,8 @@ import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElem
 import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
+type LayoutMapY<T> = Map<number, Map<number, T>>;
+
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
     const tagged: string[] = [];
     let current: HTMLElement | null = element;
@@ -746,9 +748,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const settings = this.userSettings;
         const localSettings = this.controllerHandler.localSettings;
         const documentRoot = this.processing.node as T;
-        const mapX: LayoutMapX<T> = [];
-        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
+        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         let baseTemplate = localSettings.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
@@ -769,14 +770,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
         setMapY(-1, 0, documentRoot.parent as T);
         let maxDepth = 0;
         for (const node of this.processing.cache.visible) {
-            const x = Math.floor(node.linear.left);
-            if (mapX[node.depth] === undefined) {
-                mapX[node.depth] = {};
-            }
-            if (mapX[node.depth][x] === undefined) {
-                mapX[node.depth][x] = [];
-            }
-            mapX[node.depth][x].push(node);
             setMapY(node.depth, node.id, node);
             maxDepth = Math.max(node.depth, maxDepth);
         }
@@ -1004,7 +997,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (nodeY.styleElement) {
                             prioritizeExtensions(<HTMLElement> documentRoot.element, <HTMLElement> nodeY.element, extensions).some(item => {
                                 if (item.is(nodeY) && item.condition(nodeY, parentY)) {
-                                    const result =  item.processNode(nodeY, parentY, mapX, mapY);
+                                    const result = item.processNode(nodeY, parentY);
                                     if (result.output) {
                                         this.addRenderTemplate(parentY, nodeY, result.output);
                                     }

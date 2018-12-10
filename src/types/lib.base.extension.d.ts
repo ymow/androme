@@ -20,8 +20,8 @@ declare global {
             init(element: HTMLElement): boolean;
             afterInit(element: HTMLElement, recursive?: boolean): void;
             condition(node: T, parent?: T): boolean;
-            processNode(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
-            processChild(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T>;
+            processNode(node: T, parent: T): ExtensionResult<T>;
+            processChild(node: T, parent: T): ExtensionResult<T>;
             postBaseLayout(node: T): void;
             postConstraints(node: T): void;
             postParseDocument(node: T): void;

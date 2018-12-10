@@ -94,11 +94,11 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return false;
     }
 
-    public processNode(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T> {
+    public processNode(node: T, parent: T): ExtensionResult<T> {
         return { output: '', complete: false };
     }
 
-    public processChild(node: T, parent: T, mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult<T> {
+    public processChild(node: T, parent: T): ExtensionResult<T> {
         return { output: '', complete: false };
     }
 
