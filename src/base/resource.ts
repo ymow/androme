@@ -541,8 +541,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         if (previousSibling === undefined || previousSibling.multiLine || previousSibling.lineBreak || previousSibling.plainText && /\s+$/.test(previousSibling.textContent)) {
                             value = value.replace(/^\s+/, '');
                         }
-                        else {
-                            previousSpaceEnd = /\s+$/.test((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent || '');
+                        else if (previousSibling.baseElement) {
+                            previousSpaceEnd = /\s+$/.test((<HTMLElement> previousSibling.baseElement).innerText || previousSibling.textContent);
                         }
                         if (inlineTrim) {
                             const original = value;
@@ -560,8 +560,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     previousSibling && (
                                         previousSibling.block ||
                                         previousSibling.lineBreak ||
-                                        (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
-                                        (node.multiLine && hasLineBreak(element))
+                                        previousSpaceEnd && previousSibling.htmlElement && previousSibling.textContent.length > 1 ||
+                                        node.multiLine && hasLineBreak(element)
                                     ) ? '' : '&#160;'
                                 );
                                 value = value.replace(/\s+$/, node.display === 'table-cell' || nextSibling && nextSibling.lineBreak || node.blockStatic ? '' : '&#160;');

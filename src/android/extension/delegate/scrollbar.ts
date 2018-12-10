@@ -55,7 +55,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 parent.appendTry(node, container);
             }
             else {
-                container.inherit(node, 'dimensions');
+                container.inherit(node, 'base');
                 container.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
             }
             container.resetBox($enum.BOX_STANDARD.PADDING);
@@ -119,11 +119,12 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 node.android('layout_height', 'wrap_content');
             }
         }
-        node.overflow = 0;
-        node.parent = scrollView[scrollView.length - 1];
+        const outer = scrollView[scrollView.length - 1];
+        node.parent = outer;
         if (parent.layoutConstraint) {
-            node.parent.companion = node;
+            outer.companion = node;
         }
+        node.overflow = 0;
         node.resetBox($enum.BOX_STANDARD.MARGIN);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
         return { output: '', parent: node.parent, renderAs: scrollView[0], outputAs };

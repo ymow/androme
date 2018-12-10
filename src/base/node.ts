@@ -64,7 +64,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     {
         super();
         this.initial = {
-            depth: -1,
             children: [],
             styleMap: {},
             bounds: newRectDimensions()
@@ -291,12 +290,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     Object.assign(this.initial, node.initial);
                     break;
                 case 'base':
-                    this.style = node.style;
                     this.documentParent = node.documentParent;
-                    if (this.tagName === '') {
-                        this.tagName = node.tagName;
-                    }
-                case 'dimensions':
                     this._bounds = assignBounds(node.bounds);
                     this._linear = assignBounds(node.linear);
                     this._box = assignBounds(node.box);
@@ -733,7 +727,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             for (const attr of Array.from(CSS_SPACING.values()).slice(start, end)) {
                 this._boxReset[attr] = 1;
                 if (node) {
-                    node.modifyBox(fromParent ? keys[i] : keys[i + 4], this[margin ? keys[i] : keys[i + 4]]);
+                    const spacing = CSS_SPACING.get(margin ? keys[i] : keys[i + 4]);
+                    if (spacing) {
+                        node.modifyBox(fromParent ? keys[i] : keys[i + 4], this[spacing]);
+                    }
                 }
                 i++;
             }
@@ -899,26 +896,22 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     set parent(value) {
-        if (value !== this._parent) {
-            if (this._parent) {
-                this._parent.remove(this);
-            }
-            this._parent = value;
-        }
         if (value) {
+            if (value !== this._parent) {
+                if (this._parent) {
+                    this._parent.remove(this);
+                }
+                this._parent = value;
+            }
             if (!value.contains(this)) {
                 value.append(this);
-                if (this.groupParent && value.siblingIndex !== Number.MAX_VALUE) {
+                if (this.groupParent) {
                     this.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                 }
             }
-            if (this.initial.depth === -1) {
-                Object.assign(this.initial, { depth: value.depth + 1 });
+            if (this.depth === -1) {
+                this.depth = value.depth + 1;
             }
-            this.depth = value.depth + 1;
-        }
-        else {
-            this.depth = -1;
         }
     }
     get parent() {
@@ -1086,8 +1079,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return this._excludeResource;
     }
 
-    get extension() {
-        return this.dataset.include ? this.dataset.include.split(',')[0].trim() : '';
+    get extensions() {
+        return this.dataset.include ? this.dataset.include.split(',').map(value => value.trim()).filter(value => value) : [];
     }
 
     get flexbox() {
@@ -1222,7 +1215,13 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get positionAuto() {
         if (this._cached.positionAuto === undefined) {
             const styleMap = this.initial.styleMap;
-            this._cached.positionAuto = !this.pageFlow && (styleMap.top === 'auto' || !styleMap.top) && (styleMap.right === 'auto' || !styleMap.right) && (styleMap.bottom === 'auto' || !styleMap.bottom) && (styleMap.left === 'auto' || !styleMap.left);
+            this._cached.positionAuto = (
+                !this.pageFlow &&
+                (styleMap.top === 'auto' || !styleMap.top) &&
+                (styleMap.right === 'auto' || !styleMap.right) &&
+                (styleMap.bottom === 'auto' || !styleMap.bottom) &&
+                (styleMap.left === 'auto' || !styleMap.left)
+            );
         }
         return this._cached.positionAuto;
     }
@@ -1365,10 +1364,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                                 element.children.length === 0 ||
                                 Array.from(element.children).every(item => {
                                     const node = getElementAsNode<T>(item);
-                                    if (node && !node.excluded || hasComputedStyle(item) && hasValue(item.dataset.include)) {
-                                        return false;
-                                    }
-                                    return true;
+                                    return !(node && !node.excluded || hasComputedStyle(item) && hasValue(item.dataset.include));
                                 })
                             )
                         );
@@ -1490,6 +1486,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             this._cached.float = this.floating ? this.css('cssFloat') : 'none';
         }
         return this._cached.float;
+    }
+
+    get zIndex() {
+        return this.toInt('zIndex');
     }
 
     get textContent() {

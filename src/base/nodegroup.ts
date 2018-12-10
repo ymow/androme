@@ -4,6 +4,20 @@ import Node from './node';
 import NodeList from './nodelist';
 
 export default abstract class NodeGroup extends Node {
+    public init() {
+        if (this.length) {
+            for (const item of this.children) {
+                item.parent = this;
+            }
+            if (this.parent) {
+                this.parent.sort(NodeList.siblingIndex);
+            }
+            this.initial.children.push(...this.duplicate());
+        }
+        this.setBounds();
+        this.css('direction', this.documentParent.dir);
+    }
+
     public setBounds(calibrate = false) {
         if (!calibrate) {
             if (this.length) {

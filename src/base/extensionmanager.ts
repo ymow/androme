@@ -5,7 +5,7 @@ import Node from './node';
 import { hasBit } from '../lib/util';
 
 export default abstract class ExtensionManager<T extends Node> implements androme.lib.base.ExtensionManager<T> {
-    public constructor(public readonly application: Application<T>) {
+    protected constructor(public readonly application: Application<T>) {
     }
 
     public include(ext: Extension<T>) {

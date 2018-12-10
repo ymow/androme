@@ -194,7 +194,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                     }
                                     break;
                             }
-                            Controller.dimensionFlex(chain, horizontal);
+                            Controller.setFlexDimension(chain, horizontal);
                         }
                         chain.positioned = true;
                     }

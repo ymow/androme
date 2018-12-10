@@ -48,7 +48,7 @@ const optionsAsync = new Map<string, ExternalData>();
 
 export function setFramework(value: AppFramework<T>, cached = false) {
     if (framework !== value) {
-        const appBase: AppBase<T> = cached ? value.cached() : value.create();
+        const appBase = cached ? value.cached() : value.create();
         if (main || Object.keys(settings).length === 0) {
             settings = appBase.userSettings;
         }

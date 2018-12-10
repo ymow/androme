@@ -1,6 +1,5 @@
 export interface InitialData<T> {
     readonly styleMap: StringMap;
-    readonly depth: number;
     readonly children: T[];
     readonly bounds: RectDimensions;
     readonly linear?: RectDimensions;

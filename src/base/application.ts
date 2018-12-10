@@ -691,7 +691,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             for (const adjacent of node.children) {
                                 if (adjacent.actualChildren.includes(item) || item.ascend().some(child => adjacent.cascade().includes(child))) {
                                     let index = -1;
-                                    if (item.toInt('zIndex') >= 0 || adjacent !== item.actualParent) {
+                                    if (item.zIndex >= 0 || adjacent !== item.actualParent) {
                                         index = adjacent.siblingIndex + 1;
                                     }
                                     else {
@@ -710,8 +710,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         const order = layer[j];
                         if (order) {
                             order.sort((a, b) => {
-                                const indexA = a.toInt('zIndex');
-                                const indexB = b.toInt('zIndex');
+                                const indexA = a.zIndex;
+                                const indexB = b.zIndex;
                                 if (indexA === indexB) {
                                     return a.id < b.id ? -1 : 1;
                                 }
@@ -785,10 +785,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         this.processing.cache.delegateAppend = (node: T) => {
             deleteMapY(node.id);
-            setMapY((node.initial.depth * -1) - 2, node.id, node);
+            setMapY((node.depth * -1) - 2, node.id, node);
             node.cascade().forEach((item: T) => {
                 deleteMapY(item.id);
-                setMapY((item.initial.depth * -1) - 2, item.id, item);
+                setMapY((item.depth * -1) - 2, item.id, item);
             });
         };
         for (const depth of mapY.values()) {
@@ -804,7 +804,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
-                    if (nodeY.rendered || !nodeY.visible || !nodeY.documentRoot && nodeY.baseElement && this.parseElements.has(<HTMLElement> nodeY.baseElement)) {
+                    if (nodeY.rendered || !nodeY.visible || !nodeY.documentRoot && !nodeY.documentBody && nodeY.baseElement && this.parseElements.has(<HTMLElement> nodeY.baseElement)) {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
@@ -1709,7 +1709,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         basegroup.init();
                         layout.itemCount = children.length;
                         xml += this.renderNode(layout);
-                        children.forEach((node, index) => {
+                        children.forEach(node => {
                             if (data.contains(node) || node.length === 0) {
                                 xml = replacePlaceholder(xml, basegroup.id, formatPlaceholder(node.id));
                             }

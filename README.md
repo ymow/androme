@@ -1,6 +1,6 @@
 # androme
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML.
 
 Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
@@ -1461,7 +1461,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
-### ALL: Redirecting output location
+### ALL: Redirecting Output Location
 
 It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
 

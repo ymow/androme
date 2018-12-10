@@ -23,7 +23,6 @@ export default class MaxWidthHeight<T extends View> extends androme.lib.base.Ext
             container.css('height', node.css('maxHeight'), true);
             node.css('maxHeight', 'auto');
         }
-        node.parent = container;
         const layout = new $Layout(
             parent,
             container,

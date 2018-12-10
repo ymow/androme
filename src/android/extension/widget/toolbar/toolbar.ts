@@ -63,8 +63,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
-        let output: string;
-        let depth = target ? 0 : node.depth;
+        let depth = target ? 0 : parent.renderDepth + 1;
         let children = node.filter(item => !item.positioned).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
@@ -136,16 +135,16 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
         if (hasMenu) {
             if (hasAppBar) {
-                if (toolbarOptions['app'].popupTheme) {
-                    popupOverlay = toolbarOptions['app'].popupTheme.replace('@style/', '');
+                if (toolbarOptions.app.popupTheme) {
+                    popupOverlay = toolbarOptions.app.popupTheme.replace('@style/', '');
                 }
-                toolbarOptions['app'].popupTheme = '@style/AppTheme.PopupOverlay';
+                toolbarOptions.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
         const numberResourceValue = application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue');
         node.setControlType($android_const.SUPPORT_ANDROID.TOOLBAR, $android_enum.CONTAINER_NODE.BLOCK);
-        output = controller.renderNodeStatic(
+        let output = controller.renderNodeStatic(
             $android_const.SUPPORT_ANDROID.TOOLBAR,
             innerDepth,
             $Resource.formatOptions(toolbarOptions, numberResourceValue),
@@ -195,10 +194,10 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             $util.defaultWhenNull(appBarOptions, 'android', 'layout_height', node.hasHeight ? $util.formatPX(node.height) : 'wrap_content');
             $util.defaultWhenNull(appBarOptions, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
-                if (appBarOptions['android'].theme) {
-                    appBarOverlay = appBarOptions['android'].theme;
+                if (appBarOptions.android.theme) {
+                    appBarOverlay = appBarOptions.android.theme;
                 }
-                appBarOptions['android'].theme = '@style/AppTheme.AppBarOverlay';
+                appBarOptions.android.theme = '@style/AppTheme.AppBarOverlay';
                 node.data(WIDGET_NAME.TOOLBAR, 'themeData', <ToolbarThemeData> {
                     target,
                     appBarOverlay,
@@ -210,7 +209,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             }
             appBarNode = this.createPlaceholder(application.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
-            appBarNode.controlId = $android_util.stripId(appBarOptions['android'].id);
+            appBarNode.controlId = $android_util.stripId(appBarOptions.android.id);
             appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $android_enum.CONTAINER_NODE.BLOCK);
             application.processing.cache.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
@@ -292,7 +291,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             const options: ExternalData = Object.assign({}, this.options[node.element.id]);
             const toolbarOptions = $android_util.createAttribute(options.self);
             $util.defaultWhenNull(toolbarOptions, 'app', 'menu', `@menu/${menu}`);
-            node.app('menu', toolbarOptions['app'].menu);
+            node.app('menu', toolbarOptions.app.menu);
         }
         const themeData: ToolbarThemeData = node.data(WIDGET_NAME.TOOLBAR, 'themeData');
         if (themeData) {
@@ -328,12 +327,15 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     }
 
     private createPlaceholder(nextId: number, node: T, children: T[]) {
-        const placeholder = new $View(nextId, $dom.createElement(node.absoluteParent.baseElement, node.block), this.application.controllerHandler.delegateNodeInit);
-        placeholder.init();
-        placeholder.inherit(node, 'dimensions');
-        placeholder.positioned = true;
+        const placeholder = new $View(
+            nextId,
+            $dom.createElement(node.absoluteParent.baseElement, node.block),
+            this.application.controllerHandler.delegateNodeInit
+        );
+        placeholder.inherit(node, 'base');
         placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
-        children.forEach((item: T) => item.parent = placeholder);
+        placeholder.positioned = true;
+        children.forEach(item => item.parent = placeholder);
         return placeholder;
     }
 }

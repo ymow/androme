@@ -27,6 +27,7 @@ declare global {
             appendAfter(id: number, output: string, index?: number): void;
             hasAppendProcessing(id: number): boolean;
             getEnclosingTag(controlName: string, id: number, depth: number, xml?: string): string;
+            removePlaceholders(value: string): string;
         }
 
         export class Controller<T extends Node> implements Controller<T> {

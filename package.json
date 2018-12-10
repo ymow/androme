@@ -16,30 +16,23 @@
   "keywords": [
     "Android",
     "iOS",
+    "iPhone",
     "Chrome",
     "Safari",
     "Edge",
     "Firefox",
     "HTML",
-    "CSS",
-    "SVG",
     "XML",
+    "CSS",
+    "Javascript",
+    "CSS Grid",
+    "Flexbox",
+    "SVG",
     "Flutter",
     "Xamarin",
     "Xamarin Forms",
-    "Cordova",
-    "PhoneGap",
-    "Javascript",
-    "TypeScript",
-    "Flexbox",
-    "LinearLayout",
-    "RelativeLayout",
-    "ConstraintLayout",
-    "GridLayout",
-    "FrameLayout",
-    "Android Studio",
-    "Xcode",
-    "iPhone"
+    "TypeScript"
+
   ],
   "author": {
     "name": "An Pham",
@@ -70,6 +63,6 @@
     "systemjs-plugin-babel": "0.0.25",
     "terser": "^3.11.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.2.1"
+    "typescript": "^3.2.2"
   }
 }

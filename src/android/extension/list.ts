@@ -177,7 +177,6 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                         companion.css('fontSize', '12px');
                     }
-                    node.companion = companion;
                     this.application.processing.cache.append(companion, false);
                     const xml = controller.renderNodeStatic(
                         image !== '' ? CONTAINER_ANDROID.IMAGE : (mainData.ordinal !== '' ? CONTAINER_ANDROID.TEXT : CONTAINER_ANDROID.SPACE),
@@ -237,8 +236,8 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                         layout_columnSpan: columnCount.toString()
                     }
                 });
-                const xml = this.application.controllerHandler.renderNodeStatic(CONTAINER_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
-                this.application.controllerHandler.prependBefore(current.id, xml, 0);
+                const output = this.application.controllerHandler.renderNodeStatic(CONTAINER_ANDROID.SPACE, current.renderDepth, options, 'match_parent', $util.formatPX(spaceHeight));
+                this.application.controllerHandler.prependBefore(current.id, output, 0);
             }
         }
     }

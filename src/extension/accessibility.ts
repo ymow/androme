@@ -10,7 +10,7 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
     public afterInit() {
         for (const node of this.application.processing.cache.elements) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
-                const element = node.element;
+                const element = node.baseElement;
                 if (element instanceof HTMLInputElement) {
                     switch (element.type) {
                         case 'radio':

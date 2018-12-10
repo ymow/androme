@@ -339,10 +339,12 @@ export default (Base: Constructor<T>) => {
             Object.assign(node.localSettings, this.localSettings);
             node.containerType = this.containerType;
             node.alignmentType = this.alignmentType;
+            node.tagName = this.tagName;
             node.controlId = this.controlId;
             node.controlName = this.controlName;
             node.depth = this.depth;
             node.visible = this.visible;
+            node.excluded = this.excluded;
             node.rendered = this.rendered;
             node.renderDepth = this.renderDepth;
             node.renderParent = this.renderParent;

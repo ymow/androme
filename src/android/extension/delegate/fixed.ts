@@ -3,61 +3,76 @@ import { CONTAINER_NODE } from '../../lib/enumeration';
 import View from '../../view';
 
 import $Layout = androme.lib.base.Layout;
+import $NodeList = androme.lib.base.NodeList;
 
+import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
 
 function getFixedNodes<T extends View>(node: T) {
     return node.filter(item => !item.pageFlow && (item.position === 'fixed' || item.absoluteParent === node));
 }
 
+function withinBoxRegion(rect: number[], value: number) {
+    return rect.some(coord => coord < value);
+}
+
 export default class Fixed<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
-        if (node.documentRoot) {
-            const fixed = getFixedNodes(node);
-            if (fixed.length > 0) {
-                const top = fixed.filter(item => item.top !== 0);
-                const right = fixed.filter(item => item.right !== 0);
-                const bottom = fixed.filter(item => item.bottom !== 0);
-                const left = fixed.filter(item => item.left !== 0);
-                return (
-                    node.documentRoot && (
-                        node.paddingTop > 0 && top.length > 0 ||
-                        node.paddingRight > 0 && right.length > 0 ||
-                        node.paddingBottom > 0 && bottom.length > 0 ||
-                        node.paddingLeft > 0 && left.length > 0
-                    ) ||
-                    node.documentBody && (
-                        node.marginTop > 0 && top.length > 0 ||
-                        node.marginRight > 0 && right.length > 0 ||
-                        node.marginBottom > 0 && bottom.length > 0 ||
-                        node.marginLeft > 0 && left.length > 0
-                    )
-                );
-            }
+        const fixed = getFixedNodes(node);
+        if (fixed.length > 0) {
+            const top = fixed.filter(item => item.has('top')).map(item => item.top);
+            const right = fixed.filter(item => item.has('right')).map(item => item.right);
+            const bottom = fixed.filter(item => item.has('bottom')).map(item => item.bottom);
+            const left = fixed.filter(item => item.has('left')).map(item => item.left);
+            return (
+                withinBoxRegion(top, node.paddingTop + (node.documentBody ? node.marginTop : 0)) ||
+                withinBoxRegion(right, node.paddingRight + (node.documentBody ? node.marginRight : 0)) ||
+                withinBoxRegion(bottom, node.paddingBottom + (node.documentBody ? node.marginBottom : 0)) ||
+                withinBoxRegion(left, node.paddingLeft + (node.documentBody ? node.marginLeft : 0))
+            );
         }
         return false;
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const controller = (<android.lib.base.Controller<T>> this.application.controllerHandler);
-        const fixed = getFixedNodes(node);
-        const children = [node, ...fixed] as T[];
-        const container = controller.createNodeWrapper(node);
-        container.android('layout_width', 'match_parent');
-        container.android('layout_height', 'match_parent');
-        children.forEach((item, index) => {
-            item.siblingIndex = index;
-            item.parent = container;
+        const container = new View(
+            this.application.nextId,
+            $dom.createElement(node.absoluteParent.baseElement),
+            this.application.controllerHandler.delegateNodeInit
+        ) as T;
+        container.inherit(node, 'initial', 'base');
+        container.exclude({
+            procedure: $enum.NODE_PROCEDURE.NONPOSITIONAL,
+            resource: $enum.NODE_RESOURCE.ASSET
         });
-        node.each((item, index) => item.siblingIndex = index);
+        container.android('layout_width', node.hasWidth || node.documentBody ? 'match_parent' : 'wrap_content');
+        container.android('layout_height',  node.hasHeight || node.documentBody ? 'match_parent' : 'wrap_content');
+        const [normal, nested] = $util.partition(getFixedNodes(node), item => item.absoluteParent === node.absoluteParent);
+        normal.push(container);
+        const children = [
+            ...$util.sortAsc(normal, 'zIndex', 'id'),
+            ...$util.sortAsc(nested, 'zIndex', 'id')
+        ] as T[];
+        node.duplicate().forEach((item: T) => {
+            if (!children.includes(item)) {
+                item.parent = container;
+            }
+        });
+        container.parent = node;
+        children.forEach((item, index) => item.siblingIndex = index);
+        node.sort($NodeList.siblingIndex);
+        this.application.processing.cache.append(container);
+        node.resetBox($enum.BOX_STANDARD.PADDING | (node.documentBody ? $enum.BOX_STANDARD.MARGIN : 0), container, true);
         const layout = new $Layout(
             parent,
-            container,
+            node,
             CONTAINER_NODE.CONSTRAINT,
             $enum.NODE_ALIGNMENT.ABSOLUTE,
             children.length,
             children
         );
-        return { output: '', parent: container, renderAs: container, outputAs: this.application.renderLayout(layout) };
+        const output = this.application.renderLayout(layout);
+        return { output };
     }
 }

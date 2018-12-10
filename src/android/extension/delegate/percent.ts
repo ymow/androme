@@ -20,7 +20,6 @@ export default class Percent<T extends View> extends androme.lib.base.Extension<
         if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
             node.css('height', $util.formatPX(node.bounds.height), true);
         }
-        node.parent = container;
         const layout = new $Layout(
             parent,
             container,

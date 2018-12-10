@@ -83,14 +83,18 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         let output = `{<${id}}`;
         if (xml !== '') {
             output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
-                            xml +
-                    indent + `</${controlName}>\n`;
+                               xml +
+                      indent + `</${controlName}>\n`;
         }
         else {
             output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
         }
         output += `{>${id}}`;
         return output;
+    }
+
+    public removePlaceholders(value: string) {
+        return value.replace(/{[<:@>]\d+(\^\d+)?}/g, '').trim();
     }
 
     get outputIndentPrefix() {

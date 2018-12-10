@@ -52,7 +52,7 @@ declare global {
             readonly groupParent: boolean;
             readonly documentBody: boolean;
             readonly dataset: DOMStringMap;
-            readonly extension: string;
+            readonly extensions: string[];
             readonly flexbox: Flexbox;
             readonly rightAligned: boolean;
             readonly bottomAligned: boolean;
@@ -98,6 +98,7 @@ declare global {
             readonly pageFlow: boolean;
             readonly floating: boolean;
             readonly float: string;
+            readonly zIndex: number;
             readonly visibleStyle: VisibleStyle;
             readonly textContent: string;
             readonly fontSize: number;
