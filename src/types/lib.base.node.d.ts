@@ -175,8 +175,8 @@ declare global {
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
             actualRight(dimension?: string): number;
-            previousSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
-            nextSiblings(lineBreak?: boolean, excluded?: boolean, visible?: boolean): Node[];
+            previousSiblings(lineBreak?: boolean, excluded?: boolean, height?: boolean): Node[];
+            nextSiblings(lineBreak?: boolean, excluded?: boolean, height?: boolean): Node[];
             firstChild(element?: HTMLElement): Node | undefined;
             lastChild(element?: HTMLElement): Node | undefined;
         }

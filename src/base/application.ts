@@ -9,7 +9,7 @@ import NodeList from './nodelist';
 import Resource from './resource';
 
 import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isElementIncluded, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache } from '../lib/dom';
-import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
@@ -1538,11 +1538,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (floatgroup && floating.includes(segment)) {
                         basegroup = floatgroup;
                     }
+                    let target: T | undefined;
                     if (segment.length > 1) {
-                        const subgroup = this.controllerHandler.createNodeGroup(segment[0], segment, basegroup);
+                        target = this.controllerHandler.createNodeGroup(segment[0], segment, basegroup);
                         const layout = new Layout(
                             basegroup,
-                            subgroup,
+                            target,
                             0,
                             NODE_ALIGNMENT.SEGMENTED,
                             segment.length,
@@ -1559,10 +1560,20 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         output = replacePlaceholder(output, basegroup.id, this.renderNode(layout));
                     }
                     else if (segment.length) {
-                        const single = segment[0];
-                        single.alignmentType |= NODE_ALIGNMENT.SINGLE;
-                        single.renderPosition = index;
-                        output = replacePlaceholder(output, basegroup.id, formatPlaceholder(single.renderPositionId));
+                        target = segment[0];
+                        target.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                        target.renderPosition = index;
+                        output = replacePlaceholder(output, basegroup.id, formatPlaceholder(target.renderPositionId));
+                    }
+                    if (!settings.floatOverlapDisabled && target && segment === inlineAbove) {
+                        if (leftAbove.length) {
+                            const marginRight = maxArray(leftAbove.map(subitem => subitem.linear.right));
+                            target.modifyBox(BOX_STANDARD.PADDING_LEFT, marginRight - segment[0].bounds.left);
+                        }
+                        if (rightAbove.length) {
+                            const marginLeft = minArray(rightAbove.map(subitem => subitem.linear.left));
+                            target.modifyBox(BOX_STANDARD.PADDING_RIGHT, segment[0].bounds.right - marginLeft);
+                        }
                     }
                 });
             });

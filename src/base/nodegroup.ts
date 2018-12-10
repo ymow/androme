@@ -27,14 +27,14 @@ export default abstract class NodeGroup extends Node {
         }
     }
 
-    public previousSiblings(lineBreak = true, excluded = true, visible = false) {
+    public previousSiblings(lineBreak = true, excluded = true, height = false) {
         const node = this.item(0);
-        return node ? node.previousSiblings(lineBreak, excluded, visible) : [];
+        return node ? node.previousSiblings(lineBreak, excluded, height) : [];
     }
 
-    public nextSiblings(lineBreak = true, excluded = true, visible = false) {
+    public nextSiblings(lineBreak = true, excluded = true, height = false) {
         const node = this.item();
-        return node ? node.nextSiblings(lineBreak, excluded, visible) : [];
+        return node ? node.nextSiblings(lineBreak, excluded, height) : [];
     }
 
     public firstChild() {

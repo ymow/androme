@@ -329,7 +329,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return true;
         }
         if (this.pageFlow && previousSiblings.length) {
-            const actualParent = this.actualParent;
             if (isArray(siblings) && this !== siblings[0]) {
                 if (cleared && cleared.has(this)) {
                     return true;
@@ -346,6 +345,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     }
                 }
             }
+            const actualParent = this.actualParent;
             for (const previous of previousSiblings) {
                 const vertical = (
                     previous.blockStatic ||
@@ -353,10 +353,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         !previous.inlineFlow ||
                         cleared && cleared.has(previous)
                     ) ||
-                    cleared && cleared.get(previous) === 'both' ||
+                    cleared && cleared.get(previous) === 'both' && (!isArray(siblings) || siblings[0] !== previous) ||
                     !previous.floating && (
                         this.blockStatic ||
-                        !this.inlineFlow && !this.floating
+                        !this.floating && !this.inlineFlow
                     ) ||
                     actualParent && previous.bounds.width > (actualParent.has('width', CSS_STANDARD.UNIT) ? actualParent.width : actualParent.box.width) && (
                         !previous.textElement ||
@@ -764,7 +764,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         }
     }
 
-    public previousSiblings(lineBreak = true, excluded = true, visible = false) {
+    public previousSiblings(lineBreak = true, excluded = true, height = false) {
         let element: Element | null = null;
         const result: T[] = [];
         if (this._element) {
@@ -782,7 +782,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 }
                 else if (!node.excluded && node.pageFlow) {
                     result.push(node);
-                    if (!visible || node.visible) {
+                    if (!height || node.visible && !node.floating) {
                         break;
                     }
                 }
@@ -810,7 +810,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 }
                 else if (!node.excluded && node.pageFlow) {
                     result.push(node);
-                    if (!visible || node.visible) {
+                    if (!visible || node.visible && !node.floating) {
                         break;
                     }
                 }

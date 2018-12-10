@@ -554,7 +554,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkConstraintFloat(layout: $Layout<T>) {
-        return layout.floated.size === 1 && layout.every(node => node.pageFlow && node.floating && node.marginLeft >= 0 && node.marginRight >= 0);
+        return layout.floated.size === 1 && layout.every(node => node.floating && node.marginLeft >= 0 && node.marginRight >= 0 && (!node.positionRelative || node.left >= 0 && node.top >= 0));
     }
 
     public checkConstraintHorizontal(layout: $Layout<T>) {
