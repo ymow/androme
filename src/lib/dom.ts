@@ -61,7 +61,7 @@ export function newBoxModel(): BoxModel {
 export function createElement(parent: Element | null, block = false) {
     const element = document.createElement(block ? 'div' : 'span');
     element.style.display = 'none';
-    element.className = 'androme.display.none';
+    element.className = '__css.placeholder';
     if (parent instanceof HTMLElement) {
         parent.appendChild(element);
     }
@@ -440,7 +440,7 @@ export function isLineBreak(element: Element, excluded = true) {
     return false;
 }
 
-export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace = false, asNode = false) {
+export function getElementsBetween(elementStart: Element | null, elementEnd: Element, whiteSpace = false, asNode = false) {
     if (!elementStart || elementStart.parentElement === elementEnd.parentElement) {
         const parent = elementEnd.parentElement;
         if (parent) {

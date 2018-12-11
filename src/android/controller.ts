@@ -134,7 +134,8 @@ function constraintPercentValue<T extends View>(node: T, dimension: string, valu
             node.android(`layout_${dimension.toLowerCase()}`, node.convertPercent(value, dimension === 'Width'));
         }
         else if (value !== '100%') {
-            node.app(`layout_constraint${dimension}_percent`, (parseInt(value) / 100).toFixed(2));
+            const percent = parseInt(value) / 100 + (node.actualParent ? node.contentBoxWidth / node.actualParent.box.width : 0);
+            node.app(`layout_constraint${dimension}_percent`, percent.toFixed(node.localSettings.constraintPercentAccuracy || 4));
             node.android(`layout_${dimension.toLowerCase()}`, '0px');
         }
     }
@@ -306,15 +307,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 const indent = $util.repeat(node.renderDepth + 1);
                 return node.combine().map(value => `\n${indent + value}`).join('');
             }
-            const cache: StringMap[] = data.cache.visible.map(node => {
-                if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                    node.setBoxSpacing();
-                }
-                return {
-                    pattern: $xml.formatPlaceholder(node.id, '@'),
-                    attributes: parseAttributes(node)
-                };
-            });
+            const cache = data.cache.visible.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: parseAttributes(node) }));
             for (const value of [...data.views, ...data.includes]) {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, getRootNamespace(value.content));
@@ -808,15 +801,15 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 $dom.createElement(node.absoluteParent.baseElement),
                                 this.delegateNodeInit
                             ) as T;
-                            if (parent.layoutConstraint) {
-                                container.companion = node;
-                            }
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                             container.inherit(node, 'base');
-                            container.css('zIndex', node.css('zIndex'));
                             container.exclude({
                                 procedure: $enum.NODE_PROCEDURE.ALL,
                                 resource: $enum.NODE_RESOURCE.ALL
+                            });
+                            container.css({
+                                'position': node.position,
+                                'zIndex': node.zIndex
                             });
                             parent.appendTry(node, container);
                             this.cache.append(container);
@@ -833,6 +826,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 container.android('layout_height', 'wrap_content');
                             }
                             container.render(target ? container : parent);
+                            container.companion = node;
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.top);
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, node.left);
                             node.render(container);
@@ -1321,7 +1315,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         alignSibling = '';
                     }
                     const viewGroup = item.groupParent && !item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
-                    siblings = !viewGroup && previous.inlineVertical && item.inlineVertical ? $dom.getBetweenElements(previous.element, item.element, true) : [];
+                    siblings = !viewGroup && previous.inlineVertical && item.inlineVertical ? $dom.getElementsBetween(previous.element, item.element, true) : [];
                     const startNewRow = (() => {
                         if (item.textElement) {
                             let connected = false;
@@ -1649,8 +1643,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         const chainHorizontal = $NodeList.partitionRows(children);
         const boxParent = $NodeList.actualParent(children) || node;
         const floating = node.hasAlign($enum.NODE_ALIGNMENT.FLOAT);
-        const nowrap = node.hasAlign($enum.NODE_ALIGNMENT.NOWRAP);
-        const cleared = chainHorizontal.length > 1 && nowrap ? $NodeList.clearedAll(boxParent) : new Map<T, string>();
+        const cleared = chainHorizontal.length > 1 && node.hasAlign($enum.NODE_ALIGNMENT.NOWRAP) ? $NodeList.clearedAll(boxParent) : new Map<T, string>();
         let reverse = false;
         if (chainHorizontal.length > 1) {
             node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
@@ -1680,25 +1673,40 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
         }
         const previousSiblings: T[] = [];
-        const anchorStart = 'left';
-        const anchorEnd = 'right';
-        const chainStart = 'leftRight';
-        const chainEnd = 'rightLeft';
+        let anchorStart: string;
+        let anchorEnd: string;
+        let chainStart: string;
+        let chainEnd: string;
+        if (reverse) {
+            anchorStart = 'right';
+            anchorEnd = 'left';
+            chainStart = 'rightLeft';
+            chainEnd = 'leftRight';
+        }
+        else {
+            anchorStart = 'left';
+            anchorEnd = 'right';
+            chainStart = 'leftRight';
+            chainEnd = 'rightLeft';
+        }
         chainHorizontal.forEach((segment, index) => {
-            if (reverse) {
-                segment.reverse();
-            }
             const rowStart = segment[0];
-            const rowEnd = segment.length > 1 ? segment[segment.length - 1] : null;
-            rowStart.anchor(reverse && rowEnd === null ? anchorEnd : anchorStart, 'parent');
-            if (rowEnd) {
-                if (boxParent.css('textAlign') === 'center') {
-                    rowStart.app('layout_constraintHorizontal_chainStyle', 'spread');
+            const rowEnd = segment[segment.length - 1];
+            rowStart.anchor(anchorStart, 'parent');
+            if (boxParent.css('textAlign') === 'center') {
+                rowStart.app('layout_constraintHorizontal_chainStyle', 'spread');
+            }
+            else {
+                if (reverse) {
+                    rowEnd.app('layout_constraintHorizontal_chainStyle', 'packed');
+                    rowEnd.app('layout_constraintHorizontal_bias', '1');
                 }
                 else {
                     rowStart.app('layout_constraintHorizontal_chainStyle', 'packed');
-                    rowStart.app('layout_constraintHorizontal_bias', reverse || node.rightAligned ? '1' : '0');
+                    rowStart.app('layout_constraintHorizontal_bias', '0');
                 }
+            }
+            if (segment.length > 1) {
                 rowEnd.anchor(anchorEnd, 'parent');
             }
             let previousRowBottom: T | undefined;
@@ -1729,9 +1737,20 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 Controller.setConstraintDimension(chain);
                 if (index > 0) {
                     const previousRow = chainHorizontal[index - 1];
-                    if (floating && nowrap && !cleared.has(reverse ? rowEnd as T : rowStart)) {
+                    const aboveEnd = reverse ? previousRow[0] : previousRow[previousRow.length - 1];
+                    const previousEnd = reverse ? rowEnd as T : rowStart;
+                    const nodes: T[] = [];
+                    if (aboveEnd) {
+                        nodes.push(aboveEnd);
+                        if (chain.baseElement) {
+                            nodes.push(...$util.flatMap($dom.getElementsBetween(aboveEnd.baseElement, chain.baseElement), element => $dom.getElementAsNode<T>(element) as T));
+                        }
+                    }
+                    else {
+                        nodes.push(previousEnd);
+                    }
+                    if (floating && (cleared.size === 0 || !nodes.some(item => cleared.has(item)))) {
                         if (previousRow.length) {
-                            const aboveEnd = reverse ? previousRow[0] : previousRow[previousRow.length - 1];
                             chain.anchor('topBottom', aboveEnd.documentId);
                             if (!aboveEnd.alignSibling('bottomTop')) {
                                 aboveEnd.anchor('bottomTop', chain.documentId);

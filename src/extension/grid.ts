@@ -139,15 +139,15 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 return -1;
             }
             const nextMapX: ObjectIndex<T[]> = {};
-            node.each(item => {
-                item.each((subitem: T) => {
+            for (const item of node) {
+                for (const subitem of item) {
                     const x = Math.floor(subitem.linear.left);
                     if (nextMapX[x] === undefined) {
                         nextMapX[x] = [];
                     }
-                    nextMapX[x].push(subitem);
-                });
-            });
+                    nextMapX[x].push(subitem as T);
+                }
+            }
             const nextCoordsX = Object.keys(nextMapX);
             if (nextCoordsX.length) {
                 const columnRight: number[] = [];

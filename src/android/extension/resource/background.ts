@@ -268,6 +268,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }
                                 return `${boxPosition.horizontal === 'center' ? 'center_horizontal' : boxPosition.horizontal}|${boxPosition.vertical === 'center' ? 'center_vertical' : boxPosition.vertical}`;
                             })();
+                            let width = '';
+                            let height = '';
                             let tileMode = '';
                             let tileModeX = '';
                             let tileModeY = '';
@@ -294,60 +296,62 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             }
                             if (gravity !== '' && image && image.width > 0 && image.height > 0 && node.renderChildren.length === 0) {
                                 if (tileModeY === 'repeat') {
-                                    let width = 0;
+                                    let tileWidth = 0;
                                     if (node.hasWidth) {
-                                        width = node.width + node.paddingLeft + node.paddingRight;
+                                        tileWidth = node.width + node.paddingLeft + node.paddingRight;
                                     }
                                     else {
-                                        width = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
+                                        tileWidth = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
                                     }
-                                    if (image.width < width) {
+                                    if (image.width < tileWidth) {
                                         const layoutWidth = $util.convertInt(node.android('layout_width'));
                                         if (gravity.indexOf('left') !== -1) {
-                                            boxPosition.right = width - image.width;
-                                            if (node.hasWidth && width > layoutWidth) {
+                                            boxPosition.right = tileWidth - image.width;
+                                            if (node.hasWidth && tileWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity.indexOf('right') !== -1) {
-                                            boxPosition.left = width - image.width;
-                                            if (node.hasWidth && width > layoutWidth) {
+                                            boxPosition.left = tileWidth - image.width;
+                                            if (node.hasWidth && tileWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
-                                            boxPosition.right = Math.floor((width - image.width) / 2);
-                                            if (node.hasWidth && width > layoutWidth) {
+                                            boxPosition.left = Math.floor((tileWidth - image.width) / 2);
+                                            width = $util.formatPX(image.width);
+                                            if (node.hasWidth && tileWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                     }
                                 }
                                 if (tileModeX === 'repeat') {
-                                    let height = 0;
+                                    let tileHeight = 0;
                                     if (node.hasHeight) {
-                                        height = node.height + node.paddingTop + node.paddingBottom;
+                                        tileHeight = node.height + node.paddingTop + node.paddingBottom;
                                     }
                                     else {
-                                        height = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
+                                        tileHeight = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
                                     }
-                                    if (image.height < height) {
+                                    if (image.height < tileHeight) {
                                         const layoutHeight = $util.convertInt(node.android('layout_height'));
                                         if (gravity.indexOf('top') !== -1) {
-                                            boxPosition.bottom = height - image.height;
-                                            if (!node.hasHeight && height > layoutHeight) {
+                                            boxPosition.bottom = tileHeight - image.height;
+                                            if (!node.hasHeight && tileHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity.indexOf('bottom') !== -1) {
-                                            boxPosition.top = height - image.height;
-                                            if (!node.hasHeight && height > layoutHeight) {
+                                            boxPosition.top = tileHeight - image.height;
+                                            if (!node.hasHeight && tileHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
-                                            boxPosition.bottom = Math.floor((height - image.height) / 2);
-                                            if (!node.hasHeight && height > layoutHeight) {
+                                            boxPosition.top = Math.floor((tileHeight - image.height) / 2);
+                                            height = $util.formatPX(image.height);
+                                            if (!node.hasHeight && tileHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
@@ -397,8 +401,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                         tileMode,
                                         tileModeX,
                                         tileModeY,
-                                        width: '',
-                                        height: '',
+                                        width,
+                                        height,
                                         src: backgroundImage[i]
                                     };
                                     if (!(backgroundSize[i] === 'auto' || backgroundSize[i] === 'auto auto' || backgroundSize[i] === 'initial')) {
@@ -406,6 +410,8 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                             case 'cover':
                                             case 'contain':
                                             case '100% 100%':
+                                                width = '';
+                                                height = '';
                                                 tileMode = '';
                                                 tileModeX = '';
                                                 tileModeY = '';
@@ -427,7 +433,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                                 break;
                                         }
                                     }
-                                    if (imageData.width === '' && imageData.height === '' && (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '')) {
+                                    if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
                                         images6.push(imageData);
                                     }
                                     else {

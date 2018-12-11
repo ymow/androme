@@ -27,7 +27,7 @@ const template = [
 '	<item android:left="{~left}" android:top="{~top}" android:right="{~right}" android:bottom="{~bottom}" android:drawable="@drawable/{&src}" android:width="{~width}" android:height="{~height}" />',
 '!5',
 '!6',
-'	<item android:left="{~left}" android:top="{~top}" android:right="{~right}" android:bottom="{~bottom}">',
+'	<item android:left="{~left}" android:top="{~top}" android:right="{~right}" android:bottom="{~bottom}" android:width="{~width}" android:height="{~height}">',
 '		<bitmap android:src="@drawable/{&src}" android:gravity="{~gravity}" android:tileMode="{~tileMode}" android:tileModeX="{~tileModeX}" android:tileModeY="{~tileModeY}" />',
 '	</item>',
 '!6',

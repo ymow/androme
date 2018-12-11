@@ -9,7 +9,6 @@ declare global {
             alignmentType: number;
             depth: number;
             siblingIndex: number;
-            renderIndex: number;
             renderPosition: number;
             renderExtension: Set<Extension<Node>>;
             documentRoot: boolean;
@@ -172,6 +171,7 @@ declare global {
             exclude(options: { section?: number, procedure?: number, resource?: number }): void;
             setExclusions(): void;
             setBounds(calibrate?: boolean): void;
+            setBoxSpacing(): void;
             resetBox(region: number, node?: Node, fromParent?: boolean): void;
             inheritBox(region: number, node: Node): void;
             actualRight(dimension?: string): number;

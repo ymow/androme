@@ -11,18 +11,22 @@ function setMinHeight<T extends Node>(node: T, offset: number) {
     node.css('minHeight', formatPX(Math.max(offset, minHeight)));
 }
 
-function applyMarginCollapse<T extends Node>(parent: T, node: T, direction: string) {
-    if (!node.lineBreak && !node.plainText && node === parent.renderChildren[direction === 'Top' ? 0 : parent.renderChildren.length - 1]) {
-        if ((parent[`margin${direction}`] > 0 || !parent.documentBody) && parent[`padding${direction}`] === 0 && parent[`border${direction}Width`] === 0) {
-            node.modifyBox(direction === 'Top' ? BOX_STANDARD.MARGIN_TOP : BOX_STANDARD.MARGIN_BOTTOM, null);
-        }
+function applyMarginCollapse<T extends Node>(parent: T, node: T, direction: boolean) {
+    if (!node.lineBreak &&
+        !node.plainText &&
+        node === parent[direction ? 'firstChild' : 'lastChild']() &&
+        parent[direction ? 'marginTop' : 'marginBottom'] > 0 &&
+        parent[direction ? 'borderTopWidth' : 'borderBottomWidth'] === 0 &&
+        parent[direction ? 'paddingTop' : 'paddingBottom'] === 0)
+    {
+        node.modifyBox(direction ? BOX_STANDARD.MARGIN_TOP : BOX_STANDARD.MARGIN_BOTTOM, null);
     }
 }
 
 export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
     public afterBaseLayout() {
         const processed = new Set<T>();
-        for (const node of this.application.session.cache) {
+        for (const node of this.application.processing.cache) {
             if (node.htmlElement && node.blockStatic) {
                 let firstChild: T | undefined;
                 let lastChild: T | undefined;
@@ -85,15 +89,15 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
                     }
                 }
                 if (firstChild) {
-                    applyMarginCollapse(node, firstChild, 'Top');
+                    applyMarginCollapse(node, firstChild, true);
                 }
                 if (lastChild) {
-                    applyMarginCollapse(node, lastChild, 'Bottom');
+                    applyMarginCollapse(node, lastChild, false);
                 }
             }
         }
-        for (const element of this.application.parseElements) {
-            flatMap(Array.from(element.getElementsByTagName('BR')), item => getElementAsNode(item) as T).forEach(node => {
+        if (this.application.processing.node) {
+            flatMap(Array.from(this.application.processing.node.element.getElementsByTagName('BR')), item => getElementAsNode(item) as T).forEach(node => {
                 if (!processed.has(node)) {
                     const actualParent = node.actualParent;
                     const previousSiblings = node.previousSiblings(true, true, true);
@@ -163,7 +167,7 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
                         }
                     }
                     else if (actualParent && actualParent.visible) {
-                        if (!actualParent.documentBody && previousSiblings.length) {
+                        if (!actualParent.documentRoot && previousSiblings.length) {
                             const previousStart = previousSiblings[previousSiblings.length - 1];
                             const offset = actualParent.box.bottom - previousStart.linear[previousStart.lineBreak || previousStart.excluded ? 'top' : 'bottom'];
                             if (offset > 0) {
@@ -197,7 +201,7 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
                 }
             });
         }
-        for (const node of this.application.session.excluded) {
+        for (const node of this.application.processing.excluded) {
             if (!processed.has(node) && !node.lineBreak) {
                 const offset = node.marginTop + node.marginBottom;
                 if (offset !== 0) {
@@ -215,7 +219,7 @@ export default abstract class WhiteSpace<T extends Node> extends Extension<T> {
     }
 
     public afterConstraints() {
-        for (const node of this.application.session.cache) {
+        for (const node of this.application.processing.cache) {
             const renderParent = node.renderAs ? node.renderAs.renderParent : node.renderParent;
             if (renderParent && node.pageFlow) {
                 if (!renderParent.hasAlign(NODE_ALIGNMENT.AUTO_LAYOUT) && !node.alignParent('left') && node.styleElement && node.inlineVertical) {

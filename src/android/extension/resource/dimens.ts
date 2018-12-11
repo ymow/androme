@@ -4,6 +4,11 @@ import View from '../../view';
 import $util = androme.lib.util;
 
 function getResourceKey(dimens: Map<string, string>, key: string, value: string) {
+    for (const [storedKey, storedvalue] of dimens.entries()) {
+        if (storedKey.startsWith(key) && value === storedvalue) {
+            return storedKey;
+        }
+    }
     return dimens.has(key) && dimens.get(key) !== value ? Resource.generateId('dimen', key, 1) : key;
 }
 

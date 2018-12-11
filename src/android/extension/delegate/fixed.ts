@@ -21,10 +21,10 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
     public condition(node: T) {
         const fixed = getFixedNodes(node);
         if (fixed.length > 0) {
-            const top = fixed.filter(item => item.has('top')).map(item => item.top);
-            const right = fixed.filter(item => item.has('right')).map(item => item.right);
-            const bottom = fixed.filter(item => item.has('bottom')).map(item => item.bottom);
-            const left = fixed.filter(item => item.has('left')).map(item => item.left);
+            const top = fixed.filter(item => item.has('top') && item.top >= 0).map(item => item.top);
+            const right = fixed.filter(item => item.has('right') && item.right >= 0).map(item => item.right);
+            const bottom = fixed.filter(item => item.has('bottom') && item.bottom >= 0).map(item => item.bottom);
+            const left = fixed.filter(item => item.has('left') && item.left >= 0).map(item => item.left);
             return (
                 withinBoxRegion(top, node.paddingTop + (node.documentBody ? node.marginTop : 0)) ||
                 withinBoxRegion(right, node.paddingRight + (node.documentBody ? node.marginRight : 0)) ||
@@ -39,7 +39,7 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const container = new View(
             this.application.nextId,
-            $dom.createElement(node.absoluteParent.baseElement, node.block),
+            $dom.createElement(node.baseElement, node.block),
             this.application.controllerHandler.delegateNodeInit
         ) as T;
         container.inherit(node, 'initial', 'base');
@@ -65,8 +65,8 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
         node.resetBox($enum.BOX_STANDARD.PADDING | (node.documentBody ? $enum.BOX_STANDARD.MARGIN : 0), container, true);
         if (node.documentBody && node.hasWidth && children.some(item => item.has('right'))) {
             container.css({
-                'minWidth': node.css('minWidth'),
-                'width': node.css('width')
+                'minWidth': node.cssInitial('minWidth'),
+                'width': node.cssInitial('width')
             }, '', true);
             node.css({
                 'minWidth': 'auto',

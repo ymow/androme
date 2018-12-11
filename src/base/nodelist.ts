@@ -2,7 +2,7 @@ import Container from './container';
 import Node from './node';
 
 import { getElementAsNode } from '../lib/dom';
-import { convertInt, isUnit, maxArray, minArray, withinFraction } from '../lib/util';
+import { convertInt, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -15,7 +15,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static baseline<T extends Node>(list: T[], text = false) {
-        let baseline = list.filter(item => !item.floating && !isUnit(item.verticalAlign) && !['absolute', 'fixed'].includes(item.cssInitial('position')));
+        let baseline = list.filter(item => item.baseline && !['absolute', 'fixed'].includes(item.cssInitial('position')));
         if (baseline.length) {
             list = baseline;
         }

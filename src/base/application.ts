@@ -1,4 +1,4 @@
-import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, USER_AGENT } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
 import Controller from './controller';
 import Extension from './extension';
@@ -135,6 +135,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 ext.postProcedure(node);
             }
         }
+        for (const node of nodes) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                node.setBoxSpacing();
+            }
+        }
         for (const ext of this.extensions) {
             ext.afterProcedure();
         }
@@ -144,6 +149,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const ext of this.extensions) {
             ext.afterFinalize();
         }
+        removeElementsByClassName('__css.placeholder');
         this.closed = true;
     }
 
@@ -195,7 +201,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const parseResume = () => {
             this.initialized = false;
             if (this.userSettings.preloadImages) {
-                removeElementsByClassName('androme.image.preload');
+                removeElementsByClassName('__css.preload');
             }
             for (const [uri, image] of this.session.image.entries()) {
                 Resource.ASSETS.images.set(uri, image);
@@ -228,7 +234,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
             for (const ext of this.extensions) {
                 ext.afterParseDocument();
             }
-            removeElementsByClassName('androme.display.none');
             if (typeof __THEN === 'function') {
                 __THEN.call(this);
             }
@@ -257,7 +262,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         image.height = imageElement.naturalHeight;
                     }
                     else {
-                        imageElement.className = 'androme.image.preload';
+                        imageElement.className = '__css.preload';
                         imageElement.style.display = 'none';
                         documentRoot.appendChild(imageElement);
                     }
@@ -875,6 +880,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 if (horizontal.length) {
                                                     if (!settings.floatOverlapDisabled &&
                                                         floatSegment.size &&
+                                                        !previous.autoMargin.horizontal &&
                                                         !previousSiblings.some(node => node.lineBreak && !cleared.has(node)) &&
                                                         cleared.get(item) !== 'both')
                                                     {
@@ -1059,15 +1065,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             for (const [id, templates] of this.processing.depthMap.entries()) {
                 const renderPosition = this._renderPosition.get(id);
-                let children: T[];
+                let children: T[] | undefined;
                 if (renderPosition) {
                     children = this.controllerHandler.sortRenderPosition(renderPosition.parent, renderPosition.children);
                 }
-                else {
+                else if (id !== 0) {
                     const parent = this.processing.cache.find('id', id);
                     children = parent ? this.controllerHandler.sortRenderPosition(parent, parent.children as T[]) : [];
                 }
-                if (children.length) {
+                if (children && children.length) {
                     const sorted = new Map<string, string>();
                     children.forEach(node => {
                         const key = node.renderPositionId;
@@ -1077,7 +1083,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     });
                     if (sorted.size === templates.size) {
-                        children.forEach((node, index) => node.renderIndex = index);
                         this.processing.depthMap.set(id, sorted);
                     }
                 }
@@ -1110,17 +1115,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
             documentRoot.hide();
         }
         this.processing.cache.sort((a, b) => {
-            if (!a.visible) {
+            if (!a.visible || !a.rendered) {
                 return 1;
             }
             else if (a.renderDepth !== b.renderDepth) {
                 return a.renderDepth < b.renderDepth ? -1 : 1;
             }
-            else if (a.documentParent !== b.documentParent) {
-                return a.documentParent.id >= b.documentParent.id ? 1 : -1;
+            else if (a.renderParent !== b.renderParent) {
+                return a.documentParent.id < b.documentParent.id ? -1 : 1;
             }
             else {
-                return a.renderIndex >= b.renderIndex ? 1 : -1;
+                return a.siblingIndex < b.siblingIndex ? -1 : 1;
             }
         });
         this.session.cache.children.push(...this.processing.cache.duplicate());

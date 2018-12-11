@@ -55,7 +55,7 @@ declare global {
             export function isPlainText(element: Element, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Element, lineBreak?: boolean, trimString?: boolean): boolean;
             export function isLineBreak(element: Element, excluded?: boolean): boolean;
-            export function getBetweenElements(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
+            export function getElementsBetween(elementStart: Element | null, elementEnd: Element, whiteSpace?: boolean, asNode?: boolean): Element[];
             export function getPreviousElementSibling(element: Element): Element | null;
             export function getNextElementSibling(element: Element): Element | null;
             export function hasComputedStyle(element: UndefNull<Element>): element is HTMLElement;

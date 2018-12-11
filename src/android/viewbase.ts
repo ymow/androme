@@ -18,7 +18,7 @@ type T = androme.lib.base.Node;
 function setLineHeight(node: T, lineHeight: number) {
     const offset = lineHeight - (node.hasHeight ? parseInt(node.convertPX(node.css('height'), false, true)) : node.bounds.height - (node.paddingTop + node.paddingBottom));
     if (offset > 0) {
-        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? node.toInt('verticalAlign') : 0));
+        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? $util.convertInt(node.verticalAlign) : 0));
         node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
     }
 }
@@ -166,6 +166,7 @@ export default (Base: Constructor<T>) => {
                                 documentId,
                                 horizontal: $util.indexOf(position.toLowerCase(), 'left', 'right') !== -1
                             };
+                            return true;
                         }
                     }
                 }
@@ -175,8 +176,10 @@ export default (Base: Constructor<T>) => {
                     }
                     const attr: string = LAYOUT_ANDROID[documentId === 'true' ? 'relativeParent' : 'relative'][position];
                     this.android(this.localizeString(attr), documentId, overwrite);
+                    return true;
                 }
             }
+            return false;
         }
 
         public anchorParent(orientation: string, overwrite = false, constraintBias = false) {
@@ -191,13 +194,16 @@ export default (Base: Constructor<T>) => {
                         if (constraintBias) {
                             this.app(`layout_constraint${$util.capitalize(orientation)}_bias`, this[`${orientation}Bias`]);
                         }
+                        return true;
                     }
                 }
                 else if (renderParent.layoutRelative) {
                     this.anchor(horizontal ? 'left' : 'top', 'true');
                     this.anchor(horizontal ? 'right' : 'bottom', 'true');
+                    return true;
                 }
             }
+            return false;
         }
 
         public anchorDelete(...position: string[]) {
@@ -397,8 +403,14 @@ export default (Base: Constructor<T>) => {
             }
             if (position) {
                 node.anchorClear();
-                node.anchor('left', this.documentId);
-                node.anchor('top', this.documentId);
+                if (node.anchor('left', this.documentId)) {
+                    Object.assign(node.unsafe('boxReset'), { marginLeft: 1 });
+                    Object.assign(node.unsafe('boxAdjustment'), { marginLeft: 0 });
+                }
+                if (node.anchor('top', this.documentId)) {
+                    Object.assign(node.unsafe('boxReset'), { marginTop: 1 });
+                    Object.assign(node.unsafe('boxAdjustment'), { marginTop: 0 });
+                }
             }
             node.inherit(this, 'initial', 'base', 'alignment', 'styleMap');
             Object.assign(node.unsafe('cached'), this.unsafe('cached'));
@@ -496,6 +508,7 @@ export default (Base: Constructor<T>) => {
                     this.android('layout_width', 'wrap_content', false);
                 }
                 else if (
+                    this.flexElement && renderParent && renderParent.hasWidth ||
                     !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
                     this.layoutFrame && (
                         $NodeList.floated(children).size === 2 ||
@@ -618,7 +631,7 @@ export default (Base: Constructor<T>) => {
                 if (this.pageFlow) {
                     const children = this.renderChildren;
                     let floating = '';
-                    if (this.inlineVertical && renderParent.is(CONTAINER_NODE.LINEAR, CONTAINER_NODE.GRID)) {
+                    if (this.inlineVertical && (!renderParent.support.container.positionRelative && renderParent.layoutHorizontal || renderParent.is(CONTAINER_NODE.GRID))) {
                         switch (this.cssInitial('verticalAlign', true)) {
                             case 'top':
                                 verticalAlign = 'top';

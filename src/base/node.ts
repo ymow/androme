@@ -19,7 +19,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public alignmentType = 0;
     public depth = -1;
     public siblingIndex = Number.MAX_VALUE;
-    public renderIndex = Number.MAX_VALUE;
     public renderPosition = -1;
     public documentRoot = false;
     public baselineActive = false;
@@ -83,6 +82,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract setControlType(viewName: string, containerType?: number): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
+    public abstract setBoxSpacing(): void;
     public abstract applyOptimizations(): void;
     public abstract applyCustomizations(): void;
     public abstract alignParent(position: string): boolean;
@@ -363,6 +363,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                         previous.textElement && previous.css('whiteSpace') === 'nowrap'
                     ) ||
                     previous.lineBreak ||
+                    previous.autoMargin.leftRight ||
                     previous.float === 'left' && this.autoMargin.right ||
                     previous.float === 'right' && this.autoMargin.left
                 );
@@ -664,7 +665,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             if (this.styleElement) {
                 this._bounds = assignBounds(element.getBoundingClientRect());
                 if (this.documentBody) {
-                    this._bounds.top = this.marginTop + this.paddingTop;
+                    this._bounds.top = this.paddingTop;
                 }
             }
             else if (this.plainText) {
@@ -828,7 +829,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (element) {
             for (let i = 0; i < element.childNodes.length; i++) {
                 const node = getElementAsNode<T>(<Element> element.childNodes[i]);
-                if (node && this.initial.children.includes(node)) {
+                if (node) {
                     return node;
                 }
             }
@@ -841,7 +842,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (element) {
             for (let i = element.childNodes.length - 1; i >= 0; i--) {
                 const node = getElementAsNode<T>(<Element> element.childNodes[i]);
-                if (node && this.initial.children.includes(node)) {
+                if (node) {
                     return node;
                 }
             }
