@@ -25,6 +25,7 @@ declare global {
             verticalBias(): number;
             supported(obj: string, attr: string, result?: {}): boolean;
             combine(...objs: string[]): string[];
+            setBoxSpacing(): void;
         }
 
         export class View implements View {

@@ -54,7 +54,7 @@ export default class ResourceDimens<T extends View> extends androme.lib.base.Ext
     public afterFinalize() {
         const dimens = Resource.STORED.dimens;
         for (const view of this.application.viewData) {
-            const pattern = /[\s\n]+<[^<]*?(\w+):(\w+)="([\d.]+(?:px|dp|sp))"/;
+            const pattern = /[\s\n]+<[^<]*?(\w+):(\w+)="(-?[\d.]+(?:px|dp|sp))"/;
             let match: RegExpExecArray | null;
             let content = view.content;
             while ((match = pattern.exec(content)) !== null) {

@@ -87,7 +87,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyCustomizations(): void;
     public abstract alignParent(position: string): boolean;
     public abstract localizeString(value: string): string;
-    public abstract clone(id?: number, children?: boolean): T;
+    public abstract clone(id?: number, attributes?: boolean, position?: boolean): T;
     public abstract set containerType(value: number);
     public abstract get containerType(): number;
     public abstract get documentId(): string;
@@ -189,7 +189,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         this.rendered = true;
     }
 
-    public hide() {
+    public hide(invisible?: boolean) {
         this.rendered = true;
         this.visible = false;
     }

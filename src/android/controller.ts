@@ -20,32 +20,28 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-function sortByAlignment<T extends View>(list: T[], alignmentType: number) {
-    if ($util.hasBit($enum.NODE_ALIGNMENT.HORIZONTAL | $enum.NODE_ALIGNMENT.FLOAT, alignmentType)) {
-        function sortHorizontal(nodes: T[]) {
-            if (nodes.some(node => node.floating) && !($util.hasBit($enum.NODE_ALIGNMENT.HORIZONTAL, alignmentType) && nodes.every(node => node.float === 'right'))) {
-                nodes.sort((a, b) => {
-                    if (a.floating && !b.floating) {
-                        return a.float === 'left' ? -1 : 1;
-                    }
-                    else if (!a.floating && b.floating) {
-                        return b.float === 'left' ? 1 : -1;
-                    }
-                    else if (a.floating && b.floating) {
-                        if (a.float !== b.float) {
-                            return a.float === 'left' ? -1 : 1;
-                        }
-                        else if (a.float === 'right' && b.float === 'right') {
-                            return -1;
-                        }
-                    }
-                    return 0;
-                });
-                return true;
-            }
-            return false;
+function sortLinearHorizontal<T extends View>(list: T[]) {
+    const result = list.slice().sort((a, b) => {
+        if (a.floating && !b.floating) {
+            return a.float === 'left' ? -1 : 1;
         }
-        return sortHorizontal(list);
+        else if (!a.floating && b.floating) {
+            return b.float === 'left' ? 1 : -1;
+        }
+        else if (a.floating && b.floating) {
+            if (a.float !== b.float) {
+                return a.float === 'left' ? -1 : 1;
+            }
+            else if (a.float === 'right' && b.float === 'right') {
+                return -1;
+            }
+        }
+        return 0;
+    });
+    if (result.map(item => item.id).join('-') !== list.map(item => item.id).join('-')) {
+        list.length = 0;
+        list.push(...result);
+        return true;
     }
     return false;
 }
@@ -308,7 +304,15 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 const indent = $util.repeat(node.renderDepth + 1);
                 return node.combine().map(value => `\n${indent + value}`).join('');
             }
-            const cache: StringMap[] = data.cache.visible.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: parseAttributes(node) }));
+            const cache: StringMap[] = data.cache.visible.map(node => {
+                if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                    node.setBoxSpacing();
+                }
+                return {
+                    pattern: $xml.formatPlaceholder(node.id, '@'),
+                    attributes: parseAttributes(node)
+                };
+            });
             for (const value of [...data.views, ...data.includes]) {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, getRootNamespace(value.content));
@@ -317,7 +321,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         for (const value of [...data.views, ...data.includes]) {
             value.content = replaceUnit(value.content, settings.resolutionDPI, settings.convertPixels);
             value.content = replaceTab(value.content, settings.insertSpaces);
-            value.content = this.removePlaceholders(value.content).replace(/\n\n/g, '\n');
+            value.content = this.removePlaceholders(value.content);
         }
     }
 
@@ -390,7 +394,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     else {
                         layout.setType(CONTAINER_NODE.LINEAR);
                         if (layout.floated.size) {
-                            layout.renderPosition = sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
+                            layout.renderPosition = sortLinearHorizontal(layout.children);
                         }
                     }
                     layout.add($enum.NODE_ALIGNMENT.HORIZONTAL);
@@ -496,7 +500,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         else if (!strictMode || layout.linearX && !layout.floated.has('right')) {
             containerType = CONTAINER_NODE.LINEAR;
             if (layout.floated.size) {
-                layout.renderPosition = sortByAlignment(layout.children, $enum.NODE_ALIGNMENT.FLOAT);
+                layout.renderPosition = sortLinearHorizontal(layout.children);
             }
         }
         if (containerType !== 0) {
@@ -554,11 +558,19 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkConstraintFloat(layout: $Layout<T>) {
-        return layout.floated.size === 1 && layout.every(node => node.floating && node.marginLeft >= 0 && node.marginRight >= 0 && (!node.positionRelative || node.left >= 0 && node.top >= 0));
+        return (
+            layout.floated.size === 1 &&
+            layout.every(node => node.floating && node.marginLeft >= 0 && node.marginRight >= 0 && (!node.positionRelative || node.left >= 0 && node.top >= 0))
+        );
     }
 
     public checkConstraintHorizontal(layout: $Layout<T>) {
-        return !layout.parent.hasHeight && new Set(layout.map(node => node.bounds.height)).size !== 1 && layout.some(node => node.verticalAlign === 'bottom') && layout.every(node => node.inlineVertical && (node.baseline || node.verticalAlign === 'bottom'));
+        return (
+            !layout.parent.hasHeight &&
+            new Set(layout.map(node => node.bounds.height)).size !== 1 &&
+            layout.some(node => node.verticalAlign === 'bottom') &&
+            layout.every(node => node.inlineVertical && (node.baseline || node.verticalAlign === 'bottom'))
+        );
     }
 
     public checkRelativeHorizontal(layout: $Layout<T>) {
@@ -731,10 +743,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public renderNode(layout: $Layout<T>) {
-        const [node, parent, containerType, alignmentType] = [layout.node, layout.parent, layout.containerType, layout.alignmentType];
-        node.alignmentType |= alignmentType;
-        const controlName = View.getControlName(containerType);
-        node.setControlType(controlName, containerType);
+        const [node, parent] = [layout.node, layout.parent];
+        node.alignmentType |= layout.alignmentType;
+        const controlName = View.getControlName(layout.containerType);
+        node.setControlType(controlName, layout.containerType);
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         switch (node.element.tagName) {
             case 'IMG': {
@@ -804,7 +816,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 container.companion = node;
                             }
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
-                            container.init();
                             container.inherit(node, 'base');
                             container.css('zIndex', node.css('zIndex'));
                             container.exclude({
@@ -849,10 +860,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (element.maxLength > 0) {
                     node.android('maxLength', element.maxLength.toString());
                 }
-                if (!node.hasWidth) {
-                    if (element.cols) {
-                        node.css('width', $util.formatPX(element.cols * 8), true);
-                    }
+                if (!node.hasWidth && element.cols > 0) {
+                    node.css('width', $util.formatPX(element.cols * 8), true);
                 }
                 node.android('hint', element.placeholder);
                 node.android('scrollbars', AXIS_ANDROID.VERTICAL);
@@ -1032,7 +1041,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         if (node.dataset.constraintOpposite === 'true') {
             opposite = true;
         }
-        const documentParent = parent.groupParent ? parent : node.documentParent;
+        const documentParent = parent.groupParent ? parent : node.documentParent as T;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 const horizontal = index === 0;
@@ -1131,11 +1140,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (!node.pageFlow) {
                     if (node.absoluteParent === documentParent) {
                         if (horizontal) {
-                            location = adjustDocumentRootOffset(location, documentParent as T, 'Left');
+                            location = adjustDocumentRootOffset(location, documentParent, 'Left');
                         }
                         else {
                             const reset = documentParent.valueBox($enum.BOX_STANDARD.PADDING_TOP);
-                            location = adjustDocumentRootOffset(location, documentParent as T, 'Top', reset[0] === 1);
+                            location = adjustDocumentRootOffset(location, documentParent, 'Top', reset[0] === 1);
                         }
                     }
                 }

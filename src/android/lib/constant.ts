@@ -98,7 +98,7 @@ export const LAYOUT_ANDROID = {
         right: 'layout_alignParentRight',
         bottom: 'layout_alignParentBottom',
         centerHorizontal: 'layout_centerHorizontal',
-        centerVertical: 'layout_centerVertical',
+        centerVertical: 'layout_centerVertical'
     },
     relative: {
         left: 'layout_alignLeft',
@@ -109,7 +109,7 @@ export const LAYOUT_ANDROID = {
         leftRight: 'layout_toRightOf',
         rightLeft: 'layout_toLeftOf',
         topBottom: 'layout_below',
-        bottomTop: 'layout_above',
+        bottomTop: 'layout_above'
     },
     constraint: {
         left: 'layout_constraintLeft_toLeftOf',

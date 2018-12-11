@@ -11,4 +11,4 @@ span    { margin:0; padding:2px; background-color:white; }
 *.relative { position:relative; }
 *.absolute { position:absolute; z-index:auto;
              left:450px; top:0; width:130px; height:130px; background-color:yellow; }
-*.offset   { left:20px; top:auto; }
+*.offset   { right:20px; top:10px; }

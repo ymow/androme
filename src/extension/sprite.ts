@@ -11,7 +11,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
         let valid = false;
         if (node.hasWidth && node.hasHeight && node.length === 0 && !node.inlineText) {
             let url = node.css('backgroundImage');
-            if (!url || url === 'none') {
+            if (!hasValue(url) || url === 'none') {
                 url = '';
                 const match = REGEX_PATTERN.CSS_URL.exec(node.css('background'));
                 if (match) {
@@ -27,7 +27,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
                     const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, dpi, fontSize);
                     const height = convertClientUnit(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, dpi, fontSize);
                     const position = getBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, dpi, fontSize);
-                    if (width > 0 && position.left <= 0 && image.width > width && height > 0 && position.top <= 0 && image.height > height) {
+                    if (position.left <= 0 && position.top <= 0 && image.width > width && image.height > height) {
                         image.position = { x: position.left, y: position.top };
                         node.data(EXT_NAME.SPRITE, 'mainData', image);
                         valid = true;

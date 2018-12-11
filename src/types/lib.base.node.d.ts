@@ -131,7 +131,7 @@ declare global {
             valueBox(region: number): [number, number];
             alignParent(position: string): boolean;
             localizeString(value: string): string;
-            clone(id?: number, children?: boolean): Node;
+            clone(id?: number, attributes?: boolean, position?: boolean): Node;
             init(): void;
             is(...containers: number[]): boolean;
             of(containerType: number, ...alignmentType: number[]): boolean;
@@ -142,7 +142,7 @@ declare global {
             apply(options: {}): void;
             each(predicate: IteratorPredicate<Node, void>, rendered?: boolean): this;
             render(parent: Node): void;
-            hide(): void;
+            hide(invisible?: boolean): void;
             data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
             unsetCache(...attrs: string[]): void;
             ascend(generated?: boolean, levels?: number): Node[];

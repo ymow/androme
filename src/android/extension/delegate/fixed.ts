@@ -38,16 +38,14 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
     public processNode(node: T, parent: T): ExtensionResult<T> {
         const container = new View(
             this.application.nextId,
-            $dom.createElement(node.absoluteParent.baseElement),
+            $dom.createElement(node.absoluteParent.baseElement, node.block),
             this.application.controllerHandler.delegateNodeInit
         ) as T;
         container.inherit(node, 'initial', 'base');
         container.exclude({
             procedure: $enum.NODE_PROCEDURE.NONPOSITIONAL,
-            resource: $enum.NODE_RESOURCE.ASSET
+            resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET
         });
-        container.android('layout_width', node.hasWidth || node.documentBody ? 'match_parent' : 'wrap_content');
-        container.android('layout_height',  node.hasHeight || node.documentBody ? 'match_parent' : 'wrap_content');
         const [normal, nested] = $util.partition(getFixedNodes(node), item => item.absoluteParent === node.absoluteParent);
         normal.push(container);
         const children = [
@@ -60,9 +58,9 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
             }
         });
         container.parent = node;
+        this.application.processing.cache.append(container);
         children.forEach((item, index) => item.siblingIndex = index);
         node.sort($NodeList.siblingIndex);
-        this.application.processing.cache.append(container);
         node.resetBox($enum.BOX_STANDARD.PADDING | (node.documentBody ? $enum.BOX_STANDARD.MARGIN : 0), container, true);
         const layout = new $Layout(
             parent,

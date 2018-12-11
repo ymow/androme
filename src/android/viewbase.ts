@@ -219,6 +219,19 @@ export default (Base: Constructor<T>) => {
             }
         }
 
+        public anchorClear() {
+            const renderParent = this.renderParent as View;
+            if (renderParent) {
+                if (renderParent.layoutConstraint) {
+                    this.anchorDelete(...Object.keys(LAYOUT_ANDROID.constraint));
+                }
+                else if (renderParent.layoutRelative) {
+                    this.anchorDelete(...Object.keys(LAYOUT_ANDROID.relativeParent));
+                    this.anchorDelete(...Object.keys(LAYOUT_ANDROID.relative));
+                }
+            }
+        }
+
         public alignParent(position: string) {
             const renderParent = this.renderParent as View;
             if (renderParent) {
@@ -247,7 +260,7 @@ export default (Base: Constructor<T>) => {
                     return value !== 'parent' && value !== renderParent.documentId ? value : '';
                 }
                 else if (renderParent.is(CONTAINER_NODE.RELATIVE)) {
-                    const attr = LAYOUT_ANDROID.relative[position];
+                    const attr: string = LAYOUT_ANDROID.relative[position];
                     return this.android(this.localizeString(attr)) || this.android(attr);
                 }
             }
@@ -301,12 +314,12 @@ export default (Base: Constructor<T>) => {
 
         public combine(...objs: string[]) {
             const result: string[] = [];
-            for (const value of this._namespaces.values()) {
-                const obj: StringMap = this[`__${value}`];
-                if (objs.length === 0 || objs.includes(value)) {
+            for (const name of this._namespaces.values()) {
+                const obj: StringMap = this[`__${name}`];
+                if (objs.length === 0 || objs.includes(name)) {
                     for (const attr in obj) {
-                        if (value !== '_') {
-                            result.push(`${value}:${attr}="${obj[attr]}"`);
+                        if (name !== '_') {
+                            result.push(`${name}:${attr}="${obj[attr]}"`);
                         }
                         else {
                             result.push(`${attr}="${obj[attr]}"`);
@@ -334,27 +347,61 @@ export default (Base: Constructor<T>) => {
             return value;
         }
 
-        public clone(id?: number, children = false): View {
+        public hide(invisible?: boolean) {
+            if (invisible) {
+                this.android('visibility', 'invisible');
+            }
+            else {
+                super.hide();
+            }
+        }
+
+        public clone(id?: number, attributes = false, position = false): View {
             const node = new View(id || this.id, this.baseElement);
             Object.assign(node.localSettings, this.localSettings);
-            node.containerType = this.containerType;
-            node.alignmentType = this.alignmentType;
             node.tagName = this.tagName;
-            node.controlId = this.controlId;
-            node.controlName = this.controlName;
+            if (id) {
+                node.setControlType(this.controlName, this.containerType);
+            }
+            else {
+                node.controlId = this.controlId;
+                node.controlName = this.controlName;
+                node.containerType = this.containerType;
+            }
+            node.alignmentType = this.alignmentType;
             node.depth = this.depth;
             node.visible = this.visible;
             node.excluded = this.excluded;
             node.rendered = this.rendered;
             node.renderDepth = this.renderDepth;
             node.renderParent = this.renderParent;
-            node.renderExtension = this.renderExtension;
             node.documentParent = this.documentParent;
             node.documentRoot = this.documentRoot;
-            if (children) {
+            if (this.length) {
                 node.retain(this.duplicate());
             }
-            node.inherit(this, 'initial', 'base', 'styleMap');
+            if (attributes) {
+                Object.assign(node.unsafe('boxReset'), this._boxReset);
+                Object.assign(node.unsafe('boxAdjustment'), this._boxAdjustment);
+                for (const name of this._namespaces.values()) {
+                    const obj: StringMap = this[`__${name}`];
+                    for (const attr in obj) {
+                        if (name === 'android' && attr === 'id') {
+                            node.attr(name, attr, node.documentId);
+                        }
+                        else {
+                            node.attr(name, attr, obj[attr]);
+                        }
+                    }
+                }
+            }
+            if (position) {
+                node.anchorClear();
+                node.anchor('left', this.documentId);
+                node.anchor('top', this.documentId);
+            }
+            node.inherit(this, 'initial', 'base', 'alignment', 'styleMap');
+            Object.assign(node.unsafe('cached'), this.unsafe('cached'));
             return node;
         }
 
@@ -692,11 +739,10 @@ export default (Base: Constructor<T>) => {
                 this.alignHorizontalLayout();
                 this.alignVerticalLayout();
             }
-            this.setBoxSpacing();
             switch (this.cssParent('visibility', true)) {
                 case 'hidden':
                 case 'collapse':
-                    this.android('visibility', 'invisible');
+                    this.hide(true);
                     break;
             }
         }
@@ -716,6 +762,100 @@ export default (Base: Constructor<T>) => {
                     }
                 }
             }
+        }
+
+        public setBoxSpacing() {
+            const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
+            if (stored) {
+                if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right')) {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
+                }
+                if (this.css('marginLeft') === 'auto') {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                }
+                if (this.css('marginRight') === 'auto') {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
+                }
+            }
+            const boxModel: BoxMargin & BoxPadding = {
+                marginTop: 0,
+                marginRight: 0,
+                marginBottom: 0,
+                marginLeft: 0,
+                paddingTop: 0,
+                paddingRight: 0,
+                paddingBottom: 0,
+                paddingLeft: 0
+            };
+            ['margin', 'padding'].forEach((region, index) => {
+                ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
+                    const dimension = region + direction;
+                    let value = 0;
+                    if (!(dimension === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
+                        value += this._boxReset[dimension] === 0 ? this[dimension] : 0;
+                    }
+                    value += this._boxAdjustment[dimension];
+                    boxModel[region + direction] = value;
+                });
+                const prefix = index === 0 ? 'layout_margin' : 'padding';
+                const top = `${region}Top`;
+                const right = `${region}Right`;
+                const bottom = `${region}Bottom`;
+                const left = `${region}Left`;
+                const localizeLeft = this.localizeString('Left');
+                const localizeRight = this.localizeString('Right');
+                const renderParent = this.renderParent;
+                let mergeAll: number | undefined;
+                let mergeHorizontal: number | undefined;
+                let mergeVertical: number | undefined;
+                if (this.supported('android', 'layout_marginHorizontal') && !(index === 0 && renderParent && renderParent.is(CONTAINER_NODE.GRID))) {
+                    if (boxModel[top] === boxModel[right] && boxModel[right] === boxModel[bottom] && boxModel[bottom] === boxModel[left]) {
+                        mergeAll = boxModel[top];
+                    }
+                    else {
+                        if (boxModel[left] === boxModel[right]) {
+                            mergeHorizontal = boxModel[left];
+                        }
+                        if (boxModel[top] === boxModel[bottom]) {
+                            mergeVertical = boxModel[top];
+                        }
+                    }
+                }
+                if (mergeAll !== undefined) {
+                    if (mergeAll !== 0) {
+                        this.android(prefix, $util.formatPX(mergeAll));
+                    }
+                }
+                else {
+                    if (mergeHorizontal !== undefined) {
+                        if (mergeHorizontal !== 0) {
+                            this.android(`${prefix}Horizontal`, $util.formatPX(mergeHorizontal));
+                        }
+                    }
+                    else {
+                        if (boxModel[left] !== 0) {
+                            this.android(prefix + localizeLeft, $util.formatPX(boxModel[left]));
+                        }
+                        if (boxModel[right] !== 0) {
+                            this.android(prefix + localizeRight, $util.formatPX(boxModel[right]));
+                        }
+                    }
+                    if (mergeVertical !== undefined) {
+                        if (mergeVertical !== 0) {
+                            this.android(`${prefix}Vertical`, $util.formatPX(mergeVertical));
+                        }
+                    }
+                    else {
+                        if (boxModel[top] !== 0) {
+                            this.android(`${prefix}Top`, $util.formatPX(boxModel[top]));
+                        }
+                        if (boxModel[bottom] !== 0) {
+                            this.android(`${prefix}Bottom`, $util.formatPX(boxModel[bottom]));
+                        }
+                    }
+                }
+            });
         }
 
         private autoSizeBoxModel() {
@@ -892,102 +1032,6 @@ export default (Base: Constructor<T>) => {
                         this.each((node: View) => !node.layoutHorizontal && setLineHeight(node, lineHeight), true);
                     }
                 }
-            }
-        }
-
-        private setBoxSpacing() {
-            if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
-                if (stored) {
-                    if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right')) {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                    }
-                    if (this.css('marginLeft') === 'auto') {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                    }
-                    if (this.css('marginRight') === 'auto') {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                    }
-                }
-                const boxModel: BoxMargin & BoxPadding = {
-                    marginTop: 0,
-                    marginRight: 0,
-                    marginBottom: 0,
-                    marginLeft: 0,
-                    paddingTop: 0,
-                    paddingRight: 0,
-                    paddingBottom: 0,
-                    paddingLeft: 0
-                };
-                ['margin', 'padding'].forEach((region, index) => {
-                    ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-                        const dimension = region + direction;
-                        let value = 0;
-                        if (!(dimension === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
-                            value += this._boxReset[dimension] === 0 ? this[dimension] : 0;
-                        }
-                        value += this._boxAdjustment[dimension];
-                        boxModel[region + direction] = value;
-                    });
-                    const prefix = index === 0 ? 'layout_margin' : 'padding';
-                    const top = `${region}Top`;
-                    const right = `${region}Right`;
-                    const bottom = `${region}Bottom`;
-                    const left = `${region}Left`;
-                    const localizeLeft = this.localizeString('Left');
-                    const localizeRight = this.localizeString('Right');
-                    const renderParent = this.renderParent;
-                    let mergeAll: number | undefined;
-                    let mergeHorizontal: number | undefined;
-                    let mergeVertical: number | undefined;
-                    if (this.supported('android', 'layout_marginHorizontal') && !(index === 0 && renderParent && renderParent.is(CONTAINER_NODE.GRID))) {
-                        if (boxModel[top] === boxModel[right] && boxModel[right] === boxModel[bottom] && boxModel[bottom] === boxModel[left]) {
-                            mergeAll = boxModel[top];
-                        }
-                        else {
-                            if (boxModel[left] === boxModel[right]) {
-                                mergeHorizontal = boxModel[left];
-                            }
-                            if (boxModel[top] === boxModel[bottom]) {
-                                mergeVertical = boxModel[top];
-                            }
-                        }
-                    }
-                    if (mergeAll !== undefined) {
-                        if (mergeAll !== 0) {
-                            this.android(prefix, $util.formatPX(mergeAll));
-                        }
-                    }
-                    else {
-                        if (mergeHorizontal !== undefined) {
-                            if (mergeHorizontal !== 0) {
-                                this.android(`${prefix}Horizontal`, $util.formatPX(mergeHorizontal));
-                            }
-                        }
-                        else {
-                            if (boxModel[left] !== 0) {
-                                this.android(prefix + localizeLeft, $util.formatPX(boxModel[left]));
-                            }
-                            if (boxModel[right] !== 0) {
-                                this.android(prefix + localizeRight, $util.formatPX(boxModel[right]));
-                            }
-                        }
-                        if (mergeVertical !== undefined) {
-                            if (mergeVertical !== 0) {
-                                this.android(`${prefix}Vertical`, $util.formatPX(mergeVertical));
-                            }
-                        }
-                        else {
-                            if (boxModel[top] !== 0) {
-                                this.android(`${prefix}Top`, $util.formatPX(boxModel[top]));
-                            }
-                            if (boxModel[bottom] !== 0) {
-                                this.android(`${prefix}Bottom`, $util.formatPX(boxModel[bottom]));
-                            }
-                        }
-                    }
-                });
             }
         }
 

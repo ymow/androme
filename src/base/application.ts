@@ -1070,8 +1070,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (children.length) {
                     const sorted = new Map<string, string>();
                     children.forEach(node => {
-                        const key = node.id + (node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
-                        const result = templates.get(key) || (node.companion ? templates.get(node.companion.id.toString()) : null);
+                        const key = node.renderPositionId;
+                        const result = templates.get(key) || (node.companion ? templates.get(node.companion.renderPositionId) : null);
                         if (result) {
                             sorted.set(key, result);
                         }
@@ -1685,7 +1685,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (floating.length > 1) {
                                 subgroup = controller.createNodeGroup(floating[0], floating, basegroup);
                                 layout.add(NODE_ALIGNMENT.FLOAT);
-                                if (floating.every(item => item.float === 'right')) {
+                                if (pageFlow.length === 0 && floating.every(item => item.float === 'right')) {
                                     layout.add(NODE_ALIGNMENT.RIGHT);
                                 }
                             }
