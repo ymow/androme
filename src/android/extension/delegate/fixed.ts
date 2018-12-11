@@ -29,7 +29,8 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
                 withinBoxRegion(top, node.paddingTop + (node.documentBody ? node.marginTop : 0)) ||
                 withinBoxRegion(right, node.paddingRight + (node.documentBody ? node.marginRight : 0)) ||
                 withinBoxRegion(bottom, node.paddingBottom + (node.documentBody ? node.marginBottom : 0)) ||
-                withinBoxRegion(left, node.paddingLeft + (node.documentBody ? node.marginLeft : 0))
+                withinBoxRegion(left, node.paddingLeft + (node.documentBody ? node.marginLeft : 0)) ||
+                node.documentBody && right.length > 0 && node.hasWidth
             );
         }
         return false;
@@ -46,7 +47,7 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
             procedure: $enum.NODE_PROCEDURE.NONPOSITIONAL,
             resource: $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET
         });
-        const [normal, nested] = $util.partition(getFixedNodes(node), item => item.absoluteParent === node.absoluteParent);
+        const [normal, nested] = $util.partition(getFixedNodes(node), item => item.absoluteParent === node);
         normal.push(container);
         const children = [
             ...$util.sortAsc(normal, 'zIndex', 'id'),
@@ -62,6 +63,17 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
         children.forEach((item, index) => item.siblingIndex = index);
         node.sort($NodeList.siblingIndex);
         node.resetBox($enum.BOX_STANDARD.PADDING | (node.documentBody ? $enum.BOX_STANDARD.MARGIN : 0), container, true);
+        if (node.documentBody && node.hasWidth && children.some(item => item.has('right'))) {
+            container.css({
+                'minWidth': node.css('minWidth'),
+                'width': node.css('width')
+            }, '', true);
+            node.css({
+                'minWidth': 'auto',
+                'width': 'auto'
+            }, '', true);
+            node.android('layout_width', 'match_parent');
+        }
         const layout = new $Layout(
             parent,
             node,

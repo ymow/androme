@@ -20,28 +20,30 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-function sortLinearHorizontal<T extends View>(list: T[]) {
-    const result = list.slice().sort((a, b) => {
-        if (a.floating && !b.floating) {
-            return a.float === 'left' ? -1 : 1;
-        }
-        else if (!a.floating && b.floating) {
-            return b.float === 'left' ? 1 : -1;
-        }
-        else if (a.floating && b.floating) {
-            if (a.float !== b.float) {
+function sortFloatHorizontal<T extends View>(list: T[]) {
+    if (list.some(node => node.floating)) {
+        const result = list.slice().sort((a, b) => {
+            if (a.floating && !b.floating) {
                 return a.float === 'left' ? -1 : 1;
             }
-            else if (a.float === 'right' && b.float === 'right') {
-                return -1;
+            else if (!a.floating && b.floating) {
+                return b.float === 'left' ? 1 : -1;
             }
+            else if (a.floating && b.floating) {
+                if (a.float !== b.float) {
+                    return a.float === 'left' ? -1 : 1;
+                }
+                else if (a.float === 'right' && b.float === 'right') {
+                    return -1;
+                }
+            }
+            return 0;
+        });
+        if (result.map(item => item.id).join('-') !== list.map(item => item.id).join('-')) {
+            list.length = 0;
+            list.push(...result);
+            return true;
         }
-        return 0;
-    });
-    if (result.map(item => item.id).join('-') !== list.map(item => item.id).join('-')) {
-        list.length = 0;
-        list.push(...result);
-        return true;
     }
     return false;
 }
@@ -394,7 +396,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     else {
                         layout.setType(CONTAINER_NODE.LINEAR);
                         if (layout.floated.size) {
-                            layout.renderPosition = sortLinearHorizontal(layout.children);
+                            layout.renderPosition = sortFloatHorizontal(layout.children);
                         }
                     }
                     layout.add($enum.NODE_ALIGNMENT.HORIZONTAL);
@@ -500,7 +502,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         else if (!strictMode || layout.linearX && !layout.floated.has('right')) {
             containerType = CONTAINER_NODE.LINEAR;
             if (layout.floated.size) {
-                layout.renderPosition = sortLinearHorizontal(layout.children);
+                layout.renderPosition = sortFloatHorizontal(layout.children);
             }
         }
         if (containerType !== 0) {
@@ -545,13 +547,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             if (layout.floated.has('right')) {
                 return true;
             }
-            else {
+            else if (!this.userSettings.floatOverlapDisabled && layout.floated.has('left')) {
                 const flowIndex = $util.minArray(sibling.map(node => node.siblingIndex));
                 const floatMap = floating.map(node => node.siblingIndex);
-                return layout.floated.has('left') && (
-                    floatMap.some(value => value > flowIndex) ||
-                    !this.userSettings.floatOverlapDisabled && floatMap.some(value => value < flowIndex) && sibling.some(node => node.blockStatic)
-                );
+                return floatMap.some(value => value < flowIndex) && sibling.some(node => node.blockStatic);
             }
         }
         return false;
@@ -574,10 +573,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public checkRelativeHorizontal(layout: $Layout<T>) {
-        const [floating, sibling] = layout.partition(node => node.floating);
-        const minFlow = $util.minArray(sibling.map(node => node.siblingIndex));
-        const maxFloat = $util.maxArray(floating.map(node => node.siblingIndex));
-        if (layout.floated.size === 2 || maxFloat > minFlow) {
+        if (layout.floated.size === 2) {
             return false;
         }
         return layout.some(node => node.positionRelative || node.textElement || node.imageElement || !node.baseline);
@@ -970,6 +966,14 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         return false;
                     });
                 }
+                if (node.has('maxWidth')) {
+                    const value = node.convertPX(node.css('maxWidth'));
+                    node.android('maxWidth', value);
+                }
+                if (node.has('maxHeight')) {
+                    const value = node.convertPX(node.css('maxHeight'), false);
+                    node.android('maxHeight', value);
+                }
                 break;
             case CONTAINER_ANDROID.BUTTON:
                 if (!node.cssInitial('verticalAlign')) {
@@ -1050,24 +1054,17 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 let RB: string;
                 let LTRB: string;
                 let RBLT: string;
-                let offset = 0;
                 if (horizontal) {
                     LT = !opposite ? 'left' : 'right';
                     RB = !opposite ? 'right' : 'left';
                     LTRB = !opposite ? 'leftRight' : 'rightLeft';
                     RBLT = !opposite ? 'rightLeft' : 'leftRight';
-                    if (node.positionRelative && node.left < 0) {
-                        offset = node.left;
-                    }
                 }
                 else {
                     LT = !opposite ? 'top' : 'bottom';
                     RB = !opposite ? 'bottom' : 'top';
                     LTRB = !opposite ? 'topBottom' : 'bottomTop';
                     RBLT = !opposite ? 'bottomTop' : 'topBottom';
-                    if (node.positionRelative && node.top < 0) {
-                        offset = node.top;
-                    }
                 }
                 let beginPercent = 'layout_constraintGuide_';
                 let usePercent = false;
@@ -1084,21 +1081,21 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 const pageFlow = node.pageFlow && item.pageFlow;
                                 let valid = false;
                                 if (pageFlow) {
-                                    if ($util.withinFraction(node.linear[LT] + offset, item.linear[RB])) {
+                                    if ($util.withinFraction(node.linear[LT], item.linear[RB])) {
                                         node.anchor(LTRB, item.documentId, true);
                                         valid = true;
                                     }
-                                    else if ($util.withinFraction(node.linear[RB] + offset, item.linear[LT])) {
+                                    else if ($util.withinFraction(node.linear[RB], item.linear[LT])) {
                                         node.anchor(RBLT, item.documentId, true);
                                         valid = true;
                                     }
                                 }
                                 if (pageFlow || !node.pageFlow && !item.pageFlow) {
-                                    if ($util.withinFraction(node.bounds[LT] + offset, item.bounds[LT])) {
+                                    if ($util.withinFraction(node.bounds[LT], item.bounds[LT])) {
                                         node.anchor(!horizontal && node.textElement && item.textElement && item.baseline && node.baseline && node.bounds.height === item.bounds.height ? 'baseline' : LT, item.documentId, true);
                                         valid = true;
                                     }
-                                    else if ($util.withinFraction(node.bounds[RB] + offset, item.bounds[RB])) {
+                                    else if ($util.withinFraction(node.bounds[RB], item.bounds[RB])) {
                                         node.anchor(RB, item.documentId, true);
                                         valid = true;
                                     }
@@ -1126,19 +1123,19 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                     }
                     if (percent) {
-                        const position = Math.abs((node[dimension][LT] + offset) - (documentParent.documentBody ? 0 : documentParent.box[LT])) / documentParent.box[horizontal ? 'width' : 'height'];
+                        const position = Math.abs(node[dimension][LT] - documentParent.box[LT]) / documentParent.box[horizontal ? 'width' : 'height'];
                         location = parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(this.localSettings.constraint.percentAccuracy));
                         usePercent = true;
                         beginPercent += 'percent';
                     }
                     else {
-                        location = (node[dimension][LT] + offset) - (documentParent.documentBody ? 0 : documentParent.box[!opposite ? LT : RB]);
+                        location = node[dimension][LT] - documentParent.box[!opposite ? LT : RB];
                         beginPercent += 'begin';
                     }
                 }
                 const guideline = parent.constraint.guideline || {};
                 if (!node.pageFlow) {
-                    if (node.absoluteParent === documentParent) {
+                    if (node.absoluteParent === node.documentParent) {
                         if (horizontal) {
                             location = adjustDocumentRootOffset(location, documentParent, 'Left');
                         }
@@ -1150,7 +1147,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 }
                 else {
                     if (node.inlineVertical) {
-                        const verticalAlign = node.toInt('verticalAlign');
+                        const verticalAlign = $util.convertInt(node.verticalAlign);
                         if (verticalAlign < 0) {
                             location += verticalAlign;
                         }
@@ -1256,7 +1253,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
 
     protected processRelativeHorizontal(node: T, children: T[]) {
         const edgeOrFirefox = $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
-        const floatRight = children.every(item => item.float === 'right');
         const cleared = $NodeList.cleared(children);
         const boxWidth = Math.ceil((() => {
             const renderParent = node.renderParent;
@@ -1286,128 +1282,132 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         })());
         const wrapWidth = boxWidth * this.localSettings.relative.boxWidthWordWrapPercent;
         const checkLineWrap = node.css('whiteSpace') !== 'nowrap';
-        const alignParent = floatRight ? 'right' : 'left';
         const rows: T[][] = [];
         const rangeMultiLine = new Set<T>();
         let alignmentMultiLine = false;
         let rowWidth = 0;
         let rowPreviousLeft: T | undefined;
         let rowPreviousBottom: T | undefined;
-        for (let i = 0; i < children.length; i++) {
-            const item = children[i];
-            const previous = children[i - 1];
-            let dimension = item.bounds;
-            if (item.inlineText && !item.hasWidth) {
-                const bounds = $dom.getRangeClientRect(item.element);
-                if (bounds.multiLine || bounds.width > 0 && bounds.width < item.box.width) {
-                    dimension = bounds;
-                    item.multiLine = bounds.multiLine;
-                    if (edgeOrFirefox && bounds.multiLine && !/^\s*\n+/.test(item.textContent)) {
-                        rangeMultiLine.add(item);
-                    }
-                }
-            }
-            let alignSibling = floatRight ? 'rightLeft' : 'leftRight';
-            let siblings: Element[] = [];
-            if (i === 0) {
-                item.anchor(alignParent, 'true');
-                rows.push([item]);
-            }
-            else {
-                const baseWidth = (rowPreviousLeft && rows.length > 1 ? rowPreviousLeft.linear.width : 0) + rowWidth + item.marginLeft + (previous.float === 'left' && !cleared.has(item) ? 0 : dimension.width) - (edgeOrFirefox ? item.borderRightWidth : 0);
-                function checkWidthWrap() {
-                    return !item.rightAligned && (Math.floor(baseWidth) - (item.styleElement && item.inlineStatic ? item.paddingLeft + item.paddingRight : 0) > boxWidth);
-                }
-                if (adjustFloatingNegativeMargin(item, previous)) {
-                    alignSibling = '';
-                }
-                const viewGroup = item.groupParent && !item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
-                siblings = !viewGroup && previous.inlineVertical && item.inlineVertical ? $dom.getBetweenElements(previous.element, item.element, true) : [];
-                const startNewRow = (() => {
-                    if (item.textElement) {
-                        let connected = false;
-                        if (previous.textElement) {
-                            if (i === 1 && item.plainText && !previous.rightAligned) {
-                                connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(item.textContent);
-                            }
-                            if (checkLineWrap && !connected && (rangeMultiLine.has(previous) || previous.multiLine && $dom.hasLineBreak(previous.element, false, true))) {
-                                return true;
-                            }
-                        }
-                        if (checkLineWrap && !connected && (
-                                checkWidthWrap() ||
-                                item.multiLine && $dom.hasLineBreak(item.element) ||
-                                item.preserveWhiteSpace && /^\n+/.test(item.textContent)
-                           ))
-                        {
-                            return true;
+        const [right, left] = $util.partition(children, item => item.float === 'right');
+        sortFloatHorizontal(left);
+        [left, right].forEach((segment, index) => {
+            const alignParent = index === 0 ? 'left' : 'right';
+            for (let i = 0; i < segment.length; i++) {
+                const item = segment[i];
+                const previous = segment[i - 1];
+                let dimension = item.bounds;
+                if (item.inlineText && !item.hasWidth) {
+                    const bounds = $dom.getRangeClientRect(item.element);
+                    if (bounds.multiLine || bounds.width > 0 && bounds.width < item.box.width) {
+                        dimension = bounds;
+                        item.multiLine = bounds.multiLine;
+                        if (edgeOrFirefox && bounds.multiLine && !/^\s*\n+/.test(item.textContent)) {
+                            rangeMultiLine.add(item);
                         }
                     }
-                    return false;
-                })();
-                const rowItems = rows[rows.length - 1];
-                const previousSiblings = item.previousSiblings();
-                if (startNewRow || (
-                        viewGroup ||
-                        !item.textElement && checkWidthWrap() ||
-                        item.linear.top >= previous.linear.bottom && (
-                            item.blockStatic ||
-                            item.floating && previous.float === item.float
-                        ) ||
-                        !item.floating && (
-                            previous.blockStatic ||
-                            previousSiblings.length && previousSiblings.some(sibling => sibling.lineBreak || sibling.excluded && sibling.blockStatic) ||
-                            siblings.some(element => $dom.isLineBreak(element))
-                        ) ||
-                        cleared.has(item)
-                   ))
-                {
-                    rowPreviousBottom = rowItems.filter(subitem => !subitem.floating)[0] || rowItems[0];
-                    for (let j = 0; j < rowItems.length; j++) {
-                        if (rowItems[j] !== rowPreviousBottom && rowItems[j].linear.bottom > rowPreviousBottom.linear.bottom && (!rowItems[j].floating || (rowItems[j].floating && rowPreviousBottom.floating))) {
-                            rowPreviousBottom = rowItems[j];
-                        }
-                    }
-                    item.anchor('topBottom', rowPreviousBottom.documentId);
-                    if (rowPreviousLeft && item.linear.bottom <= rowPreviousLeft.bounds.bottom) {
-                        item.anchor(alignSibling, rowPreviousLeft.documentId);
-                    }
-                    else {
-                        item.anchor(alignParent, 'true');
-                        rowPreviousLeft = undefined;
-                    }
-                    if (startNewRow && item.multiLine) {
-                        checkSingleLine(previous, checkLineWrap);
-                    }
-                    rowWidth = Math.min(0, startNewRow && !previous.multiLine && item.multiLine && !cleared.has(item) ? item.linear.right - node.box.right : 0);
+                }
+                let alignSibling = index === 0 ? 'leftRight' : 'rightLeft';
+                let siblings: Element[] = [];
+                if (i === 0) {
+                    item.anchor(alignParent, 'true');
                     rows.push([item]);
                 }
                 else {
-                    if (alignSibling !== '') {
-                        item.anchor(alignSibling, previous.documentId);
+                    const baseWidth = (rowPreviousLeft && rows.length > 1 ? rowPreviousLeft.linear.width : 0) + rowWidth + item.marginLeft + (previous.float === 'left' && !cleared.has(item) ? 0 : dimension.width) - (edgeOrFirefox ? item.borderRightWidth : 0);
+                    function checkWidthWrap() {
+                        return !item.rightAligned && (Math.floor(baseWidth) - (item.styleElement && item.inlineStatic ? item.paddingLeft + item.paddingRight : 0) > boxWidth);
                     }
-                    if (rowPreviousBottom) {
+                    if (adjustFloatingNegativeMargin(item, previous)) {
+                        alignSibling = '';
+                    }
+                    const viewGroup = item.groupParent && !item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
+                    siblings = !viewGroup && previous.inlineVertical && item.inlineVertical ? $dom.getBetweenElements(previous.element, item.element, true) : [];
+                    const startNewRow = (() => {
+                        if (item.textElement) {
+                            let connected = false;
+                            if (previous.textElement) {
+                                if (i === 1 && item.plainText && !previous.rightAligned) {
+                                    connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(item.textContent);
+                                }
+                                if (checkLineWrap && !connected && (rangeMultiLine.has(previous) || previous.multiLine && $dom.hasLineBreak(previous.element, false, true))) {
+                                    return true;
+                                }
+                            }
+                            if (checkLineWrap && !connected && (
+                                    checkWidthWrap() ||
+                                    item.multiLine && $dom.hasLineBreak(item.element) ||
+                                    item.preserveWhiteSpace && /^\n+/.test(item.textContent)
+                               ))
+                            {
+                                return true;
+                            }
+                        }
+                        return false;
+                    })();
+                    const rowItems = rows[rows.length - 1];
+                    const previousSiblings = item.previousSiblings();
+                    if (startNewRow || (
+                            viewGroup ||
+                            !item.textElement && checkWidthWrap() ||
+                            item.linear.top >= previous.linear.bottom && (
+                                item.blockStatic ||
+                                item.floating && previous.float === item.float
+                            ) ||
+                            !item.floating && (
+                                previous.blockStatic ||
+                                previousSiblings.length && previousSiblings.some(sibling => sibling.lineBreak || sibling.excluded && sibling.blockStatic) ||
+                                siblings.some(element => $dom.isLineBreak(element))
+                            ) ||
+                            cleared.has(item)
+                       ))
+                    {
+                        rowPreviousBottom = rowItems.filter(subitem => !subitem.floating)[0] || rowItems[0];
+                        for (let j = 0; j < rowItems.length; j++) {
+                            if (rowItems[j] !== rowPreviousBottom && rowItems[j].linear.bottom > rowPreviousBottom.linear.bottom && (!rowItems[j].floating || (rowItems[j].floating && rowPreviousBottom.floating))) {
+                                rowPreviousBottom = rowItems[j];
+                            }
+                        }
                         item.anchor('topBottom', rowPreviousBottom.documentId);
+                        if (rowPreviousLeft && item.linear.bottom <= rowPreviousLeft.bounds.bottom) {
+                            item.anchor(alignSibling, rowPreviousLeft.documentId);
+                        }
+                        else {
+                            item.anchor(alignParent, 'true');
+                            rowPreviousLeft = undefined;
+                        }
+                        if (startNewRow && item.multiLine) {
+                            checkSingleLine(previous, checkLineWrap);
+                        }
+                        rowWidth = Math.min(0, startNewRow && !previous.multiLine && item.multiLine && !cleared.has(item) ? item.linear.right - node.box.right : 0);
+                        rows.push([item]);
                     }
-                    rowItems.push(item);
+                    else {
+                        if (alignSibling !== '') {
+                            item.anchor(alignSibling, previous.documentId);
+                        }
+                        if (rowPreviousBottom) {
+                            item.anchor('topBottom', rowPreviousBottom.documentId);
+                        }
+                        rowItems.push(item);
+                    }
+                }
+                if (item.float === 'left') {
+                    rowPreviousLeft = item;
+                }
+                let previousOffset = 0;
+                if (siblings.length && !siblings.some(element => !!$dom.getElementAsNode(element) || $dom.isLineBreak(element))) {
+                    const betweenStart = $dom.getRangeClientRect(siblings[0]);
+                    const betweenEnd = siblings.length > 1 ? $dom.getRangeClientRect(siblings[siblings.length - 1]) : null;
+                    if (!betweenStart.multiLine && (betweenEnd === null || !betweenEnd.multiLine)) {
+                        previousOffset = betweenEnd ? betweenStart.left - betweenEnd.right : betweenStart.width;
+                    }
+                }
+                rowWidth += previousOffset + item.marginLeft + dimension.width + item.marginRight;
+                if (Math.ceil(rowWidth) >= wrapWidth && !item.alignParent(alignParent)) {
+                    checkSingleLine(item, checkLineWrap);
                 }
             }
-            if (item.float === 'left') {
-                rowPreviousLeft = item;
-            }
-            let previousOffset = 0;
-            if (siblings.length && !siblings.some(element => !!$dom.getElementAsNode(element) || $dom.isLineBreak(element))) {
-                const betweenStart = $dom.getRangeClientRect(siblings[0]);
-                const betweenEnd = siblings.length > 1 ? $dom.getRangeClientRect(siblings[siblings.length - 1]) : null;
-                if (!betweenStart.multiLine && (betweenEnd === null || !betweenEnd.multiLine)) {
-                    previousOffset = betweenEnd ? betweenStart.left - betweenEnd.right : betweenStart.width;
-                }
-            }
-            rowWidth += previousOffset + item.marginLeft + dimension.width + item.marginRight;
-            if (Math.ceil(rowWidth) >= wrapWidth && !item.alignParent(alignParent)) {
-                checkSingleLine(item, checkLineWrap);
-            }
-        }
+        });
         if (rows.length > 1) {
             node.alignmentType |= $enum.NODE_ALIGNMENT.MULTILINE;
             alignmentMultiLine = true;

@@ -922,45 +922,28 @@ export default (Base: Constructor<T>) => {
                     }
                 }
                 else {
-                    let borderWidthHorizontal = false;
-                    let borderWidthVertical = false;
+                    let borderWidth = false;
                     if (this.tableElement) {
-                        borderWidthHorizontal = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
-                        borderWidthVertical = borderWidthHorizontal;
+                        borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                     }
                     else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                        borderWidthHorizontal = true;
-                        borderWidthVertical = true;
                         if (!renderParent.tableElement && this.css('boxSizing') !== 'border-box') {
-                            if (!this.has('width', $enum.CSS_STANDARD.PERCENT, { map: 'initial' })) {
-                                const paddedWidth = this.contentBoxWidth;
-                                if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', true) > 0) {
-                                    this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
-                                }
+                            const paddedWidth = this.contentBoxWidth;
+                            if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', true) > 0) {
+                                this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                             }
-                            else {
-                                borderWidthHorizontal = false;
-                            }
-                            if (!this.has('height', $enum.CSS_STANDARD.PERCENT, { map: 'initial' })) {
-                                const paddedHeight = this.contentBoxHeight;
-                                if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', true) > 0) {
-                                    this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
-                                }
-                            }
-                            else {
-                                borderWidthVertical = false;
+                            const paddedHeight = this.contentBoxHeight;
+                            if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', true) > 0) {
+                                this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
                             }
                         }
+                        borderWidth = true;
                     }
-                    if (this.visibleStyle.borderWidth) {
-                        if (borderWidthHorizontal) {
-                            this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
-                            this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
-                        }
-                        if (borderWidthVertical) {
-                            this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
-                            this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
-                        }
+                    if (borderWidth && this.visibleStyle.borderWidth) {
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
                     }
                 }
             }
@@ -985,7 +968,7 @@ export default (Base: Constructor<T>) => {
                         setLineHeight(this, lineHeight);
                     }
                 }
-                if (!this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE) && !this.hasAlign($enum.NODE_ALIGNMENT.RIGHT)) {
+                if (!this.hasAlign($enum.NODE_ALIGNMENT.MULTILINE) && !this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) && !this.visibleStyle.background) {
                     const firstChild = this.find(node => node.float === 'left') || this.renderChildren[0];
                     if (firstChild && firstChild.marginLeft < 0) {
                         const value = Math.abs(firstChild.marginLeft);

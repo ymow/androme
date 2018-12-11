@@ -1558,14 +1558,16 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         target.renderPosition = index;
                         output = replacePlaceholder(output, basegroup.id, formatPlaceholder(target.renderPositionId));
                     }
-                    if (!settings.floatOverlapDisabled && target && segment === inlineAbove) {
+                    if (!settings.floatOverlapDisabled && target && segment === inlineAbove && segment.some(subitem => subitem.blockStatic && !subitem.hasWidth)) {
                         if (leftAbove.length) {
                             const marginRight = maxArray(leftAbove.map(subitem => subitem.linear.right));
-                            target.modifyBox(BOX_STANDARD.PADDING_LEFT, marginRight - segment[0].bounds.left);
+                            const boundsLeft = minArray(segment.map(subitem => subitem.bounds.left));
+                            target.modifyBox(BOX_STANDARD.PADDING_LEFT, marginRight - boundsLeft);
                         }
                         if (rightAbove.length) {
                             const marginLeft = minArray(rightAbove.map(subitem => subitem.linear.left));
-                            target.modifyBox(BOX_STANDARD.PADDING_RIGHT, segment[0].bounds.right - marginLeft);
+                            const boundsRight = maxArray(segment.map(subitem => subitem.bounds.right));
+                            target.modifyBox(BOX_STANDARD.PADDING_RIGHT, boundsRight - marginLeft);
                         }
                     }
                 });

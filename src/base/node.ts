@@ -663,6 +663,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         if (element && !calibrate) {
             if (this.styleElement) {
                 this._bounds = assignBounds(element.getBoundingClientRect());
+                if (this.documentBody) {
+                    this._bounds.top = this.marginTop + this.paddingTop;
+                }
             }
             else if (this.plainText) {
                 const bounds = getRangeClientRect(element);
