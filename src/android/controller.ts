@@ -798,7 +798,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         if (absoluteParent && absoluteParent.css('overflow') === 'hidden') {
                             const container = new View(
                                 this.cache.nextId,
-                                $dom.createElement(node.absoluteParent.baseElement),
+                                $dom.createElement(node.actualParent ? node.actualParent.baseElement : null),
                                 this.delegateNodeInit
                             ) as T;
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
@@ -1203,6 +1203,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
 
     public createNodeGroup(node: T, children: T[], parent?: T, replaceWith?: T) {
         const group = new ViewGroup(this.cache.nextId, node, children, this.delegateNodeInit) as T;
+        group.siblingIndex = node.siblingIndex;
         if (parent) {
             parent.appendTry(replaceWith || node, group);
             group.init();
@@ -1214,7 +1215,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public createNodeWrapper(node: T, parent?: T, controlName?: string, containerType?: number) {
         const container = new View(
             this.application.nextId,
-            $dom.createElement(node.absoluteParent.baseElement, node.block),
+            $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
             this.application.controllerHandler.delegateNodeInit
         ) as T;
         if (node.documentRoot) {
@@ -1737,7 +1738,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 Controller.setConstraintDimension(chain);
                 if (index > 0) {
                     const previousRow = chainHorizontal[index - 1];
-                    const aboveEnd = reverse ? previousRow[0] : previousRow[previousRow.length - 1];
+                    const aboveEnd = previousRow[previousRow.length - 1];
                     const previousEnd = reverse ? rowEnd as T : rowStart;
                     const nodes: T[] = [];
                     if (aboveEnd) {
@@ -1758,10 +1759,10 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             for (let j = previousSiblings.length - 2; j >= 0; j--) {
                                 const aboveBefore = previousSiblings[j];
                                 if (aboveBefore.linear.bottom > aboveEnd.linear.bottom) {
-                                    const offset = reverse ? Math.ceil(aboveBefore.linear[anchorStart]) - Math.floor(boxParent.box[anchorStart]) : Math.ceil(boxParent.box[anchorEnd]) - Math.floor(aboveBefore.linear[anchorEnd]);
+                                    const offset = reverse ? Math.ceil(aboveBefore.linear[anchorEnd]) - Math.floor(boxParent.box[anchorEnd]) : Math.ceil(boxParent.box[anchorEnd]) - Math.floor(aboveBefore.linear[anchorEnd]);
                                     if (offset >= chain.linear.width) {
-                                        chain.anchor(reverse ? chainEnd : chainStart, aboveBefore.documentId);
-                                        chain.anchorDelete(reverse ? chainStart : chainEnd);
+                                        chain.anchor(chainStart, aboveBefore.documentId);
+                                        chain.anchorDelete(chainEnd);
                                         if (chain === rowStart) {
                                             chain.anchorDelete(anchorStart);
                                             chain.delete('app', 'layout_constraintHorizontal_chainStyle', 'layout_constraintHorizontal_bias');
@@ -1786,12 +1787,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                     }
                 }
-                if (reverse) {
-                    previousSiblings.unshift(chain);
-                }
-                else {
-                    previousSiblings.push(chain);
-                }
+                previousSiblings.push(chain);
             }
         });
         Controller.evaluateAnchors(children);

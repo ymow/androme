@@ -3,11 +3,18 @@ import { NODE_ALIGNMENT } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
+import { getElementAsNode } from '../lib/dom';
+
 export default abstract class NodeGroup extends Node {
     public init() {
         if (this.length) {
+            let siblingIndex = Number.MAX_VALUE;
             for (const item of this.children) {
+                siblingIndex = Math.min(siblingIndex, item.siblingIndex);
                 item.parent = this;
+            }
+            if (this.siblingIndex === Number.MAX_VALUE) {
+                this.siblingIndex = siblingIndex;
             }
             if (this.parent) {
                 this.parent.sort(NodeList.siblingIndex);
@@ -37,24 +44,40 @@ export default abstract class NodeGroup extends Node {
         return node ? node.nextSiblings(lineBreak, excluded, height) : [];
     }
 
-    public firstChild() {
-        const actualParent = NodeList.actualParent(this.initial.children);
+    get actualParent() {
+        return NodeList.actualParent(this.initial.children);
+    }
+
+    get firstChild() {
+        const actualParent = NodeList.actualParent(this.nodes);
         if (actualParent) {
-            return super.firstChild(<HTMLElement> actualParent.element);
+            const element = actualParent.element;
+            for (let i = 0; i < actualParent.element.childNodes.length; i++) {
+                const node = getElementAsNode<Node>(<Element> element.childNodes[i]);
+                if (node && this.nodes.includes(node)) {
+                    return node;
+                }
+            }
         }
-        else if (this.initial.children.length) {
-            return this.initial.children.slice().sort(NodeList.siblingIndex)[0];
+        if (this.initial.children.length) {
+            return this.initial.children[0];
         }
         return undefined;
     }
 
-    public lastChild() {
-        const actualParent = NodeList.actualParent(this.initial.children);
+    get lastChild() {
+        const actualParent = NodeList.actualParent(this.nodes);
         if (actualParent) {
-            return super.lastChild(<HTMLElement> actualParent.element);
+            const element = actualParent.element;
+            for (let i = actualParent.element.childNodes.length - 1; i >= 0; i--) {
+                const node = getElementAsNode<Node>(<Element> element.childNodes[i]);
+                if (node && this.nodes.includes(node)) {
+                    return node;
+                }
+            }
         }
-        else if (this.initial.children.length) {
-            return this.initial.children.slice().sort(NodeList.siblingIndex)[this.initial.children.length - 1];
+        if (this.initial.children.length) {
+            return this.initial.children[this.initial.children.length - 1];
         }
         return undefined;
     }

@@ -18,17 +18,17 @@ declare global {
             excluded: boolean;
             rendered: boolean;
             controlId: string;
-            companion: Node | undefined;
-            parent: Node | undefined;
-            documentParent: Node;
-            renderParent: Node | undefined;
             tagName: string;
             controlName: string;
-            renderAs: Node | undefined;
             renderDepth: number;
             renderPositionId: string;
             multiLine: number;
             overflow: number;
+            documentParent: Node;
+            parent: Node | undefined;
+            renderParent: Node | undefined;
+            companion: Node | undefined;
+            renderAs: Node | undefined;
             readonly localSettings: EnvironmentSettings;
             readonly excludeSection: number;
             readonly excludeProcedure: number;
@@ -42,6 +42,7 @@ declare global {
             readonly baseElement: Element | null;
             readonly htmlElement: boolean;
             readonly styleElement: boolean;
+            readonly naturalElement: boolean;
             readonly imageElement: boolean;
             readonly svgElement: boolean;
             readonly flexElement: boolean;
@@ -108,15 +109,13 @@ declare global {
             readonly preserveWhiteSpace: boolean;
             readonly layoutHorizontal: boolean;
             readonly layoutVertical: boolean;
-            readonly inlineWidth: boolean;
-            readonly inlineHeight: boolean;
-            readonly blockWidth: boolean;
-            readonly blockHeight: boolean;
             readonly support: Support;
             readonly absoluteParent: Node | undefined;
             readonly actualParent: Node | undefined;
             readonly actualChildren: Node[];
             readonly actualHeight: number;
+            readonly firstChild: Node | undefined;
+            readonly lastChild: Node | undefined;
             readonly documentId: string;
             readonly dir: string;
             readonly nodes: Node[];
@@ -129,6 +128,7 @@ declare global {
             modifyBox(region: number, offset: number | null, negative?: boolean): void;
             valueBox(region: number): [number, number];
             alignParent(position: string): boolean;
+            alignSibling(position: string): boolean;
             localizeString(value: string): string;
             clone(id?: number, attributes?: boolean, position?: boolean): Node;
             init(): void;
@@ -177,8 +177,6 @@ declare global {
             actualRight(dimension?: string): number;
             previousSiblings(lineBreak?: boolean, excluded?: boolean, height?: boolean): Node[];
             nextSiblings(lineBreak?: boolean, excluded?: boolean, height?: boolean): Node[];
-            firstChild(element?: HTMLElement): Node | undefined;
-            lastChild(element?: HTMLElement): Node | undefined;
         }
 
         export class Node implements Node {}

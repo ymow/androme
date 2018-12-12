@@ -7,7 +7,7 @@ import { convertInt, maxArray, minArray, withinFraction } from '../lib/util';
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
         for (const node of list) {
-            if (node.baseElement && node.actualParent) {
+            if (node.naturalElement && node.actualParent) {
                 return node.actualParent as T;
             }
         }

@@ -47,12 +47,13 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
             container.setControlType(RADIO_GROUP, CONTAINER_NODE.INLINE);
             container.inherit(node, 'alignment');
             container.css('verticalAlign', 'text-bottom');
-            container.each((item: T) => {
+            container.each((item: T, index) => {
                 if (item !== node) {
                     item.setControlType(CONTAINER_ANDROID.RADIO, CONTAINER_NODE.RADIO);
                 }
                 item.positioned = true;
                 item.parent = container;
+                item.siblingIndex = index;
             });
             pending.forEach(item => item.hide());
             container.android('orientation', $NodeList.linearX(children) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);

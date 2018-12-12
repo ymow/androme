@@ -192,7 +192,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             let previous: T | undefined;
             let columnMax = 0;
             node.each((item: T, index) => {
-                if (previous === undefined || item.linear[direction[0]] >= previous.linear[direction[1]]) {
+                if (previous === undefined || item.linear[direction[0]] >= previous.linear[direction[1]] || column > 0 && column === columnMax) {
                     columnMax = Math.max(column, columnMax);
                     row++;
                     column = 1;

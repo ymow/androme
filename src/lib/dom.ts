@@ -60,7 +60,14 @@ export function newBoxModel(): BoxModel {
 
 export function createElement(parent: Element | null, block = false) {
     const element = document.createElement(block ? 'div' : 'span');
-    element.style.display = 'none';
+    const style = element.style;
+    style.position = 'static';
+    style.margin = '0px';
+    style.padding = '0px';
+    style.border = 'none';
+    style.cssFloat = 'none';
+    style.clear = 'none';
+    style.display = 'none';
     element.className = '__css.placeholder';
     if (parent instanceof HTMLElement) {
         parent.appendChild(element);

@@ -6,29 +6,29 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE
 import Container from './container';
 import Extension from './extension';
 
-import { assignBounds, deleteElementCache, getElementAsNode, getElementCache, getRangeClientRect, hasComputedStyle, hasFreeFormText, newRectDimensions, setElementCache } from '../lib/dom';
+import { assignBounds, deleteElementCache, getElementAsNode, getElementCache, getRangeClientRect, hasComputedStyle, hasFreeFormText, newRectDimensions, setElementCache, createElement } from '../lib/dom';
 import { assignWhenNull, convertCamelCase, convertInt, convertPX, flatMap, formatPX, hasBit, hasValue, isArray, isPercent, isUnit, searchObject, trimNull, withinFraction } from '../lib/util';
 
 type T = Node;
 
 export default abstract class Node extends Container<T> implements androme.lib.base.Node {
-    public abstract readonly localSettings: EnvironmentSettings;
-    public abstract readonly renderChildren: T[];
-
     public style: CSSStyleDeclaration;
     public alignmentType = 0;
     public depth = -1;
     public siblingIndex = Number.MAX_VALUE;
     public renderPosition = -1;
     public documentRoot = false;
-    public baselineActive = false;
-    public positioned = false;
     public visible = true;
     public excluded = false;
     public rendered = false;
+    public baselineActive = false;
+    public positioned = false;
     public renderExtension = new Set<Extension<T>>();
     public controlId = '';
     public companion: T | undefined;
+
+    public abstract readonly localSettings: EnvironmentSettings;
+    public abstract readonly renderChildren: T[];
 
     public readonly initial: InitialData<T>;
 
@@ -55,6 +55,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     private _excludeSection = 0;
     private _excludeProcedure = 0;
     private _excludeResource = 0;
+
     private readonly _element: Element | null = null;
 
     protected constructor(
@@ -86,15 +87,12 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     public abstract applyOptimizations(): void;
     public abstract applyCustomizations(): void;
     public abstract alignParent(position: string): boolean;
+    public abstract alignSibling(position: string): boolean;
     public abstract localizeString(value: string): string;
     public abstract clone(id?: number, attributes?: boolean, position?: boolean): T;
     public abstract set containerType(value: number);
     public abstract get containerType(): number;
     public abstract get documentId(): string;
-    public abstract get inlineWidth(): boolean;
-    public abstract get inlineHeight(): boolean;
-    public abstract get blockWidth(): boolean;
-    public abstract get blockHeight(): boolean;
     public abstract get dpi(): number;
     public abstract get fontSize(): number;
     public abstract get support(): Support;
@@ -290,7 +288,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                     Object.assign(this.initial, node.initial);
                     break;
                 case 'base':
-                    this.documentParent = node.documentParent;
+                    this._documentParent = node.documentParent;
                     this._bounds = assignBounds(node.bounds);
                     this._linear = assignBounds(node.linear);
                     this._box = assignBounds(node.box);
@@ -824,32 +822,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
         return result;
     }
 
-    public firstChild(element?: HTMLElement) {
-        element = element || this._element as HTMLElement;
-        if (element) {
-            for (let i = 0; i < element.childNodes.length; i++) {
-                const node = getElementAsNode<T>(<Element> element.childNodes[i]);
-                if (node) {
-                    return node;
-                }
-            }
-        }
-        return undefined;
-    }
-
-    public lastChild(element?: HTMLElement) {
-        element = element || this._element as HTMLElement;
-        if (element) {
-            for (let i = element.childNodes.length - 1; i >= 0; i--) {
-                const node = getElementAsNode<T>(<Element> element.childNodes[i]);
-                if (node) {
-                    return node;
-                }
-            }
-        }
-        return undefined;
-    }
-
     public actualRight(dimension = 'linear') {
         const node = this.companion && !this.companion.visible && this.companion[dimension].right > this[dimension].right ? this.companion : this;
         return node[dimension].right as number;
@@ -909,9 +881,6 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             }
             if (!value.contains(this)) {
                 value.append(this);
-                if (this.groupParent) {
-                    this.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
-                }
             }
             if (this.depth === -1) {
                 this.depth = value.depth + 1;
@@ -947,7 +916,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
             return this._element;
         }
         else {
-            const element = document.createElement('span');
+            const element = createElement(null, this.block);
             setElementCache(element, 'node', this);
             return element;
         }
@@ -958,7 +927,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get htmlElement() {
-        return this._element instanceof HTMLElement;
+        return this._element instanceof HTMLElement && (this.display !== 'none' || this._element.innerHTML !== '');
     }
 
     get svgElement() {
@@ -967,6 +936,10 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get styleElement() {
         return hasComputedStyle(this._element);
+    }
+
+    get naturalElement() {
+        return this.styleElement && (this.display !== 'none' || this.element.innerHTML !== '') || this.plainText;
     }
 
     get imageElement() {
@@ -1662,7 +1635,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get actualParent() {
-        return this.element.parentElement ? getElementAsNode(this.element.parentElement) as T : undefined;
+        return this.baseElement && this.baseElement.parentElement ? getElementAsNode(this.baseElement.parentElement) as T : undefined;
     }
 
     get actualChildren() {
@@ -1682,6 +1655,32 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get actualHeight() {
         return this.plainText ? this.bounds.bottom - this.bounds.top : this.bounds.height;
+    }
+
+    get firstChild() {
+        const element = this._element as HTMLElement;
+        if (element) {
+            for (let i = 0; i < element.childNodes.length; i++) {
+                const node = getElementAsNode<T>(<Element> element.childNodes[i]);
+                if (node) {
+                    return node;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    get lastChild() {
+        const element = this._element as HTMLElement;
+        if (element) {
+            for (let i = element.childNodes.length - 1; i >= 0; i--) {
+                const node = getElementAsNode<T>(<Element> element.childNodes[i]);
+                if (node) {
+                    return node;
+                }
+            }
+        }
+        return undefined;
     }
 
     get dir() {

@@ -815,7 +815,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_5"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -869,7 +869,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_6"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">

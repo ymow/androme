@@ -329,13 +329,18 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     private createPlaceholder(nextId: number, node: T, children: T[]) {
         const placeholder = new $View(
             nextId,
-            $dom.createElement(node.absoluteParent.baseElement, node.block),
+            $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
             this.application.controllerHandler.delegateNodeInit
         );
         placeholder.inherit(node, 'base');
         placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
         placeholder.positioned = true;
-        children.forEach(item => item.parent = placeholder);
+        let siblingIndex = Number.MAX_VALUE;
+        children.forEach(item => {
+            siblingIndex = Math.min(siblingIndex, item.siblingIndex);
+            item.parent = placeholder;
+        });
+        placeholder.siblingIndex = siblingIndex;
         return placeholder;
     }
 }

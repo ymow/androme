@@ -113,7 +113,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public finalize() {
-        const nodes = this.session.cache.filter(node => node.visible && node.rendered);
+        let nodes = this.session.cache.filter(node => node.visible && node.rendered);
         for (const node of nodes) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
@@ -135,6 +135,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 ext.postProcedure(node);
             }
         }
+        nodes = this.session.cache.filter(node => node.visible && node.rendered);
         for (const node of nodes) {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                 node.setBoxSpacing();
@@ -1128,7 +1129,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 return a.siblingIndex < b.siblingIndex ? -1 : 1;
             }
         });
-        this.session.cache.children.push(...this.processing.cache.duplicate());
+        this.session.cache.children.push(...this.processing.cache);
         this.session.excluded.children.push(...this.processing.excluded);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {

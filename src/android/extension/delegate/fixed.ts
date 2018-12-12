@@ -17,6 +17,25 @@ function withinBoxRegion(rect: number[], value: number) {
     return rect.some(coord => coord < value);
 }
 
+function reduceContainerWidth<T extends View>(node: T, value: string, offset: number) {
+    if ($util.isPercent(value)) {
+        const actualParent = node.actualParent;
+        if (actualParent) {
+            const width = parseInt(value) - (offset / actualParent.box.width) * 100;
+            if (width > 0) {
+                return $util.formatPercent(width);
+            }
+        }
+    }
+    else if ($util.isUnit(value)) {
+        const width = parseInt(value) - offset;
+        if (width > 0) {
+            return $util.formatPX(width);
+        }
+    }
+    return value;
+}
+
 export default class Fixed<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
         const fixed = getFixedNodes(node);
@@ -63,17 +82,7 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
         children.forEach((item, index) => item.siblingIndex = index);
         node.sort($NodeList.siblingIndex);
         node.resetBox($enum.BOX_STANDARD.PADDING | (node.documentBody ? $enum.BOX_STANDARD.MARGIN : 0), container, true);
-        if (node.documentBody && node.hasWidth && children.some(item => item.has('right'))) {
-            container.css({
-                'minWidth': node.cssInitial('minWidth'),
-                'width': node.cssInitial('width')
-            }, '', true);
-            node.css({
-                'minWidth': 'auto',
-                'width': 'auto'
-            }, '', true);
-            node.android('layout_width', 'match_parent');
-        }
+        node.companion = container;
         const layout = new $Layout(
             parent,
             node,
@@ -84,5 +93,30 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
         );
         const output = this.application.renderLayout(layout);
         return { output };
+    }
+
+    public postBaseLayout(node: T) {
+        if (node.hasWidth && node.companion) {
+            const width = node.cssInitial('width', true);
+            const minWidth = node.cssInitial('minWidth', true);
+            if (node.documentBody && node.some(item => item.has('right'))) {
+                node.css({
+                    'width': 'auto',
+                    'minWidth': 'auto'
+                }, '', true);
+                node.companion.css({
+                    'width': width,
+                    'minWidth': minWidth
+                }, '', true);
+                node.android('layout_width', 'match_parent');
+            }
+            else {
+                const offset = node.paddingLeft + node.paddingRight + (node.documentBody ? node.marginLeft + node.marginRight : 0);
+                node.companion.css({
+                    'width': reduceContainerWidth(node, width, offset),
+                    'minWidth': reduceContainerWidth(node, minWidth, offset)
+                }, '', true);
+            }
+        }
     }
 }

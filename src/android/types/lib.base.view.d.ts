@@ -11,8 +11,11 @@ declare global {
             readonly layoutLinear: boolean;
             readonly layoutRelative: boolean;
             readonly layoutConstraint: boolean;
+            readonly inlineWidth: boolean;
+            readonly inlineHeight: boolean;
+            readonly blockWidth: boolean;
+            readonly blockHeight: boolean;
             readonly singleChild: boolean;
-            readonly absoluteParent: androme.lib.base.Node;
             android(attr: string, value?: string, overwrite?: boolean): string;
             app(attr: string, value?: string, overwrite?: boolean): string;
             formatted(value: string, overwrite?: boolean): void;
@@ -20,7 +23,7 @@ declare global {
             anchor(position: string, documentId?: string, overwrite?: boolean): boolean;
             anchorParent(orientation: string, overwrite?: boolean, constraintBias?: boolean): boolean;
             anchorDelete(...position: string[]): void;
-            alignSibling(position: string): string;
+            anchorClear(): void;
             horizontalBias(): number;
             verticalBias(): number;
             supported(obj: string, attr: string, result?: {}): boolean;

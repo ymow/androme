@@ -258,19 +258,20 @@ export default (Base: Constructor<T>) => {
         }
 
         public alignSibling(position: string) {
-            if (this.rendered) {
-                const renderParent = this.renderParent as View;
-                if (renderParent.is(CONTAINER_NODE.CONSTRAINT)) {
+            const renderParent = this.renderParent as View;
+            if (renderParent) {
+                if (renderParent.layoutConstraint) {
                     const attr: string = LAYOUT_ANDROID.constraint[position];
                     const value = this.app(this.localizeString(attr)) || this.app(attr);
-                    return value !== 'parent' && value !== renderParent.documentId ? value : '';
+                    return value !== 'parent' && value !== renderParent.documentId;
                 }
-                else if (renderParent.is(CONTAINER_NODE.RELATIVE)) {
+                else if (renderParent.layoutRelative) {
                     const attr: string = LAYOUT_ANDROID.relative[position];
-                    return this.android(this.localizeString(attr)) || this.android(attr);
+                    const value = this.android(this.localizeString(attr)) || this.android(attr);
+                    return value !== '';
                 }
             }
-            return '';
+            return false;
         }
 
         public horizontalBias() {
@@ -454,8 +455,8 @@ export default (Base: Constructor<T>) => {
 
         public setLayout() {
             const parent = this.absoluteParent;
-            const children = this.renderChildren;
             const renderParent = this.renderParent;
+            const children = this.renderChildren;
             if (this.documentBody) {
                 if (!this.hasWidth && children.some(node => node.alignParent('right'))) {
                     this.android('layout_width', 'match_parent', false);
@@ -524,14 +525,20 @@ export default (Base: Constructor<T>) => {
                         this.inlineFlow ||
                         this.tableElement ||
                         this.flexElement ||
-                        parent.flexElement ||
-                        parent.gridElement ||
+                        !!parent && parent.flexElement ||
+                        !!parent && parent.gridElement ||
                         !!renderParent && renderParent.is(CONTAINER_NODE.GRID)
                     );
                     if ((!wrap || this.blockStatic && !this.has('maxWidth')) && (
-                            this.linear.width >= parent.box.width ||
+                            !!parent && this.linear.width >= parent.box.width ||
                             this.layoutVertical && !this.autoMargin.horizontal ||
-                            this.htmlElement && this.blockStatic && (parent.documentBody || parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings()))) ||
+                            this.htmlElement && this.blockStatic && (
+                                this.documentBody ||
+                                !!parent && (
+                                    parent.documentBody ||
+                                    parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings()))
+                                )
+                            ) ||
                             this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width)
                         ))
                     {
@@ -620,27 +627,19 @@ export default (Base: Constructor<T>) => {
                             return '';
                     }
                 }
-                function setTextAlign(value: string) {
-                    if (textAlign === '' || value === right) {
-                        return value;
-                    }
-                    return textAlign;
-                }
                 let textAlign = this.cssInitial('textAlign', true) || '';
-                let verticalAlign = '';
                 if (this.pageFlow) {
-                    const children = this.renderChildren;
                     let floating = '';
-                    if (this.inlineVertical && (!renderParent.support.container.positionRelative && renderParent.layoutHorizontal || renderParent.is(CONTAINER_NODE.GRID))) {
+                    if (this.inlineVertical && (renderParent.layoutHorizontal && !renderParent.support.container.positionRelative || renderParent.is(CONTAINER_NODE.GRID))) {
                         switch (this.cssInitial('verticalAlign', true)) {
                             case 'top':
-                                verticalAlign = 'top';
+                                this.mergeGravity('layout_gravity', 'top');
                                 break;
                             case 'middle':
-                                verticalAlign = 'center_vertical';
+                                this.mergeGravity('layout_gravity', 'center_vertical');
                                 break;
                             case 'bottom':
-                                verticalAlign = 'bottom';
+                                this.mergeGravity('layout_gravity', 'bottom');
                                 break;
                         }
                     }
@@ -653,22 +652,24 @@ export default (Base: Constructor<T>) => {
                         }
                     }
                     if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
-                        if (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || children.length && children.every(node => node.rightAligned)) {
+                        if (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.renderChildren.length && this.renderChildren.every(node => node.rightAligned)) {
                             floating = right;
                         }
-                        else if (this.groupParent && !children.some(item => item.float === 'right')) {
+                        else if (this.groupParent && !this.renderChildren.some(item => item.float === 'right')) {
                             floating = left;
                         }
                     }
                     if (renderParent.layoutFrame && !setAutoMargin(this)) {
                         floating = this.floating ? this.float : floating;
-                        if (floating !== '' && floating !== 'none' && (renderParent.inlineWidth || this.singleChild && !renderParent.documentRoot)) {
+                        if (floating !== '' && (renderParent.inlineWidth || this.singleChild && !renderParent.documentRoot)) {
                             renderParent.mergeGravity('layout_gravity', floating);
                         }
                     }
                     if (floating !== '') {
                         if (this.blockWidth) {
-                            textAlign = setTextAlign(floating);
+                            if (textAlign === '' || floating === right) {
+                                textAlign = floating;
+                            }
                         }
                         else {
                             this.mergeGravity('layout_gravity', floating);
@@ -684,12 +685,8 @@ export default (Base: Constructor<T>) => {
                         textAlign = textAlignParent;
                     }
                 }
-                if (verticalAlign !== '' && renderParent.layoutLinear && renderParent.layoutHorizontal) {
-                    this.mergeGravity('layout_gravity', verticalAlign);
-                    verticalAlign = '';
-                }
                 if (!this.layoutConstraint) {
-                    this.mergeGravity('gravity', convertHorizontal(textAlign), verticalAlign);
+                    this.mergeGravity('gravity', convertHorizontal(textAlign));
                 }
             }
         }
@@ -751,12 +748,12 @@ export default (Base: Constructor<T>) => {
                 this.autoSizeBoxModel();
                 this.alignHorizontalLayout();
                 this.alignVerticalLayout();
-            }
-            switch (this.cssParent('visibility', true)) {
-                case 'hidden':
-                case 'collapse':
-                    this.hide(true);
-                    break;
+                switch (this.cssParent('visibility', true)) {
+                    case 'hidden':
+                    case 'collapse':
+                        this.hide(true);
+                        break;
+                }
             }
         }
 
@@ -876,78 +873,40 @@ export default (Base: Constructor<T>) => {
                 const renderParent = this.renderParent as View;
                 let layoutWidth = $util.convertInt(this.android('layout_width'));
                 let layoutHeight = $util.convertInt(this.android('layout_height'));
-                if (this.imageElement) {
-                    const top = this.borderTopWidth;
-                    const right = this.borderRightWidth;
-                    const bottom = this.borderBottomWidth;
-                    const left = this.borderLeftWidth;
-                    let width = 0;
-                    let height = 0;
-                    if (top > 0) {
-                        this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, top);
-                        height += top;
-                    }
-                    if (right > 0) {
-                        this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, right);
-                        width += right;
-                    }
-                    if (bottom > 0) {
-                        this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, bottom);
-                        height += bottom;
-                    }
-                    if (left > 0) {
-                        this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, left);
-                        width += left;
-                    }
-                    height += this.paddingTop + this.paddingBottom;
-                    width += this.paddingLeft + this.paddingRight;
-                    if (width > 0) {
-                        if (layoutWidth > 0) {
-                            this.android('layout_width', $util.formatPX(layoutWidth + width));
-                        }
-                        else {
-                            layoutWidth = $util.convertInt(renderParent.android('layout_width'));
-                            if (layoutWidth > 0 && this.singleChild) {
-                                renderParent.android('layout_width', $util.formatPX(layoutWidth + this.marginLeft + width));
-                            }
-                        }
-                    }
-                    if (height > 0) {
-                        if (layoutHeight > 0) {
-                            this.android('layout_height', $util.formatPX(layoutHeight + height));
-                        }
-                        else {
-                            layoutHeight = $util.convertInt(renderParent.android('layout_height'));
-                            if (layoutHeight > 0 && this.singleChild) {
-                                renderParent.android('layout_height', $util.formatPX(layoutHeight + this.marginTop + height));
-                            }
-                        }
-                    }
-                }
-                else if (this.is(CONTAINER_NODE.BUTTON) && layoutHeight === 0) {
+                if (this.is(CONTAINER_NODE.BUTTON) && layoutHeight === 0) {
                     if (!this.has('minHeight')) {
                         this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
                     }
                 }
                 else if (this.is(CONTAINER_NODE.LINE)) {
-                    if (layoutHeight > 0 && this.cssInitial('height') && this.tagName !== 'HR') {
+                    if (layoutHeight > 0 && this.toInt('height', true) > 0 && this.tagName !== 'HR') {
                         this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                     }
                 }
-                else {
+                else if (renderParent) {
                     let borderWidth = false;
                     if (this.tableElement) {
-                        borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
+                        borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.FIREFOX | $enum.USER_AGENT.EDGE);
                     }
                     else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                        if (!renderParent.tableElement && this.css('boxSizing') !== 'border-box') {
-                            const paddedWidth = this.contentBoxWidth;
-                            if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', true) > 0) {
-                                this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
+                        if (this.css('boxSizing') !== 'border-box' && !renderParent.tableElement) {
+                            if (layoutWidth > 0 && this.toInt('width', true) > 0 && this.contentBoxWidth > 0) {
+                                this.android('layout_width', $util.formatPX(layoutWidth + this.contentBoxWidth));
                             }
-                            const paddedHeight = this.contentBoxHeight;
-                            if (layoutHeight > 0 && paddedHeight > 0 && this.toInt('height', true) > 0) {
-                                this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
+                            else if (this.imageElement && this.singleChild) {
+                                layoutWidth = $util.convertInt(renderParent.android('layout_width'));
+                                if (layoutWidth > 0) {
+                                    renderParent.android('layout_width', $util.formatPX(layoutWidth + this.marginLeft + this.contentBoxWidth));
+                                }
+                            }
+                            if (layoutHeight > 0 && this.toInt('height', true) > 0 && this.contentBoxHeight > 0) {
+                                this.android('layout_height', $util.formatPX(layoutHeight + this.contentBoxHeight));
+                            }
+                            else if (this.imageElement && this.singleChild) {
+                                layoutHeight = $util.convertInt(renderParent.android('layout_height'));
+                                if (layoutHeight > 0) {
+                                    renderParent.android('layout_height', $util.formatPX(layoutHeight + this.marginTop + this.contentBoxHeight));
+                                }
                             }
                         }
                         borderWidth = true;
@@ -1091,12 +1050,14 @@ export default (Base: Constructor<T>) => {
             return this.android('layout_height') === 'match_parent';
         }
 
-        get absoluteParent() {
-            return super.absoluteParent || $dom.getElementAsNode(document.body) || super.documentParent;
-        }
-
         get singleChild() {
-            return this.renderParent ? this.renderParent.length === 1 : this.parent ? this.parent.length === 1 : false;
+            if (this.renderParent) {
+                return this.renderParent.length === 1;
+            }
+            else if (this.parent && this.parent.id !== 0) {
+                return this.parent.length === 1;
+            }
+            return false;
         }
 
         get dpi() {

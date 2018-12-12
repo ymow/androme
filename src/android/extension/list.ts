@@ -169,7 +169,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     }
                     const companion = new View(
                         this.application.nextId,
-                        $dom.createElement(node.absoluteParent.baseElement),
+                        $dom.createElement(node.actualParent ? node.actualParent.baseElement : null),
                         this.application.controllerHandler.delegateNodeInit
                     ) as T;
                     companion.tagName = `${node.tagName}_ORDINAL`;
