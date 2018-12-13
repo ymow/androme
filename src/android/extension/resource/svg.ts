@@ -12,22 +12,6 @@ import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
-function adjustRotateXY(x: number, y: number, transform: SvgTransformAttributes) {
-    if (transform.rotateX !== undefined) {
-        x = transform.rotateX;
-    }
-    else {
-        x += transform.translateX;
-    }
-    if (transform.rotateY !== undefined) {
-        y = transform.rotateY;
-    }
-    else {
-        y += transform.translateY;
-    }
-    return [x, y];
-}
-
 function setPivotXY(data: ExternalData, transform: SvgTransformAttributes) {
     const origin = transform.origin;
     if (origin) {
@@ -81,6 +65,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             let x = group.x || 0;
                             let y = group.y || 0;
                             if (transform) {
+                                x += transform.translateX;
+                                y += transform.translateY;
                                 if (transform.scaleX !== 1) {
                                     data.scaleX = transform.scaleX.toString();
                                 }
@@ -89,9 +75,12 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 }
                                 if (transform.rotateAngle !== 0) {
                                     data.rotation = transform.rotateAngle.toString();
+                                    data.pivotX = transform.rotateX.toString();
+                                    data.pivotY = transform.rotateY.toString();
                                 }
-                                [x, y] = adjustRotateXY(x, y, transform);
-                                setPivotXY(data, transform);
+                                else {
+                                    setPivotXY(data, transform);
+                                }
                             }
                             if (x !== 0) {
                                 data.translateX = x.toString();
@@ -174,17 +163,39 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             let x = item.x || 0;
                             let y = item.y || 0;
                             if (transform) {
+                                const matrix = transform.rotateMatrix;
+                                if (matrix) {
+                                    x = matrix.a * x + matrix.c * y + matrix.e;
+                                    y = matrix.b * y + matrix.d * y + matrix.f;
+                                    if (item.width) {
+                                        if (matrix.a < 0) {
+                                            x += matrix.a * item.width;
+                                        }
+                                        if (matrix.c < 0) {
+                                            x += matrix.c * item.width;
+                                        }
+                                    }
+                                    if (item.height) {
+                                        if (matrix.b < 0) {
+                                            y += matrix.b * item.height;
+                                        }
+                                        if (matrix.d < 0) {
+                                            y += matrix.d * item.height;
+                                        }
+                                    }
+                                }
                                 if (item.width) {
                                     item.width *= scaleX * transform.scaleX;
                                 }
                                 if (item.height) {
                                     item.height *= scaleY * transform.scaleY;
                                 }
-                                [x, y] = adjustRotateXY(x, y, transform);
+                                x += transform.translateX;
+                                y += transform.translateY;
                             }
                             x *= scaleX;
                             y *= scaleY;
-                            let parent = item.element && item.element.parentElement;
+                            let parent = item.element ? item.element.parentElement : null;
                             while (parent instanceof SVGSVGElement && parent !== node.element) {
                                 const attributes = $svg.createTransform(parent);
                                 x += parent.x.baseVal.value + attributes.translateX;

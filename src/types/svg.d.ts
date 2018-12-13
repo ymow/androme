@@ -13,8 +13,9 @@ interface SvgTransformAttributes {
     skewX: number;
     skewY: number;
     rotateAngle: number;
-    rotateX?: number;
-    rotateY?: number;
+    rotateX: number;
+    rotateY: number;
+    rotateMatrix?: DOMMatrix;
     origin?: RectPosition;
 }
 
