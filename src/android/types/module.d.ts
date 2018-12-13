@@ -2,7 +2,6 @@ export interface UserSettingsAndroid extends UserSettings {
     targetAPI: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
-    autoSizePaddingAndBorderWidth: boolean;
     collapseUnattributedElements: boolean;
     customizationsOverwritePrivilege: boolean;
     convertPixels: string;
@@ -14,7 +13,6 @@ export interface LocalSettings extends EnvironmentSettings {
     supportRTL: boolean;
     constraintPercentAccuracy?: number;
     customizationsOverwritePrivilege?: boolean;
-    autoSizePaddingAndBorderWidth?: boolean;
 }
 
 export interface Constraint {

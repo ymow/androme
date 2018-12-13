@@ -199,7 +199,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         else if (mapWidth.every(value => isUnit(value))) {
             const width = mapWidth.reduce((a, b) => a + parseInt(b), 0);
-            if (node.has('width', CSS_STANDARD.PERCENT) || width < node.width) {
+            if (width < node.width) {
                 mapWidth = mapWidth.map(value => value !== '0px' ? `${(parseInt(value) / width) * 100}%` : value);
             }
             else if (width > node.width) {

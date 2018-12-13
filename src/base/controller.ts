@@ -94,7 +94,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     }
 
     public removePlaceholders(value: string) {
-        return value.replace(/{[<:@>]\d+(\^\d+)?}/g, '').trim();
+        return value.replace(/{[<:@#>]\d+(\^\d+)?}/g, '').trim();
     }
 
     get outputIndentPrefix() {

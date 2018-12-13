@@ -44,8 +44,12 @@ function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element
 }
 
 function checkPositionStatic<T extends Node>(node: T, parent: T) {
+    const previousSiblings = node.previousSiblings();
     const nextSiblings = node.nextSiblings();
-    if (node.positionAuto && (node.element === getLastChildElement(parent.element) || nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded))) {
+    if (node.positionAuto &&
+        (previousSiblings.length === 0 || !(previousSiblings.length === 1 && previousSiblings[0].plainText && previousSiblings[0].multiLine)) &&
+        (node.element === getLastChildElement(parent.element) || nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded)))
+    {
         node.css({
             'position': 'static',
             'display': 'inline-block',

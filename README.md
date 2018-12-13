@@ -113,7 +113,6 @@ androme.settings = {
     resolutionDPI: 160,
     supportRTL: true,
     preloadImages: true,
-    autoSizePaddingAndBorderWidth: true,
     ellipsisOnTextOverflow: true,
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,

@@ -316,7 +316,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         for (const value of [...data.views, ...data.includes]) {
             value.content = replaceUnit(value.content, settings.resolutionDPI, settings.convertPixels);
             value.content = replaceTab(value.content, settings.insertSpaces);
-            value.content = this.removePlaceholders(value.content);
+            value.content = this.removePlaceholders(value.content).replace(/\n\n/g, '\n');
         }
     }
 
@@ -1832,7 +1832,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : 26,
                 resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : 160,
                 supportRTL: settings.supportRTL !== undefined ? settings.supportRTL : true,
-                autoSizePaddingAndBorderWidth: settings.autoSizePaddingAndBorderWidth !== undefined ? settings.autoSizePaddingAndBorderWidth : true,
                 constraintPercentAccuracy: this.localSettings.constraint.percentAccuracy,
                 customizationsOverwritePrivilege: settings.customizationsOverwritePrivilege !== undefined ? settings.customizationsOverwritePrivilege : true
             };

@@ -46,7 +46,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
         const scrollView = overflow.map((value, index) => {
             const container = new View(
                 this.application.nextId,
-                $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
+                index === 0 ? node.baseElement : $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
                 this.application.controllerHandler.delegateNodeInit
             );
             container.setControlType(value, CONTAINER_NODE.BLOCK);
@@ -58,6 +58,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
                 container.inherit(node, 'base');
                 container.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
             }
+            container.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
             container.resetBox($enum.BOX_STANDARD.PADDING);
             return container;
         }) as T[];

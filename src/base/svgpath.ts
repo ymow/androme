@@ -102,7 +102,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 }
                 case 'circle': {
                     const item = <SVGCircleElement> element;
-                    this.d = SvgPath.getCircle(item.cx.baseVal.value , item.cy.baseVal.value, item.r.baseVal.value);
+                    this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
                     break;
                 }
                 case 'ellipse': {

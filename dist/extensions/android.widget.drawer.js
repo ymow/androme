@@ -1,4 +1,4 @@
-/* android.widget 2.3.0
+/* android.widget 2.3.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -76,7 +76,7 @@ this.android.widget.drawer = (function () {
             node.documentRoot = true;
             node.setControlType($android_const.SUPPORT_ANDROID.DRAWER, $android_enum.CONTAINER_NODE.BLOCK);
             node.exclude({ resource: $enum.NODE_RESOURCE.FONT_STYLE });
-            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.DRAWER, 0, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'match_parent', 'match_parent', node, true);
+            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.DRAWER, 0, $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'match_parent', 'match_parent', node, true);
             return { output, complete: true };
         }
         postParseDocument(node) {
@@ -94,7 +94,7 @@ this.android.widget.drawer = (function () {
                 $util.defaultWhenNull(options, 'android', 'id', `${node.documentId}_navigation`);
                 $util.defaultWhenNull(options, 'android', 'fitsSystemWindows', 'true');
                 $util.defaultWhenNull(options, 'android', 'layout_gravity', node.localizeString('left'));
-                const output = application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.NAVIGATION_VIEW, 1, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'wrap_content', 'match_parent');
+                const output = application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.NAVIGATION_VIEW, 1, $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'wrap_content', 'match_parent');
                 application.addRenderQueue(node.id.toString(), output);
             }
         }

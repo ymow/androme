@@ -106,7 +106,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                 this._styleMap = Object.assign({}, styleMap);
                 Object.assign(this.initial.styleMap, styleMap);
             }
-            if (this.id !== 0 && this._element) {
+            if (this._element) {
                 setElementCache(this._element, 'node', this);
             }
             this._initialized = true;

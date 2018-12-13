@@ -1,4 +1,4 @@
-/* android.widget 2.3.0
+/* android.widget 2.3.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -120,7 +120,7 @@ this.android.widget.floatingactionbutton = (function () {
             else {
                 node.render(parent);
             }
-            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, target ? -1 : node.renderDepth, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'wrap_content', 'wrap_content', node);
+            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.FLOATING_ACTION_BUTTON, target ? -1 : node.renderDepth, $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), 'wrap_content', 'wrap_content', node);
             return { output, complete: true };
         }
     }

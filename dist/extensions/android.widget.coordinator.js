@@ -1,4 +1,4 @@
-/* android.widget 2.3.0
+/* android.widget 2.3.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -19,12 +19,12 @@ this.android.widget.coordinator = (function () {
             node.setControlType($android_const.SUPPORT_ANDROID.COORDINATOR, $android_enum.CONTAINER_NODE.BLOCK);
             node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
             node.render(parent);
-            const output = controller.renderNodeStatic($android_const.SUPPORT_ANDROID.COORDINATOR, node.renderDepth, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), '', '', node, true);
+            const output = controller.renderNodeStatic($android_const.SUPPORT_ANDROID.COORDINATOR, node.renderDepth, $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), '', '', node, true);
             const element = Coordinator.findNestedByName(node.element, "android.widget.toolbar" /* TOOLBAR */);
             if (element) {
                 const toolbar = $dom.getElementAsNode(element);
                 if (toolbar) {
-                    const ext = this.application.retrieveExtension("android.widget.toolbar" /* TOOLBAR */);
+                    const ext = this.application.extensionManager.retrieve("android.widget.toolbar" /* TOOLBAR */);
                     if (ext) {
                         const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
                         if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {

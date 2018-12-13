@@ -1,4 +1,4 @@
-/* android.widget 2.3.0
+/* android.widget 2.3.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -50,7 +50,7 @@ this.android.widget.bottomnavigation = (function () {
             node.setControlType($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, $android_enum.CONTAINER_NODE.BLOCK);
             node.exclude({ resource: $enum.NODE_RESOURCE.ASSET });
             node.render(parent);
-            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, node.renderDepth, $Resource.formatOptions(options, this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), parent.layoutConstraint ? '0px' : 'match_parent', 'wrap_content', node);
+            const output = this.application.controllerHandler.renderNodeStatic($android_const.SUPPORT_ANDROID.BOTTOM_NAVIGATION, node.renderDepth, $Resource.formatOptions(options, this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue')), parent.layoutConstraint ? '0px' : 'match_parent', 'wrap_content', node);
             node.cascade().forEach(item => this.subscribersChild.add(item));
             this.setStyleTheme();
             return { output, complete: true };

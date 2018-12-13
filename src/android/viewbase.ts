@@ -16,7 +16,7 @@ import $util = androme.lib.util;
 type T = androme.lib.base.Node;
 
 function setLineHeight(node: T, lineHeight: number) {
-    const offset = lineHeight - (node.hasHeight ? parseInt(node.convertPX(node.css('height'), false, true)) : node.bounds.height - (node.paddingTop + node.paddingBottom));
+    const offset = lineHeight - (node.hasHeight ? node.height : node.bounds.height);
     if (offset > 0) {
         node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2) - (node.inlineVertical ? $util.convertInt(node.verticalAlign) : 0));
         node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
@@ -263,7 +263,7 @@ export default (Base: Constructor<T>) => {
                 if (renderParent.layoutConstraint) {
                     const attr: string = LAYOUT_ANDROID.constraint[position];
                     const value = this.app(this.localizeString(attr)) || this.app(attr);
-                    return value !== 'parent' && value !== renderParent.documentId;
+                    return value !== '' && value !== 'parent' && value !== renderParent.documentId;
                 }
                 else if (renderParent.layoutRelative) {
                     const attr: string = LAYOUT_ANDROID.relative[position];
@@ -631,15 +631,16 @@ export default (Base: Constructor<T>) => {
                 if (this.pageFlow) {
                     let floating = '';
                     if (this.inlineVertical && (renderParent.layoutHorizontal && !renderParent.support.container.positionRelative || renderParent.is(CONTAINER_NODE.GRID))) {
+                        const gravity = this.display === 'table-cell' ? 'gravity' : 'layout_gravity';
                         switch (this.cssInitial('verticalAlign', true)) {
                             case 'top':
-                                this.mergeGravity('layout_gravity', 'top');
+                                this.mergeGravity(gravity, 'top');
                                 break;
                             case 'middle':
-                                this.mergeGravity('layout_gravity', 'center_vertical');
+                                this.mergeGravity(gravity, 'center_vertical');
                                 break;
                             case 'bottom':
-                                this.mergeGravity('layout_gravity', 'bottom');
+                                this.mergeGravity(gravity, 'bottom');
                                 break;
                         }
                     }
@@ -869,7 +870,7 @@ export default (Base: Constructor<T>) => {
         }
 
         private autoSizeBoxModel() {
-            if (this.localSettings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
+            if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
                 const renderParent = this.renderParent as View;
                 let layoutWidth = $util.convertInt(this.android('layout_width'));
                 let layoutHeight = $util.convertInt(this.android('layout_height'));
@@ -890,7 +891,7 @@ export default (Base: Constructor<T>) => {
                     }
                     else if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                         if (this.css('boxSizing') !== 'border-box' && !renderParent.tableElement) {
-                            if (layoutWidth > 0 && this.toInt('width', true) > 0 && this.contentBoxWidth > 0) {
+                            if (layoutWidth > 0 && this.toInt('width', !this.imageElement) > 0 && this.contentBoxWidth > 0) {
                                 this.android('layout_width', $util.formatPX(layoutWidth + this.contentBoxWidth));
                             }
                             else if (this.imageElement && this.singleChild) {
@@ -899,7 +900,7 @@ export default (Base: Constructor<T>) => {
                                     renderParent.android('layout_width', $util.formatPX(layoutWidth + this.marginLeft + this.contentBoxWidth));
                                 }
                             }
-                            if (layoutHeight > 0 && this.toInt('height', true) > 0 && this.contentBoxHeight > 0) {
+                            if (layoutHeight > 0 && this.toInt('height', !this.imageElement) > 0 && this.contentBoxHeight > 0) {
                                 this.android('layout_height', $util.formatPX(layoutHeight + this.contentBoxHeight));
                             }
                             else if (this.imageElement && this.singleChild) {
@@ -967,9 +968,10 @@ export default (Base: Constructor<T>) => {
                 const lineHeight = this.lineHeight;
                 if (lineHeight) {
                     const setMinHeight = () => {
-                        const minHeight = this.css('minHeight');
-                        if ($util.isUnit(minHeight) && parseInt(minHeight) < lineHeight) {
-                            this.android('minHeight', $util.formatPX(lineHeight));
+                        const minHeight = this.android('minHeight');
+                        const value = lineHeight + this.contentBoxHeight;
+                        if ($util.isUnit(minHeight) && $util.convertInt(minHeight) < value) {
+                            this.android('minHeight', $util.formatPX(value));
                             this.mergeGravity('gravity', 'center_vertical');
                         }
                     };

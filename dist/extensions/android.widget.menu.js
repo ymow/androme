@@ -1,4 +1,4 @@
-/* android.widget 2.3.0
+/* android.widget 2.3.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -187,7 +187,7 @@ this.android.widget.menu = (function () {
                     break;
             }
             if (title !== '') {
-                const name = $Resource.addString(title, '', this.application.getExtensionOptionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue'));
+                const name = $Resource.addString(title, '', this.application.extensionManager.optionValueAsBoolean($android_const.EXT_ANDROID.RESOURCE_STRINGS, 'numberResourceValue'));
                 options.android.title = name !== '' ? `@string/${name}` : title;
             }
             node.setControlType(controlName, $android_enum.CONTAINER_NODE.INLINE);

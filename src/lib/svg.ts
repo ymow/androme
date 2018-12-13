@@ -24,8 +24,6 @@ export function createTransform(element: SVGGraphicsElement) {
         scaleX: 1,
         scaleY: 1,
         rotateAngle: 0,
-        rotateX: 0,
-        rotateY: 0,
         skewX: 0,
         skewY: 0
     };
@@ -42,9 +40,44 @@ export function createTransform(element: SVGGraphicsElement) {
                 break;
             case SVGTransform.SVG_TRANSFORM_ROTATE:
                 data.rotateAngle += item.angle;
-                if (item.matrix.e > 0) {
-                    data.rotateX = Math.round((item.matrix.e - item.matrix.f) / 2);
-                    data.rotateY = item.matrix.e - data.rotateX;
+                let x = 0;
+                let y = 0;
+                if (element instanceof SVGLineElement) {
+                    x = element.x1.baseVal.value;
+                    y = element.y1.baseVal.value;
+                }
+                else if (element instanceof SVGRectElement || element instanceof SVGImageElement) {
+                    x = element.x.baseVal.value;
+                    y = element.y.baseVal.value;
+                }
+                else if ((element instanceof SVGPolygonElement || element instanceof SVGPolylineElement) && element.points.numberOfItems > 0) {
+                    x = element.points[0].x1;
+                    y = element.points[0].y1;
+                }
+                else if (element instanceof SVGCircleElement || element instanceof SVGEllipseElement) {
+                    x = element.cx.baseVal.value;
+                    y = element.cy.baseVal.value;
+                }
+                else if (element instanceof SVGPathElement) {
+                    const match = /\s*[Mm]\s*(-?[\d.]+)\s*,?\s*(-?[\d.]+)/.exec(cssAttribute(element, 'd'));
+                    if (match) {
+                        x = parseFloat(match[1]);
+                        y = parseFloat(match[2]);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                else {
+                    continue;
+                }
+                if (item.matrix.e !== 0) {
+                    data.rotateX = Math.round(data.translateX + (item.matrix.a * x) + (item.matrix.c * y) + item.matrix.e);
+                    data.translateX = 0;
+                }
+                if (item.matrix.f !== 0) {
+                    data.rotateY = Math.round(data.translateY + (item.matrix.b * x) + (item.matrix.d * y) + item.matrix.f);
+                    data.translateY = 0;
                 }
                 break;
             case SVGTransform.SVG_TRANSFORM_SKEWX:
