@@ -78,7 +78,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const rowWidth: number[] = [];
         const mapBounds: number[] = [];
         const tableFilled: T[][] = [];
-        let columnIndex = new Array(table.length).fill(0);
+        let columnIndex: number[] = new Array(table.length).fill(0);
         let mapWidth: string[] = [];
         let multiLine = 0;
         for (let i = 0; i < table.length; i++) {
@@ -144,14 +144,14 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        const percent = isPercent(columnWidth);
                         const unit = isUnit(mapWidth[m]);
-                        if (reevaluate || td.bounds.width < mapBounds[m] || td.bounds.width === mapBounds[m] && (
-                                (percent || unit) ||
-                                percent && unit ||
+                        const percent = isPercent(columnWidth);
+                        if (reevaluate || td.bounds.width < mapBounds[m] || (td.bounds.width === mapBounds[m] && (
+                                (unit || percent) ||
+                                unit && percent ||
                                 percent && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m]) ||
                                 unit && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m])
-                           ))
+                           )))
                         {
                             mapWidth[m] = columnWidth;
                         }

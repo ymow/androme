@@ -53,34 +53,6 @@ interface Flexbox {
     shrink: number;
 }
 
-interface RGBA {
-    r: number;
-    g: number;
-    b: number;
-    a: number;
-}
-
-interface Color {
-    name: string;
-    hex: string;
-    rgba?: RGBA;
-    hsl?: {
-        h: number;
-        s: number;
-        l: number;
-    };
-}
-
-interface ColorHexAlpha {
-    valueRGB: string;
-    valueRGBA: string;
-    valueARGB: string;
-    rgba: RGBA;
-    alpha: number;
-    opaque: boolean;
-    visible: boolean;
-}
-
 interface BorderAttribute {
     width: string;
     style: string;
@@ -114,6 +86,34 @@ interface BoxStyle extends BoxBorder {
     backgroundRepeat: string;
     backgroundPositionX: string;
     backgroundPositionY: string;
+}
+
+interface RGBA {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
+
+interface Color {
+    name: string;
+    hex: string;
+    rgba?: RGBA;
+    hsl?: {
+        h: number;
+        s: number;
+        l: number;
+    };
+}
+
+interface ColorData {
+    valueRGB: string;
+    valueRGBA: string;
+    valueARGB: string;
+    rgba: RGBA;
+    alpha: number;
+    opaque: boolean;
+    visible: boolean;
 }
 
 interface Gradient {

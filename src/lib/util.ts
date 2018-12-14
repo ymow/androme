@@ -92,11 +92,11 @@ export function convertWord(value: string) {
     return value ? value.replace(/[^\w]/g, '_').trim() : '';
 }
 
-export function convertInt(value: string | null) {
+export function convertInt(value: string) {
     return (value && parseInt(value)) || 0;
 }
 
-export function convertFloat(value: string | null) {
+export function convertFloat(value: string) {
     return (value && parseFloat(value)) || 0;
 }
 

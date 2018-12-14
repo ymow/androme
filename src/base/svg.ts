@@ -1,19 +1,21 @@
+import { USER_AGENT } from '../lib/enumeration';
+
 import Container from './container';
 import SvgGroup from './svggroup';
 import SvgImage from './svgimage';
 import SvgPath from './svgpath';
 
-import { cssAttribute } from '../lib/dom';
+import { cssAttribute, getElementAsNode, isUserAgent } from '../lib/dom';
 import { applyMatrixX, applyMatrixY, createColorStop } from '../lib/svg';
 import { resolvePath } from '../lib/util';
 
 export default class Svg extends Container<SvgGroup> implements androme.lib.base.Svg {
     public static createClipPath(element: SVGClipPathElement) {
         const result: SvgPath[] = [];
-        if (element.id) {
-            for (const item of Array.from(element.children)) {
-                const path = new SvgPath(<SVGGraphicsElement> item);
-                if (path) {
+        for (const item of Array.from(element.children)) {
+            if (item instanceof SVGGraphicsElement) {
+                const path = new SvgPath(item);
+                if (path.d !== '') {
                     result.push(path);
                 }
             }
@@ -60,49 +62,61 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         const element = this.element;
         this.defs.image = [];
         this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
+        if (isUserAgent(USER_AGENT.FIREFOX)) {
+            const node = getElementAsNode<androme.lib.base.Node>(element);
+            if (node && node.bounds.width > this.width && node.bounds.height > this.height) {
+                this.setDimensions(node.bounds.width, node.bounds.height);
+            }
+        }
         this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
         this.setOpacity(cssAttribute(element, 'opacity'));
         element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((svg: SVGElement) => {
             switch (svg.tagName) {
                 case 'clipPath': {
-                    const clipPath = Svg.createClipPath(<SVGClipPathElement> svg);
-                    if (clipPath.length) {
-                        this.defs.clipPath.set(`${svg.id}`, clipPath);
+                    if (svg.id) {
+                        const clipPath = Svg.createClipPath(<SVGClipPathElement> svg);
+                        if (clipPath.length) {
+                            this.defs.clipPath.set(`${svg.id}`, clipPath);
+                        }
                     }
                     break;
                 }
                 case 'linearGradient': {
-                    const svgElement = <SVGLinearGradientElement> svg;
-                    this.defs.gradient.set(`@${svgElement.id}`, <LinearGradient> {
-                        type: 'linear',
-                        x1: svgElement.x1.baseVal.value,
-                        x2: svgElement.x2.baseVal.value,
-                        y1: svgElement.y1.baseVal.value,
-                        y2: svgElement.y2.baseVal.value,
-                        x1AsString: svgElement.x1.baseVal.valueAsString,
-                        x2AsString: svgElement.x2.baseVal.valueAsString,
-                        y1AsString: svgElement.y1.baseVal.valueAsString,
-                        y2AsString: svgElement.y2.baseVal.valueAsString,
-                        colorStop: createColorStop(svgElement)
-                    });
+                    if (svg.id) {
+                        const svgElement = <SVGLinearGradientElement> svg;
+                        this.defs.gradient.set(`@${svg.id}`, <LinearGradient> {
+                            type: 'linear',
+                            x1: svgElement.x1.baseVal.value,
+                            x2: svgElement.x2.baseVal.value,
+                            y1: svgElement.y1.baseVal.value,
+                            y2: svgElement.y2.baseVal.value,
+                            x1AsString: svgElement.x1.baseVal.valueAsString,
+                            x2AsString: svgElement.x2.baseVal.valueAsString,
+                            y1AsString: svgElement.y1.baseVal.valueAsString,
+                            y2AsString: svgElement.y2.baseVal.valueAsString,
+                            colorStop: createColorStop(svgElement)
+                        });
+                    }
                     break;
                 }
                 case 'radialGradient': {
-                    const svgElement = <SVGRadialGradientElement> svg;
-                    this.defs.gradient.set(`@${svgElement.id}`, <RadialGradient> {
-                        type: 'radial',
-                        cx: svgElement.cx.baseVal.value,
-                        cy: svgElement.cy.baseVal.value,
-                        r: svgElement.r.baseVal.value,
-                        cxAsString: svgElement.cx.baseVal.valueAsString,
-                        cyAsString: svgElement.cy.baseVal.valueAsString,
-                        rAsString: svgElement.r.baseVal.valueAsString,
-                        fx: svgElement.fx.baseVal.value,
-                        fy: svgElement.fy.baseVal.value,
-                        fxAsString: svgElement.fx.baseVal.valueAsString,
-                        fyAsString: svgElement.fy.baseVal.valueAsString,
-                        colorStop: createColorStop(svgElement)
-                    });
+                    if (svg.id) {
+                        const svgElement = <SVGRadialGradientElement> svg;
+                        this.defs.gradient.set(`@${svg.id}`, <RadialGradient> {
+                            type: 'radial',
+                            cx: svgElement.cx.baseVal.value,
+                            cy: svgElement.cy.baseVal.value,
+                            r: svgElement.r.baseVal.value,
+                            cxAsString: svgElement.cx.baseVal.valueAsString,
+                            cyAsString: svgElement.cy.baseVal.valueAsString,
+                            rAsString: svgElement.r.baseVal.valueAsString,
+                            fx: svgElement.fx.baseVal.value,
+                            fy: svgElement.fy.baseVal.value,
+                            fxAsString: svgElement.fx.baseVal.valueAsString,
+                            fyAsString: svgElement.fy.baseVal.valueAsString,
+                            colorStop: createColorStop(svgElement)
+                        });
+                    }
                     break;
                 }
                 case 'image': {

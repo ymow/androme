@@ -4,7 +4,6 @@ declare global {
             x: number | undefined;
             y: number | undefined;
             visibility: boolean;
-            transform?: SvgTransformAttributes;
         }
 
         export interface SvgGroup extends SvgElement, Container<SvgPath> {}

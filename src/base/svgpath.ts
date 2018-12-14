@@ -9,8 +9,8 @@ export default class SvgPath implements androme.lib.base.SvgPath {
             const item = transform.getItem(i);
             points.forEach(pt => {
                 const x = pt.x;
-                pt.x = applyMatrixX(<DOMMatrix> item.matrix, x, pt.y);
-                pt.y = applyMatrixY(<DOMMatrix> item.matrix, x, pt.y);
+                pt.x = applyMatrixX(item.matrix, x, pt.y);
+                pt.y = applyMatrixY(item.matrix, x, pt.y);
             });
         }
         return points;
@@ -25,8 +25,8 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     }
 
     public static getPolyline(points: Point[] | DOMPoint[] | SVGPointList) {
-        const data = points instanceof SVGPointList ? this.toPoints(points) : points;
-        return data.length ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
+        points = points instanceof SVGPointList ? this.toPoints(points) : points;
+        return points.length ? `M${points.map(item => `${item.x},${item.y}`).join(' ')}` : '';
     }
 
     public static getPolygon(points: Point[] | DOMPoint[] | SVGPointList) {
@@ -171,24 +171,28 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 }
             }
         }
-        let clipPath = '';
         const href = pattern.exec(cssAttribute(element, 'clip-path'));
         if (href) {
-            clipPath = href[1];
+            this.clipPath = href[1];
         }
         const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
         const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
-        this.color = color ? color.valueRGB : '';
+        if (color) {
+            this.color = color.valueRGB;
+        }
         this.fillRule = cssAttribute(element, 'fill-rule');
         this.fill = values.fill;
         this.stroke = values.stroke;
         this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
-        this.fillOpacity = !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1;
-        this.strokeOpacity = !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1;
+        if (!isNaN(fillOpacity) && fillOpacity < 1) {
+            this.fillOpacity = fillOpacity;
+        }
+        if (!isNaN(strokeOpacity) && strokeOpacity < 1) {
+            this.strokeOpacity = strokeOpacity;
+        }
         this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
         this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
         this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
-        this.clipPath = clipPath;
         this.clipRule = cssAttribute(element, 'clip-rule');
         this.visibility = isSvgVisible(element);
     }

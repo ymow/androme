@@ -1,3 +1,3 @@
-import ViewBase from './viewbase';
+import View$Base from './view-base';
 
-export default class View extends ViewBase(androme.lib.base.Node) implements android.lib.base.View {}
+export default class View extends View$Base(androme.lib.base.Node) implements android.lib.base.View {}

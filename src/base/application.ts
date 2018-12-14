@@ -117,8 +117,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public finalize() {
-        let nodes = this.session.cache.filter(node => node.visible && node.rendered);
-        for (const node of nodes) {
+        const rendered = this.rendered;
+        for (const node of rendered) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
@@ -126,7 +126,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.setAlignment();
             }
         }
-        for (const node of nodes) {
+        for (const node of rendered) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
                 node.applyOptimizations();
             }
@@ -139,8 +139,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 ext.postProcedure(node);
             }
         }
-        nodes = this.session.cache.filter(node => node.visible && node.rendered);
-        for (const node of nodes) {
+        for (const node of this.rendered) {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                 node.setBoxSpacing();
             }
@@ -214,7 +213,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             for (const ext of this.extensions) {
                 ext.beforeParseDocument();
             }
-            for (const element of this.parseElements as Set<HTMLElement>) {
+            for (const element of this.parseElements) {
                 if (this.appName === '') {
                     this.appName = element.id || 'untitled';
                 }
@@ -445,13 +444,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public saveRenderPosition(parent: T, required: boolean) {
         let children: T[];
         if (parent.groupParent) {
-            const baseParent = parent.parent;
+            const baseParent = parent.parent as T;
             if (baseParent) {
                 const id = baseParent.id;
-                const parentMap = this._renderPosition.get(id);
+                const mapParent = this._renderPosition.get(id);
                 let revised: T[] | undefined;
-                if (parentMap) {
-                    const previous = parentMap.children.filter(item => !parent.contains(item)) as T[];
+                if (mapParent) {
+                    const previous = mapParent.children.filter(item => !parent.contains(item)) as T[];
                     if (parent.siblingIndex < previous.length) {
                         previous.splice(parent.siblingIndex, 0, parent);
                         for (let i = parent.siblingIndex + 1; i < previous.length; i++) {
@@ -463,7 +462,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         parent.siblingIndex = previous.length;
                         previous.push(parent);
                     }
-                    this._renderPosition.set(id, { parent: parent.parent as T, children: previous });
+                    this._renderPosition.set(id, { parent: baseParent, children: previous });
                 }
                 else {
                     revised = baseParent.children as T[];
@@ -1930,6 +1929,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
             views: this._views,
             includes: this._includes
         };
+    }
+
+    get rendered() {
+        return this.session.cache.filter(node => node.visible && node.rendered);
     }
 
     get nextId() {

@@ -26,8 +26,8 @@ declare global {
             export function getColorByName(value: string): Color | null;
             export function getColorByShade(value: string): Color | null;
             export function convertRGBA(value: string): RGBA | null;
-            export function parseRGBA(value: string, opacity?: string): ColorHexAlpha | null;
-            export function reduceRGBA(value: string, percent: number): ColorHexAlpha | null;
+            export function parseRGBA(value: string, opacity?: string): ColorData | null;
+            export function reduceRGBA(value: string, percent: number): ColorData | null;
         }
 
         namespace dom {
@@ -84,8 +84,8 @@ declare global {
             export function convertUnderscore(value: string): string;
             export function convertCamelCase(value: string, char?: string): string;
             export function convertWord(value: string): string;
-            export function convertInt(value: string | null): number;
-            export function convertFloat(value: string | null): number;
+            export function convertInt(value: string): number;
+            export function convertFloat(value: string): number;
             export function convertPX(value: string, dpi: number, fontSize: number): string;
             export function convertPercent(value: number, precision?: number): string;
             export function convertAlpha(value: number): string;

@@ -88,10 +88,20 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         if (item[value].charAt(0) === '@') {
                                             const gradient = svg.defs.gradient.get(item[value]);
                                             if (gradient) {
-                                                const gradients = Resource.createBackgroundGradient(node, [gradient], this.options.vectorColorResourceValue);
-                                                item[value] = [{ gradients }];
-                                                namespace.add('aapt');
-                                                return;
+                                                switch (item.element.tagName) {
+                                                    case 'path':
+                                                        if (!/[zZ]\s*$/.test(item.d)) {
+                                                            break;
+                                                        }
+                                                    case 'rect':
+                                                    case 'polygon':
+                                                    case 'circle':
+                                                    case 'ellipse':
+                                                        const gradients = Resource.createBackgroundGradient(node, [gradient], item, this.options.vectorColorResourceValue);
+                                                        item[value] = [{ gradients }];
+                                                        namespace.add('aapt');
+                                                        return;
+                                                }
                                             }
                                             else {
                                                 item[value] = item.color;
@@ -142,7 +152,6 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const rotate: ExternalData = [];
                     for (const item of svg.defs.image) {
                         if (item.element && item.uri) {
-                            const transform = $svg.createTransformSingle(item.element);
                             const scaleX = svg.width / svg.viewBoxWidth;
                             const scaleY = svg.height / svg.viewBoxHeight;
                             let x = (item.x || 0) * scaleX;
@@ -163,7 +172,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 top: y !== 0 ? $util.formatPX(y) : '',
                                 src: Resource.addImage({ mdpi: item.uri })
                             };
-                            if (transform && transform.rotateAngle !== 0) {
+                            const transform = $svg.createTransformSingle(item.element);
+                            if (transform.rotateAngle !== 0) {
                                 data.fromDegrees = transform.rotateAngle.toString();
                                 data.visible = item.visibility ? 'true' : 'false';
                                 rotate.push(data);

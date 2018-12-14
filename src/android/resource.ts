@@ -5,6 +5,8 @@ import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
 import View from './view';
 
+import $SvgPath = androme.lib.base.SvgPath;
+
 import $color = androme.lib.color;
 import $const = androme.lib.constant;
 import $dom = androme.lib.dom;
@@ -20,12 +22,16 @@ type ThemeTemplate = {
     items?: StringMap
 };
 
-function getHexARGB(value: ColorHexAlpha | null) {
+function getHexARGB(value: ColorData | null) {
     return value ? (value.opaque ? value.valueARGB : value.valueRGB) : '';
 }
 
+function getRadiusPercent(value: string) {
+    return $util.isPercent(value) ? parseInt(value) / 100 : 0.5;
+}
+
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
-    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], colorAlias = true) {
+    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: $SvgPath, colorAlias = true) {
         const result: BackgroundGradient[] = [];
         const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
         for (const item of gradients) {
@@ -39,10 +45,79 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
             switch (item.type) {
                 case 'radial':
                     if (node.svgElement) {
-                        const radial = <SvgRadialGradient> item;
-                        gradient.gradientRadius = radial.r.toString();
-                        gradient.centerX = radial.cx.toString();
-                        gradient.centerY = radial.cy.toString();
+                        if (svgPath) {
+                            const radial = <SvgRadialGradient> item;
+                            const mapPoint: Point[] = [];
+                            let cx: number | undefined;
+                            let cy: number | undefined;
+                            let cxDiameter: number | undefined;
+                            let cyDiameter: number | undefined;
+                            switch (svgPath.element.tagName) {
+                                case 'path': {
+                                    svgPath.d.split(' ').map(value => value.replace(/[^-\d.,]/g, '').trim()).forEach(value => {
+                                        if (value !== '') {
+                                            const points = value.split(',').map(pt => $util.convertFloat(pt));
+                                            if (points.length >= 2) {
+                                                mapPoint.push({
+                                                    x: points[0],
+                                                    y: points[1]
+                                                });
+                                                if (points.length >= 4) {
+                                                    mapPoint.push({
+                                                        x: points[points.length - 2],
+                                                        y: points[points.length - 1]
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (!mapPoint.length) {
+                                        break;
+                                    }
+                                }
+                                case 'polygon': {
+                                    if (svgPath.element instanceof SVGPolygonElement) {
+                                        mapPoint.push(...$SvgPath.toPoints(svgPath.element.points));
+                                    }
+                                    cx = $util.minArray(mapPoint.map(pt => pt.x));
+                                    cy = $util.minArray(mapPoint.map(pt => pt.y));
+                                    cxDiameter = $util.maxArray(mapPoint.map(pt => pt.x)) - cx;
+                                    cyDiameter = $util.maxArray(mapPoint.map(pt => pt.y)) - cy;
+                                    break;
+                                }
+                                case 'rect': {
+                                    const rect = <SVGRectElement> svgPath.element;
+                                    cx = rect.x.baseVal.value;
+                                    cy = rect.y.baseVal.value;
+                                    cxDiameter = rect.width.baseVal.value;
+                                    cyDiameter = rect.height.baseVal.value;
+                                    break;
+                                }
+                                case 'circle': {
+                                    const circle = <SVGCircleElement> svgPath.element;
+                                    cx = circle.cx.baseVal.value - circle.r.baseVal.value;
+                                    cy = circle.cy.baseVal.value - circle.r.baseVal.value;
+                                    cxDiameter = circle.r.baseVal.value * 2;
+                                    cyDiameter = cxDiameter;
+                                    break;
+                                }
+                                case 'ellipse': {
+                                    const ellipse = <SVGEllipseElement> svgPath.element;
+                                    cx = ellipse.cx.baseVal.value - ellipse.rx.baseVal.value;
+                                    cy = ellipse.cy.baseVal.value - ellipse.ry.baseVal.value;
+                                    cxDiameter = ellipse.rx.baseVal.value * 2;
+                                    cyDiameter = ellipse.ry.baseVal.value * 2;
+                                    break;
+                                }
+                            }
+                            if (cx !== undefined && cy !== undefined && cxDiameter !== undefined && cyDiameter !== undefined) {
+                                const cxPercent = getRadiusPercent(radial.cxAsString);
+                                const cyPercent = getRadiusPercent(radial.cyAsString);
+                                gradient.centerX = (cx + cxDiameter * cxPercent).toString();
+                                gradient.centerY = (cy + cyDiameter * cyPercent).toString();
+                                gradient.gradientRadius = (((cxDiameter + cyDiameter) / 2) * ($util.isPercent(radial.rAsString) ? (parseInt(radial.rAsString) / 100) : 1)).toString();
+                            }
+                        }
                     }
                     else {
                         const radial = <RadialGradient> item;
@@ -303,7 +378,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return '';
     }
 
-    public static addColor(value: ColorHexAlpha | string | null) {
+    public static addColor(value: ColorData | string | null) {
         if (typeof value === 'string') {
             value = $color.parseRGBA(value);
         }

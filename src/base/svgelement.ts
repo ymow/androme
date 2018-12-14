@@ -1,3 +1,3 @@
-import SvgElementBase from './svgelementbase';
+import SvgElement$Base from './svgelement-base';
 
-export default class SvgElement extends SvgElementBase(Object as Constructor<any>) {}
+export default class SvgElement extends SvgElement$Base(Object as Constructor<any>) {}

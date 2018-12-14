@@ -344,7 +344,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             {
                 const opacity = node.css('opacity');
                 const color = parseRGBA(node.css('color'), opacity);
-                let backgroundColor: ColorHexAlpha | null;
+                let backgroundColor: ColorData | null;
                 if (backgroundImage ||
                     node.cssParent('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.cssInitial('backgroundColor')) ||
                     !node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))

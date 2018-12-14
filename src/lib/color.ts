@@ -326,7 +326,7 @@ export function parseRGBA(value: string, opacity = '1') {
             const valueA = convertAlpha(match[4]);
             const valueRGBA = `#${valueHex + valueA}`;
             const alpha = parseFloat(match[4]);
-            return <ColorHexAlpha> {
+            return <ColorData> {
                 valueRGB: `#${valueHex}`,
                 valueRGBA,
                 valueARGB: `#${valueA + valueHex}`,

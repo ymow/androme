@@ -217,7 +217,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, typeof vectorColorAlias === 'boolean' ? vectorColorAlias : true);
+                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, undefined, typeof vectorColorAlias === 'boolean' ? vectorColorAlias : true);
                     if (gradients.length) {
                         backgroundGradient.push(gradients[0]);
                     }
