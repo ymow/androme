@@ -80,10 +80,10 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                             if (hasStop) {
                                 const x = Math.round(node.bounds.width / 2);
                                 const y = Math.round(node.bounds.height / 2);
-                                gradient.startX = Math.round($svg.getOffsetX(linear.angle + 180, x) + x).toString();
-                                gradient.startY = Math.round($svg.getOffsetY(linear.angle + 180, y) + y).toString();
-                                gradient.endX = Math.round($svg.getOffsetX(linear.angle, x) + x).toString();
-                                gradient.endY = Math.round($svg.getOffsetY(linear.angle, y) + y).toString();
+                                gradient.startX = Math.round($svg.getRadiusX(linear.angle + 180, x) + x).toString();
+                                gradient.startY = Math.round($svg.getRadiusY(linear.angle + 180, y) + y).toString();
+                                gradient.endX = Math.round($svg.getRadiusX(linear.angle, x) + x).toString();
+                                gradient.endY = Math.round($svg.getRadiusY(linear.angle, y) + y).toString();
                             }
                             else {
                                 gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();

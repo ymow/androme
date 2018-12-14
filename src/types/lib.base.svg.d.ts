@@ -4,14 +4,11 @@ declare global {
             name: string;
             width?: number;
             height?: number;
-            readonly element: SVGGraphicsElement | undefined;
-            setElement(element: SVGGraphicsElement): void;
+            readonly element: SVGGraphicsElement;
             build(): void;
         }
 
         export interface Svg extends Container<SvgGroup>, SvgBase {
-            dpi: number;
-            fontSize: number;
             readonly defs: SvgDefs<SvgImage, SvgPath>;
             readonly width: number;
             readonly height: number;
@@ -24,7 +21,7 @@ declare global {
         }
 
         export class Svg implements Svg {
-            constructor(element: SVGSVGElement, dpi?: number, fontSize?: number);
+            constructor(element: SVGSVGElement);
         }
     }
 }

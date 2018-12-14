@@ -7,7 +7,7 @@ import Node from './node';
 import NodeList from './nodelist';
 
 import { parseRGBA } from '../lib/color';
-import { cssFromParent, cssInherit, getBoxSpacing, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
+import { cssFromParent, cssInherit, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
 import { convertInt, hasValue, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 
@@ -417,24 +417,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
                 };
                 node.data(Resource.KEY_NAME, 'fontStyle', result);
-            }
-        }
-    }
-
-    public setBoxSpacing() {
-        for (const node of this.cache.elements) {
-            const boxSpacing = getBoxSpacing(node.element);
-            if (Object.keys(boxSpacing).length) {
-                const result: StringMap = {};
-                for (const attr in boxSpacing) {
-                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
-                        result[attr] = '0px';
-                    }
-                    else {
-                        result[attr] = node.convertPX(boxSpacing[attr]);
-                    }
-                }
-                node.data(Resource.KEY_NAME, 'boxSpacing', result);
             }
         }
     }

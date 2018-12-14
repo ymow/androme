@@ -1,4 +1,4 @@
-import { REGEX_PATTERN } from './constant';
+import { CSS_SPACING, REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
 import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, isPercent, isString, maxArray, minArray, resolvePath, withinFraction } from './util';
@@ -156,30 +156,12 @@ export function getStyle(element: Element | null, cache = true): CSSStyleDeclara
     return <CSSStyleDeclaration> { display: 'none' };
 }
 
-export function getBoxSpacing(element: Element, complete = false, merge = false) {
+export function getBoxSpacing(element: Element) {
     const result = {};
-    const node = getElementAsNode(element);
-    const style = getStyle(element);
-    ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-        let total = 0;
-        ['padding', 'margin'].forEach(region => {
-            const attr = region + direction;
-            const value = convertInt((node || style)[attr]);
-            if (complete || value !== 0) {
-                result[attr] = value;
-            }
-            total += value;
-        });
-        if (merge) {
-            result[`padding${direction}`] = total;
-            if (complete) {
-                result[`margin${direction}`] = 0;
-            }
-            else {
-                delete result[`margin${direction}`];
-            }
-        }
-    });
+    const node = getElementAsNode(element) || getStyle(element);
+    for (const attr of CSS_SPACING.values()) {
+        result[attr] = convertInt(node[attr]);
+    }
     return <BoxModel> result;
 }
 

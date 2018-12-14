@@ -1,21 +1,19 @@
 import SvgElement from './svgelement';
 
 export default class SvgImage extends SvgElement implements androme.lib.base.SvgImage {
+    public width: number;
+    public height: number;
     public uri = '';
 
     constructor(
-        element?: SVGImageElement,
+        public readonly element: SVGImageElement,
         uri?: string)
     {
         super(element);
+        this.width = element.width.baseVal.value;
+        this.height = element.height.baseVal.value;
         if (uri) {
             this.uri = uri;
-        }
-    }
-
-    public setElement(element: SVGImageElement) {
-        if (element instanceof SVGImageElement) {
-            this._element = element;
         }
     }
 }

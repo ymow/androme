@@ -8,7 +8,6 @@ declare global {
             readonly stored: ResourceStoredMap;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
-            setBoxSpacing(): void;
             setBoxStyle(): void;
             setFontStyle(): void;
             setValueString(): void;

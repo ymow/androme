@@ -5,7 +5,6 @@ import View from '../view';
 import $Layout = androme.lib.base.Layout;
 
 import $const = androme.lib.constant;
-import $dom = androme.lib.dom;
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 
@@ -33,6 +32,7 @@ function transferData<T extends View>(parent: T, siblings: T[])  {
                 }
             }
         }
+        item.siblingIndex = i;
         item.data($const.EXT_NAME.GRID, 'cellData', null);
     }
     parent.data($const.EXT_NAME.GRID, 'cellData', destination);
@@ -109,27 +109,29 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                 node.each(item => {
                     const cellData: GridCellData<T> = item.data($const.EXT_NAME.GRID, 'cellData');
                     if (cellData) {
-                        const dimensions = $dom.getBoxSpacing(item.documentParent.element, true);
-                        if (cellData.cellStart) {
-                            mainData.paddingTop = dimensions.paddingTop + dimensions.marginTop;
-                        }
-                        if (cellData.rowStart) {
-                            mainData.paddingLeft = Math.max(dimensions.marginLeft + dimensions.paddingLeft, mainData.paddingLeft);
-                        }
-                        if (cellData.rowEnd) {
-                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellEnd ? dimensions.marginTop + dimensions.paddingTop : 0);
-                            if (heightBottom > 0) {
-                                if (cellData.cellEnd) {
-                                    mainData.paddingBottom = heightBottom;
-                                }
-                                else {
-                                    this.application.controllerHandler.appendAfter(
-                                        item.id,
-                                        (<android.lib.base.Controller<T>> this.application.controllerHandler).renderSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
-                                    );
-                                }
+                        const actualParent = item.actualParent;
+                        if (actualParent && !actualParent.visible) {
+                            if (cellData.cellStart) {
+                                mainData.paddingTop = actualParent.paddingTop + actualParent.marginTop;
                             }
-                            mainData.paddingRight = Math.max(dimensions.marginRight + dimensions.paddingRight, mainData.paddingRight);
+                            if (cellData.rowStart) {
+                                mainData.paddingLeft = Math.max(actualParent.marginLeft + actualParent.paddingLeft, mainData.paddingLeft);
+                            }
+                            if (cellData.rowEnd) {
+                                const heightBottom = actualParent.marginBottom + actualParent.paddingBottom + (cellData.cellEnd ? 0 : actualParent.marginTop + actualParent.paddingTop);
+                                if (heightBottom > 0) {
+                                    if (cellData.cellEnd) {
+                                        mainData.paddingBottom = heightBottom;
+                                    }
+                                    else {
+                                        this.application.controllerHandler.appendAfter(
+                                            item.id,
+                                            (<android.lib.base.Controller<T>> this.application.controllerHandler).renderSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
+                                        );
+                                    }
+                                }
+                                mainData.paddingRight = Math.max(actualParent.marginRight + actualParent.paddingRight, mainData.paddingRight);
+                            }
                         }
                     }
                 }, true);

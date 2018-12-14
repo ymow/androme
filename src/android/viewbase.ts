@@ -776,20 +776,7 @@ export default (Base: Constructor<T>) => {
         }
 
         public setBoxSpacing() {
-            const stored: StringMap = this.data($Resource.KEY_NAME, 'boxSpacing');
-            if (stored) {
-                if (stored.marginLeft === stored.marginRight && !this.blockWidth && this.alignParent('left') && this.alignParent('right')) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-                if (this.css('marginLeft') === 'auto') {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                }
-                if (this.css('marginRight') === 'auto') {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-            }
-            const boxModel: BoxMargin & BoxPadding = {
+            const boxModel: BoxModel = {
                 marginTop: 0,
                 marginRight: 0,
                 marginBottom: 0,
@@ -801,13 +788,13 @@ export default (Base: Constructor<T>) => {
             };
             ['margin', 'padding'].forEach((region, index) => {
                 ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-                    const dimension = region + direction;
+                    const attr = region + direction;
                     let value = 0;
-                    if (!(dimension === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
-                        value += this._boxReset[dimension] === 0 ? this[dimension] : 0;
+                    if (!(attr === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
+                        value += this._boxReset[attr] === 0 ? this[attr] : 0;
                     }
-                    value += this._boxAdjustment[dimension];
-                    boxModel[region + direction] = value;
+                    value += this._boxAdjustment[attr];
+                    boxModel[attr] = value;
                 });
                 const prefix = index === 0 ? 'layout_margin' : 'padding';
                 const top = `${region}Top`;
@@ -880,7 +867,7 @@ export default (Base: Constructor<T>) => {
                     }
                 }
                 else if (this.is(CONTAINER_NODE.LINE)) {
-                    if (layoutHeight > 0 && this.toInt('height', true) > 0 && this.tagName !== 'HR') {
+                    if (this.element.tagName !== 'HR' && layoutHeight > 0 && this.toInt('height', true) > 0) {
                         this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                     }
                 }
@@ -970,7 +957,7 @@ export default (Base: Constructor<T>) => {
                     const setMinHeight = () => {
                         const minHeight = this.android('minHeight');
                         const value = lineHeight + this.contentBoxHeight;
-                        if ($util.isUnit(minHeight) && $util.convertInt(minHeight) < value) {
+                        if ($util.convertInt(minHeight) < value) {
                             this.android('minHeight', $util.formatPX(value));
                             this.mergeGravity('gravity', 'center_vertical');
                         }

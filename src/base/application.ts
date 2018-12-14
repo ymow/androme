@@ -513,7 +513,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         const nodeRoot = this.insertNode(documentRoot);
         if (nodeRoot) {
-            nodeRoot.parent = new this.nodeConstructor(0, (documentRoot === document.body ? document.body : documentRoot.parentElement) || document.body, this.controllerHandler.delegateNodeInit);
+            nodeRoot.parent = new this.nodeConstructor(0, documentRoot.parentElement || document.body, this.controllerHandler.delegateNodeInit);
             nodeRoot.parent.setBounds();
             nodeRoot.documentRoot = true;
             nodeRoot.documentParent = nodeRoot.parent;
@@ -548,7 +548,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         if (this.processing.cache.length) {
             for (const node of this.processing.cache) {
-                if (node.tagName !== 'SELECT') {
+                if (node.element.tagName !== 'SELECT') {
                     const plainText: Element[] = [];
                     let valid = false;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
@@ -1160,7 +1160,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
     protected setResources() {
         this.resourceHandler.setBoxStyle();
         this.resourceHandler.setFontStyle();
-        this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setValueString();
         for (const ext of this.extensions) {
             ext.afterResources();

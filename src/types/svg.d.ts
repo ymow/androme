@@ -5,7 +5,7 @@ interface SvgDefs<T, U> {
 }
 
 interface SvgTransformAttributes {
-    length: number;
+    operations: number[];
     translateX: number;
     translateY: number;
     scaleX: number;
@@ -13,9 +13,11 @@ interface SvgTransformAttributes {
     skewX: number;
     skewY: number;
     rotateAngle: number;
-    rotateX: number;
-    rotateY: number;
-    rotateMatrix?: DOMMatrix;
+    rotateOriginX: number;
+    rotateOriginY: number;
+    matrixSkewX?: DOMMatrix;
+    matrixSkewY?: DOMMatrix;
+    matrixRotate?: DOMMatrix;
     origin?: RectPosition;
 }
 

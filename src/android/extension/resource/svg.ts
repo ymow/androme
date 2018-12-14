@@ -11,18 +11,7 @@ import $Svg = androme.lib.base.Svg;
 import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
-
-function setPivotXY(data: ExternalData, transform: SvgTransformAttributes) {
-    const origin = transform.origin;
-    if (origin) {
-        if (origin.left !== 0) {
-            data.pivotX = $util.isPercent(origin.originalX) ? origin.originalX : origin.left.toString();
-        }
-        if (origin.top !== 0) {
-            data.pivotY = $util.isPercent(origin.originalY) ? origin.originalY : origin.top.toString();
-        }
-    }
-}
+import { createTransform } from '../../../lib/svg';
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
@@ -38,7 +27,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
     public afterResources() {
         for (const node of this.application.processing.cache) {
             if (node.svgElement && node.element.children.length) {
-                const svg = new $Svg(<SVGSVGElement> node.element, node.dpi, node.fontSize);
+                const svg = new $Svg(<SVGSVGElement> node.element);
                 svg.defs.image.forEach(item => {
                     const dimensions = Resource.ASSETS.images.get(item.uri);
                     if (dimensions) {
@@ -60,11 +49,11 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             name: group.name,
                             '2': []
                         };
-                        if (group.element !== node.element) {
-                            const transform = group.transform;
-                            let x = group.x || 0;
-                            let y = group.y || 0;
-                            if (transform) {
+                        if (group.element && group.element !== node.element) {
+                            const transform = createTransform(group.element);
+                            let x = group.x;
+                            let y = group.y;
+                            if (transform.operations.length) {
                                 x += transform.translateX;
                                 y += transform.translateY;
                                 if (transform.scaleX !== 1) {
@@ -75,11 +64,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 }
                                 if (transform.rotateAngle !== 0) {
                                     data.rotation = transform.rotateAngle.toString();
-                                    data.pivotX = transform.rotateX.toString();
-                                    data.pivotY = transform.rotateY.toString();
-                                }
-                                else {
-                                    setPivotXY(data, transform);
+                                    data.pivotX = transform.rotateOriginX.toString();
+                                    data.pivotY = transform.rotateOriginY.toString();
                                 }
                             }
                             if (x !== 0) {
@@ -156,45 +142,14 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const images: ExternalData = [];
                     const rotate: ExternalData = [];
                     for (const item of svg.defs.image) {
-                        if (item.uri) {
-                            const transform = item.transform;
+                        if (item.element && item.uri) {
+                            const transform = createTransform(item.element);
                             const scaleX = svg.width / svg.viewBoxWidth;
                             const scaleY = svg.height / svg.viewBoxHeight;
-                            let x = item.x || 0;
-                            let y = item.y || 0;
-                            if (transform) {
-                                const matrix = transform.rotateMatrix;
-                                if (matrix) {
-                                    x = matrix.a * x + matrix.c * y + matrix.e;
-                                    y = matrix.b * y + matrix.d * y + matrix.f;
-                                    if (item.width) {
-                                        if (matrix.a < 0) {
-                                            x += matrix.a * item.width;
-                                        }
-                                        if (matrix.c < 0) {
-                                            x += matrix.c * item.width;
-                                        }
-                                    }
-                                    if (item.height) {
-                                        if (matrix.b < 0) {
-                                            y += matrix.b * item.height;
-                                        }
-                                        if (matrix.d < 0) {
-                                            y += matrix.d * item.height;
-                                        }
-                                    }
-                                }
-                                if (item.width) {
-                                    item.width *= scaleX * transform.scaleX;
-                                }
-                                if (item.height) {
-                                    item.height *= scaleY * transform.scaleY;
-                                }
-                                x += transform.translateX;
-                                y += transform.translateY;
-                            }
-                            x *= scaleX;
-                            y *= scaleY;
+                            let x = item.x * scaleX;
+                            let y = item.y * scaleY;
+                            item.width *= scaleX;
+                            item.height *= scaleY;
                             let parent = item.element ? item.element.parentElement : null;
                             while (parent instanceof SVGSVGElement && parent !== node.element) {
                                 const attributes = $svg.createTransform(parent);
@@ -212,7 +167,6 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             if (transform && transform.rotateAngle !== 0) {
                                 data.fromDegrees = transform.rotateAngle.toString();
                                 data.visible = item.visibility ? 'true' : 'false';
-                                setPivotXY(data, transform);
                                 rotate.push(data);
                             }
                             else {

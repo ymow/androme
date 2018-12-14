@@ -42,7 +42,7 @@ declare global {
             export function getRangeClientRect(element: Element): TextDimensions;
             export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions;
             export function getStyle(element: Element | null, cache?: boolean): CSSStyleDeclaration;
-            export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
+            export function getBoxSpacing(element: Element): BoxModel;
             export function cssResolveUrl(value: string): string;
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
@@ -70,9 +70,11 @@ declare global {
         namespace svg {
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransform(element: SVGGraphicsElement): SvgTransformAttributes;
-            export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): RectPosition | undefined;
-            export function getOffsetX(angle: number, radius: number): number;
-            export function getOffsetY(angle: number, radius: number): number;
+            export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): RectPosition;
+            export function applyMatrixX(matrix: DOMMatrix, x: number, y: number): number;
+            export function applyMatrixY(matrix: DOMMatrix, x: number, y: number): number;
+            export function getRadiusX(angle: number, radius: number): number;
+            export function getRadiusY(angle: number, radius: number): number;
             export function isSvgVisible(element: SVGGraphicsElement): boolean;
         }
 
