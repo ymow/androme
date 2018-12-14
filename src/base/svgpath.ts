@@ -8,9 +8,9 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         for (let i = transform.numberOfItems - 1; i >= 0; i--) {
             const item = transform.getItem(i);
             points.forEach(pt => {
-                const localX = pt.x;
-                pt.x = applyMatrixX(<DOMMatrix> item.matrix, localX, pt.y);
-                pt.y = applyMatrixY(<DOMMatrix> item.matrix, localX, pt.y);
+                const x = pt.x;
+                pt.x = applyMatrixX(<DOMMatrix> item.matrix, x, pt.y);
+                pt.y = applyMatrixY(<DOMMatrix> item.matrix, x, pt.y);
             });
         }
         return points;
@@ -25,13 +25,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     }
 
     public static getPolyline(points: Point[] | DOMPoint[] | SVGPointList) {
-        let data: Point[];
-        if (points instanceof SVGPointList) {
-            data = this.toPoints(points);
-        }
-        else {
-            data = points;
-        }
+        const data = points instanceof SVGPointList ? this.toPoints(points) : points;
         return data.length ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
     }
 
@@ -88,6 +82,20 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         const element = this.element;
         const transform = element.transform.baseVal;
         switch (element.tagName) {
+            case 'path': {
+                this.d = cssAttribute(element, 'd');
+                break;
+            }
+            case 'circle': {
+                const item = <SVGCircleElement> element;
+                this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
+                break;
+            }
+            case 'ellipse': {
+                const item = <SVGEllipseElement> element;
+                this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
+                break;
+            }
             case 'line': {
                 const item = <SVGLineElement> element;
                 const x1 = item.x1.baseVal.value;
@@ -131,20 +139,6 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 const item = <SVGPolygonElement> element;
                 const points = SvgPath.applyTransforms(transform, SvgPath.toPoints(item.points));
                 this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
-                break;
-            }
-            case 'path': {
-                this.d = cssAttribute(element, 'd');
-                break;
-            }
-            case 'circle': {
-                const item = <SVGCircleElement> element;
-                this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
-                break;
-            }
-            case 'ellipse': {
-                const item = <SVGEllipseElement> element;
-                this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
                 break;
             }
         }

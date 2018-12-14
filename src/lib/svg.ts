@@ -16,7 +16,7 @@ export function createColorStop(element: SVGGradientElement) {
     return result;
 }
 
-export function createTransform(element: SVGGraphicsElement) {
+export function createTransformSingle(element: SVGGraphicsElement) {
     const data: SvgTransformAttributes = {
         operations: [],
         translateX: 0,
@@ -34,12 +34,18 @@ export function createTransform(element: SVGGraphicsElement) {
         if (!data.operations.includes(item.type)) {
             switch (item.type) {
                 case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                    data.translateX = item.matrix.e;
-                    data.translateY = item.matrix.f;
+                    if (item.matrix.e !== 0 || item.matrix.f !== 0) {
+                        data.translateX = item.matrix.e;
+                        data.translateY = item.matrix.f;
+                        data.operations.push(item.type);
+                    }
                     break;
                 case SVGTransform.SVG_TRANSFORM_SCALE:
-                    data.scaleX = item.matrix.a;
-                    data.scaleY = item.matrix.d;
+                    if (item.matrix.a !== 1 || item.matrix.d !== 1) {
+                        data.scaleX = item.matrix.a;
+                        data.scaleY = item.matrix.d;
+                        data.operations.push(item.type);
+                    }
                     break;
                 case SVGTransform.SVG_TRANSFORM_ROTATE:
                     if (item.angle !== 0) {
@@ -53,28 +59,30 @@ export function createTransform(element: SVGGraphicsElement) {
                             }
                         }
                         data.matrixRotate = item.matrix;
+                        data.operations.push(item.type);
                     }
                     break;
                 case SVGTransform.SVG_TRANSFORM_SKEWX:
                     if (item.angle !== 0) {
                         data.skewX += item.angle;
                         data.matrixSkewX = item.matrix;
+                        data.operations.push(item.type);
                     }
                     break;
                 case SVGTransform.SVG_TRANSFORM_SKEWY:
                     if (item.angle !== 0) {
                         data.skewY += item.angle;
                         data.matrixSkewY = item.matrix;
+                        data.operations.push(item.type);
                     }
                     break;
             }
-            data.operations.push(item.type);
         }
     }
     return data;
 }
 
-export function createTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number) {
+export function getTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number) {
     const style = getStyle(element);
     if (style.transformOrigin) {
         switch (style.transformOrigin) {

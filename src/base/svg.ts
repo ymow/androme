@@ -62,60 +62,60 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
         this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
         this.setOpacity(cssAttribute(element, 'opacity'));
-        element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((item: SVGElement) => {
-            switch (item.tagName) {
+        element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((svg: SVGElement) => {
+            switch (svg.tagName) {
                 case 'clipPath': {
-                    const clipPath = Svg.createClipPath(<SVGClipPathElement> item);
+                    const clipPath = Svg.createClipPath(<SVGClipPathElement> svg);
                     if (clipPath.length) {
-                        this.defs.clipPath.set(`${item.id}`, clipPath);
+                        this.defs.clipPath.set(`${svg.id}`, clipPath);
                     }
                     break;
                 }
                 case 'linearGradient': {
-                    const gradient = <SVGLinearGradientElement> item;
-                    this.defs.gradient.set(`@${gradient.id}`, <LinearGradient> {
+                    const svgElement = <SVGLinearGradientElement> svg;
+                    this.defs.gradient.set(`@${svgElement.id}`, <LinearGradient> {
                         type: 'linear',
-                        x1: gradient.x1.baseVal.value,
-                        x2: gradient.x2.baseVal.value,
-                        y1: gradient.y1.baseVal.value,
-                        y2: gradient.y2.baseVal.value,
-                        x1AsString: gradient.x1.baseVal.valueAsString,
-                        x2AsString: gradient.x2.baseVal.valueAsString,
-                        y1AsString: gradient.y1.baseVal.valueAsString,
-                        y2AsString: gradient.y2.baseVal.valueAsString,
-                        colorStop: createColorStop(gradient)
+                        x1: svgElement.x1.baseVal.value,
+                        x2: svgElement.x2.baseVal.value,
+                        y1: svgElement.y1.baseVal.value,
+                        y2: svgElement.y2.baseVal.value,
+                        x1AsString: svgElement.x1.baseVal.valueAsString,
+                        x2AsString: svgElement.x2.baseVal.valueAsString,
+                        y1AsString: svgElement.y1.baseVal.valueAsString,
+                        y2AsString: svgElement.y2.baseVal.valueAsString,
+                        colorStop: createColorStop(svgElement)
                     });
                     break;
                 }
                 case 'radialGradient': {
-                    const gradient = <SVGRadialGradientElement> item;
-                    this.defs.gradient.set(`@${gradient.id}`, <RadialGradient> {
+                    const svgElement = <SVGRadialGradientElement> svg;
+                    this.defs.gradient.set(`@${svgElement.id}`, <RadialGradient> {
                         type: 'radial',
-                        cx: gradient.cx.baseVal.value,
-                        cy: gradient.cy.baseVal.value,
-                        r: gradient.r.baseVal.value,
-                        cxAsString: gradient.cx.baseVal.valueAsString,
-                        cyAsString: gradient.cy.baseVal.valueAsString,
-                        rAsString: gradient.r.baseVal.valueAsString,
-                        fx: gradient.fx.baseVal.value,
-                        fy: gradient.fy.baseVal.value,
-                        fxAsString: gradient.fx.baseVal.valueAsString,
-                        fyAsString: gradient.fy.baseVal.valueAsString,
-                        colorStop: createColorStop(gradient)
+                        cx: svgElement.cx.baseVal.value,
+                        cy: svgElement.cy.baseVal.value,
+                        r: svgElement.r.baseVal.value,
+                        cxAsString: svgElement.cx.baseVal.valueAsString,
+                        cyAsString: svgElement.cy.baseVal.valueAsString,
+                        rAsString: svgElement.r.baseVal.valueAsString,
+                        fx: svgElement.fx.baseVal.value,
+                        fy: svgElement.fy.baseVal.value,
+                        fxAsString: svgElement.fx.baseVal.valueAsString,
+                        fyAsString: svgElement.fy.baseVal.valueAsString,
+                        colorStop: createColorStop(svgElement)
                     });
                     break;
                 }
                 case 'image': {
-                    const image = <SVGImageElement> item;
-                    const svg = new SvgImage(image, resolvePath(image.href.baseVal));
-                    const transform = image.transform.baseVal;
-                    let x = image.x.baseVal.value;
-                    let y = image.y.baseVal.value;
+                    const svgElement = <SVGImageElement> svg;
+                    const image = new SvgImage(svgElement, resolvePath(svgElement.href.baseVal));
+                    const transform = svgElement.transform.baseVal;
+                    let x = svgElement.x.baseVal.value;
+                    let y = svgElement.y.baseVal.value;
                     if (transform.numberOfItems) {
                         for (let i = transform.numberOfItems - 1; i >= 0; i--) {
-                            const subitem = transform.getItem(i);
-                            const matrix = subitem.matrix;
-                            switch (subitem.type) {
+                            const item = transform.getItem(i);
+                            const matrix = item.matrix;
+                            switch (item.type) {
                                 case SVGTransform.SVG_TRANSFORM_TRANSLATE:
                                     x += matrix.e;
                                     y += matrix.f;
@@ -123,47 +123,54 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                                 case SVGTransform.SVG_TRANSFORM_SCALE:
                                     x *= matrix.a;
                                     y *= matrix.d;
-                                    svg.width *= matrix.a;
-                                    svg.height *= matrix.d;
+                                    image.width *= matrix.a;
+                                    image.height *= matrix.d;
                                     break;
                                 case SVGTransform.SVG_TRANSFORM_ROTATE:
                                     x = applyMatrixX(matrix, x, x);
                                     y = applyMatrixY(matrix, y, y);
                                     if (matrix.a < 0) {
-                                        x += matrix.a * svg.width;
+                                        x += matrix.a * image.width;
                                     }
                                     if (matrix.c < 0) {
-                                        x += matrix.c * svg.width;
+                                        x += matrix.c * image.width;
                                     }
                                     if (matrix.b < 0) {
-                                        y += matrix.b * svg.height;
+                                        y += matrix.b * image.height;
                                     }
                                     if (matrix.d < 0) {
-                                        y += matrix.d * svg.height;
+                                        y += matrix.d * image.height;
                                     }
                                     break;
                             }
                         }
                     }
-                    svg.x = x;
-                    svg.y = y;
-                    this.defs.image.push(svg);
+                    image.x = x;
+                    image.y = y;
+                    this.defs.image.push(image);
                     break;
                 }
             }
         });
         const baseTags = new Set(['svg', 'g']);
-        [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item: SVGGraphicsElement, index) => {
-            const group = new SvgGroup(item);
-            if (index > 0 && item.tagName === 'svg') {
-                const svg = <SVGSVGElement> item;
-                group.x = svg.x.baseVal.value;
-                group.y = svg.y.baseVal.value;
-                group.width = svg.width.baseVal.value;
-                group.height = svg.height.baseVal.value;
-            }
-            for (let i = 0; i < item.children.length; i++) {
-                switch (item.children[i].tagName) {
+        [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((svg: SVGGraphicsElement, index) => {
+            const createGroup = (baseElement: SVGGraphicsElement) => {
+                const group = new SvgGroup(baseElement);
+                if (svg.tagName === 'svg' && index > 0) {
+                    const svgElement = <SVGSVGElement> svg;
+                    group.x = svgElement.x.baseVal.value;
+                    group.y = svgElement.y.baseVal.value;
+                    group.width = svgElement.width.baseVal.value;
+                    group.height = svgElement.height.baseVal.value;
+                }
+                this.append(group);
+                return group;
+            };
+            let current: SvgGroup | null = null;
+            for (let i = 0; i < svg.children.length; i++) {
+                const svgElement = <SVGGraphicsElement> svg.children[i];
+                let newGroup = false;
+                switch (svg.children[i].tagName) {
                     case 'g':
                     case 'use':
                     case 'image':
@@ -171,35 +178,47 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     case 'linearGradient':
                     case 'radialGradient':
                         break;
+                    case 'path':
+                    case 'circle':
+                    case 'ellipse':
+                        if (svgElement.transform.baseVal.numberOfItems) {
+                            current = createGroup(svgElement);
+                            newGroup = true;
+                        }
                     default:
-                        const path = new SvgPath(<SVGGraphicsElement> item.children[i]);
+                        if (current === null) {
+                            current = createGroup(svg);
+                        }
+                        const path = new SvgPath(svgElement);
                         if (path.d && path.d !== 'none') {
-                            group.append(path);
+                            current.append(path);
                         }
                         break;
                 }
+                if (newGroup) {
+                    current = null;
+                }
             }
-            this.append(group);
         });
-        element.querySelectorAll('use').forEach((item: SVGUseElement) => {
-            if (cssAttribute(item, 'display') !== 'none') {
-                let pathParent: SvgPath | undefined;
-                this.some(parent => {
-                    return parent.some(path => {
-                        if (item.href.baseVal === `#${path.name}`) {
-                            pathParent = path;
+        element.querySelectorAll('use').forEach((svg: SVGUseElement) => {
+            if (cssAttribute(svg, 'display') !== 'none') {
+                let parentPath: SvgPath | undefined;
+                this.some(item => {
+                    return item.some(path => {
+                        if (svg.href.baseVal === `#${path.name}`) {
+                            parentPath = path;
                             return true;
                         }
                         return false;
                     });
                 });
-                if (pathParent) {
-                    const use = new SvgPath(item, pathParent.d);
+                if (parentPath) {
+                    const use = new SvgPath(svg, parentPath.d);
                     if (use) {
                         let found = false;
-                        if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
+                        if (svg.transform.baseVal.numberOfItems === 0 && svg.x.baseVal.value === 0 && svg.y.baseVal.value === 0 && svg.width.baseVal.value === 0 && svg.height.baseVal.value === 0) {
                             this.some(groupItem => {
-                                if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
+                                if (svg.parentElement instanceof SVGGraphicsElement && svg.parentElement === groupItem.element) {
                                     groupItem.append(use);
                                     found = true;
                                     return true;
@@ -208,11 +227,11 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                             });
                         }
                         if (!found) {
-                            const group = new SvgGroup(item);
-                            group.x = item.x.baseVal.value;
-                            group.y = item.y.baseVal.value;
-                            group.width = item.width.baseVal.value;
-                            group.height = item.height.baseVal.value;
+                            const group = new SvgGroup(svg);
+                            group.x = svg.x.baseVal.value;
+                            group.y = svg.y.baseVal.value;
+                            group.width = svg.width.baseVal.value;
+                            group.height = svg.height.baseVal.value;
                             group.append(use);
                             this.append(group);
                         }
@@ -221,16 +240,16 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             }
         });
         const sorted = new Set<SvgGroup>();
-        for (const item of Array.from(element.children)) {
-            const nested = new Set(Array.from(item.querySelectorAll('*')));
+        for (const svg of Array.from(element.children)) {
+            const nested = new Set(Array.from(svg.querySelectorAll('*')));
             for (const group of this.children) {
-                if (group.element && (group.element === item || nested.has(group.element))) {
+                if (group.element && (group.element === svg || nested.has(group.element))) {
                     sorted.delete(group);
                     sorted.add(group);
                     break;
                 }
                 for (const path of group) {
-                    if (path.element && (path.element === item || nested.has(path.element))) {
+                    if (path.element && (path.element === svg || nested.has(path.element))) {
                         sorted.delete(group);
                         sorted.add(group);
                         break;

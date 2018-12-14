@@ -11,7 +11,6 @@ import $Svg = androme.lib.base.Svg;
 import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
-import { createTransform } from '../../../lib/svg';
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
@@ -50,9 +49,9 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             '2': []
                         };
                         if (group.element && group.element !== node.element) {
-                            const transform = createTransform(group.element);
-                            let x = group.x;
-                            let y = group.y;
+                            const transform = $svg.createTransformSingle(group.element);
+                            let x = group.x || 0;
+                            let y = group.y || 0;
                             if (transform.operations.length) {
                                 x += transform.translateX;
                                 y += transform.translateY;
@@ -143,16 +142,16 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const rotate: ExternalData = [];
                     for (const item of svg.defs.image) {
                         if (item.element && item.uri) {
-                            const transform = createTransform(item.element);
+                            const transform = $svg.createTransformSingle(item.element);
                             const scaleX = svg.width / svg.viewBoxWidth;
                             const scaleY = svg.height / svg.viewBoxHeight;
-                            let x = item.x * scaleX;
-                            let y = item.y * scaleY;
+                            let x = (item.x || 0) * scaleX;
+                            let y = (item.y || 0) * scaleY;
                             item.width *= scaleX;
                             item.height *= scaleY;
                             let parent = item.element ? item.element.parentElement : null;
                             while (parent instanceof SVGSVGElement && parent !== node.element) {
-                                const attributes = $svg.createTransform(parent);
+                                const attributes = $svg.createTransformSingle(parent);
                                 x += parent.x.baseVal.value + attributes.translateX;
                                 y += parent.y.baseVal.value + attributes.translateY;
                                 parent = parent.parentElement;
