@@ -1527,7 +1527,8 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get baseline() {
         if (this._cached.baseline === undefined) {
             const value = this.verticalAlign;
-            this._cached.baseline = this.pageFlow && !this.floating && (value === 'baseline' || value === 'initial');
+            const originalValue = this.cssInitial('verticalAlign');
+            this._cached.baseline = this.pageFlow && !this.floating && (value === 'baseline' || value === 'initial' || isUnit(originalValue) && parseInt(originalValue) === 0);
         }
         return this._cached.baseline;
     }
@@ -1541,7 +1542,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
     get multiLine() {
         if (this._cached.multiLine === undefined) {
-            this._cached.multiLine = this.plainText || this.display === 'table-cell' ? getRangeClientRect(<Element> this._element).multiLine : 0;
+            this._cached.multiLine = this.plainText || this.inlineFlow && this.inlineText ? getRangeClientRect(<Element> this._element).multiLine : 0;
         }
         return this._cached.multiLine;
     }

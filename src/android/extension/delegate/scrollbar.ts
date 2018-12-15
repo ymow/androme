@@ -128,6 +128,6 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
         node.overflow = 0;
         node.resetBox($enum.BOX_STANDARD.MARGIN);
         node.exclude({ resource: $enum.NODE_RESOURCE.BOX_STYLE });
-        return { output: '', parent: node.parent, renderAs: scrollView[0], outputAs };
+        return { output: '', parent: node.parent as T, renderAs: scrollView[0], outputAs };
     }
 }

@@ -82,12 +82,12 @@ interface ExtensionDependency {
     preload: boolean;
 }
 
-interface ExtensionResult<T> {
+interface ExtensionResult<T extends androme.lib.base.Node> {
     output: string;
     complete?: boolean;
     next?: boolean;
-    parent?: androme.lib.base.Node;
-    renderAs?: androme.lib.base.Node;
+    parent?: T;
+    renderAs?: T;
     outputAs?: string;
     include?: boolean;
 }
@@ -101,5 +101,5 @@ interface LayoutType {
 interface LayoutResult<T extends androme.lib.base.Node> {
     layout: androme.lib.base.Layout<T>;
     next?: boolean;
-    renderAs?: androme.lib.base.Node;
+    renderAs?: T;
 }

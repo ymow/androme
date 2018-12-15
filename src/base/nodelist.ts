@@ -2,7 +2,7 @@ import Container from './container';
 import Node from './node';
 
 import { getElementAsNode } from '../lib/dom';
-import { convertInt, maxArray, minArray, withinFraction } from '../lib/util';
+import { isUnit, maxArray, minArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -15,7 +15,13 @@ export default class NodeList<T extends Node> extends Container<T> implements an
     }
 
     public static baseline<T extends Node>(list: T[], text = false) {
-        let baseline = list.filter(item => item.baseline && !['absolute', 'fixed'].includes(item.cssInitial('position')));
+        let baseline = list.filter(item => {
+            if (item.baseline || isUnit(item.verticalAlign) && item.verticalAlign !== '0px') {
+                const position = item.cssInitial('position');
+                return position !== 'absolute' && position !== 'fixed';
+            }
+            return false;
+        });
         if (baseline.length) {
             list = baseline;
         }
@@ -29,20 +35,18 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         const lineHeight = maxArray(list.map(node => node.lineHeight));
         const boundsHeight = maxArray(list.map(node => node.bounds.height));
         return list.filter(item => lineHeight > boundsHeight ? item.lineHeight === lineHeight : item.bounds.height === boundsHeight).sort((a, b) => {
-            if (a.groupParent || (!a.baseline && b.baseline)) {
+            if (a.groupParent || a.length > 0 || (!a.baseline && b.baseline)) {
                 return 1;
             }
-            else if (b.groupParent || (a.baseline && !b.baseline)) {
+            else if (b.groupParent || b.length > 0 || (a.baseline && !b.baseline)) {
                 return -1;
             }
             if (!a.imageElement || !b.imageElement) {
-                const fontSizeA = convertInt(a.css('fontSize'));
-                const fontSizeB = convertInt(b.css('fontSize'));
                 if (a.multiLine || b.multiLine) {
                     if (a.lineHeight && b.lineHeight) {
                         return a.lineHeight <= b.lineHeight ? 1 : -1;
                     }
-                    else if (fontSizeA === fontSizeB) {
+                    else if (a.fontSize === b.fontSize) {
                         return a.htmlElement || !b.htmlElement ? -1 : 1;
                     }
                 }
@@ -62,7 +66,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                     return 1;
                 }
                 else {
-                    if (fontSizeA === fontSizeB) {
+                    if (a.fontSize === b.fontSize) {
                         if (a.htmlElement && !b.htmlElement) {
                             return -1;
                         }
@@ -73,8 +77,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return a.siblingIndex >= b.siblingIndex ? 1 : -1;
                         }
                     }
-                    else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
-                        return fontSizeA > fontSizeB ? -1 : 1;
+                    else if (a.fontSize !== b.fontSize && a.fontSize > 0 && b.fontSize > 0) {
+                        return a.fontSize > b.fontSize ? -1 : 1;
                     }
                 }
             }

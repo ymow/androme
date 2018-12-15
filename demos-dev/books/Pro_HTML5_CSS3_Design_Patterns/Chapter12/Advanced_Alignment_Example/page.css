@@ -6,7 +6,7 @@ sub   { vertical-align:-0.3em; font-size:0.75em; }
 *.ac1-max {vertical-align:3em;   font-size:0.2em; position:relative; left:-6em;  }
 *.ac1-min {vertical-align:-1em;  font-size:0.2em; position:relative; left:-3.3em;}
 *.ac1-formula { vertical-align:0.6em; font-size:0.3em; font-style:italic; 
-                position:relative; left:-4em; letter-spacing:0.1em; }
+                position:relative; left:-4em; /* letter-spacing:0.1em; */ }
 
 *.ac2     {vertical-align:0.4em; font-size:1.5em; position:relative; left:-0.3em;}
 *.ac2-num {vertical-align:0.7em;  font-size:0.4em; border-bottom:1px solid black;}

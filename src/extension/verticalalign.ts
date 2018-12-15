@@ -9,11 +9,12 @@ import { convertInt, isUnit } from '../lib/util';
 
 export default class VerticalAlign<T extends Node> extends Extension<T> {
     public condition(node: T) {
-        return node.block && node.length > 1 && node.some(item => item.inlineVertical && convertInt(item.verticalAlign) !== 0) && NodeList.linearX(node.children);
+        return node.length > 1 && node.some(item => item.inlineVertical && convertInt(item.verticalAlign) !== 0) && NodeList.linearX(node.children);
     }
 
     public processNode(node: T): ExtensionResult<T> {
-        const aboveBaseline: T[] = [];
+        const belowBaseline: T[] = [];
+        let aboveBaseline: T[] = [];
         let minTop = Number.MAX_VALUE;
         node.each((item: T) => {
             if (item.inlineVertical && item.linear.top <= minTop) {
@@ -24,35 +25,53 @@ export default class VerticalAlign<T extends Node> extends Extension<T> {
                 minTop = item.linear.top;
             }
         });
-        if (aboveBaseline.length !== node.length) {
-            const belowBaseline: T[] = [];
-            node.each((item: T) => {
-                let reset = false;
-                if (aboveBaseline.includes(item)) {
-                    reset = true;
-                }
-                else if ((item.inlineVertical || item.plainText) && isUnit(item.verticalAlign)) {
-                    item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.linear.top - aboveBaseline[0].linear.top);
-                    belowBaseline.push(item);
-                    reset = true;
-                }
-                if (reset) {
-                    item.css('verticalAlign', '0px', true);
-                }
-            });
+        if (node.every(item => item.positionStatic || item.positionRelative && item.length > 0)) {
+            if (aboveBaseline.length !== node.length) {
+                node.each((item: T) => {
+                    let reset = false;
+                    if (aboveBaseline.includes(item)) {
+                        reset = true;
+                    }
+                    else if ((item.inlineVertical || item.plainText) && isUnit(item.verticalAlign)) {
+                        item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.linear.top - aboveBaseline[0].linear.top);
+                        belowBaseline.push(item);
+                        reset = true;
+                    }
+                    if (reset) {
+                        item.css('verticalAlign', '0px', true);
+                    }
+                });
+            }
+        }
+        else {
+            aboveBaseline = aboveBaseline.filter(item => isUnit(item.verticalAlign) && convertInt(item.verticalAlign) > 0);
+        }
+        if (aboveBaseline.length) {
             node.data(EXT_NAME.VERTICAL_ALIGN, 'mainData', <VerticalAlignData<T>> {
-                belowBaseline,
-                aboveBaseline
+                aboveBaseline,
+                belowBaseline
             });
         }
         return { output: '' };
     }
 
-    public postConstraints(node: T) {
+    public postProcedure(node: T) {
         const mainData: VerticalAlignData<T> = node.data(EXT_NAME.VERTICAL_ALIGN, 'mainData');
-        const baseline = node.find(item => item.baselineActive) as T;
-        if (mainData && baseline) {
-            baseline.modifyBox(BOX_STANDARD.MARGIN_TOP, baseline.linear.top - mainData.aboveBaseline[0].linear.top);
+        if (mainData) {
+            const baseline = node.find(item => item.baselineActive) as T;
+            if (baseline) {
+                baseline.modifyBox(BOX_STANDARD.MARGIN_TOP, baseline.linear.top - mainData.aboveBaseline[0].linear.top);
+            }
+            else {
+                [...mainData.belowBaseline, ...mainData.aboveBaseline].some(item => {
+                    const verticalAlign = convertInt(item.cssInitial('verticalAlign'));
+                    if (verticalAlign > 0) {
+                        item.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, verticalAlign);
+                        return true;
+                    }
+                    return false;
+                });
+            }
         }
     }
 }

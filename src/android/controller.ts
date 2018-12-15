@@ -1247,7 +1247,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     protected processRelativeHorizontal(node: T, children: T[]) {
-        const edgeOrFirefox = $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
         const cleared = $NodeList.cleared(children);
         const boxWidth = Math.ceil((() => {
             const renderParent = node.renderParent;
@@ -1277,6 +1276,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         })());
         const wrapWidth = boxWidth * this.localSettings.relative.boxWidthWordWrapPercent;
         const checkLineWrap = node.css('whiteSpace') !== 'nowrap';
+        const firefoxEdge = $dom.isUserAgent($enum.USER_AGENT.FIREFOX | $enum.USER_AGENT.EDGE);
         const rows: T[][] = [];
         const rangeMultiLine = new Set<T>();
         let alignmentMultiLine = false;
@@ -1293,10 +1293,12 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 let dimension = item.bounds;
                 if (item.inlineText && !item.hasWidth) {
                     const bounds = $dom.getRangeClientRect(item.element);
-                    if (bounds.multiLine || bounds.width > 0 && bounds.width < item.box.width) {
+                    if (bounds.multiLine || bounds.width < item.box.width) {
                         dimension = bounds;
-                        item.multiLine = bounds.multiLine;
-                        if (edgeOrFirefox && bounds.multiLine && !/^\s*\n+/.test(item.textContent)) {
+                        if (item.multiLine === 0) {
+                            item.multiLine = bounds.multiLine;
+                        }
+                        if (firefoxEdge && bounds.multiLine && !/^\s*\n+/.test(item.textContent)) {
                             rangeMultiLine.add(item);
                         }
                     }
@@ -1308,7 +1310,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     rows.push([item]);
                 }
                 else {
-                    const baseWidth = (rowPreviousLeft && rows.length > 1 ? rowPreviousLeft.linear.width : 0) + rowWidth + item.marginLeft + (previous.float === 'left' && !cleared.has(item) ? 0 : dimension.width) - (edgeOrFirefox ? item.borderRightWidth : 0);
+                    const baseWidth = (rowPreviousLeft && rows.length > 1 ? rowPreviousLeft.linear.width : 0) + rowWidth + item.marginLeft + (previous.float === 'left' && !cleared.has(item) ? 0 : dimension.width) - (firefoxEdge ? item.borderRightWidth : 0);
                     function checkWidthWrap() {
                         return !item.rightAligned && (Math.floor(baseWidth) - (item.styleElement && item.inlineStatic ? item.paddingLeft + item.paddingRight : 0) > boxWidth);
                     }
@@ -1477,11 +1479,16 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                     item.anchor('bottom', documentId);
                                 }
                                 break;
+                            default:
+                                if (item.verticalAlign !== '0px') {
+                                    baselineAlign.push(item);
+                                }
+                                break;
                         }
                     }
                 }
             }
-            if (baseline) {
+            if (baseline && baselineAlign.length) {
                 adjustBaseline(baseline, baselineAlign);
                 baseline.baselineActive = true;
                 if (node.lineHeight || baseline.lineHeight) {

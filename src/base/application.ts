@@ -47,8 +47,8 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
     const previousSiblings = node.previousSiblings();
     const nextSiblings = node.nextSiblings();
     if (node.positionAuto &&
-        (previousSiblings.length === 0 || !(previousSiblings.length === 1 && previousSiblings[0].plainText && previousSiblings[0].multiLine)) &&
-        (node.element === getLastChildElement(parent.element) || nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded)))
+        (previousSiblings.length === 0 || !previousSiblings.some(item => item.multiLine > 0 || item.excluded && !item.blockStatic)) &&
+        (nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded) || node.element === getLastChildElement(parent.element)))
     {
         node.css({
             'position': 'static',
@@ -1811,8 +1811,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     else {
                                         const value: string = cssRule.style[attr];
                                         if (value !== 'initial') {
-                                            if (style[attr] === value) {
-                                                styleMap[attr] = style[attr];
+                                            const computedValue = style[attr] || '';
+                                            if (value === computedValue) {
+                                                styleMap[attr] = value;
                                             }
                                             else {
                                                 switch (attr) {
@@ -1824,7 +1825,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                     case 'color':
                                                     case 'fontSize':
                                                     case 'fontWeight':
-                                                        styleMap[attr] = style[attr] || value;
+                                                        styleMap[attr] = computedValue || value;
                                                         break;
                                                     case 'width':
                                                     case 'height':
