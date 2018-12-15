@@ -1,4 +1,4 @@
-/* androme 2.3.1
+/* androme 2.3.2
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -892,30 +892,12 @@
         }
         return { display: 'none' };
     }
-    function getBoxSpacing(element, complete = false, merge = false) {
+    function getBoxSpacing(element) {
         const result = {};
-        const node = getElementAsNode(element);
-        const style = getStyle(element);
-        ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-            let total = 0;
-            ['padding', 'margin'].forEach(region => {
-                const attr = region + direction;
-                const value = convertInt((node || style)[attr]);
-                if (complete || value !== 0) {
-                    result[attr] = value;
-                }
-                total += value;
-            });
-            if (merge) {
-                result[`padding${direction}`] = total;
-                if (complete) {
-                    result[`margin${direction}`] = 0;
-                }
-                else {
-                    delete result[`margin${direction}`];
-                }
-            }
-        });
+        const node = getElementAsNode(element) || getStyle(element);
+        for (const attr of CSS_SPACING.values()) {
+            result[attr] = convertInt(node[attr]);
+        }
         return result;
     }
     function cssResolveUrl(value) {
@@ -2598,23 +2580,6 @@
                 }
             }
         }
-        setBoxSpacing() {
-            for (const node of this.cache.elements) {
-                const boxSpacing = getBoxSpacing(node.element);
-                if (Object.keys(boxSpacing).length) {
-                    const result = {};
-                    for (const attr in boxSpacing) {
-                        if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
-                            result[attr] = '0px';
-                        }
-                        else {
-                            result[attr] = node.convertPX(boxSpacing[attr]);
-                        }
-                    }
-                    node.data(Resource.KEY_NAME, 'boxSpacing', result);
-                }
-            }
-        }
         setValueString() {
             function replaceWhiteSpace(node, value) {
                 const renderParent = node.renderParent;
@@ -2852,8 +2817,8 @@
             this.resourceHandler = handler;
         }
         finalize() {
-            let nodes = this.session.cache.filter(node => node.visible && node.rendered);
-            for (const node of nodes) {
+            const rendered = this.rendered;
+            for (const node of rendered) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                     node.setLayout();
                 }
@@ -2861,7 +2826,7 @@
                     node.setAlignment();
                 }
             }
-            for (const node of nodes) {
+            for (const node of rendered) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
                     node.applyOptimizations();
                 }
@@ -2874,8 +2839,7 @@
                     ext.postProcedure(node);
                 }
             }
-            nodes = this.session.cache.filter(node => node.visible && node.rendered);
-            for (const node of nodes) {
+            for (const node of this.rendered) {
                 if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                     node.setBoxSpacing();
                 }
@@ -3172,10 +3136,10 @@
                 const baseParent = parent.parent;
                 if (baseParent) {
                     const id = baseParent.id;
-                    const parentMap = this._renderPosition.get(id);
+                    const mapParent = this._renderPosition.get(id);
                     let revised;
-                    if (parentMap) {
-                        const previous = parentMap.children.filter(item => !parent.contains(item));
+                    if (mapParent) {
+                        const previous = mapParent.children.filter(item => !parent.contains(item));
                         if (parent.siblingIndex < previous.length) {
                             previous.splice(parent.siblingIndex, 0, parent);
                             for (let i = parent.siblingIndex + 1; i < previous.length; i++) {
@@ -3187,7 +3151,7 @@
                             parent.siblingIndex = previous.length;
                             previous.push(parent);
                         }
-                        this._renderPosition.set(id, { parent: parent.parent, children: previous });
+                        this._renderPosition.set(id, { parent: baseParent, children: previous });
                     }
                     else {
                         revised = baseParent.children;
@@ -3235,7 +3199,7 @@
             }
             const nodeRoot = this.insertNode(documentRoot);
             if (nodeRoot) {
-                nodeRoot.parent = new this.nodeConstructor(0, (documentRoot === document.body ? document.body : documentRoot.parentElement) || document.body, this.controllerHandler.delegateNodeInit);
+                nodeRoot.parent = new this.nodeConstructor(0, documentRoot.parentElement || document.body, this.controllerHandler.delegateNodeInit);
                 nodeRoot.parent.setBounds();
                 nodeRoot.documentRoot = true;
                 nodeRoot.documentParent = nodeRoot.parent;
@@ -3267,7 +3231,7 @@
             }
             if (this.processing.cache.length) {
                 for (const node of this.processing.cache) {
-                    if (node.tagName !== 'SELECT') {
+                    if (node.element.tagName !== 'SELECT') {
                         const plainText = [];
                         let valid = false;
                         Array.from(node.element.childNodes).forEach((element) => {
@@ -3863,7 +3827,6 @@
         setResources() {
             this.resourceHandler.setBoxStyle();
             this.resourceHandler.setFontStyle();
-            this.resourceHandler.setBoxSpacing();
             this.resourceHandler.setValueString();
             for (const ext of this.extensions) {
                 ext.afterResources();
@@ -4575,6 +4538,9 @@
                 views: this._views,
                 includes: this._includes
             };
+        }
+        get rendered() {
+            return this.session.cache.filter(node => node.visible && node.rendered);
         }
         get nextId() {
             return this.processing.cache.nextId;
@@ -6566,81 +6532,72 @@
         }
         return result;
     }
-    function createTransform(element) {
+    function createTransformSingle(element) {
         const data = {
-            length: element.transform.baseVal.numberOfItems,
+            operations: [],
             translateX: 0,
             translateY: 0,
             scaleX: 1,
             scaleY: 1,
             rotateAngle: 0,
+            rotateOriginX: 0,
+            rotateOriginY: 0,
             skewX: 0,
             skewY: 0
         };
         for (let i = 0; i < element.transform.baseVal.numberOfItems; i++) {
             const item = element.transform.baseVal.getItem(i);
-            switch (item.type) {
-                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                    data.translateX += item.matrix.e;
-                    data.translateY += item.matrix.f;
-                    break;
-                case SVGTransform.SVG_TRANSFORM_SCALE:
-                    data.scaleX *= item.matrix.a;
-                    data.scaleY *= item.matrix.d;
-                    break;
-                case SVGTransform.SVG_TRANSFORM_ROTATE:
-                    data.rotateAngle += item.angle;
-                    let x = 0;
-                    let y = 0;
-                    if (element instanceof SVGLineElement) {
-                        x = element.x1.baseVal.value;
-                        y = element.y1.baseVal.value;
-                    }
-                    else if (element instanceof SVGRectElement || element instanceof SVGImageElement) {
-                        x = element.x.baseVal.value;
-                        y = element.y.baseVal.value;
-                    }
-                    else if ((element instanceof SVGPolygonElement || element instanceof SVGPolylineElement) && element.points.numberOfItems > 0) {
-                        x = element.points[0].x1;
-                        y = element.points[0].y1;
-                    }
-                    else if (element instanceof SVGCircleElement || element instanceof SVGEllipseElement) {
-                        x = element.cx.baseVal.value;
-                        y = element.cy.baseVal.value;
-                    }
-                    else if (element instanceof SVGPathElement) {
-                        const match = /\s*[Mm]\s*(-?[\d.]+)\s*,?\s*(-?[\d.]+)/.exec(cssAttribute(element, 'd'));
-                        if (match) {
-                            x = parseFloat(match[1]);
-                            y = parseFloat(match[2]);
+            if (!data.operations.includes(item.type)) {
+                switch (item.type) {
+                    case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                        if (item.matrix.e !== 0 || item.matrix.f !== 0) {
+                            data.translateX = item.matrix.e;
+                            data.translateY = item.matrix.f;
+                            data.operations.push(item.type);
                         }
-                        else {
-                            continue;
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_SCALE:
+                        if (item.matrix.a !== 1 || item.matrix.d !== 1) {
+                            data.scaleX = item.matrix.a;
+                            data.scaleY = item.matrix.d;
+                            data.operations.push(item.type);
                         }
-                    }
-                    else {
-                        continue;
-                    }
-                    if (item.matrix.e !== 0) {
-                        data.rotateX = Math.round(data.translateX + (item.matrix.a * x) + (item.matrix.c * y) + item.matrix.e);
-                        data.translateX = 0;
-                    }
-                    if (item.matrix.f !== 0) {
-                        data.rotateY = Math.round(data.translateY + (item.matrix.b * x) + (item.matrix.d * y) + item.matrix.f);
-                        data.translateY = 0;
-                    }
-                    break;
-                case SVGTransform.SVG_TRANSFORM_SKEWX:
-                    data.skewX += item.angle;
-                    break;
-                case SVGTransform.SVG_TRANSFORM_SKEWY:
-                    data.skewY += item.angle;
-                    break;
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_ROTATE:
+                        if (item.angle !== 0) {
+                            data.rotateAngle = item.angle;
+                            const namedItem = element.attributes.getNamedItem('transform');
+                            if (namedItem && namedItem.nodeValue) {
+                                const match = /rotate\((\d+), (\d+), (\d+)\)/.exec(namedItem.nodeValue);
+                                if (match) {
+                                    data.rotateOriginX = parseInt(match[2]);
+                                    data.rotateOriginY = parseInt(match[3]);
+                                }
+                            }
+                            data.matrixRotate = item.matrix;
+                            data.operations.push(item.type);
+                        }
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_SKEWX:
+                        if (item.angle !== 0) {
+                            data.skewX += item.angle;
+                            data.matrixSkewX = item.matrix;
+                            data.operations.push(item.type);
+                        }
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_SKEWY:
+                        if (item.angle !== 0) {
+                            data.skewY += item.angle;
+                            data.matrixSkewY = item.matrix;
+                            data.operations.push(item.type);
+                        }
+                        break;
+                }
             }
         }
         return data;
     }
-    function createTransformOrigin(element, dpi, fontSize) {
+    function getTransformOrigin(element, dpi, fontSize) {
         const style = getStyle(element);
         if (style.transformOrigin) {
             switch (style.transformOrigin) {
@@ -6652,12 +6609,18 @@
                     return getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), dpi, fontSize, true);
             }
         }
-        return undefined;
+        return newRectDimensions();
     }
-    function getOffsetX(angle, radius) {
+    function applyMatrixX(matrix, x, y) {
+        return matrix.a * x + matrix.c * y + matrix.e;
+    }
+    function applyMatrixY(matrix, x, y) {
+        return matrix.b * x + matrix.d * y + matrix.f;
+    }
+    function getRadiusX(angle, radius) {
         return radius * Math.sin(angle * Math.PI / 180);
     }
-    function getOffsetY(angle, radius) {
+    function getRadiusY(angle, radius) {
         return radius * Math.cos(angle * Math.PI / 180) * -1;
     }
     function isSvgVisible(element) {
@@ -6666,10 +6629,12 @@
 
     var svg = /*#__PURE__*/Object.freeze({
         createColorStop: createColorStop,
-        createTransform: createTransform,
-        createTransformOrigin: createTransformOrigin,
-        getOffsetX: getOffsetX,
-        getOffsetY: getOffsetY,
+        createTransformSingle: createTransformSingle,
+        getTransformOrigin: getTransformOrigin,
+        applyMatrixX: applyMatrixX,
+        applyMatrixY: applyMatrixY,
+        getRadiusX: getRadiusX,
+        getRadiusY: getRadiusY,
         isSvgVisible: isSvgVisible
     });
 
@@ -6677,37 +6642,13 @@
         return class SvgElement extends Base {
             constructor(element) {
                 super();
+                this.element = element;
                 this.name = '';
                 this.visibility = true;
-                if (element) {
-                    this.setElement(element);
-                    this.build();
-                    if (this._element) {
-                        this.visibility = isSvgVisible(element);
-                    }
-                }
+                this.name = element.id;
+                this.visibility = isSvgVisible(element);
             }
-            setElement(element) {
-                if (element instanceof SVGGraphicsElement) {
-                    this._element = element;
-                }
-            }
-            setTransformOrigin(dpi, fontSize) {
-                const element = this._element;
-                if (element && this.transform && this.transform.length) {
-                    this.transform.origin = createTransformOrigin(element, dpi, fontSize);
-                }
-            }
-            build() {
-                const element = this._element;
-                if (element) {
-                    this.name = element.id;
-                    this.transform = createTransform(element);
-                }
-            }
-            get element() {
-                return this._element;
-            }
+            build() { }
         };
     };
 
@@ -6720,20 +6661,19 @@
     class SvgImage extends SvgElement {
         constructor(element, uri) {
             super(element);
+            this.element = element;
             this.uri = '';
+            this.width = element.width.baseVal.value;
+            this.height = element.height.baseVal.value;
             if (uri) {
                 this.uri = uri;
-            }
-        }
-        setElement(element) {
-            if (element instanceof SVGImageElement) {
-                this._element = element;
             }
         }
     }
 
     class SvgPath {
         constructor(element, d) {
+            this.element = element;
             this.name = '';
             this.visibility = true;
             this.d = '';
@@ -6749,13 +6689,22 @@
             this.strokeMiterlimit = '';
             this.clipPath = '';
             this.clipRule = '';
-            if (element) {
-                this.setElement(element);
-                this.build();
-            }
+            this.name = element.id;
+            this.build();
             if (d) {
                 this.d = d;
             }
+        }
+        static applyTransforms(transform, points) {
+            for (let i = transform.numberOfItems - 1; i >= 0; i--) {
+                const item = transform.getItem(i);
+                points.forEach(pt => {
+                    const x = pt.x;
+                    pt.x = applyMatrixX(item.matrix, x, pt.y);
+                    pt.y = applyMatrixY(item.matrix, x, pt.y);
+                });
+            }
+            return points;
         }
         static getLine(x1, y1, x2 = 0, y2 = 0) {
             return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
@@ -6764,17 +6713,8 @@
             return width > 0 && height > 0 ? `M${x},${y} H${x + width} V${y + height} H${x} Z` : '';
         }
         static getPolyline(points) {
-            const data = [];
-            if (points instanceof SVGPointList) {
-                for (let j = 0; j < points.numberOfItems; j++) {
-                    const pt = points.getItem(j);
-                    data.push(pt);
-                }
-            }
-            else {
-                data.push(...points);
-            }
-            return data.length ? `M${data.map(item => `${item.x},${item.y}`).join(' ')}` : '';
+            points = points instanceof SVGPointList ? this.toPoints(points) : points;
+            return points.length ? `M${points.map(item => `${item.x},${item.y}`).join(' ')}` : '';
         }
         static getPolygon(points) {
             const value = this.getPolyline(points);
@@ -6786,109 +6726,139 @@
         static getEllipse(cx, cy, rx, ry) {
             return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0` : '';
         }
-        setElement(element) {
-            if (element instanceof SVGGraphicsElement) {
-                this._element = element;
+        static toPoints(points) {
+            const result = [];
+            for (let j = 0; j < points.numberOfItems; j++) {
+                const pt = points.getItem(j);
+                result.push({ x: pt.x, y: pt.y });
             }
+            return result;
         }
         build() {
-            const element = this._element;
-            if (element) {
-                switch (element.tagName) {
-                    case 'path': {
-                        this.d = cssAttribute(element, 'd');
-                        break;
-                    }
-                    case 'line': {
-                        const item = element;
-                        this.d = SvgPath.getLine(item.x1.baseVal.value, item.y1.baseVal.value, item.x2.baseVal.value, item.y2.baseVal.value);
-                        break;
-                    }
-                    case 'rect': {
-                        const item = element;
-                        this.d = SvgPath.getRect(item.width.baseVal.value, item.height.baseVal.value, item.x.baseVal.value, item.y.baseVal.value);
-                        break;
-                    }
-                    case 'polyline':
-                    case 'polygon': {
-                        const item = element;
-                        this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(item.points) : SvgPath.getPolyline(item.points);
-                        break;
-                    }
-                    case 'circle': {
-                        const item = element;
-                        this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
-                        break;
-                    }
-                    case 'ellipse': {
-                        const item = element;
-                        this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
-                        break;
-                    }
+            const element = this.element;
+            const transform = element.transform.baseVal;
+            switch (element.tagName) {
+                case 'path': {
+                    this.d = cssAttribute(element, 'd');
+                    break;
                 }
-                const values = {
-                    fill: cssAttribute(element, 'fill'),
-                    stroke: cssAttribute(element, 'stroke')
-                };
-                const color = parseRGBA(cssAttribute(element, 'color')) || parseRGBA(cssInherit(element, 'color'));
-                const pattern = /url\("?#(.*?)"?\)/;
-                for (const attr in values) {
-                    const match = pattern.exec(values[attr]);
-                    if (match) {
-                        values[attr] = `@${match[1]}`;
-                    }
-                    else if (isString(values[attr])) {
-                        switch (values[attr].toLowerCase()) {
-                            case 'none':
-                            case 'transparent':
-                                values[attr] = '';
-                                break;
-                            case 'currentcolor':
-                                values[attr] = color ? color.valueRGB : '';
-                                break;
-                            default:
-                                const rgba = parseRGBA(values[attr]);
-                                if (rgba) {
-                                    values[attr] = rgba.valueRGB;
-                                }
-                                break;
-                        }
-                    }
+                case 'circle': {
+                    const item = element;
+                    this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
+                    break;
                 }
-                let clipPath = '';
-                const href = pattern.exec(cssAttribute(element, 'clip-path'));
-                if (href) {
-                    clipPath = href[1];
+                case 'ellipse': {
+                    const item = element;
+                    this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
+                    break;
                 }
-                const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
-                const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
-                this.name = element.id;
-                this.color = color ? color.valueRGB : '';
-                this.fillRule = cssAttribute(element, 'fill-rule');
-                this.fill = values.fill;
-                this.stroke = values.stroke;
-                this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
-                this.fillOpacity = !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1;
-                this.strokeOpacity = !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1;
-                this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
-                this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
-                this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
-                this.clipPath = clipPath;
-                this.clipRule = cssAttribute(element, 'clip-rule');
-                this.visibility = isSvgVisible(element);
+                case 'line': {
+                    const item = element;
+                    const x1 = item.x1.baseVal.value;
+                    const y1 = item.y1.baseVal.value;
+                    const x2 = item.x2.baseVal.value;
+                    const y2 = item.y2.baseVal.value;
+                    if (transform.numberOfItems) {
+                        const points = [
+                            { x: x1, y: y1 },
+                            { x: x2, y: y2 }
+                        ];
+                        this.d = SvgPath.getPolyline(SvgPath.applyTransforms(transform, points));
+                    }
+                    else {
+                        this.d = SvgPath.getLine(x1, y1, x2, y2);
+                    }
+                    break;
+                }
+                case 'rect': {
+                    const item = element;
+                    const x = item.x.baseVal.value;
+                    const y = item.y.baseVal.value;
+                    const width = item.width.baseVal.value;
+                    const height = item.height.baseVal.value;
+                    if (transform.numberOfItems) {
+                        const points = [
+                            { x, y },
+                            { x: x + width, y },
+                            { x: x + width, y: y + height },
+                            { x, y: y + height }
+                        ];
+                        this.d = SvgPath.getPolygon(SvgPath.applyTransforms(transform, points));
+                    }
+                    else {
+                        this.d = SvgPath.getRect(width, height, x, y);
+                    }
+                    break;
+                }
+                case 'polyline':
+                case 'polygon': {
+                    const item = element;
+                    const points = SvgPath.applyTransforms(transform, SvgPath.toPoints(item.points));
+                    this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
+                    break;
+                }
             }
-        }
-        get element() {
-            return this._element;
+            const values = {
+                fill: cssAttribute(element, 'fill'),
+                stroke: cssAttribute(element, 'stroke')
+            };
+            const color = parseRGBA(cssAttribute(element, 'color')) || parseRGBA(cssInherit(element, 'color'));
+            const pattern = /url\("?#(.*?)"?\)/;
+            for (const attr in values) {
+                const match = pattern.exec(values[attr]);
+                if (match) {
+                    values[attr] = `@${match[1]}`;
+                }
+                else if (isString(values[attr])) {
+                    switch (values[attr].toLowerCase()) {
+                        case 'none':
+                        case 'transparent':
+                            values[attr] = '';
+                            break;
+                        case 'currentcolor':
+                            values[attr] = color ? color.valueRGB : '';
+                            break;
+                        default:
+                            const rgba = parseRGBA(values[attr]);
+                            if (rgba) {
+                                values[attr] = rgba.valueRGB;
+                            }
+                            break;
+                    }
+                }
+            }
+            const href = pattern.exec(cssAttribute(element, 'clip-path'));
+            if (href) {
+                this.clipPath = href[1];
+            }
+            const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
+            const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
+            if (color) {
+                this.color = color.valueRGB;
+            }
+            this.fillRule = cssAttribute(element, 'fill-rule');
+            this.fill = values.fill;
+            this.stroke = values.stroke;
+            this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
+            if (!isNaN(fillOpacity) && fillOpacity < 1) {
+                this.fillOpacity = fillOpacity;
+            }
+            if (!isNaN(strokeOpacity) && strokeOpacity < 1) {
+                this.strokeOpacity = strokeOpacity;
+            }
+            this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
+            this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
+            this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
+            this.clipRule = cssAttribute(element, 'clip-rule');
+            this.visibility = isSvgVisible(element);
         }
     }
 
     class Svg extends Container {
-        constructor(element, dpi, fontSize) {
+        constructor(element) {
             super();
+            this.element = element;
             this.name = '';
-            this.dpi = 0;
-            this.fontSize = 0;
             this.defs = {
                 image: [],
                 clipPath: new Map(),
@@ -6899,33 +6869,20 @@
             this._viewBoxWidth = 0;
             this._viewBoxHeight = 0;
             this._opacity = 1;
-            if (dpi) {
-                this.dpi = dpi;
-            }
-            if (fontSize) {
-                this.fontSize = fontSize;
-            }
-            if (element) {
-                this.setElement(element);
-                this.build();
-            }
+            this.name = element.id;
+            this.build();
         }
         static createClipPath(element) {
             const result = [];
-            if (element.id) {
-                for (const item of Array.from(element.children)) {
+            for (const item of Array.from(element.children)) {
+                if (item instanceof SVGGraphicsElement) {
                     const path = new SvgPath(item);
-                    if (path) {
+                    if (path.d !== '') {
                         result.push(path);
                     }
                 }
             }
             return result;
-        }
-        setElement(element) {
-            if (element instanceof SVGSVGElement) {
-                this._element = element;
-            }
         }
         setDimensions(width, height) {
             this._width = width;
@@ -6940,162 +6897,219 @@
             this._opacity = !isNaN(value) && value < 1 ? value : 1;
         }
         build() {
-            const element = this._element;
-            if (element) {
-                this.name = element.id;
-                this.defs.image = [];
-                this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
-                this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
-                this.setOpacity(cssAttribute(element, 'opacity'));
-                element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((item) => {
-                    switch (item.tagName) {
-                        case 'clipPath': {
-                            const clipPath = Svg.createClipPath(item);
+            const element = this.element;
+            this.defs.image = [];
+            this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
+            if (isUserAgent(16 /* FIREFOX */)) {
+                const node = getElementAsNode(element);
+                if (node && node.bounds.width > this.width && node.bounds.height > this.height) {
+                    this.setDimensions(node.bounds.width, node.bounds.height);
+                }
+            }
+            this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
+            this.setOpacity(cssAttribute(element, 'opacity'));
+            element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((svg) => {
+                switch (svg.tagName) {
+                    case 'clipPath': {
+                        if (svg.id) {
+                            const clipPath = Svg.createClipPath(svg);
                             if (clipPath.length) {
-                                this.defs.clipPath.set(`${item.id}`, clipPath);
+                                this.defs.clipPath.set(`${svg.id}`, clipPath);
                             }
-                            break;
                         }
-                        case 'linearGradient': {
-                            const gradient = item;
-                            this.defs.gradient.set(`@${gradient.id}`, {
+                        break;
+                    }
+                    case 'linearGradient': {
+                        if (svg.id) {
+                            const svgElement = svg;
+                            this.defs.gradient.set(`@${svg.id}`, {
                                 type: 'linear',
-                                x1: gradient.x1.baseVal.value,
-                                x2: gradient.x2.baseVal.value,
-                                y1: gradient.y1.baseVal.value,
-                                y2: gradient.y2.baseVal.value,
-                                x1AsString: gradient.x1.baseVal.valueAsString,
-                                x2AsString: gradient.x2.baseVal.valueAsString,
-                                y1AsString: gradient.y1.baseVal.valueAsString,
-                                y2AsString: gradient.y2.baseVal.valueAsString,
-                                colorStop: createColorStop(gradient)
+                                x1: svgElement.x1.baseVal.value,
+                                x2: svgElement.x2.baseVal.value,
+                                y1: svgElement.y1.baseVal.value,
+                                y2: svgElement.y2.baseVal.value,
+                                x1AsString: svgElement.x1.baseVal.valueAsString,
+                                x2AsString: svgElement.x2.baseVal.valueAsString,
+                                y1AsString: svgElement.y1.baseVal.valueAsString,
+                                y2AsString: svgElement.y2.baseVal.valueAsString,
+                                colorStop: createColorStop(svgElement)
                             });
-                            break;
                         }
-                        case 'radialGradient': {
-                            const gradient = item;
-                            this.defs.gradient.set(`@${gradient.id}`, {
+                        break;
+                    }
+                    case 'radialGradient': {
+                        if (svg.id) {
+                            const svgElement = svg;
+                            this.defs.gradient.set(`@${svg.id}`, {
                                 type: 'radial',
-                                cx: gradient.cx.baseVal.value,
-                                cy: gradient.cy.baseVal.value,
-                                r: gradient.r.baseVal.value,
-                                cxAsString: gradient.cx.baseVal.valueAsString,
-                                cyAsString: gradient.cy.baseVal.valueAsString,
-                                rAsString: gradient.r.baseVal.valueAsString,
-                                fx: gradient.fx.baseVal.value,
-                                fy: gradient.fy.baseVal.value,
-                                fxAsString: gradient.fx.baseVal.valueAsString,
-                                fyAsString: gradient.fy.baseVal.valueAsString,
-                                colorStop: createColorStop(gradient)
+                                cx: svgElement.cx.baseVal.value,
+                                cy: svgElement.cy.baseVal.value,
+                                r: svgElement.r.baseVal.value,
+                                cxAsString: svgElement.cx.baseVal.valueAsString,
+                                cyAsString: svgElement.cy.baseVal.valueAsString,
+                                rAsString: svgElement.r.baseVal.valueAsString,
+                                fx: svgElement.fx.baseVal.value,
+                                fy: svgElement.fy.baseVal.value,
+                                fxAsString: svgElement.fx.baseVal.valueAsString,
+                                fyAsString: svgElement.fy.baseVal.valueAsString,
+                                colorStop: createColorStop(svgElement)
                             });
-                            break;
                         }
-                        case 'image': {
-                            const image = item;
-                            const svgImage = new SvgImage(image, resolvePath(image.href.baseVal));
-                            svgImage.width = image.width.baseVal.value;
-                            svgImage.height = image.height.baseVal.value;
-                            svgImage.x = image.x.baseVal.value;
-                            svgImage.y = image.y.baseVal.value;
-                            svgImage.setTransformOrigin(this.dpi, this.fontSize);
-                            this.defs.image.push(svgImage);
-                            break;
-                        }
+                        break;
                     }
-                });
-                const baseTags = new Set(['svg', 'g']);
-                [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item, index) => {
-                    const group = new SvgGroup(item);
-                    if (index > 0 && item.tagName === 'svg') {
-                        const svg = item;
-                        group.x = svg.x.baseVal.value;
-                        group.y = svg.y.baseVal.value;
-                        group.width = svg.width.baseVal.value;
-                        group.height = svg.height.baseVal.value;
-                        group.setTransformOrigin(this.dpi, this.fontSize);
-                    }
-                    for (let i = 0; i < item.children.length; i++) {
-                        switch (item.children[i].tagName) {
-                            case 'g':
-                            case 'use':
-                            case 'image':
-                            case 'clipPath':
-                            case 'linearGradient':
-                            case 'radialGradient':
-                                break;
-                            default:
-                                const path = new SvgPath(item.children[i]);
-                                if (path.d && path.d !== 'none') {
-                                    group.append(path);
+                    case 'image': {
+                        const svgElement = svg;
+                        const image = new SvgImage(svgElement, resolvePath(svgElement.href.baseVal));
+                        const transform = svgElement.transform.baseVal;
+                        let x = svgElement.x.baseVal.value;
+                        let y = svgElement.y.baseVal.value;
+                        if (transform.numberOfItems) {
+                            for (let i = transform.numberOfItems - 1; i >= 0; i--) {
+                                const item = transform.getItem(i);
+                                const matrix = item.matrix;
+                                switch (item.type) {
+                                    case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                        x += matrix.e;
+                                        y += matrix.f;
+                                        break;
+                                    case SVGTransform.SVG_TRANSFORM_SCALE:
+                                        x *= matrix.a;
+                                        y *= matrix.d;
+                                        image.width *= matrix.a;
+                                        image.height *= matrix.d;
+                                        break;
+                                    case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                        x = applyMatrixX(matrix, x, x);
+                                        y = applyMatrixY(matrix, y, y);
+                                        if (matrix.a < 0) {
+                                            x += matrix.a * image.width;
+                                        }
+                                        if (matrix.c < 0) {
+                                            x += matrix.c * image.width;
+                                        }
+                                        if (matrix.b < 0) {
+                                            y += matrix.b * image.height;
+                                        }
+                                        if (matrix.d < 0) {
+                                            y += matrix.d * image.height;
+                                        }
+                                        break;
                                 }
-                                break;
+                            }
                         }
+                        image.x = x;
+                        image.y = y;
+                        this.defs.image.push(image);
+                        break;
+                    }
+                }
+            });
+            const baseTags = new Set(['svg', 'g']);
+            [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((svg, index) => {
+                const createGroup = (baseElement) => {
+                    const group = new SvgGroup(baseElement);
+                    if (svg.tagName === 'svg' && index > 0) {
+                        const svgElement = svg;
+                        group.x = svgElement.x.baseVal.value;
+                        group.y = svgElement.y.baseVal.value;
+                        group.width = svgElement.width.baseVal.value;
+                        group.height = svgElement.height.baseVal.value;
                     }
                     this.append(group);
-                });
-                element.querySelectorAll('use').forEach((item) => {
-                    if (cssAttribute(item, 'display') !== 'none') {
-                        let pathParent;
-                        this.some(parent => {
-                            return parent.some(path => {
-                                if (item.href.baseVal === `#${path.name}`) {
-                                    pathParent = path;
-                                    return true;
-                                }
-                                return false;
-                            });
-                        });
-                        if (pathParent) {
-                            const use = new SvgPath(item, pathParent.d);
-                            if (use) {
-                                let found = false;
-                                if (item.transform.baseVal.numberOfItems === 0 && item.x.baseVal.value === 0 && item.y.baseVal.value === 0 && item.width.baseVal.value === 0 && item.height.baseVal.value === 0) {
-                                    this.some(groupItem => {
-                                        if (item.parentElement instanceof SVGGraphicsElement && item.parentElement === groupItem.element) {
-                                            groupItem.append(use);
-                                            found = true;
-                                            return true;
-                                        }
-                                        return false;
-                                    });
-                                }
-                                if (!found) {
-                                    const group = new SvgGroup(item);
-                                    group.x = item.x.baseVal.value;
-                                    group.y = item.y.baseVal.value;
-                                    group.width = item.width.baseVal.value;
-                                    group.height = item.height.baseVal.value;
-                                    group.setTransformOrigin(this.dpi, this.fontSize);
-                                    group.append(use);
-                                    this.append(group);
-                                }
-                            }
-                        }
-                    }
-                });
-                const sorted = new Set();
-                for (const item of Array.from(element.children)) {
-                    const nested = new Set(Array.from(item.querySelectorAll('*')));
-                    for (const group of this.children) {
-                        if (group.element && (group.element === item || nested.has(group.element))) {
-                            sorted.delete(group);
-                            sorted.add(group);
+                    return group;
+                };
+                let current = null;
+                for (let i = 0; i < svg.children.length; i++) {
+                    const svgElement = svg.children[i];
+                    let newGroup = false;
+                    switch (svg.children[i].tagName) {
+                        case 'g':
+                        case 'use':
+                        case 'image':
+                        case 'clipPath':
+                        case 'linearGradient':
+                        case 'radialGradient':
                             break;
-                        }
-                        for (const path of group) {
-                            if (path.element && (path.element === item || nested.has(path.element))) {
-                                sorted.delete(group);
-                                sorted.add(group);
-                                break;
+                        case 'path':
+                        case 'circle':
+                        case 'ellipse':
+                            if (svgElement.transform.baseVal.numberOfItems) {
+                                current = createGroup(svgElement);
+                                newGroup = true;
+                            }
+                        default:
+                            if (current === null) {
+                                current = createGroup(svg);
+                            }
+                            const path = new SvgPath(svgElement);
+                            if (path.d && path.d !== 'none') {
+                                current.append(path);
+                            }
+                            break;
+                    }
+                    if (newGroup) {
+                        current = null;
+                    }
+                }
+            });
+            element.querySelectorAll('use').forEach((svg) => {
+                if (cssAttribute(svg, 'display') !== 'none') {
+                    let parentPath;
+                    this.some(item => {
+                        return item.some(path => {
+                            if (svg.href.baseVal === `#${path.name}`) {
+                                parentPath = path;
+                                return true;
+                            }
+                            return false;
+                        });
+                    });
+                    if (parentPath) {
+                        const use = new SvgPath(svg, parentPath.d);
+                        if (use) {
+                            let found = false;
+                            if (svg.transform.baseVal.numberOfItems === 0 && svg.x.baseVal.value === 0 && svg.y.baseVal.value === 0 && svg.width.baseVal.value === 0 && svg.height.baseVal.value === 0) {
+                                this.some(groupItem => {
+                                    if (svg.parentElement instanceof SVGGraphicsElement && svg.parentElement === groupItem.element) {
+                                        groupItem.append(use);
+                                        found = true;
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                            }
+                            if (!found) {
+                                const group = new SvgGroup(svg);
+                                group.x = svg.x.baseVal.value;
+                                group.y = svg.y.baseVal.value;
+                                group.width = svg.width.baseVal.value;
+                                group.height = svg.height.baseVal.value;
+                                group.append(use);
+                                this.append(group);
                             }
                         }
                     }
                 }
-                this.retain([...this.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
+            });
+            const sorted = new Set();
+            for (const svg of Array.from(element.children)) {
+                const nested = new Set(Array.from(svg.querySelectorAll('*')));
+                for (const group of this.children) {
+                    if (group.element && (group.element === svg || nested.has(group.element))) {
+                        sorted.delete(group);
+                        sorted.add(group);
+                        break;
+                    }
+                    for (const path of group) {
+                        if (path.element && (path.element === svg || nested.has(path.element))) {
+                            sorted.delete(group);
+                            sorted.add(group);
+                            break;
+                        }
+                    }
+                }
             }
-        }
-        get element() {
-            return this._element;
+            this.retain([...this.filter(item => item.length > 0 && !sorted.has(item)), ...sorted]);
         }
         get width() {
             return this._width;
@@ -7117,36 +7131,34 @@
     class Accessibility extends Extension {
         afterInit() {
             for (const node of this.application.processing.cache.elements) {
-                if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
-                    const element = node.baseElement;
-                    if (element instanceof HTMLInputElement) {
-                        switch (element.type) {
-                            case 'radio':
-                            case 'checkbox':
-                                [getPreviousElementSibling(element), getNextElementSibling(element)].some((sibling) => {
-                                    if (sibling) {
-                                        const label = getElementAsNode(sibling);
-                                        const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getElementAsNode(sibling.parentElement) : null;
-                                        if (label && label.visible && label.pageFlow) {
-                                            if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
-                                                node.companion = label;
+                const element = node.baseElement;
+                if (element instanceof HTMLInputElement && !node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
+                    switch (element.type) {
+                        case 'radio':
+                        case 'checkbox':
+                            [getPreviousElementSibling(element), getNextElementSibling(element)].some((sibling) => {
+                                if (sibling) {
+                                    const label = getElementAsNode(sibling);
+                                    const labelParent = sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getElementAsNode(sibling.parentElement) : null;
+                                    if (label && label.visible && label.pageFlow) {
+                                        if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                            node.companion = label;
+                                        }
+                                        else if (label.textElement && labelParent) {
+                                            node.companion = label;
+                                            labelParent.renderAs = node;
+                                        }
+                                        if (node.companion) {
+                                            if (this.options && !this.options.showLabel) {
+                                                label.hide();
                                             }
-                                            else if (label.textElement && labelParent) {
-                                                node.companion = label;
-                                                labelParent.renderAs = node;
-                                            }
-                                            if (node.companion) {
-                                                if (this.options && !this.options.showLabel) {
-                                                    label.hide();
-                                                }
-                                                return true;
-                                            }
+                                            return true;
                                         }
                                     }
-                                    return false;
-                                });
-                                break;
-                        }
+                                }
+                                return false;
+                            });
+                            break;
                     }
                 }
             }
@@ -8185,6 +8197,7 @@
                     }
                 }
                 sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
+                node.each((item, index) => item.siblingIndex = index);
                 if (node.tableElement && node.css('borderCollapse') === 'collapse') {
                     node.modifyBox(32 /* PADDING_TOP */, null);
                     node.modifyBox(64 /* PADDING_RIGHT */, null);
@@ -8511,12 +8524,12 @@
                             }
                         }
                         else {
-                            const percent = isPercent(columnWidth);
                             const unit = isUnit(mapWidth[m]);
-                            if (reevaluate || td.bounds.width < mapBounds[m] || td.bounds.width === mapBounds[m] && ((percent || unit) ||
-                                percent && unit ||
+                            const percent = isPercent(columnWidth);
+                            if (reevaluate || td.bounds.width < mapBounds[m] || (td.bounds.width === mapBounds[m] && ((unit || percent) ||
+                                unit && percent ||
                                 percent && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m]) ||
-                                unit && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m]))) {
+                                unit && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m])))) {
                                 mapWidth[m] = columnWidth;
                             }
                             if (reevaluate || element.colSpan === 1) {

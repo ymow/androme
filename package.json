@@ -1,6 +1,6 @@
 {
   "name": "androme",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS could possibly be supported with Swift. Compatible with Chrome and Safari.",
   "main": "dist/androme.min.js",
   "scripts": {
@@ -15,12 +15,7 @@
   },
   "keywords": [
     "Android",
-    "iOS",
-    "iPhone",
     "Chrome",
-    "Safari",
-    "Edge",
-    "Firefox",
     "HTML",
     "XML",
     "CSS",
@@ -28,10 +23,15 @@
     "CSS Grid",
     "Flexbox",
     "SVG",
+    "iOS",
+    "iPhone",
+    "Safari",
     "Flutter",
     "Xamarin",
     "Xamarin Forms",
-    "TypeScript"
+    "TypeScript",
+    "Firefox",
+    "Edge"
   ],
   "author": {
     "name": "An Pham",
