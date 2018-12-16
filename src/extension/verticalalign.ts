@@ -32,7 +32,7 @@ export default class VerticalAlign<T extends Node> extends Extension<T> {
                     if (aboveBaseline.includes(item)) {
                         reset = true;
                     }
-                    else if ((item.inlineVertical || item.plainText) && isUnit(item.verticalAlign)) {
+                    else if (item.inlineVertical && !item.baseline && isUnit(item.verticalAlign)) {
                         item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.linear.top - aboveBaseline[0].linear.top);
                         belowBaseline.push(item);
                         reset = true;

@@ -41,7 +41,8 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
         if (node.cssTry('display', 'block')) {
             for (const item of pageFlow) {
                 const bounds = item.element.getBoundingClientRect();
-                Object.assign(item.initial.bounds, { width: bounds.width, height: bounds.height });
+                const initial: InitialData<T> = item.unsafe('initial');
+                Object.assign(initial.bounds, { width: bounds.width, height: bounds.height });
             }
             node.cssFinally('display');
         }

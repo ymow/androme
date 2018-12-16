@@ -1,4 +1,4 @@
-import { AutoMargin, InitialData, Support, VisibleStyle } from './lib.base.types.node';
+import { AutoMargin, Support, VisibleStyle } from './lib.base.types.node';
 
 declare global {
     namespace androme.lib.base {
@@ -33,7 +33,6 @@ declare global {
             readonly excludeSection: number;
             readonly excludeProcedure: number;
             readonly excludeResource: number;
-            readonly initial: InitialData<Node>;
             readonly renderChildren: Node[];
             readonly box: RectDimensions;
             readonly bounds: RectDimensions;
@@ -132,6 +131,7 @@ declare global {
             localizeString(value: string): string;
             clone(id?: number, attributes?: boolean, position?: boolean): Node;
             init(): void;
+            saveAsInitial(): void;
             is(...containers: number[]): boolean;
             of(containerType: number, ...alignmentType: number[]): boolean;
             unsafe(obj: string): any;

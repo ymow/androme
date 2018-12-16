@@ -188,9 +188,12 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
                                     break;
                                 default:
                                     chain.anchor(mainData.wrapReverse ? BR : TL, 'parent');
-                                    if (!chain[`has${HW}`] && !chain.has(HWL, $enum.CSS_STANDARD.PERCENT) && chain.initial.bounds[HWL] < maxSize) {
-                                        chain.android(`layout_${HW.toLowerCase()}`, '0px');
-                                        chain.anchor(mainData.wrapReverse ? TL : BR, 'parent');
+                                    if (!chain[`has${HW}`] && !chain.has(HWL, $enum.CSS_STANDARD.PERCENT)) {
+                                        const initial: InitialData<T> = chain.unsafe('initial');
+                                        if (initial.bounds && initial.bounds[HWL] < maxSize) {
+                                            chain.android(`layout_${HW.toLowerCase()}`, '0px');
+                                            chain.anchor(mainData.wrapReverse ? TL : BR, 'parent');
+                                        }
                                     }
                                     break;
                             }

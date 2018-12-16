@@ -740,9 +740,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (node.length) {
                         node.sort(NodeList.siblingIndex);
-                        node.initial.children.push(...node.duplicate());
                     }
                 }
+                node.saveAsInitial();
             }
             sortAsc(this.processing.cache.children, 'depth', 'id');
             for (const ext of this.extensions) {

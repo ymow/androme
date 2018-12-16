@@ -103,3 +103,13 @@ interface LayoutResult<T extends androme.lib.base.Node> {
     next?: boolean;
     renderAs?: T;
 }
+
+interface InitialData<T> {
+    iteration: number,
+    styleMap: StringMap;
+    children: T[];
+    bounds?: RectDimensions;
+    linear?: RectDimensions;
+    box?: RectDimensions;
+    documentParent?: T;
+}

@@ -19,10 +19,13 @@ export default abstract class NodeGroup extends Node {
             if (this.parent) {
                 this.parent.sort(NodeList.siblingIndex);
             }
-            this.initial.children.push(...this.duplicate());
+            this.setBounds();
+            const actualParent = this.actualParent;
+            if (actualParent) {
+                this.css('direction', actualParent.dir);
+            }
+            this.saveAsInitial();
         }
-        this.setBounds();
-        this.css('direction', this.documentParent.dir);
     }
 
     public setBounds(calibrate = false) {
@@ -45,7 +48,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     get actualParent() {
-        return NodeList.actualParent(this.initial.children);
+        return NodeList.actualParent(this._initial.children);
     }
 
     get firstChild() {
@@ -59,8 +62,8 @@ export default abstract class NodeGroup extends Node {
                 }
             }
         }
-        if (this.initial.children.length) {
-            return this.initial.children[0];
+        if (this._initial.children.length) {
+            return this._initial.children[0];
         }
         return undefined;
     }
@@ -76,8 +79,8 @@ export default abstract class NodeGroup extends Node {
                 }
             }
         }
-        if (this.initial.children.length) {
-            return this.initial.children[this.initial.children.length - 1];
+        if (this._initial.children.length) {
+            return this._initial.children[this._initial.children.length - 1];
         }
         return undefined;
     }

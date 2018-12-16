@@ -1,7 +1,7 @@
 import { UserSettingsAndroid, ViewAttribute } from './types/module';
 
 import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, XMLNS_ANDROID } from './lib/constant';
-import { CONTAINER_NODE } from './lib/enumeration';
+import { BUILD_ANDROID, CONTAINER_NODE, DENSITY_ANDROID } from './lib/enumeration';
 
 import BASE_TMPL from './template/base';
 
@@ -827,6 +827,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             }
                             container.render(target ? container : parent);
                             container.companion = node;
+                            container.saveAsInitial();
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.top);
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, node.left);
                             node.render(container);
@@ -1241,6 +1242,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
             node.parent = container;
         }
+        container.saveAsInitial();
         this.application.processing.cache.append(container, parent ? false : true);
         node.unsetCache();
         return container;
@@ -1836,8 +1838,8 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         const settings = this.userSettings;
         return (self: T) => {
             self.localSettings = {
-                targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : 26,
-                resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : 160,
+                targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : BUILD_ANDROID.LATEST,
+                resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : DENSITY_ANDROID.MDPI,
                 supportRTL: settings.supportRTL !== undefined ? settings.supportRTL : true,
                 constraintPercentAccuracy: this.localSettings.constraint.percentAccuracy,
                 customizationsOverwritePrivilege: settings.customizationsOverwritePrivilege !== undefined ? settings.customizationsOverwritePrivilege : true

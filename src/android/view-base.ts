@@ -2,7 +2,7 @@ import { Constraint, LocalSettings } from './types/module';
 
 import { AXIS_ANDROID, CONTAINER_ANDROID, ELEMENT_ANDROID, LAYOUT_ANDROID, RESERVED_JAVA } from './lib/constant';
 import { API_ANDROID, DEPRECATED_ANDROID, FunctionResult } from './customizations';
-import { BUILD_ANDROID, CONTAINER_NODE } from './lib/enumeration';
+import { BUILD_ANDROID, CONTAINER_NODE, DENSITY_ANDROID } from './lib/enumeration';
 
 import { calculateBias, replaceRTL, stripId, validateString } from './lib/util';
 
@@ -69,9 +69,9 @@ export default (Base: Constructor<T>) => {
 
         private _containerType = 0;
 
-        private _localSettings: LocalSettings & ObjectMap<any> = {
-            targetAPI: 0,
-            resolutionDPI: 160,
+        private _localSettings: LocalSettings = {
+            targetAPI: BUILD_ANDROID.LATEST,
+            resolutionDPI: DENSITY_ANDROID.MDPI,
             supportRTL: false
         };
 

@@ -1,11 +1,3 @@
-export interface InitialData<T> {
-    readonly styleMap: StringMap;
-    readonly children: T[];
-    readonly bounds: RectDimensions;
-    readonly linear?: RectDimensions;
-    readonly box?: RectDimensions;
-}
-
 export interface CachedValue<T> {
     pageFlow?: boolean;
     inlineFlow?: boolean;
