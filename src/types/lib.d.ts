@@ -68,6 +68,7 @@ declare global {
         }
 
         namespace svg {
+            export function getPathPoints(value: string): SvgPathPoint[];
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransformSingle(element: SVGGraphicsElement): SvgTransformAttributes;
             export function applyMatrixX(matrix: DOMMatrix, x: number, y: number): number;

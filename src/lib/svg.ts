@@ -2,6 +2,122 @@ import { cssAttribute, getStyle } from './dom';
 import { parseRGBA } from './color';
 import { convertInt, convertPX, isPercent, isUnit } from './util';
 
+export function getPathPoints(value: string) {
+    value = value.toUpperCase();
+    const result: SvgPathPoint[] = [];
+    const patternCommand = /([A-Z])([^A-Z]+)/g;
+    let command: RegExpExecArray | null;
+    while ((command = patternCommand.exec(value)) !== null) {
+        command[2] = command[2].trim();
+        if (command[2] !== '') {
+            const coordinates: number[] = [];
+            const patternDigit = /-?[\d.]+/g;
+            let digit: RegExpExecArray | null;
+            while ((digit = patternDigit.exec(command[2])) !== null) {
+                const valuePt = parseFloat(digit[0]);
+                if (!isNaN(valuePt)) {
+                    coordinates.push(valuePt);
+                }
+            }
+            const previous = result[result.length - 1] as SvgPathPoint | undefined;
+            const previousPoint: Point | null = previous && previous.points.length ? previous.points[previous.points.length - 1] : null;
+            let xAxisRotation: number | undefined;
+            let largeArcFlag: number | undefined;
+            let sweepFlag: number | undefined;
+            switch (command[1]) {
+                case 'M':
+                case 'L':
+                    if (coordinates.length >= 2) {
+                        coordinates.length = 2;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'H':
+                    if (previousPoint && coordinates.length) {
+                        coordinates[1] = previousPoint.y;
+                        coordinates.length = 2;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'V':
+                    if (previousPoint && coordinates.length) {
+                        coordinates.unshift(previousPoint.x);
+                        coordinates.length = 2;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'Z':
+                    if (result.length) {
+                        result.push(result[0]);
+                    }
+                    continue;
+                case 'C':
+                    if (coordinates.length >= 6) {
+                        coordinates.length = 6;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'S':
+                    if (previous && (previous.command === 'C' || previous.command === 'S') && coordinates.length >= 4) {
+                        coordinates.length = 4;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'Q':
+                    if (coordinates.length >= 4) {
+                        coordinates.length = 4;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'T':
+                    if (previous && (previous.command === 'Q' || previous.command === 'T') && coordinates.length >= 2) {
+                        coordinates.length = 2;
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+                case 'A':
+                    if (coordinates.length >= 7) {
+                        coordinates.length = 7;
+                        [xAxisRotation, largeArcFlag, sweepFlag] = coordinates.splice(2, 3);
+                    }
+                    else {
+                        continue;
+                    }
+                    break;
+            }
+            if (coordinates.length) {
+                const points: Point[] = [];
+                for (let i = 0; i < coordinates.length; i += 2) {
+                    points.push({ x: coordinates[i], y: coordinates[i + 1] });
+                }
+                result.push({
+                    command: command[1],
+                    coordinates,
+                    points,
+                    xAxisRotation,
+                    largeArcFlag,
+                    sweepFlag
+                });
+            }
+        }
+    }
+    return result;
+}
+
 export function createColorStop(element: SVGGradientElement) {
     const result: ColorStop[] = [];
     for (const stop of Array.from(element.getElementsByTagName('stop'))) {

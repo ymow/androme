@@ -44,3 +44,12 @@ interface SvgRadialGradient extends Gradient {
     fxAsString: string;
     fyAsString: string;
 }
+
+interface SvgPathPoint {
+    command: string;
+    coordinates: number[];
+    points: Point[];
+    xAxisRotation?: number;
+    largeArcFlag?: number;
+    sweepFlag?: number;
+}

@@ -54,23 +54,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                             let cyDiameter: number | undefined;
                             switch (svgPath.element.tagName) {
                                 case 'path': {
-                                    svgPath.d.split(' ').map(value => value.replace(/[^-\d.,]/g, '').trim()).forEach(value => {
-                                        if (value !== '') {
-                                            const points = value.split(',').map(pt => $util.convertFloat(pt));
-                                            if (points.length >= 2) {
-                                                mapPoint.push({
-                                                    x: points[0],
-                                                    y: points[1]
-                                                });
-                                                if (points.length >= 4) {
-                                                    mapPoint.push({
-                                                        x: points[points.length - 2],
-                                                        y: points[points.length - 1]
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    });
+                                    $svg.getPathPoints(svgPath.d).forEach(path => mapPoint.push(...path.points));
                                     if (!mapPoint.length) {
                                         break;
                                     }
