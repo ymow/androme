@@ -1,5 +1,6 @@
-import { cssAttribute, getStyle, getBackgroundPosition, newRectDimensions } from './dom';
+import { cssAttribute, getStyle } from './dom';
 import { parseRGBA } from './color';
+import { convertInt, convertPX, isPercent, isUnit } from './util';
 
 export function createColorStop(element: SVGGradientElement) {
     const result: ColorStop[] = [];
@@ -24,10 +25,9 @@ export function createTransformSingle(element: SVGGraphicsElement) {
         scaleX: 1,
         scaleY: 1,
         rotateAngle: 0,
-        rotateOriginX: 0,
-        rotateOriginY: 0,
         skewX: 0,
-        skewY: 0
+        skewY: 0,
+        origin: getTransformOrigin(element)
     };
     for (let i = 0; i < element.transform.baseVal.numberOfItems; i++) {
         const item = element.transform.baseVal.getItem(i);
@@ -82,19 +82,68 @@ export function createTransformSingle(element: SVGGraphicsElement) {
     return data;
 }
 
-export function getTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number) {
-    const style = getStyle(element);
-    if (style.transformOrigin) {
-        switch (style.transformOrigin) {
-            case '0px 0px':
-            case '0% 0%':
-            case 'left top':
-                break;
-            default:
-                return getBackgroundPosition(style.transformOrigin, element.getBoundingClientRect(), dpi, fontSize, true);
+export function getTransformOrigin(element: SVGGraphicsElement, dpi = 0) {
+    const value = cssAttribute(element, 'transform-origin');
+    if (value !== '') {
+        let width: number;
+        let height: number;
+        const parent = element.parentElement;
+        if (parent instanceof SVGSVGElement) {
+            width = parent.viewBox.baseVal.width;
+            height = parent.viewBox.baseVal.height;
+        }
+        else if (parent instanceof SVGGElement && parent.viewportElement instanceof SVGSVGElement) {
+            width = parent.viewportElement.viewBox.baseVal.width;
+            height = parent.viewportElement.viewBox.baseVal.height;
+        }
+        else {
+            return undefined;
+        }
+        let positions = value.split(' ');
+        if (positions.length === 1) {
+            positions.push('center');
+        }
+        positions = positions.slice(0, 2);
+        const origin: Point = { x: null as any, y: null as any };
+        if (positions.includes('left')) {
+            origin.x = 0;
+        }
+        else if (positions.includes('right')) {
+            origin.x = width;
+        }
+        if (positions.includes('top')) {
+            origin.y = 0;
+        }
+        else if (positions.includes('bottom')) {
+            origin.y = height;
+        }
+        ['x', 'y'].forEach(attr => {
+            if (origin[attr] === null) {
+                for (let i = 0; i < positions.length; i++) {
+                    let position = positions[i];
+                    if (position !== '') {
+                        if (position === 'center') {
+                            position = '50%';
+                        }
+                        if (isUnit(position)) {
+                            origin[attr] = parseInt(position.endsWith('px') ? position : convertPX(position, dpi, convertInt(getStyle(element).fontSize as string)));
+                        }
+                        else if (isPercent(position)) {
+                            origin[attr] = (attr === 'x' ? width : height) * (parseInt(position) / 100);
+                        }
+                        if (origin[attr] !== null) {
+                            positions[i] = '';
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        if (origin.x !== 0 || origin.y !== 0) {
+            return origin;
         }
     }
-    return newRectDimensions();
+    return undefined;
 }
 
 export function applyMatrixX(matrix: DOMMatrix, x: number, y: number) {

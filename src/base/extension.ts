@@ -124,6 +124,6 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     get installed() {
-        return this.application instanceof Application ? this.application.extensions.has(this) : false;
+        return this.application.extensions ? this.application.extensions.has(this) : false;
     }
 }

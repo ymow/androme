@@ -13,12 +13,12 @@ interface SvgTransformAttributes {
     skewX: number;
     skewY: number;
     rotateAngle: number;
-    rotateOriginX: number;
-    rotateOriginY: number;
+    rotateOriginX?: number;
+    rotateOriginY?: number;
     matrixSkewX?: DOMMatrix;
     matrixSkewY?: DOMMatrix;
     matrixRotate?: DOMMatrix;
-    origin?: RectPosition;
+    origin?: Point;
 }
 
 interface SvgLinearGradient extends Gradient {

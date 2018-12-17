@@ -1243,7 +1243,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             node.parent = container;
         }
         container.saveAsInitial();
-        this.application.processing.cache.append(container, parent ? false : true);
+        this.application.processing.cache.append(container, !parent);
         node.unsetCache();
         return container;
     }

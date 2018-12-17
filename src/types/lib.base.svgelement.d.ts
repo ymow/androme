@@ -1,8 +1,9 @@
 declare global {
     namespace androme.lib.base {
         export interface SvgElement extends SvgBase {
-            x: number | undefined;
-            y: number | undefined;
+            viewable: boolean;
+            x?: number;
+            y?: number;
             visibility: boolean;
         }
 

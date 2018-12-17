@@ -1,16 +1,43 @@
 import { parseRGBA } from '../lib/color';
 import { cssAttribute, cssInherit } from '../lib/dom';
-import { applyMatrixX, applyMatrixY, isSvgVisible } from '../lib/svg';
+import { applyMatrixX, applyMatrixY, getRadiusY, getTransformOrigin, isSvgVisible } from '../lib/svg';
 import { convertInt, isString } from '../lib/util';
 
 export default class SvgPath implements androme.lib.base.SvgPath {
-    public static applyTransforms(transform: SVGTransformList, points: Point[]) {
+    public static applyTransforms(transform: SVGTransformList, points: Point[], origin?: Point) {
         for (let i = transform.numberOfItems - 1; i >= 0; i--) {
             const item = transform.getItem(i);
+            let x1 = 0;
+            let y1 = 0;
+            let x2 = 0;
+            let y2 = 0;
+            let x3 = 0;
+            let y3 = 0;
+            if (origin) {
+                switch (item.type) {
+                    case SVGTransform.SVG_TRANSFORM_SCALE:
+                        x1 += origin.x;
+                        y2 += origin.y;
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_SKEWX:
+                        y1 -= origin.y;
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_SKEWY:
+                        x2 -= origin.x;
+                        break;
+                    case SVGTransform.SVG_TRANSFORM_ROTATE:
+                        x2 -= origin.x;
+                        y1 -= origin.y;
+                        x3 = origin.x + getRadiusY(item.angle, origin.x);
+                        y3 = origin.y + getRadiusY(item.angle, origin.y);
+                        break;
+                }
+            }
             points.forEach(pt => {
                 const x = pt.x;
-                pt.x = applyMatrixX(item.matrix, x, pt.y);
-                pt.y = applyMatrixY(item.matrix, x, pt.y);
+                const y = pt.y;
+                pt.x = applyMatrixX(item.matrix, x + x1, y + y1) + x3;
+                pt.y = applyMatrixY(item.matrix, x + x2, y + y2) + y3;
             });
         }
         return points;
@@ -53,14 +80,15 @@ export default class SvgPath implements androme.lib.base.SvgPath {
 
     public name = '';
     public visibility = true;
+    public opacity = 1;
     public d = '';
     public color = '';
     public fillRule = '';
     public fill = '';
-    public fillOpacity = 1;
+    public fillOpacity = '1';
     public stroke = '';
     public strokeWidth = '';
-    public strokeOpacity = 1;
+    public strokeOpacity = '1';
     public strokeLinecap = '';
     public strokeLinejoin = '';
     public strokeMiterlimit = '';
@@ -107,7 +135,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                         { x: x1, y: y1 },
                         { x: x2, y: y2 }
                     ];
-                    this.d = SvgPath.getPolyline(SvgPath.applyTransforms(transform, points));
+                    this.d = SvgPath.getPolyline(SvgPath.applyTransforms(transform, points, getTransformOrigin(element)));
                 }
                 else {
                     this.d = SvgPath.getLine(x1, y1, x2, y2);
@@ -127,7 +155,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                         { x: x + width, y: y + height },
                         { x, y: y + height }
                     ];
-                    this.d = SvgPath.getPolygon(SvgPath.applyTransforms(transform, points));
+                    this.d = SvgPath.getPolygon(SvgPath.applyTransforms(transform, points, getTransformOrigin(element)));
                 }
                 else {
                     this.d = SvgPath.getRect(width, height, x, y);
@@ -137,7 +165,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
             case 'polyline':
             case 'polygon': {
                 const item = <SVGPolygonElement> element;
-                const points = SvgPath.applyTransforms(transform, SvgPath.toPoints(item.points));
+                const points = SvgPath.applyTransforms(transform, SvgPath.toPoints(item.points), getTransformOrigin(element));
                 this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
                 break;
             }
@@ -175,8 +203,18 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         if (href) {
             this.clipPath = href[1];
         }
-        const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
-        const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
+        const opacity = parseFloat(cssAttribute(element, 'opacity'));
+        if (!isNaN(opacity) && opacity < 1) {
+            this.opacity = opacity;
+        }
+        const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity')) * this.opacity;
+        if (!isNaN(fillOpacity) && fillOpacity < 1) {
+            this.fillOpacity = fillOpacity.toString();
+        }
+        const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity')) * this.opacity;
+        if (!isNaN(strokeOpacity) && strokeOpacity < 1) {
+            this.strokeOpacity = strokeOpacity.toString();
+        }
         if (color) {
             this.color = color.valueRGB;
         }
@@ -184,12 +222,6 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         this.fill = values.fill;
         this.stroke = values.stroke;
         this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
-        if (!isNaN(fillOpacity) && fillOpacity < 1) {
-            this.fillOpacity = fillOpacity;
-        }
-        if (!isNaN(strokeOpacity) && strokeOpacity < 1) {
-            this.strokeOpacity = strokeOpacity;
-        }
         this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
         this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
         this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');

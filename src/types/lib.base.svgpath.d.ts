@@ -1,14 +1,15 @@
 declare global {
     namespace androme.lib.base {
         export interface SvgPath extends SvgBase {
+            opacity: number;
             d: string;
             color: string;
             fillRule: string;
             fill: string;
-            fillOpacity: number;
+            fillOpacity: string;
             stroke: string;
             strokeWidth: string;
-            strokeOpacity: number;
+            strokeOpacity: string;
             strokeLinecap: string;
             strokeLinejoin: string;
             strokeMiterlimit: string;

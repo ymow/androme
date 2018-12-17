@@ -63,8 +63,18 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 }
                                 if (transform.rotateAngle !== 0) {
                                     data.rotation = transform.rotateAngle.toString();
-                                    data.pivotX = transform.rotateOriginX.toString();
-                                    data.pivotY = transform.rotateOriginY.toString();
+                                }
+                                let pivotX = transform.rotateOriginX || 0;
+                                let pivotY = transform.rotateOriginY || 0;
+                                if (transform.origin) {
+                                    pivotX += transform.origin.x;
+                                    pivotY += transform.origin.y;
+                                }
+                                if (pivotX !== 0) {
+                                    data.pivotX = pivotX.toString();
+                                }
+                                if (pivotY !== 0) {
+                                    data.pivotY = pivotY.toString();
                                 }
                             }
                             if (x !== 0) {
@@ -138,7 +148,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         height: $util.formatPX(svg.height),
                         viewportWidth: svg.viewBoxWidth > 0 ? svg.viewBoxWidth.toString() : false,
                         viewportHeight: svg.viewBoxHeight > 0 ? svg.viewBoxHeight.toString() : false,
-                        alpha: svg.opacity < 1 ? svg.opacity : false,
+                        alpha: svg.opacity < 1 ? svg.opacity.toString() : false,
                         '1': groups
                     });
                     vectorName = Resource.getStoredName('drawables', xml);
@@ -151,7 +161,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const images: ExternalData = [];
                     const rotate: ExternalData = [];
                     for (const item of svg.defs.image) {
-                        if (item.element && item.uri) {
+                        if (item.viewable) {
                             const scaleX = svg.width / svg.viewBoxWidth;
                             const scaleY = svg.height / svg.viewBoxHeight;
                             let x = (item.x || 0) * scaleX;
@@ -166,8 +176,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 parent = parent.parentElement;
                             }
                             const data: ExternalData = {
-                                width: item.width ? $util.formatPX(item.width) : '',
-                                height: item.height ? $util.formatPX(item.height) : '',
+                                width: item.width > 0 ? $util.formatPX(item.width) : '',
+                                height: item.height > 0 ? $util.formatPX(item.height) : '',
                                 left: x !== 0 ? $util.formatPX(x) : '',
                                 top: y !== 0 ? $util.formatPX(y) : '',
                                 src: Resource.addImage({ mdpi: item.uri })

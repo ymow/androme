@@ -70,9 +70,9 @@ declare global {
         namespace svg {
             export function createColorStop(element: SVGGradientElement): ColorStop[];
             export function createTransformSingle(element: SVGGraphicsElement): SvgTransformAttributes;
-            export function getTransformOrigin(element: SVGGraphicsElement, dpi: number, fontSize: number): RectPosition;
             export function applyMatrixX(matrix: DOMMatrix, x: number, y: number): number;
             export function applyMatrixY(matrix: DOMMatrix, x: number, y: number): number;
+            export function getTransformOrigin(element: SVGGraphicsElement, dpi?: number): Point | undefined;
             export function getRadiusX(angle: number, radius: number): number;
             export function getRadiusY(angle: number, radius: number): number;
             export function isSvgVisible(element: SVGGraphicsElement): boolean;

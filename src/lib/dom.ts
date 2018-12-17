@@ -227,7 +227,7 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
         originalX: '',
         originalY: ''
     };
-    const orientation = value.split(' ');
+    const orientation = value === 'center' ? ['center', 'center'] : value.split(' ');
     if (orientation.length === 4) {
         orientation.forEach((position, index) => {
             switch (index) {

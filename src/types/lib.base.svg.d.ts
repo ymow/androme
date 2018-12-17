@@ -15,9 +15,9 @@ declare global {
             readonly viewBoxWidth: number;
             readonly viewBoxHeight: number;
             readonly opacity: number;
-            setDimensions(width: number, height: number): void;
             setViewBox(width: number, height: number): void;
             setOpacity(value: string | number): void;
+            setDimensions(width: number, height: number): void;
         }
 
         export class Svg implements Svg {

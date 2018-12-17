@@ -60,7 +60,11 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
 
     public build() {
         const element = this.element;
+        const width = element.viewBox.baseVal.width;
+        const height = element.viewBox.baseVal.height;
         this.defs.image = [];
+        this.setViewBox(width, height);
+        this.setOpacity(cssAttribute(element, 'opacity'));
         this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
         if (isUserAgent(USER_AGENT.FIREFOX)) {
             const node = getElementAsNode<androme.lib.base.Node>(element);
@@ -68,8 +72,6 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                 this.setDimensions(node.bounds.width, node.bounds.height);
             }
         }
-        this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
-        this.setOpacity(cssAttribute(element, 'opacity'));
         element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((svg: SVGElement) => {
             switch (svg.tagName) {
                 case 'clipPath': {
@@ -161,6 +163,9 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     }
                     image.x = x;
                     image.y = y;
+                    if (x > width || y > height) {
+                        image.viewable = false;
+                    }
                     this.defs.image.push(image);
                     break;
                 }

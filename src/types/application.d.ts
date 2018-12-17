@@ -105,7 +105,7 @@ interface LayoutResult<T extends androme.lib.base.Node> {
 }
 
 interface InitialData<T> {
-    iteration: number,
+    iteration: number;
     styleMap: StringMap;
     children: T[];
     bounds?: RectDimensions;
