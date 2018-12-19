@@ -1,6 +1,6 @@
 const template = [
 '<?xml version="1.0" encoding="utf-8"?>',
-'<vector xmlns:android="http://schemas.android.com/apk/res/android" {~namespace} android:width="{&width}" android:height="{&height}" android:viewportWidth="{&viewportWidth}" android:viewportHeight="{&viewportHeight}" android:alpha="{~alpha}">',
+'<vector xmlns:android="http://schemas.android.com/apk/res/android" {~namespace} android:name="{&name}" android:width="{&width}" android:height="{&height}" android:viewportWidth="{&viewportWidth}" android:viewportHeight="{&viewportHeight}" android:alpha="{~alpha}">',
 '!1',
 '	<group android:name="{~name}" android:rotation="{~rotation}" android:pivotX="{~pivotX}" android:pivotY="{~pivotY}" android:scaleX="{~scaleX}" android:scaleY="{~scaleY}" android:translateX="{~translateX}" android:translateY="{~translateY}">',
 '!2',
@@ -25,7 +25,7 @@ const template = [
 '!2',
 '	</group>',
 '!1',
-'</vector>',
+'</vector>'
 ];
 
 export default template.join('\n');

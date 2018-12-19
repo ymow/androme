@@ -1,6 +1,6 @@
 const template = [
 '{&value}',
-'<!-- filename: {&name} -->',
+'<!-- filename: {&name} -->'
 ];
 
 export default template.join('\n');

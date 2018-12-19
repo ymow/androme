@@ -43,7 +43,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                             arrayName = `${node.controlId}_array`;
                             Resource.STORED.arrays.set(arrayName, result);
                         }
-                        node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
+                        node.android('entries', `@array/${arrayName}`, false);
                     }
                 }
                 else {
@@ -92,7 +92,7 @@ export default class ResourceStrings<T extends View> extends androme.lib.base.Ex
                         }
                         const name = Resource.addString(stored.value, stored.name, this.options.numberResourceValue);
                         if (name !== '') {
-                            node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, node.renderExtension.size === 0);
+                            node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, false);
                         }
                     }
                 }

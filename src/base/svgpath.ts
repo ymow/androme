@@ -1,58 +1,21 @@
+import SvgBuild from './svgbuild';
+
 import { parseRGBA } from '../lib/color';
 import { cssAttribute, cssInherit } from '../lib/dom';
-import { applyMatrixX, applyMatrixY, getRadiusY, getTransformOrigin, isSvgVisible } from '../lib/svg';
+import { getTransformOrigin, isVisible } from '../lib/svg';
 import { convertInt, isString } from '../lib/util';
 
 export default class SvgPath implements androme.lib.base.SvgPath {
-    public static applyTransforms(transform: SVGTransformList, points: Point[], origin?: Point) {
-        for (let i = transform.numberOfItems - 1; i >= 0; i--) {
-            const item = transform.getItem(i);
-            let x1 = 0;
-            let y1 = 0;
-            let x2 = 0;
-            let y2 = 0;
-            let x3 = 0;
-            let y3 = 0;
-            if (origin) {
-                switch (item.type) {
-                    case SVGTransform.SVG_TRANSFORM_SCALE:
-                        x1 += origin.x;
-                        y2 += origin.y;
-                        break;
-                    case SVGTransform.SVG_TRANSFORM_SKEWX:
-                        y1 -= origin.y;
-                        break;
-                    case SVGTransform.SVG_TRANSFORM_SKEWY:
-                        x2 -= origin.x;
-                        break;
-                    case SVGTransform.SVG_TRANSFORM_ROTATE:
-                        x2 -= origin.x;
-                        y1 -= origin.y;
-                        x3 = origin.x + getRadiusY(item.angle, origin.x);
-                        y3 = origin.y + getRadiusY(item.angle, origin.y);
-                        break;
-                }
-            }
-            points.forEach(pt => {
-                const x = pt.x;
-                const y = pt.y;
-                pt.x = applyMatrixX(item.matrix, x + x1, y + y1) + x3;
-                pt.y = applyMatrixY(item.matrix, x + x2, y + y2) + y3;
-            });
-        }
-        return points;
-    }
-
     public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
         return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
     }
 
     public static getRect(width: number, height: number, x = 0, y = 0) {
-        return width > 0 && height > 0 ? `M${x},${y} H${x + width} V${y + height} H${x} Z` : '';
+        return width > 0 && height > 0 ? `M${x},${y} h${width} v${height} h${-width} Z` : '';
     }
 
     public static getPolyline(points: Point[] | DOMPoint[] | SVGPointList) {
-        points = points instanceof SVGPointList ? this.toPoints(points) : points;
+        points = points instanceof SVGPointList ? SvgBuild.toPointList(points) : points;
         return points.length ? `M${points.map(item => `${item.x},${item.y}`).join(' ')}` : '';
     }
 
@@ -62,24 +25,16 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     }
 
     public static getCircle(cx: number, cy: number, r: number) {
-        return r > 0 ? `M${cx},${cy} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0` : '';
+        return r > 0 ? this.getEllipse(cx, cy, r, r) : '';
     }
 
     public static getEllipse(cx: number, cy: number, rx: number, ry: number) {
-        return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry} 0 1,0 ${rx * 2},0 a${rx},${ry} 0 1,0 -${rx * 2},0` : '';
-    }
-
-    public static toPoints(points: SVGPointList) {
-        const result: Point[] = [];
-        for (let j = 0; j < points.numberOfItems; j++) {
-            const pt = points.getItem(j);
-            result.push({ x: pt.x, y: pt.y });
-        }
-        return result;
+        return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry},0,1,0,${rx * 2},0 a${rx},${ry},0,1,0,-${rx * 2},0` : '';
     }
 
     public name = '';
     public visibility = true;
+    public animate: SvgAnimate[];
     public opacity = 1;
     public d = '';
     public color = '';
@@ -99,82 +54,85 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         public readonly element: SVGGraphicsElement,
         d?: string)
     {
-        this.name = element.id;
-        this.build();
+        this.name = SvgBuild.setName(element);
         if (d) {
             this.d = d;
         }
+        this.animate = SvgBuild.toAnimateList(element);
+        this.build();
     }
 
     public build() {
         const element = this.element;
-        const transform = element.transform.baseVal;
-        switch (element.tagName) {
-            case 'path': {
-                this.d = cssAttribute(element, 'd');
-                break;
-            }
-            case 'circle': {
-                const item = <SVGCircleElement> element;
-                this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
-                break;
-            }
-            case 'ellipse': {
-                const item = <SVGEllipseElement> element;
-                this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
-                break;
-            }
-            case 'line': {
-                const item = <SVGLineElement> element;
-                const x1 = item.x1.baseVal.value;
-                const y1 = item.y1.baseVal.value;
-                const x2 = item.x2.baseVal.value;
-                const y2 = item.y2.baseVal.value;
-                if (transform.numberOfItems) {
-                    const points: Point[] = [
-                        { x: x1, y: y1 },
-                        { x: x2, y: y2 }
-                    ];
-                    this.d = SvgPath.getPolyline(SvgPath.applyTransforms(transform, points, getTransformOrigin(element)));
+        if (this.d === '') {
+            const transform = element.transform.baseVal;
+            switch (element.tagName) {
+                case 'path': {
+                    this.d = cssAttribute(element, 'd');
+                    break;
                 }
-                else {
-                    this.d = SvgPath.getLine(x1, y1, x2, y2);
+                case 'circle': {
+                    const item = <SVGCircleElement> element;
+                    this.d = SvgPath.getCircle(item.cx.baseVal.value, item.cy.baseVal.value, item.r.baseVal.value);
+                    break;
                 }
-                break;
-            }
-            case 'rect': {
-                const item = <SVGRectElement> element;
-                const x = item.x.baseVal.value;
-                const y = item.y.baseVal.value;
-                const width = item.width.baseVal.value;
-                const height = item.height.baseVal.value;
-                if (transform.numberOfItems) {
-                    const points: Point[] = [
-                        { x, y },
-                        { x: x + width, y },
-                        { x: x + width, y: y + height },
-                        { x, y: y + height }
-                    ];
-                    this.d = SvgPath.getPolygon(SvgPath.applyTransforms(transform, points, getTransformOrigin(element)));
+                case 'ellipse': {
+                    const item = <SVGEllipseElement> element;
+                    this.d = SvgPath.getEllipse(item.cx.baseVal.value, item.cy.baseVal.value, item.rx.baseVal.value, item.ry.baseVal.value);
+                    break;
                 }
-                else {
-                    this.d = SvgPath.getRect(width, height, x, y);
+                case 'line': {
+                    const item = <SVGLineElement> element;
+                    const x1 = item.x1.baseVal.value;
+                    const y1 = item.y1.baseVal.value;
+                    const x2 = item.x2.baseVal.value;
+                    const y2 = item.y2.baseVal.value;
+                    if (transform.numberOfItems) {
+                        const points: Point[] = [
+                            { x: x1, y: y1 },
+                            { x: x2, y: y2 }
+                        ];
+                        this.d = SvgPath.getPolyline(SvgBuild.applyTransforms(transform, points, getTransformOrigin(element)));
+                    }
+                    else {
+                        this.d = SvgPath.getLine(x1, y1, x2, y2);
+                    }
+                    break;
                 }
-                break;
-            }
-            case 'polyline':
-            case 'polygon': {
-                const item = <SVGPolygonElement> element;
-                const points = SvgPath.applyTransforms(transform, SvgPath.toPoints(item.points), getTransformOrigin(element));
-                this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
-                break;
+                case 'rect': {
+                    const item = <SVGRectElement> element;
+                    const x = item.x.baseVal.value;
+                    const y = item.y.baseVal.value;
+                    const width = item.width.baseVal.value;
+                    const height = item.height.baseVal.value;
+                    if (transform.numberOfItems) {
+                        const points: Point[] = [
+                            { x, y },
+                            { x: x + width, y },
+                            { x: x + width, y: y + height },
+                            { x, y: y + height }
+                        ];
+                        this.d = SvgPath.getPolygon(SvgBuild.applyTransforms(transform, points, getTransformOrigin(element)));
+                    }
+                    else {
+                        this.d = SvgPath.getRect(width, height, x, y);
+                    }
+                    break;
+                }
+                case 'polyline':
+                case 'polygon': {
+                    const item = <SVGPolygonElement> element;
+                    const points = SvgBuild.applyTransforms(transform, SvgBuild.toPointList(item.points), getTransformOrigin(element));
+                    this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
+                    break;
+                }
             }
         }
         const values = {
             fill: cssAttribute(element, 'fill'),
             stroke: cssAttribute(element, 'stroke')
         };
-        const color = parseRGBA(cssAttribute(element, 'color')) || parseRGBA(cssInherit(element, 'color'));
+        const color = parseRGBA(cssAttribute(element, 'color') || cssInherit(element, 'color'));
         const pattern = /url\("?#(.*?)"?\)/;
         for (const attr in values) {
             const match = pattern.exec(values[attr]);
@@ -199,6 +157,8 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 }
             }
         }
+        this.fill = values.fill;
+        this.stroke = values.stroke;
         const href = pattern.exec(cssAttribute(element, 'clip-path'));
         if (href) {
             this.clipPath = href[1];
@@ -207,25 +167,29 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         if (!isNaN(opacity) && opacity < 1) {
             this.opacity = opacity;
         }
-        const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity')) * this.opacity;
-        if (!isNaN(fillOpacity) && fillOpacity < 1) {
-            this.fillOpacity = fillOpacity.toString();
+        const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
+        if (!isNaN(fillOpacity) && fillOpacity <= 1) {
+            this.fillOpacity = (fillOpacity * this.opacity).toString();
         }
-        const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity')) * this.opacity;
-        if (!isNaN(strokeOpacity) && strokeOpacity < 1) {
-            this.strokeOpacity = strokeOpacity.toString();
+        else if (this.fill && this.opacity < 1) {
+            this.fillOpacity = this.opacity.toString();
+        }
+        const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
+        if (!isNaN(strokeOpacity) && strokeOpacity <= 1) {
+            this.strokeOpacity = (strokeOpacity * this.opacity).toString();
+        }
+        else if (this.stroke && this.opacity < 1) {
+            this.strokeOpacity = this.opacity.toString();
         }
         if (color) {
             this.color = color.valueRGB;
         }
-        this.fillRule = cssAttribute(element, 'fill-rule');
-        this.fill = values.fill;
-        this.stroke = values.stroke;
+        this.fillRule = cssAttribute(element, 'fill-rule', true);
         this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
-        this.strokeLinecap = cssAttribute(element, 'stroke-linecap');
-        this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin');
-        this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit');
-        this.clipRule = cssAttribute(element, 'clip-rule');
-        this.visibility = isSvgVisible(element);
+        this.strokeLinecap = cssAttribute(element, 'stroke-linecap', true);
+        this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin', true);
+        this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit', true);
+        this.clipRule = cssAttribute(element, 'clip-rule', true);
+        this.visibility = isVisible(element);
     }
 }

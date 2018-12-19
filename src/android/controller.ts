@@ -896,7 +896,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
                             const result = Resource.addImage({ mdpi: element.src });
                             if (result !== '') {
-                                node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
+                                node.android('src', `@drawable/${result}`, false);
                             }
                         }
                         break;

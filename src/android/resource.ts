@@ -5,7 +5,7 @@ import { EXT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
 import View from './view';
 
-import $SvgPath = androme.lib.base.SvgPath;
+import $SvgBuild = androme.lib.base.SvgBuild;
 
 import $color = androme.lib.color;
 import $const = androme.lib.constant;
@@ -31,7 +31,7 @@ function getRadiusPercent(value: string) {
 }
 
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
-    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: $SvgPath, colorAlias = true) {
+    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: androme.lib.base.SvgPath, colorAlias = true) {
         const result: BackgroundGradient[] = [];
         const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
         for (const item of gradients) {
@@ -54,14 +54,14 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                             let cyDiameter: number | undefined;
                             switch (svgPath.element.tagName) {
                                 case 'path': {
-                                    $svg.getPathPoints(svgPath.d).forEach(path => mapPoint.push(...path.points));
+                                    $SvgBuild.toPathCommandList(svgPath.d).forEach(path => mapPoint.push(...path.points));
                                     if (!mapPoint.length) {
                                         break;
                                     }
                                 }
                                 case 'polygon': {
                                     if (svgPath.element instanceof SVGPolygonElement) {
-                                        mapPoint.push(...$SvgPath.toPoints(svgPath.element.points));
+                                        mapPoint.push(...$SvgBuild.toPointList(svgPath.element.points));
                                     }
                                     cx = $util.minArray(mapPoint.map(pt => pt.x));
                                     cy = $util.minArray(mapPoint.map(pt => pt.y));

@@ -4,7 +4,7 @@ interface SvgDefs<T, U> {
     gradient: Map<string, Gradient>;
 }
 
-interface SvgTransformAttributes {
+interface SvgTransformData {
     operations: number[];
     translateX: number;
     translateY: number;
@@ -45,11 +45,38 @@ interface SvgRadialGradient extends Gradient {
     fyAsString: string;
 }
 
-interface SvgPathPoint {
+interface SvgPathCommand {
     command: string;
+    relative: boolean;
     coordinates: number[];
     points: Point[];
+    radiusX?: number;
+    radiusY?: number;
     xAxisRotation?: number;
     largeArcFlag?: number;
     sweepFlag?: number;
+}
+
+interface SvgAnimate {
+    attributeName: string;
+    from: string;
+    to: string;
+    by: string;
+    values: string[];
+    pathValues?: string[];
+    keyTimes: number[];
+    duration: number;
+    durationMS: number;
+    repeatCount: number;
+    calcMode: string;
+    additive: boolean;
+    accumulate: boolean;
+    freeze: boolean;
+}
+
+interface SvgAnimateTransform extends SvgAnimate {
+    type?: number;
+    path?: string;
+    keyPoints?: number[];
+    rotate?: string;
 }

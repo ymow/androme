@@ -8,11 +8,9 @@ import Node from './node';
 import NodeList from './nodelist';
 import Resource from './resource';
 
-import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isElementIncluded, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache } from '../lib/dom';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache, withinViewportOrigin } from '../lib/dom';
 import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
-
-type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
     const tagged: string[] = [];
@@ -497,7 +495,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const elements = (() => {
             if (documentRoot === document.body) {
                 let i = 0;
-                return document.querySelectorAll(Array.from(document.body.childNodes).some((item: Element) => isElementIncluded(item) && ++i > 1) ? 'body, body *' : 'body *');
+                return document.querySelectorAll(Array.from(document.body.childNodes).some((item: Element) => this.conditionElement(item) && ++i > 1) ? 'body, body *' : 'body *');
             }
             else {
                 return documentRoot.querySelectorAll('*');
@@ -756,7 +754,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const localSettings = this.controllerHandler.localSettings;
         const documentRoot = this.processing.node as T;
         const extensions = Array.from(this.extensions).filter(item => !item.eventOnly);
-        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
+        const mapY = new Map<number, Map<number, T>>();
         let baseTemplate = localSettings.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
@@ -804,7 +802,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
-                    if (nodeY.rendered || !nodeY.visible || !nodeY.documentRoot && !nodeY.documentBody && nodeY.baseElement && this.parseElements.has(<HTMLElement> nodeY.baseElement)) {
+                    if (nodeY.rendered || !nodeY.visible || this.parseElements.has(<HTMLElement> nodeY.baseElement) && !nodeY.documentRoot && !nodeY.documentBody) {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
@@ -1749,7 +1747,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         let node: T | null = null;
         if (hasComputedStyle(element)) {
             const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
-            if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && isElementIncluded(element)) {
+            if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && this.conditionElement(element)) {
                 node = nodeConstructor;
                 node.setExclusions();
             }
@@ -1781,6 +1779,43 @@ export default class Application<T extends Node> implements androme.lib.base.App
             this.processing.cache.append(node);
         }
         return node;
+    }
+
+    protected conditionElement(element: Element) {
+        if (element.parentElement instanceof SVGSVGElement) {
+            return false;
+        }
+        else if (hasComputedStyle(element)) {
+            if (hasValue(element.dataset.include)) {
+                return true;
+            }
+            else if (withinViewportOrigin(element)) {
+                return true;
+            }
+            else {
+                let current = element.parentElement;
+                let valid = true;
+                while (current) {
+                    if (getStyle(current).display === 'none') {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+                if (valid && element.children.length) {
+                    return Array.from(element.children).some((item: Element) => {
+                        const style = getStyle(item);
+                        const float = style.cssFloat;
+                        const position = style.position;
+                        return position === 'absolute' || position === 'fixed' || float === 'left' || float === 'right';
+                    });
+                }
+            }
+            return false;
+        }
+        else {
+            return isPlainText(element);
+        }
     }
 
     private setStyleMap() {

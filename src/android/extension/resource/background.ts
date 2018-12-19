@@ -483,12 +483,12 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                                 }]
                             }]
                         });
-                        let vector = Resource.getStoredName('drawables', xml);
-                        if (vector === '') {
-                            vector = `${node.tagName.toLowerCase()}_${node.controlId}_gradient`;
-                            Resource.STORED.drawables.set(vector, xml);
+                        let vectorName = Resource.getStoredName('drawables', xml);
+                        if (vectorName === '') {
+                            vectorName = `${node.tagName.toLowerCase()}_${node.controlId}_gradient`;
+                            Resource.STORED.drawables.set(vectorName, xml);
                         }
-                        backgroundVector.push({ vector });
+                        backgroundVector.push({ vectorName });
                     }
                     let template: StringMap;
                     if (stored.border && !(
@@ -619,7 +619,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                             Resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
-                    node.android('background', `@drawable/${resourceName}`, node.renderExtension.size === 0);
+                    node.android('background', `@drawable/${resourceName}`, false);
                     if (hasBackgroundImage) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.options.autoSizeBackgroundImage &&
@@ -673,7 +673,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (!node.data(Resource.KEY_NAME, 'fontStyle') && $util.hasValue(stored.backgroundColor)) {
-                    node.android('background', `@color/${stored.backgroundColor}`, node.renderExtension.size === 0);
+                    node.android('background', `@color/${stored.backgroundColor}`, false);
                 }
             }
         });

@@ -4,6 +4,7 @@ declare global {
             name: string;
             width?: number;
             height?: number;
+            animate: SvgAnimate[];
             readonly element: SVGGraphicsElement;
             build(): void;
         }
@@ -22,6 +23,18 @@ declare global {
 
         export class Svg implements Svg {
             constructor(element: SVGSVGElement);
+        }
+
+        export class SvgBuild {
+            public static setName(element: SVGGraphicsElement): string;
+            public static applyTransforms(transform: SVGTransformList, points: Point[], origin?: Point): Point[];
+            public static fromPathCommandList(commands: SvgPathCommand[]): string;
+            public static toPointList(points: SVGPointList): Point[];
+            public static toFractionList(value: string, delimiter?: string): number[];
+            public static toPathCommandList(value: string): SvgPathCommand[];
+            public static toClipPathList(element: SVGClipPathElement): SvgPath[];
+            public static toColorStopList(element: SVGGradientElement): ColorStop[];
+            public static toAnimateList(element: SVGGraphicsElement): SvgAnimate[];
         }
     }
 }

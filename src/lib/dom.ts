@@ -1,7 +1,7 @@
 import { CSS_SPACING, REGEX_PATTERN } from './constant';
 import { USER_AGENT } from './enumeration';
 
-import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, hasValue, isPercent, isString, maxArray, minArray, resolvePath, withinFraction } from './util';
+import { capitalize, convertCamelCase, convertInt, convertPX, formatPercent, formatPX, hasBit, isPercent, isString, maxArray, minArray, resolvePath, withinFraction } from './util';
 
 type T = androme.lib.base.Node;
 
@@ -212,8 +212,15 @@ export function cssFromParent(element: Element, attr: string) {
     return false;
 }
 
-export function cssAttribute(element: Element, attr: string): string {
-    return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
+export function cssAttribute(element: Element, attr: string, computed = false): string {
+    let value = element.getAttribute(attr) || '';
+    if (!value) {
+        const node = getElementAsNode<T>(element);
+        if (node) {
+           value = node.cssInitial(attr);
+        }
+    }
+    return !value && computed ? getStyle(element)[convertCamelCase(attr)] : value;
 }
 
 export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective = false, percent = false) {
@@ -493,43 +500,6 @@ export function withinViewportOrigin(element: Element) {
         return !(bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
     }
     return false;
-}
-
-export function isElementIncluded(element: Element) {
-    if (element.parentElement instanceof SVGSVGElement) {
-        return false;
-    }
-    else if (hasComputedStyle(element)) {
-        if (hasValue(element.dataset.include)) {
-            return true;
-        }
-        else if (withinViewportOrigin(element)) {
-            return true;
-        }
-        else {
-            let current = element.parentElement;
-            let valid = true;
-            while (current) {
-                if (getStyle(current).display === 'none') {
-                    valid = false;
-                    break;
-                }
-                current = current.parentElement;
-            }
-            if (valid && element.children.length) {
-                return Array.from(element.children).some((item: Element) => {
-                    const style = getStyle(item);
-                    const float = style.cssFloat;
-                    const position = style.position;
-                    return position === 'absolute' || position === 'fixed' || float === 'left' || float === 'right';
-                });
-            }
-        }
-        return false;
-    }
-    else {
-        return isPlainText(element);
-    }
 }
 
 export function setElementCache(element: Element, attr: string, data: any) {

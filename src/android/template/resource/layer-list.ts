@@ -16,7 +16,7 @@ const template = [
 '	</item>',
 '!2',
 '!3',
-'	<item android:drawable="@drawable/{&vector}" />',
+'	<item android:drawable="@drawable/{&vectorName}" />',
 '!3',
 '!4',
 '	<item android:left="{~left}" android:top="{~top}" android:right="{~right}" android:bottom="{~bottom}" android:width="{~width}" android:height="{~height}">',

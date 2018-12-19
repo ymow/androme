@@ -47,7 +47,7 @@ declare global {
             export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
-            export function cssAttribute(element: Element, attr: string): string;
+            export function cssAttribute(element: Element, attr: string, computed?: boolean): string;
             export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective?: boolean, percent?: boolean): RectPosition;
             export function getFirstChildElement(elements: Element[]): Element | null;
             export function getLastChildElement(elements: Element[]): Element | null;
@@ -60,7 +60,6 @@ declare global {
             export function getNextElementSibling(element: Element): Element | null;
             export function hasComputedStyle(element: UndefNull<Element>): element is HTMLElement;
             export function hasVisibleDimensions(element: Element): boolean;
-            export function isElementIncluded(element: Element, hideOffScreen: boolean): boolean;
             export function setElementCache(element: Element, attr: string, data: any): void;
             export function getElementCache(element: Element, attr: string): any;
             export function deleteElementCache(element: Element, ...attrs: string[]): void;
@@ -68,15 +67,13 @@ declare global {
         }
 
         namespace svg {
-            export function getPathPoints(value: string): SvgPathPoint[];
-            export function createColorStop(element: SVGGradientElement): ColorStop[];
-            export function createTransformSingle(element: SVGGraphicsElement): SvgTransformAttributes;
+            export function getTransformData(element: SVGGraphicsElement): SvgTransformData;
+            export function getTransformOrigin(element: SVGGraphicsElement, dpi?: number): Point | undefined;
             export function applyMatrixX(matrix: DOMMatrix, x: number, y: number): number;
             export function applyMatrixY(matrix: DOMMatrix, x: number, y: number): number;
-            export function getTransformOrigin(element: SVGGraphicsElement, dpi?: number): Point | undefined;
             export function getRadiusX(angle: number, radius: number): number;
             export function getRadiusY(angle: number, radius: number): number;
-            export function isSvgVisible(element: SVGGraphicsElement): boolean;
+            export function isVisible(element: SVGGraphicsElement): boolean;
         }
 
         namespace util {

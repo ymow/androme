@@ -10,6 +10,7 @@ import NodeGroup from './base/nodegroup';
 import NodeList from './base/nodelist';
 import Resource from './base/resource';
 import Svg from './base/svg';
+import SvgBuild from './base/svgbuild';
 import SvgElement from './base/svgelement';
 import SvgGroup from './base/svggroup';
 import SvgImage from './base/svgimage';
@@ -248,6 +249,7 @@ const lib = {
         NodeList,
         Resource,
         Svg,
+        SvgBuild,
         SvgElement,
         SvgGroup,
         SvgImage,

@@ -5,7 +5,7 @@ const template = [
 '	<font android:fontStyle="{&style}" android:fontWeight="{&weight}" android:font="{&font}" />',
 '!1',
 '</font-family>',
-'<!-- filename: res/font/{&name}.xml -->',
+'<!-- filename: res/font/{&name}.xml -->'
 ];
 
 export default template.join('\n');
