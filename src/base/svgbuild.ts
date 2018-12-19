@@ -288,6 +288,7 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
             const item = element.children[i];
             if (item instanceof SVGAnimateElement) {
                 const animate = <SvgAnimateTransform> {
+                    element: item,
                     attributeName: '',
                     from: '',
                     to: '',

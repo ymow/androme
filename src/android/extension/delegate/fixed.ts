@@ -59,7 +59,7 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
         const container = new View(
             this.application.nextId,
             $dom.createElement(node.baseElement, node.block),
-            this.application.controllerHandler.delegateNodeInit
+            this.application.controllerHandler.afterInsertNode
         ) as T;
         container.inherit(node, 'initial', 'base');
         container.exclude({

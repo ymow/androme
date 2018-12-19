@@ -106,6 +106,7 @@ export const EXT_NAME = {
 
 export const REGEX_PATTERN = {
     CSS_URL: /url\("?(.*?)"?\)/,
+    LINK_HREF: /url\("?#(.*?)"?\)/,
     URI: /^[A-Za-z]+:\/\//,
     UNIT: /^(?:\s*(-?[\d.]+)(px|em|ch|pc|pt|vw|vh|vmin|vmax|mm|cm|in))+$/
 };

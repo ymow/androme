@@ -19,7 +19,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
             container = new View(
                 this.application.nextId,
                 node.baseElement,
-                this.application.controllerHandler.delegateNodeInit
+                this.application.controllerHandler.afterInsertNode
             ) as T;
             container.inherit(node, 'initial', 'base', 'styleMap');
             container.setControlType(CONTAINER_ANDROID.FRAME);

@@ -1,9 +1,40 @@
+import { REGEX_PATTERN } from '../lib/constant';
+
 import SvgBuild from './svgbuild';
 
 import { parseRGBA } from '../lib/color';
-import { cssAttribute, cssInherit } from '../lib/dom';
+import { cssAttribute } from '../lib/dom';
 import { getTransformOrigin, isVisible } from '../lib/svg';
-import { convertInt, isString } from '../lib/util';
+
+function getColorAttribute(element: SVGGraphicsElement, attr: string, computed = false) {
+    let value = cssAttribute(element, attr, computed);
+    const match = REGEX_PATTERN.LINK_HREF.exec(value);
+    if (match) {
+        value = `@${match[1]}`;
+    }
+    else {
+        switch (value.toLowerCase()) {
+            case 'none':
+            case 'transparent':
+            case 'rgba(0, 0, 0, 0)':
+                value = '';
+                break;
+            case 'currentcolor': {
+                const color = parseRGBA(cssAttribute(element, 'color', true));
+                value = color ? color.valueRGB : '#000000';
+                break;
+            }
+            default: {
+                const color = parseRGBA(value);
+                if (color) {
+                    value = color.valueRGB;
+                }
+                break;
+            }
+        }
+    }
+    return value;
+}
 
 export default class SvgPath implements androme.lib.base.SvgPath {
     public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
@@ -40,10 +71,10 @@ export default class SvgPath implements androme.lib.base.SvgPath {
     public color = '';
     public fillRule = '';
     public fill = '';
-    public fillOpacity = '1';
+    public fillOpacity = '';
     public stroke = '';
     public strokeWidth = '';
-    public strokeOpacity = '1';
+    public strokeOpacity = '';
     public strokeLinecap = '';
     public strokeLinejoin = '';
     public strokeMiterlimit = '';
@@ -128,67 +159,42 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 }
             }
         }
-        const values = {
-            fill: cssAttribute(element, 'fill'),
-            stroke: cssAttribute(element, 'stroke')
-        };
-        const color = parseRGBA(cssAttribute(element, 'color') || cssInherit(element, 'color'));
-        const pattern = /url\("?#(.*?)"?\)/;
-        for (const attr in values) {
-            const match = pattern.exec(values[attr]);
-            if (match) {
-                values[attr] = `@${match[1]}`;
-            }
-            else if (isString(values[attr])) {
-                switch (values[attr].toLowerCase()) {
-                    case 'none':
-                    case 'transparent':
-                        values[attr] = '';
-                        break;
-                    case 'currentcolor':
-                        values[attr] = color ? color.valueRGB : '';
-                        break;
-                    default:
-                        const rgba = parseRGBA(values[attr]);
-                        if (rgba) {
-                            values[attr] = rgba.valueRGB;
-                        }
-                        break;
-                }
-            }
-        }
-        this.fill = values.fill;
-        this.stroke = values.stroke;
-        const href = pattern.exec(cssAttribute(element, 'clip-path'));
+        const href = REGEX_PATTERN.LINK_HREF.exec(cssAttribute(element, 'clip-path'));
         if (href) {
             this.clipPath = href[1];
         }
-        const opacity = parseFloat(cssAttribute(element, 'opacity'));
-        if (!isNaN(opacity) && opacity < 1) {
-            this.opacity = opacity;
+        const opacity = cssAttribute(element, 'opacity');
+        if (opacity) {
+            this.opacity = Math.min(parseFloat(opacity), 1);
         }
-        const fillOpacity = parseFloat(cssAttribute(element, 'fill-opacity'));
-        if (!isNaN(fillOpacity) && fillOpacity <= 1) {
-            this.fillOpacity = (fillOpacity * this.opacity).toString();
+        const lineShape = element.tagName.endsWith('line');
+        if (!lineShape) {
+            this.fill = getColorAttribute(element, 'fill') || '#000000';
+            if (this.fill) {
+                const fillOpacity = cssAttribute(element, 'fill-opacity');
+                if (fillOpacity) {
+                    this.fillOpacity = (parseFloat(fillOpacity) * this.opacity).toString();
+                }
+                else {
+                    this.fillOpacity = this.opacity.toString();
+                }
+                this.fillRule = cssAttribute(element, 'fill-rule', true);
+            }
         }
-        else if (this.fill && this.opacity < 1) {
-            this.fillOpacity = this.opacity.toString();
+        this.stroke = getColorAttribute(element, 'stroke') || (lineShape ? '#000000' : '');
+        if (this.stroke) {
+            const strokeOpacity = cssAttribute(element, 'stroke-opacity');
+            if (strokeOpacity) {
+                this.strokeOpacity = (parseFloat(strokeOpacity) * this.opacity).toString();
+            }
+            else {
+                this.strokeOpacity = this.opacity.toString();
+            }
+            this.strokeWidth = cssAttribute(element, 'stroke-width') || '1';
+            this.strokeLinecap = cssAttribute(element, 'stroke-linecap', true);
+            this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin', true);
+            this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit', true);
         }
-        const strokeOpacity = parseFloat(cssAttribute(element, 'stroke-opacity'));
-        if (!isNaN(strokeOpacity) && strokeOpacity <= 1) {
-            this.strokeOpacity = (strokeOpacity * this.opacity).toString();
-        }
-        else if (this.stroke && this.opacity < 1) {
-            this.strokeOpacity = this.opacity.toString();
-        }
-        if (color) {
-            this.color = color.valueRGB;
-        }
-        this.fillRule = cssAttribute(element, 'fill-rule', true);
-        this.strokeWidth = convertInt(cssAttribute(element, 'stroke-width')).toString();
-        this.strokeLinecap = cssAttribute(element, 'stroke-linecap', true);
-        this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin', true);
-        this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit', true);
         this.clipRule = cssAttribute(element, 'clip-rule', true);
         this.visibility = isVisible(element);
     }

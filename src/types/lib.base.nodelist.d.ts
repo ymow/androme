@@ -1,7 +1,7 @@
 declare global {
     namespace androme.lib.base {
         export interface NodeList<T extends Node> extends Container<T> {
-            delegateAppend?: (node: T) => void;
+            afterAppend?: (node: T) => void;
             readonly visible: T[];
             readonly elements: T[];
             readonly nextId: number;

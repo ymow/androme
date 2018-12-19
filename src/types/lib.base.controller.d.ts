@@ -9,7 +9,7 @@ declare global {
             readonly containerTypeVertical: LayoutType;
             readonly containerTypeVerticalMargin: LayoutType;
             readonly outputIndentPrefix: RegExp;
-            readonly delegateNodeInit: SelfWrapped<T, void>;
+            readonly afterInsertNode: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
             processUnknownParent(layout: Layout<T>): LayoutResult<T>;

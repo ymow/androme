@@ -501,7 +501,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 return documentRoot.querySelectorAll('*');
             }
         })();
-        this.processing.cache.delegateAppend = undefined;
+        this.processing.cache.afterAppend = undefined;
         this.processing.cache.clear();
         this.processing.excluded.clear();
         this.processing.node = null;
@@ -510,7 +510,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         const rootNode = this.insertNode(documentRoot);
         if (rootNode) {
-            rootNode.parent = new this.nodeConstructor(0, documentRoot.parentElement || document.body, this.controllerHandler.delegateNodeInit);
+            rootNode.parent = new this.nodeConstructor(0, documentRoot.parentElement || document.body, this.controllerHandler.afterInsertNode);
             rootNode.documentRoot = true;
             rootNode.documentParent = rootNode.parent;
             this.processing.node = rootNode;
@@ -781,7 +781,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (let i = 0; i < maxDepth; i++) {
             mapY.set((i * -1) - 2, new Map<number, T>());
         }
-        this.processing.cache.delegateAppend = (node: T) => {
+        this.processing.cache.afterAppend = (node: T) => {
             deleteMapY(node.id);
             setMapY((node.depth * -1) - 2, node.id, node);
             node.cascade().forEach((item: T) => {
@@ -1746,7 +1746,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     protected insertNode(element: Element, parent?: T) {
         let node: T | null = null;
         if (hasComputedStyle(element)) {
-            const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
+            const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.afterInsertNode);
             if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && this.conditionElement(element)) {
                 node = nodeConstructor;
                 node.setExclusions();
@@ -1759,7 +1759,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         else if (element.nodeName.charAt(0) === '#' && element.nodeName === '#text') {
             if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.delegateNodeInit);
+                node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.afterInsertNode);
                 if (parent) {
                     node.inherit(parent, 'textStyle');
                 }

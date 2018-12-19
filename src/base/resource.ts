@@ -339,6 +339,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             if (!(node.renderChildren.length ||
                 node.baseElement === undefined ||
                 node.imageElement ||
+                node.svgElement ||
                 node.tagName === 'HR' ||
                 node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))
             {

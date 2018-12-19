@@ -799,7 +799,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             const container = new View(
                                 this.cache.nextId,
                                 $dom.createElement(node.actualParent ? node.actualParent.baseElement : null),
-                                this.delegateNodeInit
+                                this.afterInsertNode
                             ) as T;
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                             container.inherit(node, 'base');
@@ -988,7 +988,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public renderNodeStatic(controlName: string, depth: number, options: ExternalData = {}, width = '', height = '', node?: T, children?: boolean) {
         const renderDepth = Math.max(0, depth);
         if (node === undefined) {
-            node = new View(0, undefined, this.delegateNodeInit) as T;
+            node = new View(0, undefined, this.afterInsertNode) as T;
         }
         else {
             node.renderDepth = renderDepth;
@@ -1203,7 +1203,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public createNodeGroup(node: T, children: T[], parent?: T, replaceWith?: T) {
-        const group = new ViewGroup(this.cache.nextId, node, children, this.delegateNodeInit) as T;
+        const group = new ViewGroup(this.cache.nextId, node, children, this.afterInsertNode) as T;
         group.siblingIndex = node.siblingIndex;
         if (parent) {
             parent.appendTry(replaceWith || node, group);
@@ -1217,7 +1217,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         const container = new View(
             this.application.nextId,
             $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
-            this.application.controllerHandler.delegateNodeInit
+            this.application.controllerHandler.afterInsertNode
         ) as T;
         if (node.documentRoot) {
             container.documentRoot = true;
@@ -1834,7 +1834,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         };
     }
 
-    get delegateNodeInit(): SelfWrapped<T, void> {
+    get afterInsertNode(): SelfWrapped<T, void> {
         const settings = this.userSettings;
         return (self: T) => {
             self.localSettings = {

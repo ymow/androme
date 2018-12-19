@@ -330,7 +330,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         const placeholder = new $View(
             nextId,
             $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
-            this.application.controllerHandler.delegateNodeInit
+            this.application.controllerHandler.afterInsertNode
         );
         placeholder.inherit(node, 'base');
         placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });

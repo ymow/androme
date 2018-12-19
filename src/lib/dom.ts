@@ -21,7 +21,7 @@ export function isUserAgent(value: number) {
 
 export function getDataSet(element: Element, prefix: string) {
     const result: StringMap = {};
-    if (hasComputedStyle(element)) {
+    if (hasComputedStyle(element) || element instanceof SVGElement) {
         prefix = convertCamelCase(prefix, '\\.');
         for (const attr in element.dataset) {
             if (attr.length > prefix.length && attr.startsWith(prefix)) {
@@ -177,7 +177,7 @@ export function cssInherit(element: Element, attr: string, exclude?: string[], t
     let result = '';
     let current = element.parentElement;
     while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
-        result = getStyle(current)[attr] || '';
+        result = getStyle(current)[attr];
         if (result === 'inherit' || exclude && exclude.some(value => result.indexOf(value) !== -1)) {
             result = '';
         }
@@ -186,7 +186,7 @@ export function cssInherit(element: Element, attr: string, exclude?: string[], t
         }
         current = current.parentElement;
     }
-    return result;
+    return result || '';
 }
 
 export function cssParent(element: Element, attr: string, ...styles: string[]) {

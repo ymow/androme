@@ -13,9 +13,22 @@ import $Svg = androme.lib.base.Svg;
 import $SvgBuild = androme.lib.base.SvgBuild;
 
 import $color = androme.lib.color;
+import $dom = androme.lib.dom;
 import $svg = androme.lib.svg;
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
+
+type AnimateGroup = {
+    element: SVGGraphicsElement;
+    animate: SvgAnimate[];
+    pathData?: string;
+};
+
+type AnimateData = {
+    name: string;
+    ordering: string;
+    objectAnimators: ExternalData[]
+};
 
 type PropertyValue = {
     propertyName: string;
@@ -24,13 +37,20 @@ type PropertyValue = {
 
 type KeyFrame = {
     fraction: string;
+    valueType: string;
     value: string;
-    interpolator?: string;
 };
 
-type AnimatePath = {
-    animate: SvgAnimate[];
-    pathData?: string;
+const INTERPOLATOR_ANDROID = {
+    ACCELERATE_DECELERATE: '@android:anim/accelerate_decelerate_interpolator',
+    ACCELERATE:	'@android:anim/accelerate_interpolator',
+    ANTICIPATE:	'@android:anim/anticipate_interpolator',
+    ANTICIPATE_OVERSHOOT: '@android:anim/anticipate_overshoot_interpolator',
+    BOUNCE:	'@android:anim/bounce_interpolator',
+    CYCLE: '@android:anim/cycle_interpolator',
+    DECELERATE:	'@android:anim/decelerate_interpolator',
+    LINEAR: '@android:anim/linear_interpolator',
+    OVERSHOOT: '@android:anim/overshoot_interpolator'
 };
 
 function getSvgOffset(element: SVGGraphicsElement) {
@@ -48,7 +68,10 @@ function getSvgOffset(element: SVGGraphicsElement) {
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
-        vectorColorResourceValue: true
+        vectorColorResourceValue: true,
+        vectorAnimateOrdering: 'together',
+        vectorAnimateInterpolator: INTERPOLATOR_ANDROID.LINEAR,
+        vectorAnimateAlwaysUseKeyframes: false
     };
 
     public readonly eventOnly = true;
@@ -74,7 +97,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                 });
                 let result = '';
                 let vectorName = '';
-                const animateMap = new Map<string, AnimatePath>();
+                const animateMap = new Map<string, AnimateGroup>();
                 const templateName = `${node.tagName.toLowerCase()}_${node.controlId}`;
                 const hasImage = svg.defs.image.some(item => item.viewable);
                 if (svg.length) {
@@ -82,7 +105,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     const groups: StringMap[] = [];
                     const opacity = svg.animate.filter(item => item.attributeName === 'opacity');
                     if (opacity.length) {
-                        animateMap.set(svg.name, { animate: opacity });
+                        animateMap.set(svg.name, {
+                            element: svg.element,
+                            animate: opacity
+                        });
                     }
                     for (const group of svg.children) {
                         const data: ExternalData = {
@@ -125,7 +151,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 data.translateY = y.toString();
                             }
                             if (group.animate.length) {
-                                animateMap.set(group.name, { animate: group.animate });
+                                animateMap.set(group.name, {
+                                    element: group.element,
+                                    animate: group.animate
+                                });
                             }
                         }
                         for (const item of group.children) {
@@ -182,8 +211,9 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 }
                                 if (itemPath.animate.length) {
                                     animateMap.set(itemPath.name, {
-                                        pathData: itemPath.d,
-                                        animate: itemPath.animate
+                                        element: itemPath.element,
+                                        animate: itemPath.animate,
+                                        pathData: itemPath.d
                                     });
                                 }
                                 delete itemPath.animate;
@@ -215,16 +245,21 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             '1': []
                         };
                         for (const [name, group] of animateMap.entries()) {
-                            const animate: ExternalData = {
+                            const animate: AnimateData = {
                                 name,
-                                objectAnimator: []
+                                ordering: $dom.getDataSet(group.element, 'android').ordering || this.options.vectorAnimateOrdering,
+                                objectAnimators: []
                             };
                             const animatorMap = new Map<string, PropertyValue[]>();
                             for (const item of group.animate) {
+                                const dataset = $dom.getDataSet(item.element, 'android');
                                 const options: ExternalData = {
                                     valueType: '',
+                                    valueFrom: '',
+                                    valueTo: '',
                                     duration: (item.duration * 1000 + item.durationMS).toString(),
-                                    repeatCount: item.repeatCount === -1 ? '0' : item.repeatCount.toString(),
+                                    repeatCount: item.repeatCount.toString(),
+                                    interpolator: dataset.interpolator ? INTERPOLATOR_ANDROID[dataset.interpolator] || dataset.interpolator : this.options.vectorAnimateInterpolator,
                                     repeatMode: '',
                                     startOffset: '',
                                     fillAfter: '',
@@ -385,7 +420,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                     }
                                 }
                                 if (propertyName && values) {
-                                    if (node.localSettings.targetAPI >= BUILD_ANDROID.MARSHMALLOW && values.length === item.keyTimes.length && item.keyTimes.length > 0) {
+                                    if (node.localSettings.targetAPI >= BUILD_ANDROID.MARSHMALLOW && item.keyTimes.length > 1 && (this.options.vectorAnimateAlwaysUseKeyframes || item.keyTimes.join('-') !== '0-1')) {
                                         const keyName = JSON.stringify(options);
                                         const propertyValues: PropertyValue[] = animatorMap.get(keyName) || [];
                                         const keyframes: KeyFrame[] = [];
@@ -393,29 +428,29 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                             const value = values[i];
                                             keyframes.push({
                                                 fraction: value !== '' ? item.keyTimes[i].toString() : '',
+                                                valueType: options.valueType,
                                                 value
                                             });
                                         }
-                                        propertyValues.push({
-                                            propertyName,
-                                            keyframes
-                                        });
+                                        propertyValues.push({ propertyName, keyframes });
                                         if (!animatorMap.has(keyName)) {
                                             animatorMap.set(keyName, propertyValues);
                                             options.propertyValues = propertyValues;
-                                            animate['objectAnimator'].push(options);
+                                            animate.objectAnimators.push(options);
                                         }
                                     }
                                     else {
                                         options.propertyName = propertyName;
-                                        options.valueFrom = values[0];
+                                        if (values.length > 1) {
+                                            options.valueFrom = values[0];
+                                        }
                                         options.valueTo = values[values.length - 1];
                                         options.propertyValues = false;
-                                        animate['objectAnimator'].push(options);
+                                        animate.objectAnimators.push(options);
                                     }
                                 }
                             }
-                            if (animate['objectAnimator'].length) {
+                            if (animate.objectAnimators.length) {
                                 data['1'].push(animate);
                             }
                         }

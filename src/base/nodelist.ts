@@ -289,7 +289,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
         return a.siblingIndex >= b.siblingIndex ? 1 : -1;
     }
 
-    public delegateAppend?: (node: T) => void;
+    public afterAppend?: (node: T) => void;
 
     private _currentId = 0;
 
@@ -299,8 +299,8 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public append(node: T, delegate = true) {
         super.append(node);
-        if (delegate && this.delegateAppend) {
-            this.delegateAppend.call(this, node);
+        if (delegate && this.afterAppend) {
+            this.afterAppend.call(this, node);
         }
         return this;
     }
