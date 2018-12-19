@@ -55,6 +55,7 @@ GitHub
     });
 </script>
 ```
+
 Library files are in the /dist folder. A minimum of *two* files are required to run androme.
 
 1. androme
@@ -76,6 +77,7 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
     });
 </script>
 ```
+
 ### ALL: User Settings (example: android)
 
 These settings are available in the global variable "androme" to customize your desired output structure. Each framework shares a common set of settings and also a subset of their own settings.
@@ -129,6 +131,7 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
+
 ### ALL: Extension Standard
 
 CSS Grid and Flexbox layouts are mostly supported. There is also support for SVG and most of the common floating techniques.
@@ -149,30 +152,7 @@ CSS Grid and Flexbox layouts are mostly supported. There is also support for SVG
 
 <img src="demos/android/list.png" alt="extension: list" />
 
-### ANDROID: Extension Widgets
-
-Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
-
-- android.widget.coordinator
-- android.widget.floatingactionbutton
-- android.widget.menu
-- android.widget.bottomnavigation
-- android.widget.toolbar
-- android.widget.drawer
-
-<img src="demos/android/custom.viewpager.tablayout.png" alt="custom: viewpager + tablayout" />
-
-<img src="demos/android/drawer.png" alt="drawer: floating action button" />
-
-<img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
-
-<img src="demos/android/bottomnavigation.png" alt="bottom navigation" />
-
-<img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
-
-<img src="demos/android/menu.png" alt="toolbar: menu" />
-
-### ALL: Extension Configuration (example)
+### ALL: Extension Configuration (example: android)
 
 ```javascript
 <script src="/dist/extensions/android.widget.coordinator.min.js"></script>
@@ -208,6 +188,7 @@ Most of the Android support library extensions can be configured using the same 
     androme.include(sample);
 </script>
 ```
+
 ### ALL: Public Properties and Methods
 
 There is no official documentation as this project is still in early development. The entire source code is available on GitHub if you need further clarification.
@@ -232,6 +213,60 @@ exclude(name: string) // remove an extension by namespace or control
 retrieve(name: string) // retrieve an extension by namespace or control | same: ext(name: string)
 configure(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
 ```
+
+### ALL: Excluding Procedures / Applied Attributes
+
+Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
+
+```xml
+<div data-exclude-section="DOM_TRAVERSE | EXTENSION | RENDER | ALL"
+     data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | LOCALIZATION | ALL"
+     data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | IMAGE_SOURCE | ASSET | ALL">
+</div>
+<div>
+    <span data-exclude-resource="FONT_STYLE">content</span>
+    <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
+</div>
+```
+
+### ALL: Redirecting Output Location
+
+It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
+
+```xml
+<div>
+    <span>Item 1</span>
+    <span data-target="location">Item 2</span>
+<div>
+<ul id="location">
+    <li>Item 3</li>
+    <!-- span -->
+</ul>
+```
+
+```xml
+<LinearLayout>
+    <TextView>Item 1</TextView>
+</LinearLayout>
+<LinearLayout>
+    <TextView>Item 3</TextView>
+    <TextView>Item 2</TextView>
+</LinearLayout>
+```
+
+Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
+
+### ALL: Custom Attributes (example: android)
+
+System or extension generated attributes can be overridden with dataset. They will only be visible on the declared framework.
+
+```xml
+<div
+    data-android-attr-android="layout_width::match_parent;layout_height::match_parent"
+    data-android-attr-app="layout_scrollFlags::scroll|exitUntilCollapsed">
+</div>
+```
+
 ### ANDROID: Public System Methods
 
 You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
@@ -249,6 +284,7 @@ system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
 ```
+
 ```javascript
 <script>
     // targetAPI: 0 - ALL, 26 - OREO
@@ -260,26 +296,65 @@ system.writeResourceStyleXml(saveToDisk: boolean)
     });
 </script>
 ```
-### ALL: Excluding Procedures / Applied Attributes
 
-Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
+### ANDROID: Extension Widgets
+
+Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
+
+- android.widget.coordinator
+- android.widget.floatingactionbutton
+- android.widget.menu
+- android.widget.bottomnavigation
+- android.widget.toolbar
+- android.widget.drawer
+
+<img src="demos/android/custom.viewpager.tablayout.png" alt="custom: viewpager + tablayout" />
+
+<img src="demos/android/drawer.png" alt="drawer: floating action button" />
+
+<img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
+
+<img src="demos/android/bottomnavigation.png" alt="bottom navigation" />
+
+<img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
+
+<img src="demos/android/menu.png" alt="toolbar: menu" />
+
+### ANDROID: Layout Includes / Merge Tag
+
+Some applications can benefit from using includes or merge tags to share common templates. Nested includes are also supported.
 
 ```xml
-<div data-exclude-section="DOM_TRAVERSE | EXTENSION | RENDER | ALL"
-     data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | LOCALIZATION | ALL"
-     data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | IMAGE_SOURCE | ASSET | ALL">
-</div>
 <div>
-    <span data-exclude-resource="FONT_STYLE">content</span>
-    <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
+    <div>Item 1</div>
+    <div data-android-include="filename1" data-android-include-merge="true">Item 2</div>
+    <div>Item 3</div>
+    <div data-android-include-end="true">Item 4</div>
+    <div data-android-include="filename2" data-android-include-end="true">Item 5</div>
 </div>
 ```
+
 ```xml
-<div
-    data-attr-android="layout_width::match_parent;layout_height::match_parent"
-    data-attr-app="layout_scrollFlags::scroll|exitUntilCollapsed">
-</div>
+<LinearLayout>
+    <TextView>Item 1</TextView>
+    <include layout="@layout/filename1" />
+    <include layout="@layout/filename2" />
+</LinearLayout>
+<!-- res/layout/activity_main.xml -->
+
+<merge>
+    <TextView>Item 2</TextView>
+    <TextView>Item 3</TextView>
+    <TextView>Item 4</TextView>
+</merge>
+<!-- res/layout/filename1.xml -->
+
+<TextView>Item 5</TextView>
+<!-- res/layout/filename2.xml -->
 ```
+
+The attributes "android-include" and "android-include-end" can only be applied to elements which share the same parent container. See /demos/gradient.html for usage instructions.
+
 ### SAMPLE: Generated from HTML and CSS
 
 <img src="demos/android/form.png" alt="form" />
@@ -1076,6 +1151,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
     </LinearLayout>
 </LinearLayout>
 ```
+
 ### String Resources
 
 ```xml
@@ -1117,6 +1193,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/strings.xml -->
 ```
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
@@ -1260,6 +1337,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/string_arrays.xml -->
 ```
+
 ### Color Resources
 
 ```xml
@@ -1277,6 +1355,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```
+
 ### Styles and Themes
 
 ```xml
@@ -1359,6 +1438,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```
+
 ### Bundled Fonts
 
 ```xml
@@ -1375,6 +1455,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </font-family>
 <!-- filename: res/font/tahoma.xml -->
 ```
+
 ### Dimension Resources
 
 ```xml
@@ -1424,6 +1505,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/dimens.xml -->
 ```
+
 ### Drawable Resources
 
 ```xml
@@ -1460,63 +1542,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
-### ALL: Redirecting Output Location
-
-It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
-
-```xml
-<div>
-    <span>Item 1</span>
-    <span data-target="location">Item 2</span>
-<div>
-<ul id="location">
-    <li>Item 3</li>
-    <!-- span -->
-</ul>
-```
-```xml
-<LinearLayout>
-    <TextView>Item 1</TextView>
-</LinearLayout>
-<LinearLayout>
-    <TextView>Item 3</TextView>
-    <TextView>Item 2</TextView>
-</LinearLayout>
-```
-Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
-
-### ANDROID: Layout Includes / Merge Tag
-
-Some applications can benefit from using includes or merge tags to share common templates. Nested includes are also supported.
-
-```xml
-<div>
-    <div>Item 1</div>
-    <div data-android-include="filename1" data-android-include-merge="true">Item 2</div>
-    <div>Item 3</div>
-    <div data-android-include-end="true">Item 4</div>
-    <div data-android-include="filename2" data-android-include-end="true">Item 5</div>
-</div>
-```
-```xml
-<LinearLayout>
-    <TextView>Item 1</TextView>
-    <include layout="@layout/filename1" />
-    <include layout="@layout/filename2" />
-</LinearLayout>
-<!-- res/layout/activity_main.xml -->
-
-<merge>
-    <TextView>Item 2</TextView>
-    <TextView>Item 3</TextView>
-    <TextView>Item 4</TextView>
-</merge>
-<!-- res/layout/filename1.xml -->
-
-<TextView>Item 5</TextView>
-<!-- res/layout/filename2.xml -->
-```
-The attributes "android-include" and "android-include-end" can only be applied to elements which share the same parent container. See /demos/gradient.html for usage instructions.
 
 ### User Written HTML
 

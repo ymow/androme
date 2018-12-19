@@ -789,9 +789,12 @@ export default (Base: Constructor<T>) => {
             ['margin', 'padding'].forEach((region, index) => {
                 ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                     const attr = region + direction;
-                    let value = 0;
-                    if (!(attr === 'marginRight' && this.inline && this.bounds.right >= this.documentParent.box.right)) {
-                        value += this._boxReset[attr] === 0 ? this[attr] : 0;
+                    let value: number;
+                    if (this._boxReset[attr] === 1 || attr === 'marginRight' && this.bounds.right >= this.documentParent.box.right && this.inline) {
+                        value = 0;
+                    }
+                    else {
+                        value = this[attr];
                     }
                     value += this._boxAdjustment[attr];
                     boxModel[attr] = value;

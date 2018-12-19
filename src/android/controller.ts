@@ -293,15 +293,18 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 if (node.dir === 'rtl') {
                     node.android(node.length ? 'layoutDirection' : 'textDirection', 'rtl');
                 }
-                for (const name in node.dataset) {
-                    if (/^attr[A-Z]+/.test(name)) {
-                        const obj = $util.capitalize(name.substring(4), false);
-                        (node.dataset[name] as string).split(';').forEach(values => {
-                            const [key, value] = values.split('::');
-                            if ($util.hasValue(key) && $util.hasValue(value)) {
-                                node.attr(obj, key, value);
-                            }
-                        });
+                if (node.baseElement) {
+                    const dataset = $dom.getDataSet(node.baseElement, 'android');
+                    for (const name in dataset) {
+                        if (/^attr[A-Z]/.test(name)) {
+                            const obj = $util.capitalize(name.substring(4), false);
+                            dataset[name].split(';').forEach(values => {
+                                const [key, value] = values.split('::');
+                                if (key && value) {
+                                    node.attr(obj, key, value);
+                                }
+                            });
+                        }
                     }
                 }
                 const indent = $util.repeat(node.renderDepth + 1);
