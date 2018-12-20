@@ -1,23 +1,28 @@
 import { USER_AGENT } from '../lib/enumeration';
 
 import Container from './container';
+
 import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
 import SvgElement from './svgelement';
 import SvgGroup from './svggroup';
+import SvgGroupViewBox from './svggroupviewbox';
 import SvgImage from './svgimage';
 import SvgPath from './svgpath';
+import SvgUse from './svguse';
 
 import { cssAttribute, getElementAsNode, isUserAgent } from '../lib/dom';
-import { applyMatrixX, applyMatrixY, isVisible } from '../lib/svg';
-import { resolvePath } from '../lib/util';
+import { isVisible } from '../lib/svg';
 
 export default class Svg extends Container<SvgGroup> implements androme.lib.base.Svg {
-    public name = '';
+    public name: string;
     public animate: SvgAnimate[];
+    public visible: boolean;
 
-    public readonly defs: SvgDefs<SvgImage, SvgPath> = {
-        image: [],
+    public readonly animatable = true;
+    public readonly transformable = false;
+
+    public readonly defs: SvgDefs = {
         clipPath: new Map<string, SvgPath[]>(),
         gradient: new Map<string, Gradient>()
     };
@@ -32,6 +37,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         super();
         this.name = SvgBuild.setName(element);
         this.animate = SvgElement.toAnimateList(element);
+        this.visible = isVisible(element);
         this.build();
     }
 
@@ -50,11 +56,10 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         this._opacity = !isNaN(value) && value < 1 ? value : 1;
     }
 
-    public build() {
+    private build() {
         const element = this.element;
         const width = element.viewBox.baseVal.width;
         const height = element.viewBox.baseVal.height;
-        this.defs.image = [];
         this.setViewBox(width, height);
         this.setOpacity(cssAttribute(element, 'opacity'));
         this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
@@ -64,19 +69,17 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                 this.setDimensions(node.bounds.width, node.bounds.height);
             }
         }
-        element.querySelectorAll('clipPath, linearGradient, radialGradient, image').forEach((svg: SVGElement) => {
-            switch (svg.tagName) {
-                case 'clipPath': {
-                    if (svg.id) {
+        element.querySelectorAll('clipPath, linearGradient, radialGradient').forEach((svg: SVGElement) => {
+            if (svg.id) {
+                switch (svg.tagName) {
+                    case 'clipPath': {
                         const clipPath = SvgPath.toClipPathList(<SVGClipPathElement> svg);
                         if (clipPath.length) {
                             this.defs.clipPath.set(`${svg.id}`, clipPath);
                         }
+                        break;
                     }
-                    break;
-                }
-                case 'linearGradient': {
-                    if (svg.id) {
+                    case 'linearGradient': {
                         const svgElement = <SVGLinearGradientElement> svg;
                         this.defs.gradient.set(`@${svg.id}`, <LinearGradient> {
                             type: 'linear',
@@ -90,11 +93,9 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                             y2AsString: svgElement.y2.baseVal.valueAsString,
                             colorStop: SvgBuild.createColorStops(svgElement)
                         });
+                        break;
                     }
-                    break;
-                }
-                case 'radialGradient': {
-                    if (svg.id) {
+                    case 'radialGradient': {
                         const svgElement = <SVGRadialGradientElement> svg;
                         this.defs.gradient.set(`@${svg.id}`, <RadialGradient> {
                             type: 'radial',
@@ -110,138 +111,64 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                             fyAsString: svgElement.fy.baseVal.valueAsString,
                             colorStop: SvgBuild.createColorStops(svgElement)
                         });
+                        break;
                     }
-                    break;
-                }
-                case 'image': {
-                    const svgElement = <SVGImageElement> svg;
-                    const image = new SvgImage(svgElement, resolvePath(svgElement.href.baseVal));
-                    const transform = svgElement.transform.baseVal;
-                    let x = svgElement.x.baseVal.value;
-                    let y = svgElement.y.baseVal.value;
-                    if (transform.numberOfItems) {
-                        for (let i = transform.numberOfItems - 1; i >= 0; i--) {
-                            const item = transform.getItem(i);
-                            const matrix = item.matrix;
-                            switch (item.type) {
-                                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                                    x += matrix.e;
-                                    y += matrix.f;
-                                    break;
-                                case SVGTransform.SVG_TRANSFORM_SCALE:
-                                    x *= matrix.a;
-                                    y *= matrix.d;
-                                    image.width *= matrix.a;
-                                    image.height *= matrix.d;
-                                    break;
-                                case SVGTransform.SVG_TRANSFORM_ROTATE:
-                                    x = applyMatrixX(matrix, x, x);
-                                    y = applyMatrixY(matrix, y, y);
-                                    if (matrix.a < 0) {
-                                        x += matrix.a * image.width;
-                                    }
-                                    if (matrix.c < 0) {
-                                        x += matrix.c * image.width;
-                                    }
-                                    if (matrix.b < 0) {
-                                        y += matrix.b * image.height;
-                                    }
-                                    if (matrix.d < 0) {
-                                        y += matrix.d * image.height;
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                    image.x = x;
-                    image.y = y;
-                    if (x > width || y > height) {
-                        image.viewable = false;
-                    }
-                    this.defs.image.push(image);
-                    break;
                 }
             }
         });
-        function createGroup(graphics: SVGGraphicsElement) {
-            const group = new SvgGroup(graphics);
-            if (graphics.tagName === 'svg' && graphics !== element) {
-                const svgSvg = <SVGSVGElement> graphics;
-                group.x = svgSvg.x.baseVal.value;
-                group.y = svgSvg.y.baseVal.value;
-                group.width = svgSvg.width.baseVal.value;
-                group.height = svgSvg.height.baseVal.value;
-            }
-            return group;
-        }
-        [element, ...Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g')].forEach((graphics: SVGGraphicsElement, index) => {
-            let current: SvgGroup | null = null;
-            for (let i = 0; i < graphics.children.length; i++) {
-                const shape = <SVGGraphicsElement> graphics.children[i];
-                let newGroup = false;
-                switch (graphics.children[i].tagName) {
+        [element, ...Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g')].forEach((svg: SVGGraphicsElement, index) => {
+            const group = index > 0 && svg.tagName === 'svg' ? new SvgGroupViewBox(<SVGSVGElement> svg) : new SvgGroup(svg);
+            for (let i = 0; i < svg.children.length; i++) {
+                const item = <SVGGraphicsElement> svg.children[i];
+                let shape: SvgElement | undefined;
+                switch (item.tagName) {
                     case 'path':
                     case 'circle':
                     case 'ellipse':
-                        if (index === 0 && shape.transform.baseVal.numberOfItems) {
-                            current = createGroup(shape);
-                            newGroup = true;
-                        }
                     case 'line':
                     case 'rect':
                     case 'polygon':
                     case 'polyline':
-                        const path = new SvgPath(shape);
-                        if (path.d && path.d !== 'none') {
-                            if (current === null) {
-                                current = createGroup(graphics);
-                                this.append(current);
-                            }
-                            current.append(path);
-                            if (newGroup) {
-                                this.append(current);
-                                current = null;
-                            }
-                        }
+                        shape = new SvgElement(item);
+                        break;
+                    case 'image':
+                        shape = new SvgImage(<SVGImageElement> item);
                         break;
                 }
+                if (shape) {
+                    group.append(shape);
+                }
             }
+            this.append(group);
         });
         element.querySelectorAll('use').forEach((use: SVGUseElement) => {
             if (isVisible(use)) {
                 let parentPath: SvgPath | undefined;
-                this.some(item => {
-                    return item.some(path => {
-                        if (use.href.baseVal === `#${path.name}`) {
-                            parentPath = path;
+                this.some(group => {
+                    return group.some(svg => {
+                        if (svg.path && use.href.baseVal === `#${svg.name}`) {
+                            parentPath = svg.path;
                             return true;
                         }
                         return false;
                     });
                 });
                 if (parentPath) {
-                    const usePath = new SvgPath(use, parentPath.d);
-                    if (usePath) {
-                        let found = false;
-                        if (use.transform.baseVal.numberOfItems === 0 && use.x.baseVal.value === 0 && use.y.baseVal.value === 0 && use.width.baseVal.value === 0 && use.height.baseVal.value === 0) {
-                            this.some(groupItem => {
-                                if (use.parentElement instanceof SVGGraphicsElement && use.parentElement === groupItem.element) {
-                                    groupItem.append(usePath);
-                                    found = true;
-                                    return true;
-                                }
-                                return false;
-                            });
-                        }
-                        if (!found) {
-                            const group = new SvgGroup(use);
-                            group.x = use.x.baseVal.value;
-                            group.y = use.y.baseVal.value;
-                            group.width = use.width.baseVal.value;
-                            group.height = use.height.baseVal.value;
-                            group.append(usePath);
-                            this.append(group);
-                        }
+                    const usePath = new SvgUse(use, parentPath.d);
+                    let found = false;
+                    if (use.transform.baseVal.numberOfItems === 0 && use.x.baseVal.value === 0 && use.y.baseVal.value === 0 && use.width.baseVal.value === 0 && use.height.baseVal.value === 0) {
+                        found = this.some(group => {
+                            if (use.parentElement instanceof SVGGraphicsElement && use.parentElement === group.element) {
+                                group.append(usePath);
+                                return true;
+                            }
+                            return false;
+                        });
+                    }
+                    if (!found) {
+                        const group = new SvgGroupViewBox(use);
+                        group.append(usePath);
+                        this.append(group);
                     }
                 }
             }
@@ -283,5 +210,9 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
 
     get opacity() {
         return this._opacity;
+    }
+
+    get transform() {
+        return this.element.transform;
     }
 }

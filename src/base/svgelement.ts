@@ -1,9 +1,11 @@
-import SvgElement$Base from './svgelement-base';
-
 import SvgAnimate from './svganimate';
 import SvgAnimateTransform from './svganimatetransform';
+import SvgBuild from './svgbuild';
+import SvgPath from './svgpath';
 
-export default abstract class SvgElement extends SvgElement$Base(Object as Constructor<any>) implements androme.lib.base.SvgElement {
+import { isVisible } from '../lib/svg';
+
+export default class SvgElement implements androme.lib.base.SvgElement {
     public static toAnimateList(element: SVGGraphicsElement) {
         const result: SvgAnimate[] = [];
         for (let i = 0; i < element.children.length; i++) {
@@ -16,5 +18,39 @@ export default abstract class SvgElement extends SvgElement$Base(Object as Const
             }
         }
         return result;
+    }
+
+    public path: SvgPath | undefined;
+
+    public readonly name: string;
+    public readonly animate: SvgAnimate[];
+    public readonly visible: boolean;
+
+    constructor(public readonly element: SVGGraphicsElement) {
+        this.name = SvgBuild.setName(element);
+        this.animate = this.animatable ? SvgElement.toAnimateList(element) : [];
+        this.visible = isVisible(element);
+        if (this.drawable) {
+            const path = new SvgPath(element);
+            if (path.d && path.d !== 'none') {
+                this.path = path;
+            }
+        }
+    }
+
+    get transform() {
+        return this.element.transform;
+    }
+
+    get drawable() {
+        return true;
+    }
+
+    get animatable() {
+        return true;
+    }
+
+    get transformable() {
+        return this.element.transform.baseVal.numberOfItems > 0;
     }
 }

@@ -1,7 +1,13 @@
-interface SvgDefs<T, U> {
-    image: T[];
-    clipPath: Map<string, U[]>;
+interface SvgDefs {
+    clipPath: Map<string, androme.lib.base.SvgPath[]>;
     gradient: Map<string, Gradient>;
+}
+
+interface SvgViewBox {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
 interface SvgTransformData {

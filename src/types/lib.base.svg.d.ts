@@ -1,16 +1,20 @@
 declare global {
     namespace androme.lib.base {
         export interface SvgBase {
-            name: string;
-            width?: number;
-            height?: number;
-            animate: SvgAnimate[];
             readonly element: SVGGraphicsElement;
-            build(): void;
+            readonly name: string;
+            readonly visible: boolean;
+            readonly animate: SvgAnimate[];
+            readonly transform: SVGAnimatedTransformList;
         }
 
-        export interface Svg extends Container<SvgGroup>, SvgBase {
-            readonly defs: SvgDefs<SvgImage, SvgPath>;
+        export interface SvgBaseFeature {
+            readonly animatable: boolean;
+            readonly transformable: boolean;
+        }
+
+        export interface Svg extends Container<SvgGroup>, SvgBase, SvgBaseFeature {
+            readonly defs: SvgDefs;
             readonly width: number;
             readonly height: number;
             readonly viewBoxWidth: number;

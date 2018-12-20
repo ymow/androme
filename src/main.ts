@@ -15,8 +15,10 @@ import SvgAnimateTransform from './base/svganimatetransform';
 import SvgBuild from './base/svgbuild';
 import SvgElement from './base/svgelement';
 import SvgGroup from './base/svggroup';
+import SvgGroupViewBox from './base/svggroupviewbox';
 import SvgImage from './base/svgimage';
 import SvgPath from './base/svgpath';
+import SvgUse from './base/svguse';
 
 import Accessibility from './extension/accessibility';
 import CssGrid from './extension/cssgrid';
@@ -256,8 +258,10 @@ const lib = {
         SvgBuild,
         SvgElement,
         SvgGroup,
+        SvgGroupViewBox,
         SvgImage,
-        SvgPath
+        SvgPath,
+        SvgUse
     },
     extensions: {
         Accessibility,

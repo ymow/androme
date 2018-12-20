@@ -193,9 +193,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (this.appName === '' && elements.length === 0) {
             elements.push(document.body);
         }
-        for (const item of elements) {
-            const element = typeof item === 'string' ? document.getElementById(item) : item;
-            if (element && hasComputedStyle(element)) {
+        for (const value of elements) {
+            const element = typeof value === 'string' ? document.getElementById(value) : value;
+            if (hasComputedStyle(element)) {
                 this.parseElements.add(element);
             }
         }
@@ -243,16 +243,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (this.userSettings.preloadImages) {
             Array.from(this.parseElements).forEach(element => {
                 element.querySelectorAll('svg image').forEach((image: SVGImageElement) => {
-                    if (image.href) {
-                        const uri = resolvePath(image.href.baseVal);
-                        if (uri) {
-                            this.session.image.set(uri, {
-                                width: image.width.baseVal.value,
-                                height: image.height.baseVal.value,
-                                uri
-                            });
-                        }
-                    }
+                    const uri = resolvePath(image.href.baseVal);
+                    this.session.image.set(uri, {
+                        width: image.width.baseVal.value,
+                        height: image.height.baseVal.value,
+                        uri
+                    });
                 });
             });
             for (const image of this.session.image.values()) {

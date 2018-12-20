@@ -1,15 +1,13 @@
 import { REGEX_PATTERN } from '../lib/constant';
 
-import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
-import SvgElement from './svgelement';
 
 import { parseRGBA } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
-import { getTransformOrigin, isVisible } from '../lib/svg';
+import { getTransformOrigin } from '../lib/svg';
 
-function getColorAttribute(element: SVGGraphicsElement, attr: string, computed = false) {
-    let value = cssAttribute(element, attr, computed);
+function getColorAttribute(element: SVGGraphicsElement, attr: string) {
+    let value = cssAttribute(element, attr);
     const match = REGEX_PATTERN.LINK_HREF.exec(value);
     if (match) {
         value = `@${match[1]}`;
@@ -27,6 +25,9 @@ function getColorAttribute(element: SVGGraphicsElement, attr: string, computed =
                 break;
             }
             default: {
+                if (value === '' && attr === 'fill' && !(element.parentElement instanceof SVGGElement)) {
+                    value = '#000000';
+                }
                 const color = parseRGBA(value);
                 if (color) {
                     value = color.valueRGB;
@@ -78,11 +79,8 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         return rx > 0 && ry > 0 ? `M${cx - rx},${cy} a${rx},${ry},0,1,0,${rx * 2},0 a${rx},${ry},0,1,0,-${rx * 2},0` : '';
     }
 
-    public name = '';
-    public visibility = true;
-    public animate: SvgAnimate[];
+    public transformed = false;
     public opacity = 1;
-    public d = '';
     public color = '';
     public fillRule = '';
     public fill = '';
@@ -98,17 +96,12 @@ export default class SvgPath implements androme.lib.base.SvgPath {
 
     constructor(
         public readonly element: SVGGraphicsElement,
-        d?: string)
+        public d = '')
     {
-        this.name = SvgBuild.setName(element);
-        if (d) {
-            this.d = d;
-        }
-        this.animate = SvgElement.toAnimateList(element);
         this.build();
     }
 
-    public build() {
+    private build() {
         const element = this.element;
         if (this.d === '') {
             const transform = element.transform.baseVal;
@@ -139,6 +132,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                             { x: x2, y: y2 }
                         ];
                         this.d = SvgPath.getPolyline(SvgBuild.applyTransforms(transform, points, getTransformOrigin(element)));
+                        this.transformed = true;
                     }
                     else {
                         this.d = SvgPath.getLine(x1, y1, x2, y2);
@@ -159,6 +153,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                             { x, y: y + height }
                         ];
                         this.d = SvgPath.getPolygon(SvgBuild.applyTransforms(transform, points, getTransformOrigin(element)));
+                        this.transformed = true;
                     }
                     else {
                         this.d = SvgPath.getRect(width, height, x, y);
@@ -168,7 +163,11 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                 case 'polyline':
                 case 'polygon': {
                     const item = <SVGPolygonElement> element;
-                    const points = SvgBuild.applyTransforms(transform, SvgBuild.toPointList(item.points), getTransformOrigin(element));
+                    let points = SvgBuild.toPointList(item.points);
+                    if (transform.numberOfItems) {
+                        points = SvgBuild.applyTransforms(transform, points, getTransformOrigin(element));
+                        this.transformed = true;
+                    }
                     this.d = element.tagName === 'polygon' ? SvgPath.getPolygon(points) : SvgPath.getPolyline(points);
                     break;
                 }
@@ -177,26 +176,24 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         const href = REGEX_PATTERN.LINK_HREF.exec(cssAttribute(element, 'clip-path'));
         if (href) {
             this.clipPath = href[1];
+            this.clipRule = cssAttribute(element, 'clip-rule', true);
         }
         const opacity = cssAttribute(element, 'opacity');
         if (opacity) {
             this.opacity = Math.min(parseFloat(opacity), 1);
         }
-        const lineShape = element.tagName.endsWith('line');
-        if (!lineShape) {
-            this.fill = getColorAttribute(element, 'fill') || '#000000';
-            if (this.fill) {
-                const fillOpacity = cssAttribute(element, 'fill-opacity');
-                if (fillOpacity) {
-                    this.fillOpacity = (parseFloat(fillOpacity) * this.opacity).toString();
-                }
-                else {
-                    this.fillOpacity = this.opacity.toString();
-                }
-                this.fillRule = cssAttribute(element, 'fill-rule', true);
+        this.fill = getColorAttribute(element, 'fill');
+        if (this.fill) {
+            const fillOpacity = cssAttribute(element, 'fill-opacity');
+            if (fillOpacity) {
+                this.fillOpacity = (parseFloat(fillOpacity) * this.opacity).toString();
             }
+            else {
+                this.fillOpacity = this.opacity.toString();
+            }
+            this.fillRule = cssAttribute(element, 'fill-rule', true);
         }
-        this.stroke = getColorAttribute(element, 'stroke') || (lineShape ? '#000000' : '');
+        this.stroke = getColorAttribute(element, 'stroke');
         if (this.stroke) {
             const strokeOpacity = cssAttribute(element, 'stroke-opacity');
             if (strokeOpacity) {
@@ -210,7 +207,5 @@ export default class SvgPath implements androme.lib.base.SvgPath {
             this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin', true);
             this.strokeMiterlimit = cssAttribute(element, 'stroke-miterlimit', true);
         }
-        this.clipRule = cssAttribute(element, 'clip-rule', true);
-        this.visibility = isVisible(element);
     }
 }

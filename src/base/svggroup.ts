@@ -1,13 +1,32 @@
-import Container$SvgPath from './container-svgpath';
-import SvgElement$Base from './svgelement-base';
-
+import Container from './container';
+import SvgAnimate from './svganimate';
+import SvgBuild from './svgbuild';
 import SvgElement from './svgelement';
 
-export default class SvgGroup extends SvgElement$Base(Container$SvgPath) implements androme.lib.base.SvgGroup {
+import { isVisible } from '../lib/svg';
+
+export default class SvgGroup extends Container<SvgElement> implements androme.lib.base.SvgGroup {
+    public readonly name: string;
+    public readonly animate: SvgAnimate[];
+    public viewable = true;
+    public visible = true;
+
     constructor(public readonly element: SVGGraphicsElement) {
-        super(element);
-        if (element instanceof SVGGElement) {
-            this.animate = SvgElement.toAnimateList(element);
-        }
+        super();
+        this.name = SvgBuild.setName(element);
+        this.animate = this.animatable ? SvgElement.toAnimateList(element) : [];
+        this.visible = isVisible(element);
+    }
+
+    get transform() {
+        return this.element.transform;
+    }
+
+    get animatable() {
+        return this.element instanceof SVGGElement;
+    }
+
+    get transformable() {
+        return this.element instanceof SVGGElement && this.element.transform.baseVal.numberOfItems > 0;
     }
 }
