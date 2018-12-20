@@ -16,6 +16,6 @@ export default class SvgImage extends SvgElement implements androme.lib.base.Svg
         if (uri) {
             this.uri = uri;
         }
-        this.animate = SvgBuild.toAnimateList(element);
+        this.animate = SvgBuild.createAnimations(element);
     }
 }

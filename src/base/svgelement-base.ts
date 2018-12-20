@@ -1,4 +1,5 @@
 import Container from './container';
+import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
 import SvgPath from './svgpath';
 

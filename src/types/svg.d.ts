@@ -56,29 +56,3 @@ interface SvgPathCommand {
     largeArcFlag?: number;
     sweepFlag?: number;
 }
-
-interface SvgAnimate {
-    readonly parentElement: SVGGraphicsElement;
-    readonly element: SVGAnimateElement;
-    attributeName: string;
-    from: string;
-    to: string;
-    by: string;
-    values: string[];
-    pathValues?: string[];
-    keyTimes: number[];
-    duration: number;
-    durationMS: number;
-    repeatCount: number;
-    calcMode: string;
-    additive: boolean;
-    accumulate: boolean;
-    freeze: boolean;
-}
-
-interface SvgAnimateTransform extends SvgAnimate {
-    type?: number;
-    path?: string;
-    keyPoints?: number[];
-    rotate?: string;
-}

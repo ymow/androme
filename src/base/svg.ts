@@ -1,6 +1,7 @@
 import { USER_AGENT } from '../lib/enumeration';
 
 import Container from './container';
+import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
 import SvgGroup from './svggroup';
 import SvgImage from './svgimage';
@@ -29,7 +30,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     constructor(public readonly element: SVGSVGElement) {
         super();
         this.name = SvgBuild.setName(element);
-        this.animate = SvgBuild.toAnimateList(element);
+        this.animate = SvgBuild.createAnimations(element);
         this.build();
     }
 
@@ -86,7 +87,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                             x2AsString: svgElement.x2.baseVal.valueAsString,
                             y1AsString: svgElement.y1.baseVal.valueAsString,
                             y2AsString: svgElement.y2.baseVal.valueAsString,
-                            colorStop: SvgBuild.toColorStopList(svgElement)
+                            colorStop: SvgBuild.createColorStops(svgElement)
                         });
                     }
                     break;
@@ -106,7 +107,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                             fy: svgElement.fy.baseVal.value,
                             fxAsString: svgElement.fx.baseVal.valueAsString,
                             fyAsString: svgElement.fy.baseVal.valueAsString,
-                            colorStop: SvgBuild.toColorStopList(svgElement)
+                            colorStop: SvgBuild.createColorStops(svgElement)
                         });
                     }
                     break;

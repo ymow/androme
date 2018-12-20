@@ -7,7 +7,7 @@ export default class SvgGroup extends SvgElement$Base(Container$SvgPath) impleme
     constructor(public readonly element: SVGGraphicsElement) {
         super(element);
         if (element instanceof SVGGElement) {
-            this.animate = SvgBuild.toAnimateList(element);
+            this.animate = SvgBuild.createAnimations(element);
         }
     }
 }

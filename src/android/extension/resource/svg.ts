@@ -10,6 +10,7 @@ import View from '../../view';
 import { getXmlNs } from '../../lib/util';
 
 import $Svg = androme.lib.base.Svg;
+import $SvgAnimate = androme.lib.base.SvgAnimate;
 import $SvgBuild = androme.lib.base.SvgBuild;
 import $SvgPath = androme.lib.base.SvgPath;
 
@@ -21,7 +22,7 @@ import $xml = androme.lib.xml;
 
 type AnimateGroup = {
     element: SVGGraphicsElement;
-    animate: SvgAnimate[];
+    animate: $SvgAnimate[];
     pathData?: string;
 };
 
@@ -166,58 +167,58 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         clipPath.forEach(path => clipPaths.push({ name: path.name, d: path.d }));
                                     }
                                 }
-                                const itemPath = Object.assign({}, item, { clipPaths });
+                                const itemData = Object.assign({}, item, { clipPaths });
                                 ['fill', 'stroke'].forEach(attr => {
-                                    if ($util.isString(itemPath[attr])) {
-                                        if (itemPath[attr].charAt(0) === '@') {
-                                            const gradient = svg.defs.gradient.get(itemPath[attr]);
+                                    if ($util.isString(itemData[attr])) {
+                                        if (itemData[attr].charAt(0) === '@') {
+                                            const gradient = svg.defs.gradient.get(itemData[attr]);
                                             if (gradient) {
-                                                switch (itemPath.element.tagName) {
+                                                switch (itemData.element.tagName) {
                                                     case 'path':
-                                                        if (!/[zZ]\s*$/.test(itemPath.d)) {
+                                                        if (!/[zZ]\s*$/.test(itemData.d)) {
                                                             break;
                                                         }
                                                     case 'rect':
                                                     case 'polygon':
                                                     case 'circle':
                                                     case 'ellipse':
-                                                        const gradients = Resource.createBackgroundGradient(node, [gradient], itemPath, this.options.vectorColorResourceValue);
-                                                        itemPath[attr] = [{ gradients }];
+                                                        const gradients = Resource.createBackgroundGradient(node, [gradient], itemData, this.options.vectorColorResourceValue);
+                                                        itemData[attr] = [{ gradients }];
                                                         namespace.add('aapt');
                                                         return;
                                                 }
                                             }
                                             else {
-                                                itemPath[attr] = itemPath.color;
+                                                itemData[attr] = itemData.color;
                                             }
                                         }
                                         if (this.options.vectorColorResourceValue) {
-                                            const colorName = Resource.addColor(itemPath[attr]);
+                                            const colorName = Resource.addColor(itemData[attr]);
                                             if (colorName !== '') {
-                                                itemPath[attr] = `@color/${colorName}`;
+                                                itemData[attr] = `@color/${colorName}`;
                                             }
                                         }
                                     }
                                 });
-                                if (itemPath.fillRule) {
-                                    switch (itemPath.fillRule) {
+                                if (itemData.fillRule) {
+                                    switch (itemData.fillRule) {
                                         case 'evenodd':
-                                            itemPath.fillRule = 'evenOdd';
+                                            itemData.fillRule = 'evenOdd';
                                             break;
                                         default:
-                                            itemPath.fillRule = 'nonZero';
+                                            itemData.fillRule = 'nonZero';
                                             break;
                                     }
                                 }
-                                if (itemPath.animate.length) {
-                                    animateGroup.set(itemPath.name, {
-                                        element: itemPath.element,
-                                        animate: itemPath.animate,
-                                        pathData: itemPath.d
+                                if (itemData.animate.length) {
+                                    animateGroup.set(itemData.name, {
+                                        element: itemData.element,
+                                        animate: itemData.animate,
+                                        pathData: itemData.d
                                     });
                                 }
-                                delete itemPath.animate;
-                                data['2'].push(itemPath);
+                                delete itemData.animate;
+                                data['2'].push(itemData);
                             }
                         }
                         if (data['2'].length) {
@@ -253,15 +254,47 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             const animatorMap = new Map<string, PropertyValue[]>();
                             for (const item of group.animate) {
                                 const dataset = $dom.getDataSet(item.element, 'android');
+                                const startOffset = item.begin !== -1 ? item.begin * 1000 + item.beginMS : 0;
+                                const repeatDuration = (item.repeatDuration || 0) + (item.repeatDurationMS || 0);
+                                let duration: number | undefined;
+                                let repeatCount = 0;
+                                if (item.duration !== -1) {
+                                    duration = item.duration * 1000 + item.durationMS;
+                                    if (item.repeatCount !== undefined && item.repeatDuration !== undefined) {
+                                        if (item.repeatCount === -1 && item.repeatDuration === -1) {
+                                            repeatCount = -1;
+                                        }
+                                        else if (item.repeatCount !== -1 && item.repeatDuration !== -1) {
+                                            if (item.repeatCount * duration <= repeatDuration) {
+                                                repeatCount = item.repeatCount;
+                                            }
+                                            else {
+                                                repeatCount = Math.round(repeatDuration / duration);
+                                            }
+                                        }
+                                        else if (item.repeatDuration !== -1) {
+                                            repeatCount = Math.round(repeatDuration / duration);
+                                        }
+                                        else {
+                                            repeatCount = item.repeatCount;
+                                        }
+                                    }
+                                    else if (item.repeatCount !== undefined) {
+                                        repeatCount = item.repeatCount;
+                                    }
+                                    else if (item.repeatDuration !== undefined) {
+                                        repeatCount = Math.round(repeatDuration / duration);
+                                    }
+                                }
+                                else if (item.repeatDuration !== undefined) {
+                                    duration = repeatDuration;
+                                }
                                 const options: ExternalData = {
-                                    valueType: '',
-                                    valueFrom: '',
-                                    valueTo: '',
-                                    duration: (item.duration * 1000 + item.durationMS).toString(),
-                                    repeatCount: item.repeatCount.toString(),
+                                    startOffset: startOffset !== 0 ? startOffset.toString() : '',
+                                    duration: duration !== undefined ? duration.toString() : '',
+                                    repeatCount: repeatCount.toString(),
                                     interpolator: dataset.interpolator ? INTERPOLATOR_ANDROID[dataset.interpolator] || dataset.interpolator : this.options.vectorAnimateInterpolator,
                                     repeatMode: '',
-                                    startOffset: '',
                                     fillAfter: '',
                                     fillBefore: '',
                                     fillEnabled: ''

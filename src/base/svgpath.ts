@@ -1,5 +1,6 @@
 import { REGEX_PATTERN } from '../lib/constant';
 
+import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
 
 import { parseRGBA } from '../lib/color';
@@ -89,7 +90,7 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         if (d) {
             this.d = d;
         }
-        this.animate = SvgBuild.toAnimateList(element);
+        this.animate = SvgBuild.createAnimations(element);
         this.build();
     }
 

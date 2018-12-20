@@ -1,7 +1,7 @@
 import { parseRGBA } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
 import { applyMatrixX, applyMatrixY, getRadiusY } from '../lib/svg';
-import { flatMap, isNumber } from '../lib/util';
+import { flatMap } from '../lib/util';
 
 const NAME_GRAPHICS: ObjectMap<number> = {};
 
@@ -245,7 +245,7 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         return result;
     }
 
-    public static toColorStopList(element: SVGGradientElement) {
+    public static createColorStops(element: SVGGradientElement) {
         const result: ColorStop[] = [];
         for (const stop of Array.from(element.getElementsByTagName('stop'))) {
             const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
@@ -260,173 +260,53 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         return result;
     }
 
-    public static toAnimateList(element: SVGGraphicsElement) {
-        const result: SvgAnimate[] = [];
+    public static createAnimations(element: SVGGraphicsElement) {
+        const result: androme.lib.base.SvgAnimate[] = [];
         for (let i = 0; i < element.children.length; i++) {
             const item = element.children[i];
-            if (item instanceof SVGAnimateElement) {
-                const animate = <SvgAnimateTransform> {
-                    parentElement: element,
-                    element: item,
-                    attributeName: '',
-                    from: '',
-                    to: '',
-                    by: '',
-                    values: [],
-                    keyTimes: [],
-                    duration: 0,
-                    durationMS: 0,
-                    repeatCount: 1,
-                    calcMode: 'linear',
-                    additive: false,
-                    accumulate: false,
-                    freeze: false
-                };
-                const attributeName = item.attributes.getNamedItem('attributeName');
-                if (attributeName) {
-                    animate.attributeName = attributeName.value.trim();
-                }
-                const values = item.attributes.getNamedItem('values');
-                if (values) {
-                    animate.values.push(...flatMap(values.value.split(';'), value => value.trim()));
-                    if (animate.values.length > 1) {
-                        animate.from = animate.values[0];
-                        animate.to = animate.values[animate.values.length - 1];
-                        const keyTimes = item.attributes.getNamedItem('keyTimes');
-                        if (keyTimes) {
-                            const times = this.toFractionList(keyTimes.value);
-                            if (times.length === animate.values.length) {
-                                animate.keyTimes.push(...times);
-                            }
-                        }
-                    }
-                }
-                else {
-                    const to = item.attributes.getNamedItem('to');
-                    if (to) {
-                        const from = item.attributes.getNamedItem('from');
-                        if (from) {
-                            animate.from = from.value.trim();
-                        }
-                        animate.to = to.value.trim();
-                        animate.values.push(animate.from, animate.to);
-                        animate.keyTimes.push(0, 1);
-                        const by = item.attributes.getNamedItem('by');
-                        if (by) {
-                            animate.by = by.value.trim();
-                        }
-                    }
-                }
-                const dur = item.attributes.getNamedItem('dur');
-                if (dur) {
-                    if (/\d+ms$/.test(dur.value)) {
-                        animate.durationMS = parseInt(dur.value);
-                    }
-                    else if (/\d+s$/.test(dur.value)) {
-                        animate.duration = parseInt(dur.value);
-                    }
-                    else if (/\d+min$/.test(dur.value)) {
-                        animate.duration = parseInt(dur.value) * 60;
-                    }
-                    else if (/\d+(.\d+)?h$/.test(dur.value)) {
-                        animate.duration = parseFloat(dur.value) * 60 * 60;
-                    }
-                    else {
-                        const match = /^(?:(\d?\d):)?(?:(\d?\d):)?(\d?\d)\.?(\d?\d?\d)?$/.exec(dur.value);
-                        if (match) {
-                            if (match[1]) {
-                                animate.duration += parseInt(match[1]) * 60 * 60;
-                            }
-                            if (match[2]) {
-                                animate.duration += parseInt(match[2]) * 60;
-                            }
-                            if (match[3]) {
-                                animate.duration += parseInt(match[3]);
-                            }
-                            if (match[4]) {
-                                animate.durationMS = parseInt(match[4]) * (match[4].length < 3 ? Math.pow(10, 3 - match[4].length) : 1);
-                            }
-                        }
-                    }
-                }
-                const repeatCount = item.attributes.getNamedItem('repeatCount');
-                if (repeatCount) {
-                    if (repeatCount.value === 'indefinite') {
-                        animate.repeatCount = -1;
-                    }
-                    else {
-                        const value = parseInt(repeatCount.value);
-                        if (!isNaN(value)) {
-                            animate.repeatCount = value;
-                        }
-                    }
-                }
-                const calcMode = item.attributes.getNamedItem('calcMode');
-                if (calcMode) {
-                    switch (calcMode.value) {
-                        case 'discrete':
-                        case 'linear':
-                        case 'paced':
-                        case 'spline':
-                            animate.calcMode = calcMode.value;
-                            break;
-                    }
-                }
-                const additive = item.attributes.getNamedItem('additive');
-                if (additive) {
-                    animate.additive = additive.value === 'sum';
-                }
-                const accumulate = item.attributes.getNamedItem('accumulate');
-                if (accumulate) {
-                    animate.accumulate = accumulate.value === 'sum';
-                }
-                const fill = item.attributes.getNamedItem('fill');
-                if (fill) {
-                    animate.freeze = fill.value === 'freeze';
-                }
-                if (item instanceof SVGAnimateTransformElement) {
-                    const type = item.attributes.getNamedItem('type');
-                    if (type) {
-                        switch (type.value) {
-                            case 'translate':
-                                animate.type = SVGTransform.SVG_TRANSFORM_TRANSLATE;
-                                break;
-                            case 'scale':
-                                animate.type = SVGTransform.SVG_TRANSFORM_SCALE;
-                                break;
-                            case 'rotate':
-                                animate.type = SVGTransform.SVG_TRANSFORM_ROTATE;
-                                break;
-                            case 'skewX':
-                                animate.type = SVGTransform.SVG_TRANSFORM_SKEWX;
-                                break;
-                            case 'skewY':
-                                animate.type = SVGTransform.SVG_TRANSFORM_SKEWY;
-                                break;
-                        }
-                    }
-                    const path = item.attributes.getNamedItem('path');
-                    if (path) {
-                        animate.path = path.value.trim();
-                    }
-                    const rotate = item.attributes.getNamedItem('rotate');
-                    if (rotate && (rotate.value === 'auto' || rotate.value === 'auto-reverse' || isNumber(rotate.value))) {
-                        animate.rotate = rotate.value.trim();
-                    }
-                    if (animate.keyTimes.length) {
-                        const keyPoints = item.attributes.getNamedItem('keyPoints');
-                        if (keyPoints) {
-                            const points = this.toFractionList(keyPoints.value);
-                            if (points.length === animate.keyTimes.length) {
-                                animate.keyPoints = points;
-                            }
-                        }
-                    }
-                }
-                result.push(animate);
+            if (item instanceof SVGAnimateTransformElement) {
+                result.push(new androme.lib.base.SvgAnimateTransform(item, element));
+            }
+            else if (item instanceof SVGAnimateElement) {
+                result.push(new androme.lib.base.SvgAnimate(item, element));
             }
         }
         return result;
+    }
+
+    public static fromClockTime(value: string): [number, number] {
+        let s = 0;
+        let ms = 0;
+        if (/\d+ms$/.test(value)) {
+            ms = parseInt(value);
+        }
+        else if (/\d+s$/.test(value)) {
+            s = parseInt(value);
+        }
+        else if (/\d+min$/.test(value)) {
+            s = parseInt(value) * 60;
+        }
+        else if (/\d+(.\d+)?h$/.test(value)) {
+            s = parseFloat(value) * 60 * 60;
+        }
+        else {
+            const match = /^(?:(\d?\d):)?(?:(\d?\d):)?(\d?\d)\.?(\d?\d?\d)?$/.exec(value);
+            if (match) {
+                if (match[1]) {
+                    s += parseInt(match[1]) * 60 * 60;
+                }
+                if (match[2]) {
+                    s += parseInt(match[2]) * 60;
+                }
+                if (match[3]) {
+                    s += parseInt(match[3]);
+                }
+                if (match[4]) {
+                    ms = parseInt(match[4]) * (match[4].length < 3 ? Math.pow(10, 3 - match[4].length) : 1);
+                }
+            }
+        }
+        return [s, ms];
     }
 
     public static fromCoordinateList(coordinates: number[]) {
@@ -463,5 +343,4 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         }
         return result;
     }
-
 }
