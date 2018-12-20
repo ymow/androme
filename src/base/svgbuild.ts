@@ -86,7 +86,7 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
             }
             return -1;
         });
-        return result.length > 1 && result.some(percent => percent !== -1) && result[result.length - 1] === 1 ? result : [];
+        return result.length > 1 && result.some(percent => percent !== -1) && result[0] === 0 ? result : [];
     }
 
     public static toClipPathList(element: SVGClipPathElement) {
@@ -102,28 +102,14 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         return result;
     }
 
-    public static fromPathCommandList(commands: SvgPathCommand[]) {
-        let result = '';
-        for (const item of commands) {
-            result += (result !== '' ? ' ' : '') + item.command;
-            switch (item.command.toUpperCase()) {
-                case 'M':
-                case 'L':
-                case 'C':
-                case 'S':
-                case 'Q':
-                case 'T':
-                    result += item.coordinates.join(',');
-                    break;
-                case 'H':
-                    result += item.coordinates[0];
-                    break;
-                case 'V':
-                    result += item.coordinates[1];
-                    break;
-                case 'A':
-                    result += `${item.radiusX},${item.radiusY},${item.xAxisRotation},${item.largeArcFlag},${item.sweepFlag},${item.coordinates.join(',')}`;
-                    break;
+    public static toCoordinateList(value: string) {
+        const result: number[] = [];
+        const pattern = /-?[\d.]+/g;
+        let digit: RegExpExecArray | null;
+        while ((digit = pattern.exec(value)) !== null) {
+            const digitValue = parseFloat(digit[0]);
+            if (!isNaN(digitValue)) {
+                result.push(digitValue);
             }
         }
         return result;
@@ -139,15 +125,7 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
                 break;
             }
             command[2] = (command[2] || '').trim();
-            const coordinates: number[] = [];
-            const patternDigit = /-?[\d.]+/g;
-            let digit: RegExpExecArray | null;
-            while ((digit = patternDigit.exec(command[2])) !== null) {
-                const digitValue = parseFloat(digit[0]);
-                if (!isNaN(digitValue)) {
-                    coordinates.push(digitValue);
-                }
-            }
+            const coordinates = this.toCoordinateList(command[2]);
             const previous = result[result.length - 1] as SvgPathCommand | undefined;
             const previousCommand = previous ? previous.command.toUpperCase() : '';
             const previousPoint = previous ? previous.points[previous.points.length - 1] : undefined;
@@ -288,6 +266,7 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
             const item = element.children[i];
             if (item instanceof SVGAnimateElement) {
                 const animate = <SvgAnimateTransform> {
+                    parentElement: element,
                     element: item,
                     attributeName: '',
                     from: '',
@@ -449,4 +428,40 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         }
         return result;
     }
+
+    public static fromCoordinateList(coordinates: number[]) {
+        const result: Point[] = [];
+        for (let i = 0; i < coordinates.length; i += 2) {
+            result.push({ x: coordinates[i], y: coordinates[i + 1] });
+        }
+        return result.length % 2 === 0 ? result : [];
+    }
+
+    public static fromPathCommandList(commands: SvgPathCommand[]) {
+        let result = '';
+        for (const item of commands) {
+            result += (result !== '' ? ' ' : '') + item.command;
+            switch (item.command.toUpperCase()) {
+                case 'M':
+                case 'L':
+                case 'C':
+                case 'S':
+                case 'Q':
+                case 'T':
+                    result += item.coordinates.join(',');
+                    break;
+                case 'H':
+                    result += item.coordinates[0];
+                    break;
+                case 'V':
+                    result += item.coordinates[1];
+                    break;
+                case 'A':
+                    result += `${item.radiusX},${item.radiusY},${item.xAxisRotation},${item.largeArcFlag},${item.sweepFlag},${item.coordinates.join(',')}`;
+                    break;
+            }
+        }
+        return result;
+    }
+
 }

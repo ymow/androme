@@ -58,6 +58,7 @@ interface SvgPathCommand {
 }
 
 interface SvgAnimate {
+    readonly parentElement: SVGGraphicsElement;
     readonly element: SVGAnimateElement;
     attributeName: string;
     from: string;
