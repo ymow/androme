@@ -1,4 +1,3 @@
-import SvgBuild from './svgbuild';
 import SvgElement from './svgelement';
 
 export default class SvgImage extends SvgElement implements androme.lib.base.SvgImage {
@@ -16,6 +15,6 @@ export default class SvgImage extends SvgElement implements androme.lib.base.Svg
         if (uri) {
             this.uri = uri;
         }
-        this.animate = SvgBuild.createAnimations(element);
+        this.animate = SvgElement.toAnimateList(element);
     }
 }

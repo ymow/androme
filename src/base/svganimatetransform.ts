@@ -1,5 +1,4 @@
 import SvgAnimate from './svganimate';
-import SvgBuild from './svgbuild';
 
 import { isNumber } from '../lib/util';
 
@@ -47,7 +46,7 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
         if (this.keyTimes.length) {
             const keyPoints = element.attributes.getNamedItem('keyPoints');
             if (keyPoints) {
-                const points = SvgBuild.toFractionList(keyPoints.value);
+                const points = SvgAnimateTransform.toFractionList(keyPoints.value);
                 if (points.length === this.keyTimes.length) {
                     this.keyPoints = points;
                 }

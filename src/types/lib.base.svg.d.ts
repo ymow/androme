@@ -29,13 +29,10 @@ declare global {
             public static setName(element: SVGGraphicsElement): string;
             public static applyTransforms(transform: SVGTransformList, points: Point[], origin?: Point): Point[];
             public static toPointList(points: SVGPointList): Point[];
-            public static toFractionList(value: string, delimiter?: string): number[];
             public static toCoordinateList(value: string): number[];
             public static toPathCommandList(value: string): SvgPathCommand[];
-            public static toClipPathList(element: SVGClipPathElement): SvgPath[];
             public static createColorStops(element: SVGGradientElement): ColorStop[];
             public static createAnimations(element: SVGGraphicsElement): SvgAnimate[];
-            public static fromClockTime(value: string): [number, number];
             public static fromCoordinateList(coordinates: number[]): Point[];
             public static fromPathCommandList(commands: SvgPathCommand[]): string;
         }

@@ -8,25 +8,23 @@ declare global {
             to: string;
             by: string;
             values: string[];
-            pathValues?: string[];
             keyTimes: number[];
-            begin: number;
-            beginMS: number;
-            end: number;
-            endMS: number;
-            duration: number;
-            durationMS: number;
-            repeatDuration: number | undefined;
-            repeatDurationMS: number | undefined;
+            repeatDur: number | undefined;
             repeatCount: number | undefined;
             calcMode: string;
             additive: boolean;
             accumulate: boolean;
             freeze: boolean;
+            readonly duration: number;
+            readonly begin: number;
+            readonly end: number;
+            readonly repeatDuration: number;
             build(): void;
         }
 
         export class SvgAnimate implements SvgAnimate {
+            public static toFractionList(value: string, delimiter?: string): number[];
+            public static convertClockTime(value: string): [number, number];
             constructor(element: SVGAnimateElement, parentElement: SVGGraphicsElement);
         }
 

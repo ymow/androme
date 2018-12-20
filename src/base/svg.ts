@@ -3,6 +3,7 @@ import { USER_AGENT } from '../lib/enumeration';
 import Container from './container';
 import SvgAnimate from './svganimate';
 import SvgBuild from './svgbuild';
+import SvgElement from './svgelement';
 import SvgGroup from './svggroup';
 import SvgImage from './svgimage';
 import SvgPath from './svgpath';
@@ -30,7 +31,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     constructor(public readonly element: SVGSVGElement) {
         super();
         this.name = SvgBuild.setName(element);
-        this.animate = SvgBuild.createAnimations(element);
+        this.animate = SvgElement.toAnimateList(element);
         this.build();
     }
 
@@ -67,7 +68,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             switch (svg.tagName) {
                 case 'clipPath': {
                     if (svg.id) {
-                        const clipPath = SvgBuild.toClipPathList(<SVGClipPathElement> svg);
+                        const clipPath = SvgPath.toClipPathList(<SVGClipPathElement> svg);
                         if (clipPath.length) {
                             this.defs.clipPath.set(`${svg.id}`, clipPath);
                         }

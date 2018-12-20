@@ -254,26 +254,25 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             const animatorMap = new Map<string, PropertyValue[]>();
                             for (const item of group.animate) {
                                 const dataset = $dom.getDataSet(item.element, 'android');
-                                const startOffset = item.begin !== -1 ? item.begin * 1000 + item.beginMS : 0;
-                                const repeatDuration = (item.repeatDuration || 0) + (item.repeatDurationMS || 0);
+                                const startOffset = item.begin !== -1 ? item.begin : 0;
                                 let duration: number | undefined;
                                 let repeatCount = 0;
                                 if (item.duration !== -1) {
-                                    duration = item.duration * 1000 + item.durationMS;
+                                    duration = item.duration;
                                     if (item.repeatCount !== undefined && item.repeatDuration !== undefined) {
                                         if (item.repeatCount === -1 && item.repeatDuration === -1) {
                                             repeatCount = -1;
                                         }
                                         else if (item.repeatCount !== -1 && item.repeatDuration !== -1) {
-                                            if (item.repeatCount * duration <= repeatDuration) {
+                                            if (item.repeatCount * duration <= item.repeatDuration) {
                                                 repeatCount = item.repeatCount;
                                             }
                                             else {
-                                                repeatCount = Math.round(repeatDuration / duration);
+                                                repeatCount = Math.round(item.repeatDuration / duration);
                                             }
                                         }
                                         else if (item.repeatDuration !== -1) {
-                                            repeatCount = Math.round(repeatDuration / duration);
+                                            repeatCount = Math.round(item.repeatDuration / duration);
                                         }
                                         else {
                                             repeatCount = item.repeatCount;
@@ -283,11 +282,11 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         repeatCount = item.repeatCount;
                                     }
                                     else if (item.repeatDuration !== undefined) {
-                                        repeatCount = Math.round(repeatDuration / duration);
+                                        repeatCount = Math.round(item.repeatDuration / duration);
                                     }
                                 }
                                 else if (item.repeatDuration !== undefined) {
-                                    duration = repeatDuration;
+                                    duration = item.repeatDuration;
                                 }
                                 const options: ExternalData = {
                                     startOffset: startOffset !== 0 ? startOffset.toString() : '',

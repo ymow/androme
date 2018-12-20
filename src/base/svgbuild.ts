@@ -1,7 +1,6 @@
 import { parseRGBA } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
 import { applyMatrixX, applyMatrixY, getRadiusY } from '../lib/svg';
-import { flatMap } from '../lib/util';
 
 const NAME_GRAPHICS: ObjectMap<number> = {};
 
@@ -72,32 +71,6 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         for (let j = 0; j < points.numberOfItems; j++) {
             const pt = points.getItem(j);
             result.push({ x: pt.x, y: pt.y });
-        }
-        return result;
-    }
-
-    public static toFractionList(value: string, delimiter = ';') {
-        let previousFraction = -1;
-        const result = flatMap(value.split(delimiter), segment => {
-            const fraction = parseFloat(segment);
-            if (!isNaN(fraction) && fraction <= 1 && (previousFraction === -1 || fraction > previousFraction)) {
-                previousFraction = fraction;
-                return fraction;
-            }
-            return -1;
-        });
-        return result.length > 1 && result.some(percent => percent !== -1) && result[0] === 0 ? result : [];
-    }
-
-    public static toClipPathList(element: SVGClipPathElement) {
-        const result: androme.lib.base.SvgPath[] = [];
-        for (const item of Array.from(element.children)) {
-            if (item instanceof SVGGraphicsElement) {
-                const path = new androme.lib.base.SvgPath(item);
-                if (path.d !== '') {
-                    result.push(path);
-                }
-            }
         }
         return result;
     }
@@ -258,55 +231,6 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
             }
         }
         return result;
-    }
-
-    public static createAnimations(element: SVGGraphicsElement) {
-        const result: androme.lib.base.SvgAnimate[] = [];
-        for (let i = 0; i < element.children.length; i++) {
-            const item = element.children[i];
-            if (item instanceof SVGAnimateTransformElement) {
-                result.push(new androme.lib.base.SvgAnimateTransform(item, element));
-            }
-            else if (item instanceof SVGAnimateElement) {
-                result.push(new androme.lib.base.SvgAnimate(item, element));
-            }
-        }
-        return result;
-    }
-
-    public static fromClockTime(value: string): [number, number] {
-        let s = 0;
-        let ms = 0;
-        if (/\d+ms$/.test(value)) {
-            ms = parseInt(value);
-        }
-        else if (/\d+s$/.test(value)) {
-            s = parseInt(value);
-        }
-        else if (/\d+min$/.test(value)) {
-            s = parseInt(value) * 60;
-        }
-        else if (/\d+(.\d+)?h$/.test(value)) {
-            s = parseFloat(value) * 60 * 60;
-        }
-        else {
-            const match = /^(?:(\d?\d):)?(?:(\d?\d):)?(\d?\d)\.?(\d?\d?\d)?$/.exec(value);
-            if (match) {
-                if (match[1]) {
-                    s += parseInt(match[1]) * 60 * 60;
-                }
-                if (match[2]) {
-                    s += parseInt(match[2]) * 60;
-                }
-                if (match[3]) {
-                    s += parseInt(match[3]);
-                }
-                if (match[4]) {
-                    ms = parseInt(match[4]) * (match[4].length < 3 ? Math.pow(10, 3 - match[4].length) : 1);
-                }
-            }
-        }
-        return [s, ms];
     }
 
     public static fromCoordinateList(coordinates: number[]) {
