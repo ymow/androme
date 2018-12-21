@@ -6,39 +6,6 @@ import { parseRGBA } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
 import { getTransformOrigin } from '../lib/svg';
 
-function getColorAttribute(element: SVGGraphicsElement, attr: string) {
-    let value = cssAttribute(element, attr);
-    const match = REGEX_PATTERN.LINK_HREF.exec(value);
-    if (match) {
-        value = `@${match[1]}`;
-    }
-    else {
-        switch (value.toLowerCase()) {
-            case 'none':
-            case 'transparent':
-            case 'rgba(0, 0, 0, 0)':
-                value = '';
-                break;
-            case 'currentcolor': {
-                const color = parseRGBA(cssAttribute(element, 'color', true));
-                value = color ? color.valueRGB : '#000000';
-                break;
-            }
-            default: {
-                if (value === '' && attr === 'fill' && !(element.parentElement instanceof SVGGElement)) {
-                    value = '#000000';
-                }
-                const color = parseRGBA(value);
-                if (color) {
-                    value = color.valueRGB;
-                }
-                break;
-            }
-        }
-    }
-    return value;
-}
-
 export default class SvgPath implements androme.lib.base.SvgPath {
     public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
         return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
@@ -86,6 +53,46 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         public d = '')
     {
         this.init();
+    }
+
+    public setColor(attr: string) {
+        let value = cssAttribute(this.element, attr);
+        const match = REGEX_PATTERN.LINK_HREF.exec(value);
+        if (match) {
+            value = `@${match[1]}`;
+        }
+        else if (value !== '') {
+            switch (value.toLowerCase()) {
+                case 'none':
+                case 'transparent':
+                case 'rgba(0, 0, 0, 0)':
+                    value = '';
+                    break;
+                case 'currentcolor': {
+                    const color = parseRGBA(cssAttribute(this.element, 'color', true));
+                    value = color ? color.valueRGB : '#000000';
+                    break;
+                }
+                default: {
+                    const color = parseRGBA(value);
+                    if (color) {
+                        value = color.valueRGB;
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            if (attr === 'fill' && !(this.element.parentElement instanceof SVGGElement)) {
+                value = '#000000';
+            }
+        }
+        this[attr] = value;
+    }
+
+    public setOpacity(attr: string) {
+        const opacity = cssAttribute(this.element, `${attr}-opacity`);
+        this[`${attr}Opacity`] = opacity ? (parseFloat(opacity) * this.opacity).toString() : this.opacity.toString();
     }
 
     private init() {
@@ -169,26 +176,14 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         if (opacity) {
             this.opacity = Math.min(parseFloat(opacity), 1);
         }
-        this.fill = getColorAttribute(element, 'fill');
+        this.setColor('fill');
         if (this.fill) {
-            const fillOpacity = cssAttribute(element, 'fill-opacity');
-            if (fillOpacity) {
-                this.fillOpacity = (parseFloat(fillOpacity) * this.opacity).toString();
-            }
-            else {
-                this.fillOpacity = this.opacity.toString();
-            }
+            this.setOpacity('fill');
             this.fillRule = cssAttribute(element, 'fill-rule', true);
         }
-        this.stroke = getColorAttribute(element, 'stroke');
+        this.setColor('stroke');
         if (this.stroke) {
-            const strokeOpacity = cssAttribute(element, 'stroke-opacity');
-            if (strokeOpacity) {
-                this.strokeOpacity = (parseFloat(strokeOpacity) * this.opacity).toString();
-            }
-            else {
-                this.strokeOpacity = this.opacity.toString();
-            }
+            this.setOpacity('stroke');
             this.strokeWidth = cssAttribute(element, 'stroke-width') || '1';
             this.strokeLinecap = cssAttribute(element, 'stroke-linecap', true);
             this.strokeLinejoin = cssAttribute(element, 'stroke-linejoin', true);

@@ -1,34 +1,43 @@
 declare global {
     namespace androme.lib.base {
-        interface SvgAnimate {
-            readonly element: SVGAnimateElement;
+        interface SvgAnimation {
+            readonly element: SVGAnimationElement;
             readonly parentElement: SVGGraphicsElement;
             attributeName: string;
-            from: string;
+            attributeType: string;
             to: string;
+            readonly duration: number;
+            readonly begin: number;
+        }
+
+        export class SvgAnimation implements SvgAnimation {
+            public static convertClockTime(value: string): [number, number];
+            constructor(element: SVGAnimationElement, parentElement: SVGGraphicsElement);
+        }
+
+        interface SvgAnimate extends SvgAnimation {
+            readonly element: SVGAnimateElement;
+            from: string;
             by: string;
             values: string[];
             keyTimes: number[];
+            calcMode: string;
+            additive: boolean;
+            accumulate: boolean;
+            freeze: boolean;
             repeatDur: number | undefined;
             repeatCount: number | undefined;
-            calcMode: string;
-            readonly duration: number;
-            readonly begin: number;
             readonly end: number;
             readonly repeatDuration: number;
         }
 
         export class SvgAnimate implements SvgAnimate {
             public static toFractionList(value: string, delimiter?: string): number[];
-            public static convertClockTime(value: string): [number, number];
             constructor(element: SVGAnimateElement, parentElement: SVGGraphicsElement);
         }
 
         interface SvgAnimateTransform extends SvgAnimate {
             type: number;
-            additive: boolean;
-            accumulate: boolean;
-            freeze: boolean;
         }
 
         export class SvgAnimateTransform implements SvgAnimateTransform {

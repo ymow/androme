@@ -17,6 +17,8 @@ declare global {
             strokeMiterlimit: string;
             clipPath: string;
             clipRule: string;
+            setColor(attr: string): void;
+            setOpacity(attr: string): void;
         }
 
         export class SvgPath implements SvgPath {

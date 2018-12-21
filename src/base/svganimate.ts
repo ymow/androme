@@ -1,6 +1,8 @@
+import SvgAnimation from './svganimation';
+
 import { flatMap } from '../lib/util';
 
-export default class SvgAnimate implements androme.lib.base.SvgAnimate {
+export default class SvgAnimate extends SvgAnimation implements androme.lib.base.SvgAnimate {
     public static toFractionList(value: string, delimiter = ';') {
         let previousFraction = -1;
         const result = flatMap(value.split(delimiter), segment => {
@@ -14,74 +16,33 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
         return result.length > 1 && result.some(percent => percent !== -1) && result[0] === 0 ? result : [];
     }
 
-    public static convertClockTime(value: string): [number, number] {
-        let s = 0;
-        let ms = 0;
-        if (/\d+ms$/.test(value)) {
-            ms = parseInt(value);
-        }
-        else if (/\d+s$/.test(value)) {
-            s = parseInt(value);
-        }
-        else if (/\d+min$/.test(value)) {
-            s = parseInt(value) * 60;
-        }
-        else if (/\d+(.\d+)?h$/.test(value)) {
-            s = parseFloat(value) * 60 * 60;
-        }
-        else {
-            const match = /^(?:(\d?\d):)?(?:(\d?\d):)?(\d?\d)\.?(\d?\d?\d)?$/.exec(value);
-            if (match) {
-                if (match[1]) {
-                    s += parseInt(match[1]) * 60 * 60;
-                }
-                if (match[2]) {
-                    s += parseInt(match[2]) * 60;
-                }
-                if (match[3]) {
-                    s += parseInt(match[3]);
-                }
-                if (match[4]) {
-                    ms = parseInt(match[4]) * (match[4].length < 3 ? Math.pow(10, 3 - match[4].length) : 1);
-                }
-            }
-        }
-        return [s, ms];
-    }
-
-    public attributeName = '';
     public from = '';
-    public to = '';
     public by = '';
     public values: string[] = [];
     public keyTimes: number[] = [];
-    public repeatDur: number | undefined;
-    public repeatCount: number | undefined;
     public calcMode = '';
     public additive = false;
     public accumulate = false;
     public freeze = false;
+    public repeatDur: number | undefined;
+    public repeatCount: number | undefined;
 
-    private _begin = 0;
-    private _beginMS = 0;
     private _end = 0;
     private _endMS = 0;
-    private _duration = 0;
-    private _durationMS = 0;
     private _repeatDurationMS = 0;
 
     constructor(
         public element: SVGAnimateElement,
         public parentElement: SVGGraphicsElement)
     {
-        this.init();
-    }
-
-    private init() {
-        const element = this.element;
+        super(element, parentElement);
         const attributeName = element.attributes.getNamedItem('attributeName');
         if (attributeName) {
             this.attributeName = attributeName.value.trim();
+        }
+        const attributeType = element.attributes.getNamedItem('attributeType');
+        if (attributeType) {
+            this.attributeType = attributeType.value.trim();
         }
         const values = element.attributes.getNamedItem('values');
         if (values) {
@@ -99,13 +60,7 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
             }
         }
         else {
-            const to = element.attributes.getNamedItem('to');
-            if (to) {
-                const from = element.attributes.getNamedItem('from');
-                if (from) {
-                    this.from = from.value.trim();
-                }
-                this.to = to.value.trim();
+            if (this.to) {
                 this.values.push(this.from, this.to);
                 this.keyTimes.push(0, 1);
                 const by = element.attributes.getNamedItem('by');
@@ -114,33 +69,15 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
                 }
             }
         }
-        const begin = element.attributes.getNamedItem('begin');
         const end = element.attributes.getNamedItem('end');
-        const dur = element.attributes.getNamedItem('dur');
         const repeatDur = element.attributes.getNamedItem('repeatDur');
         const repeatCount = element.attributes.getNamedItem('repeatCount');
-        if (begin) {
-            if (begin.value === 'indefinite') {
-                this._begin = -1;
-            }
-            else {
-                [this._begin, this._beginMS] = SvgAnimate.convertClockTime(begin.value);
-            }
-        }
         if (end) {
             if (end.value === 'indefinite') {
                 this._end = -1;
             }
             else {
                 [this._end, this._endMS] = SvgAnimate.convertClockTime(end.value);
-            }
-        }
-        if (dur) {
-            if (dur.value === 'indefinite') {
-                this._duration = -1;
-            }
-            else {
-                [this._duration, this._durationMS] = SvgAnimate.convertClockTime(dur.value);
             }
         }
         if (repeatDur) {
@@ -173,14 +110,18 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
                     break;
             }
         }
-    }
-
-    get duration() {
-        return this._duration !== -1 ? this._duration * 1000 + this._durationMS : this._duration;
-    }
-
-    get begin() {
-        return this._begin !== -1 ? this._begin * 1000 + this._beginMS : this._begin;
+        const additive = element.attributes.getNamedItem('additive');
+        if (additive) {
+            this.additive = additive.value === 'sum';
+        }
+        const accumulate = element.attributes.getNamedItem('accumulate');
+        if (accumulate) {
+            this.accumulate = accumulate.value === 'sum';
+        }
+        const fill = element.attributes.getNamedItem('fill');
+        if (fill) {
+            this.freeze = fill.value === 'freeze';
+        }
     }
 
     get end() {

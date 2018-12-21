@@ -54,9 +54,6 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
     }
 
     public type = 0;
-    public path = '';
-    public keyPoints: number[] = [];
-    public rotate = '';
 
     constructor(element: SVGAnimateTransformElement, parentElement: SVGGraphicsElement) {
         super(element, parentElement);
@@ -79,18 +76,6 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
                     this.type = SVGTransform.SVG_TRANSFORM_SKEWY;
                     break;
             }
-        }
-        const additive = element.attributes.getNamedItem('additive');
-        if (additive) {
-            this.additive = additive.value === 'sum';
-        }
-        const accumulate = element.attributes.getNamedItem('accumulate');
-        if (accumulate) {
-            this.accumulate = accumulate.value === 'sum';
-        }
-        const fill = element.attributes.getNamedItem('fill');
-        if (fill) {
-            this.freeze = fill.value === 'freeze';
         }
     }
 }

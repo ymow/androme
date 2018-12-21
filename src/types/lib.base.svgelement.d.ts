@@ -6,7 +6,7 @@ declare global {
         }
 
         export class SvgElement implements SvgElement {
-            public static toAnimateList(element: SVGGraphicsElement): SvgAnimate[];
+            public static toAnimateList(element: SVGGraphicsElement): SvgAnimation[];
             constructor(element: SVGGraphicsElement);
         }
 

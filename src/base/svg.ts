@@ -2,7 +2,7 @@ import { USER_AGENT } from '../lib/enumeration';
 
 import Container from './container';
 
-import SvgAnimate from './svganimate';
+import SvgAnimation from './svganimation';
 import SvgBuild from './svgbuild';
 import SvgElement from './svgelement';
 import SvgGroup from './svggroup';
@@ -15,7 +15,7 @@ import { isSvgImage, isSvgShape, isVisible } from '../lib/svg';
 
 export default class Svg extends Container<SvgGroup> implements androme.lib.base.Svg {
     public name: string;
-    public animate: SvgAnimate[];
+    public animate: SvgAnimation[];
     public visible: boolean;
 
     public readonly animatable = true;
@@ -57,9 +57,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
 
     private init() {
         const element = this.element;
-        const width = element.viewBox.baseVal.width;
-        const height = element.viewBox.baseVal.height;
-        this.setViewBox(width, height);
+        this.setViewBox(element.viewBox.baseVal.width, element.viewBox.baseVal.height);
         this.setOpacity(cssAttribute(element, 'opacity'));
         this.setDimensions(element.width.baseVal.value, element.height.baseVal.value);
         if (isUserAgent(USER_AGENT.FIREFOX)) {
@@ -117,7 +115,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             }
         });
         const useMap = new Map<string, string>();
-        let mainGroup: SvgGroup | undefined;
+        let currentGroup: SvgGroup | undefined;
         function appendShape(item: Element) {
             let shape: SvgElement | undefined;
             if (isSvgShape(item)) {
@@ -129,28 +127,28 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             else if (isSvgImage(item)) {
                 shape = new SvgImage(item);
             }
-            if (mainGroup && shape) {
-                mainGroup.append(shape);
+            if (currentGroup && shape) {
+                currentGroup.append(shape);
             }
         }
         for (let i = 0; i < element.children.length; i++) {
             const item = element.children[i];
             if (item instanceof SVGSVGElement) {
-                mainGroup = new SvgGroupViewBox(item);
-                this.append(mainGroup);
+                currentGroup = new SvgGroupViewBox(item);
+                this.append(currentGroup);
             }
             else if (item instanceof SVGGElement) {
-                mainGroup = new SvgGroup(item);
-                this.append(mainGroup);
+                currentGroup = new SvgGroup(item);
+                this.append(currentGroup);
             }
             else if (item instanceof SVGUseElement) {
-                mainGroup = new SvgUse(item);
-                this.append(mainGroup);
+                currentGroup = new SvgUse(item);
+                this.append(currentGroup);
             }
             else {
-                if (mainGroup === undefined) {
-                    mainGroup = new SvgGroup(element);
-                    this.append(mainGroup);
+                if (currentGroup === undefined) {
+                    currentGroup = new SvgGroup(element);
+                    this.append(currentGroup);
                 }
                 appendShape(item);
                 continue;
@@ -158,7 +156,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             for (let j = 0; j < item.children.length; j++) {
                 appendShape(item.children[j]);
             }
-            mainGroup = undefined;
+            currentGroup = undefined;
         }
         this.each(item => {
             if (item instanceof SvgUse) {

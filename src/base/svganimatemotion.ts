@@ -3,7 +3,6 @@ import SvgAnimate from './svganimate';
 import { convertInt } from '../lib/util';
 
 export default class SvgAnimateMotion extends SvgAnimate implements androme.lib.base.SvgAnimateMotion {
-    public type = 0;
     public path = '';
     public keyPoints: number[] = [];
     public rotate = 0;

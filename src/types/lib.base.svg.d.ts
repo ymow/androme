@@ -4,7 +4,7 @@ declare global {
             readonly element: SVGGraphicsElement;
             readonly name: string;
             readonly visible: boolean;
-            readonly animate: SvgAnimate[];
+            readonly animate: SvgAnimation[];
             readonly transform: SVGTransformList;
         }
 
@@ -36,7 +36,7 @@ declare global {
             public static toCoordinateList(value: string): number[];
             public static toPathCommandList(value: string): SvgPathCommand[];
             public static createColorStops(element: SVGGradientElement): ColorStop[];
-            public static createAnimations(element: SVGGraphicsElement): SvgAnimate[];
+            public static createAnimations(element: SVGGraphicsElement): SvgAnimation[];
             public static fromCoordinateList(values: number[]): Point[];
             public static fromPathCommandList(commands: SvgPathCommand[]): string;
         }

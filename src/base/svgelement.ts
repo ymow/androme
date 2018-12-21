@@ -1,5 +1,7 @@
 import SvgAnimate from './svganimate';
+import SvgAnimateMotion from './svganimatemotion';
 import SvgAnimateTransform from './svganimatetransform';
+import SvgAnimation from './svganimation';
 import SvgBuild from './svgbuild';
 import SvgPath from './svgpath';
 
@@ -7,14 +9,20 @@ import { isVisible } from '../lib/svg';
 
 export default class SvgElement implements androme.lib.base.SvgElement {
     public static toAnimateList(element: SVGGraphicsElement) {
-        const result: SvgAnimate[] = [];
+        const result: SvgAnimation[] = [];
         for (let i = 0; i < element.children.length; i++) {
             const item = element.children[i];
             if (item instanceof SVGAnimateTransformElement) {
                 result.push(new SvgAnimateTransform(item, element));
             }
+            else if (item instanceof SVGAnimateMotionElement) {
+                result.push(new SvgAnimateMotion(item, element));
+            }
             else if (item instanceof SVGAnimateElement) {
                 result.push(new SvgAnimate(item, element));
+            }
+            else if (item instanceof SVGAnimationElement) {
+                result.push(new SvgAnimation(item, element));
             }
         }
         return result;
@@ -23,7 +31,7 @@ export default class SvgElement implements androme.lib.base.SvgElement {
     public path: SvgPath | undefined;
 
     public readonly name: string;
-    public readonly animate: SvgAnimate[];
+    public readonly animate: SvgAnimation[];
     public readonly visible: boolean;
 
     constructor(public readonly element: SVGGraphicsElement) {

@@ -1,5 +1,5 @@
 import Container from './container';
-import SvgAnimate from './svganimate';
+import SvgAnimation from './svganimation';
 import SvgBuild from './svgbuild';
 import SvgElement from './svgelement';
 
@@ -7,7 +7,7 @@ import { isVisible } from '../lib/svg';
 
 export default class SvgGroup extends Container<SvgElement> implements androme.lib.base.SvgGroup {
     public readonly name: string;
-    public readonly animate: SvgAnimate[];
+    public readonly animate: SvgAnimation[];
     public visible = true;
 
     constructor(public readonly element: SVGGraphicsElement) {
@@ -26,6 +26,6 @@ export default class SvgGroup extends Container<SvgElement> implements androme.l
     }
 
     get transformable() {
-        return this.element instanceof SVGGElement && this.transform.numberOfItems > 0;
+        return this.element instanceof SVGGElement && this.element.transform.baseVal.numberOfItems > 0;
     }
 }

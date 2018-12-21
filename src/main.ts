@@ -13,6 +13,7 @@ import Svg from './base/svg';
 import SvgAnimate from './base/svganimate';
 import SvgAnimateMotion from './base/svganimatemotion';
 import SvgAnimateTransform from './base/svganimatetransform';
+import SvgAnimation from './base/svganimation';
 import SvgBuild from './base/svgbuild';
 import SvgElement from './base/svgelement';
 import SvgGroup from './base/svggroup';
@@ -257,6 +258,7 @@ const lib = {
         SvgAnimate,
         SvgAnimateMotion,
         SvgAnimateTransform,
+        SvgAnimation,
         SvgBuild,
         SvgElement,
         SvgGroup,
