@@ -67,6 +67,8 @@ declare global {
         }
 
         namespace svg {
+            export function isSvgShape(element: Element): element is SVGGraphicsElement;
+            export function isSvgImage(element: Element): element is SVGImageElement;
             export function createTransformData(element: SVGGraphicsElement): SvgTransformData;
             export function getTransformOrigin(element: SVGGraphicsElement, dpi?: number): Point | undefined;
             export function applyMatrixX(matrix: DOMMatrix, x: number, y: number): number;

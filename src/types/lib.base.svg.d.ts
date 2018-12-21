@@ -5,7 +5,7 @@ declare global {
             readonly name: string;
             readonly visible: boolean;
             readonly animate: SvgAnimate[];
-            readonly transform: SVGAnimatedTransformList;
+            readonly transform: SVGTransformList;
         }
 
         export interface SvgBaseFeature {

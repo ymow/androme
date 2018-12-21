@@ -39,7 +39,7 @@ export default class SvgElement implements androme.lib.base.SvgElement {
     }
 
     get transform() {
-        return this.element.transform;
+        return this.element.transform.baseVal;
     }
 
     get drawable() {
@@ -51,6 +51,6 @@ export default class SvgElement implements androme.lib.base.SvgElement {
     }
 
     get transformable() {
-        return this.element.transform.baseVal.numberOfItems > 0;
+        return this.transform.numberOfItems > 0;
     }
 }

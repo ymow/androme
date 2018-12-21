@@ -18,10 +18,6 @@ declare global {
         export class SvgImage implements SvgImage {
             constructor(element: SVGUseElement, d: string);
         }
-
-        export class SvgUse extends SvgElement {
-            constructor(element: SVGUseElement, d: string);
-        }
     }
 }
 

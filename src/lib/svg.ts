@@ -1,6 +1,24 @@
 import { cssAttribute, getStyle } from './dom';
 import { convertInt, convertPX, isPercent, isUnit } from './util';
 
+export function isSvgShape(element: Element): element is SVGGraphicsElement {
+    switch (element.tagName) {
+        case 'path':
+        case 'circle':
+        case 'ellipse':
+        case 'line':
+        case 'rect':
+        case 'polygon':
+        case 'polyline':
+            return true;
+    }
+    return false;
+}
+
+export function isSvgImage(element: Element): element is SVGImageElement {
+    return element.tagName === 'image';
+}
+
 export function createTransformData(element: SVGGraphicsElement) {
     const data: SvgTransformData = {
         operations: [],

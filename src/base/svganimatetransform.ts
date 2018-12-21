@@ -15,7 +15,7 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
                 return [];
             }
         });
-        return result.some(item => item.length === 0) ? [] : result;
+        return result.some(item => item.length === 0) ? undefined : result;
     }
 
     public static toScaleList(values: string[]) {
@@ -34,7 +34,7 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
                 return [];
             }
         });
-        return result.some(item => item.length === 0) ? [] : result;
+        return result.some(item => item.length === 0) ? undefined : result;
     }
 
     public static toTranslateList(values: string[]) {
@@ -50,7 +50,7 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
                 return [];
             }
         });
-        return result.some(item => item.length === 0) ? [] : result;
+        return result.some(item => item.length === 0) ? undefined : result;
     }
 
     public type = 0;

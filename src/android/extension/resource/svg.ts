@@ -18,6 +18,7 @@ import $SvgGroup = androme.lib.base.SvgGroup;
 import $SvgGroupViewBox = androme.lib.base.SvgGroupViewBox;
 import $SvgImage = androme.lib.base.SvgImage;
 import $SvgPath = androme.lib.base.SvgPath;
+import $SvgUse = androme.lib.base.SvgUse;
 
 import $color = androme.lib.color;
 import $dom = androme.lib.dom;
@@ -59,14 +60,14 @@ const INTERPOLATOR_ANDROID = {
     OVERSHOOT: '@android:anim/overshoot_interpolator'
 };
 
-function getSvgOffset(element: SVGGraphicsElement) {
+function getSvgOffset(element: SVGGraphicsElement, outerParent: SVGSVGElement) {
     let parent = element.parentElement;
     let x = 0;
     let y = 0;
-    while (parent instanceof SVGSVGElement && parent.parentElement instanceof SVGSVGElement) {
-        const attributes = $svg.createTransformData(parent);
-        x += parent.x.baseVal.value + attributes.translateX;
-        y += parent.y.baseVal.value + attributes.translateY;
+    while (parent instanceof SVGSVGElement && parent !== outerParent) {
+        const transform = $svg.createTransformData(parent);
+        x += parent.x.baseVal.value + transform.translateX;
+        y += parent.y.baseVal.value + transform.translateY;
         parent = parent.parentElement;
     }
     return { x, y };
@@ -95,7 +96,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                 const images: $SvgImage[] = [];
                 let drawable = '';
                 let vectorName = '';
-                const createGroup = (group: $SvgGroup | $SvgElement) => {
+                const createGroup = (group: $SvgGroup | $SvgElement, inclusions: string[] = []) => {
                     const name = `group_${group.name}`;
                     const data: ExternalData = {
                         name,
@@ -137,16 +138,21 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     if (y !== 0) {
                         data.translateY = y.toString();
                     }
-                    if (group.animate.length) {
-                        animateGroup.set(name, { element: group.element, animate: group.animate });
+                    const animate = group.animate.filter(item => item instanceof $SvgAnimateTransform || inclusions.includes(item.attributeName));
+                    if (animate.length) {
+                        animateGroup.set(name, {
+                            element: group.element,
+                            animate,
+                            pathData: group instanceof $SvgUse && group.path ? group.path.d : ''
+                        });
                     }
                     return data;
                 };
-                const createPath = (svgElement: $SvgElement, svgPath: $SvgPath) => {
-                    const name = svgElement.name;
+                const createPath = (target: $SvgElement | $SvgUse, path: $SvgPath, exclusions: string[] = []) => {
+                    const name = target.name;
                     const clipPaths: ExternalData[] = [];
-                    if (svgPath.clipPath !== '') {
-                        const clipPath = svg.defs.clipPath.get(svgPath.clipPath);
+                    if (path.clipPath) {
+                        const clipPath = svg.defs.clipPath.get(path.clipPath);
                         if (clipPath) {
                             clipPath.each(child => {
                                 if (child.path) {
@@ -162,13 +168,13 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             });
                         }
                     }
-                    const result = Object.assign({}, svgPath, { name, clipPaths });
+                    const result = Object.assign({}, path, { name, clipPaths });
                     ['fill', 'stroke'].forEach(attr => {
                         if ($util.isString(result[attr])) {
                             if (result[attr].charAt(0) === '@') {
                                 const gradient = svg.defs.gradient.get(result[attr]);
                                 if (gradient) {
-                                    switch (svgElement.element.tagName) {
+                                    switch (target.element.tagName) {
                                         case 'path':
                                             if (!/[zZ]\s*$/.test(result.d)) {
                                                 break;
@@ -204,10 +210,11 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 break;
                         }
                     }
-                    if (svgElement.animate.length) {
+                    const animate = target.animate.filter(item => item instanceof $SvgAnimate && !exclusions.includes(item.attributeName));
+                    if (animate.length) {
                         animateGroup.set(name, {
-                            element: svgElement.element,
-                            animate: svgElement.animate,
+                            element: target.element,
+                            animate,
                             pathData: result.d
                         });
                     }
@@ -223,31 +230,38 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     for (let i = 0; i < svg.children.length; i++) {
                         const group = svg.children[i];
                         if (i > 0) {
-                            groupData = createGroup(group);
+                            groupData = createGroup(group, group instanceof $SvgGroupViewBox ? ['x', 'y'] : []);
                         }
-                        for (const item of group.children) {
-                            if (item instanceof $SvgImage) {
-                                item.setExternal();
-                                images.push(item);
+                        if (group instanceof $SvgUse) {
+                            if (groupData && group.path) {
+                                groupData['2'].push(createPath(group, group.path, ['x', 'y', 'width', 'height']));
                             }
-                            else if (item.visible && item.path) {
-                                let newGroup = false;
-                                if (i === 0) {
-                                    if (item.transformable && !item.path.transformed) {
-                                        groupData = createGroup(item);
-                                        groups.push(groupData);
-                                        newGroup = true;
-                                    }
-                                    if (groupData === undefined) {
-                                        groupData = createGroup(group);
-                                        groups.push(groupData);
-                                    }
+                        }
+                        else {
+                            for (const item of group.children) {
+                                if (item instanceof $SvgImage) {
+                                    item.setExternal();
+                                    images.push(item);
                                 }
-                                if (groupData) {
-                                    groupData['2'].push(createPath(item, item.path));
-                                }
-                                if (newGroup) {
-                                    groupData = undefined;
+                                else if (item.visible && item.path) {
+                                    let newGroup = false;
+                                    if (i === 0) {
+                                        if (item.transformable && !item.path.transformed || item.animate.some(animate => animate instanceof $SvgAnimateTransform)) {
+                                            groupData = createGroup(item);
+                                            groups.push(groupData);
+                                            newGroup = true;
+                                        }
+                                        if (groupData === undefined) {
+                                            groupData = createGroup(group);
+                                            groups.push(groupData);
+                                        }
+                                    }
+                                    if (groupData) {
+                                        groupData['2'].push(createPath(item, item.path));
+                                    }
+                                    if (newGroup) {
+                                        groupData = undefined;
+                                    }
                                 }
                             }
                         }
@@ -288,7 +302,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                     const dataset = $dom.getDataSet(item.element, 'android');
                                     const startOffset = item.begin !== -1 ? item.begin : 0;
                                     let propertyName: string[] | undefined;
-                                    let values: string[] | Null<number>[][] | undefined;
+                                    let values: string[] | (null[] | number[])[] | undefined;
                                     let duration: number | undefined;
                                     let repeatCount = 0;
                                     if (item.duration !== -1) {
@@ -298,7 +312,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                 repeatCount = -1;
                                             }
                                             else if (item.repeatCount !== -1 && item.repeatDuration !== -1) {
-                                                if (item.repeatCount * duration <= item.repeatDuration) {
+                                                if ((item.repeatCount + 1) * duration <= item.repeatDuration) {
                                                     repeatCount = item.repeatCount;
                                                 }
                                                 else {
@@ -372,10 +386,20 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                 break;
                                             case 'd':
                                             case 'x':
+                                                if (item.parentElement instanceof SVGUseElement || item.parentElement instanceof SVGSVGElement) {
+                                                    propertyName = ['translateX'];
+                                                    options.valueType = 'floatType';
+                                                    break;
+                                                }
                                             case 'x1':
                                             case 'x2':
                                             case 'cx':
                                             case 'y':
+                                                if (item.parentElement instanceof SVGUseElement || item.parentElement instanceof SVGSVGElement) {
+                                                    propertyName = ['translateX'];
+                                                    options.valueType = 'floatType';
+                                                    break;
+                                                }
                                             case 'y1':
                                             case 'y2':
                                             case 'cy':
@@ -616,7 +640,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                             }
                                         }
                                     }
-                                    if (propertyName && values) {
+                                    if (values && propertyName) {
                                         const keyName = JSON.stringify(options);
                                         for (let i = 0; i < propertyName.length; i++) {
                                             if (node.localSettings.targetAPI >= BUILD_ANDROID.MARSHMALLOW && item.keyTimes.length > 1 && (this.options.vectorAnimateAlwaysUseKeyframes || item.keyTimes.join('-') !== '0-1')) {
@@ -640,7 +664,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                         });
                                                     }
                                                 }
-                                                propertyValues.push({ propertyName: propertyName[i], keyframes });
+                                                propertyValues.push({
+                                                    propertyName: propertyName[i],
+                                                    keyframes
+                                                });
                                                 if (!animatorMap.has(keyName)) {
                                                     animatorMap.set(keyName, propertyValues);
                                                     options.propertyValues = propertyValues;
@@ -698,7 +725,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         let y = (item.y || 0) * scaleY;
                         item.width *= scaleX;
                         item.height *= scaleY;
-                        const offsetParent = getSvgOffset(item.element);
+                        const offsetParent = getSvgOffset(item.element, <SVGSVGElement> svg.element);
                         x += offsetParent.x;
                         y += offsetParent.y;
                         const data: ExternalData = {

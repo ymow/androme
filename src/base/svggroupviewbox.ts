@@ -19,6 +19,6 @@ export default class SvgGroupViewBox extends SvgGroup implements androme.lib.bas
     }
 
     get transformable() {
-        return this.element.transform.baseVal.numberOfItems > 0;
+        return this.transform.numberOfItems > 0;
     }
 }

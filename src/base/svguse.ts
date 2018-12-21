@@ -1,24 +1,20 @@
-import SvgElement from './svgelement';
+import SvgGroupViewBox from './svggroupviewbox';
 import SvgPath from './svgpath';
 
-export default class SvgUse extends SvgElement implements androme.lib.base.SvgUse {
+export default class SvgUse extends SvgGroupViewBox implements androme.lib.base.SvgUse {
+    public path: SvgPath | undefined;
+
     constructor(
         public readonly element: SVGUseElement,
-        d: string)
+        d?: string)
     {
         super(element);
-        this.path = new SvgPath(element, d);
+        if (d) {
+            this.setPath(d);
+        }
     }
 
-    get drawable() {
-        return false;
-    }
-
-    get animatable() {
-        return false;
-    }
-
-    get transformable() {
-        return false;
+    public setPath(value: string) {
+        this.path = new SvgPath(this.element, value);
     }
 }

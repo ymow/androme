@@ -32,9 +32,9 @@ declare global {
         }
 
         export class SvgAnimateTransform implements SvgAnimateTransform {
-            public static toRotateList(values: string[]): Null<number>[][];
-            public static toScaleList(values: string[]): Null<number>[][];
-            public static toTranslateList(values: string[]): Null<number>[][];
+            public static toRotateList(values: string[]): (null[] | number[])[] | undefined;
+            public static toScaleList(values: string[]): (null[] | number[])[] | undefined;
+            public static toTranslateList(values: string[]): (null[] | number[])[] | undefined;
             constructor(element: SVGAnimateTransformElement, parentElement: SVGGraphicsElement);
         }
 
