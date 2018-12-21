@@ -37,7 +37,7 @@ declare global {
             public static toPathCommandList(value: string): SvgPathCommand[];
             public static createColorStops(element: SVGGradientElement): ColorStop[];
             public static createAnimations(element: SVGGraphicsElement): SvgAnimate[];
-            public static fromCoordinateList(coordinates: number[]): Point[];
+            public static fromCoordinateList(values: number[]): Point[];
             public static fromPathCommandList(commands: SvgPathCommand[]): string;
         }
     }

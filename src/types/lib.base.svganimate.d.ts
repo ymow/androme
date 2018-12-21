@@ -12,14 +12,10 @@ declare global {
             repeatDur: number | undefined;
             repeatCount: number | undefined;
             calcMode: string;
-            additive: boolean;
-            accumulate: boolean;
-            freeze: boolean;
             readonly duration: number;
             readonly begin: number;
             readonly end: number;
             readonly repeatDuration: number;
-            build(): void;
         }
 
         export class SvgAnimate implements SvgAnimate {
@@ -30,13 +26,28 @@ declare global {
 
         interface SvgAnimateTransform extends SvgAnimate {
             type: number;
-            path: string;
-            keyPoints: number[];
-            rotate: string;
+            additive: boolean;
+            accumulate: boolean;
+            freeze: boolean;
         }
 
         export class SvgAnimateTransform implements SvgAnimateTransform {
-            constructor(element: SVGAnimateElement, parentElement: SVGGraphicsElement);
+            public static toRotateList(values: string[]): Null<number>[][];
+            public static toScaleList(values: string[]): Null<number>[][];
+            public static toTranslateList(values: string[]): Null<number>[][];
+            constructor(element: SVGAnimateTransformElement, parentElement: SVGGraphicsElement);
+        }
+
+        interface SvgAnimateMotion extends SvgAnimate {
+            path: string;
+            keyPoints: number[];
+            rotate: number;
+            rotateAuto: boolean;
+            rotateAutoReverse: boolean;
+        }
+
+        export class SvgAnimateMotion implements SvgAnimateMotion {
+            constructor(element: SVGAnimateMotionElement, parentElement: SVGGraphicsElement);
         }
     }
 }

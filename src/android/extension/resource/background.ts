@@ -1,6 +1,5 @@
 import { BackgroundImage, BackgroundGradient } from '../../template/resource/types/data';
 
-import { EXT_ANDROID } from '../../lib/constant';
 import { CONTAINER_NODE } from '../../lib/enumeration';
 
 import LAYERLIST_TMPL from '../../template/resource/layer-list';
@@ -172,7 +171,6 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
     public readonly eventOnly = true;
 
     public afterResources() {
-        const vectorColor = this.application.extensionManager.optionValueAsBoolean(EXT_ANDROID.RESOURCE_SVG, 'vectorColorResourceValue');
         this.application.processing.cache.duplicate().sort(a => !a.visible ? -1 : 0).forEach(node => {
             const stored: BoxStyle = node.data(Resource.KEY_NAME, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
@@ -217,7 +215,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient, undefined, vectorColor);
+                    const gradients = Resource.createBackgroundGradient(node, stored.backgroundGradient);
                     if (gradients.length) {
                         backgroundGradient.push(gradients[0]);
                     }

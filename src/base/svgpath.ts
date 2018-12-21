@@ -40,19 +40,6 @@ function getColorAttribute(element: SVGGraphicsElement, attr: string) {
 }
 
 export default class SvgPath implements androme.lib.base.SvgPath {
-    public static toClipPathList(element: SVGClipPathElement) {
-        const result: SvgPath[] = [];
-        for (const item of Array.from(element.children)) {
-            if (item instanceof SVGGraphicsElement) {
-                const path = new SvgPath(item);
-                if (path.d !== '') {
-                    result.push(path);
-                }
-            }
-        }
-        return result;
-    }
-
     public static getLine(x1: number, y1: number, x2 = 0, y2 = 0) {
         return x1 !== 0 || y1 !== 0 || x2 !== 0 || y2 !== 0 ? `M${x1},${y1} L${x2},${y2}` : '';
     }
@@ -98,10 +85,10 @@ export default class SvgPath implements androme.lib.base.SvgPath {
         public readonly element: SVGGraphicsElement,
         public d = '')
     {
-        this.build();
+        this.init();
     }
 
-    private build() {
+    private init() {
         const element = this.element;
         if (this.d === '') {
             const transform = element.transform.baseVal;

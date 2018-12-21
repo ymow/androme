@@ -20,7 +20,6 @@ declare global {
         }
 
         export class SvgPath implements SvgPath {
-            public static toClipPathList(element: SVGClipPathElement): SvgPath[];
             public static getLine(x1: number, y1: number, x2?: number, y2?: number): string;
             public static getRect(width: number, height: number, x?: number, y?: number): string;
             public static getPolyline(points: Point[] | DOMPoint[] | SVGPointList): string;

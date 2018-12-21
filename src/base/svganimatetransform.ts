@@ -1,20 +1,65 @@
 import SvgAnimate from './svganimate';
+import SvgBuild from './svgbuild';
 
-import { isNumber } from '../lib/util';
+export default class SvgAnimateTransform extends SvgAnimate implements androme.lib.base.SvgAnimateTransform {
+    public static toRotateList(values: string[]) {
+        const result = values.map(value => {
+            if (value === '') {
+                return [null, null, null];
+            }
+            else {
+                const segment = SvgBuild.toCoordinateList(value);
+                if (segment.length === 1 || segment.length === 3) {
+                    return segment;
+                }
+                return [];
+            }
+        });
+        return result.some(item => item.length === 0) ? [] : result;
+    }
 
-export default class SvgAnimateTransform extends SvgAnimate implements androme.lib.base.SvgAnimate {
+    public static toScaleList(values: string[]) {
+        const result = values.map(value => {
+            if (value === '') {
+                return [null, null];
+            }
+            else {
+                const segment = SvgBuild.toCoordinateList(value);
+                if (segment.length === 1) {
+                    return [segment[0], segment[0]];
+                }
+                else if (segment.length === 2) {
+                    return segment;
+                }
+                return [];
+            }
+        });
+        return result.some(item => item.length === 0) ? [] : result;
+    }
+
+    public static toTranslateList(values: string[]) {
+        const result = values.map(value => {
+            if (value === '') {
+                return [null, null];
+            }
+            else {
+                const segment = SvgBuild.toCoordinateList(value);
+                if (segment.length === 1 || segment.length === 2) {
+                    return segment;
+                }
+                return [];
+            }
+        });
+        return result.some(item => item.length === 0) ? [] : result;
+    }
+
     public type = 0;
     public path = '';
     public keyPoints: number[] = [];
     public rotate = '';
 
-    constructor(element: SVGAnimateElement, parentElement: SVGGraphicsElement) {
+    constructor(element: SVGAnimateTransformElement, parentElement: SVGGraphicsElement) {
         super(element, parentElement);
-    }
-
-    public build() {
-        super.build();
-        const element = this.element;
         const type = element.attributes.getNamedItem('type');
         if (type) {
             switch (type.value) {
@@ -35,22 +80,17 @@ export default class SvgAnimateTransform extends SvgAnimate implements androme.l
                     break;
             }
         }
-        const path = element.attributes.getNamedItem('path');
-        if (path) {
-            this.path = path.value.trim();
+        const additive = element.attributes.getNamedItem('additive');
+        if (additive) {
+            this.additive = additive.value === 'sum';
         }
-        const rotate = element.attributes.getNamedItem('rotate');
-        if (rotate && (rotate.value === 'auto' || rotate.value === 'auto-reverse' || isNumber(rotate.value))) {
-            this.rotate = rotate.value.trim();
+        const accumulate = element.attributes.getNamedItem('accumulate');
+        if (accumulate) {
+            this.accumulate = accumulate.value === 'sum';
         }
-        if (this.keyTimes.length) {
-            const keyPoints = element.attributes.getNamedItem('keyPoints');
-            if (keyPoints) {
-                const points = SvgAnimateTransform.toFractionList(keyPoints.value);
-                if (points.length === this.keyTimes.length) {
-                    this.keyPoints = points;
-                }
-            }
+        const fill = element.attributes.getNamedItem('fill');
+        if (fill) {
+            this.freeze = fill.value === 'freeze';
         }
     }
 }

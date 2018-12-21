@@ -74,10 +74,10 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
         public element: SVGAnimateElement,
         public parentElement: SVGGraphicsElement)
     {
-        this.build();
+        this.init();
     }
 
-    public build() {
+    private init() {
         const element = this.element;
         const attributeName = element.attributes.getNamedItem('attributeName');
         if (attributeName) {
@@ -172,18 +172,6 @@ export default class SvgAnimate implements androme.lib.base.SvgAnimate {
                     this.calcMode = calcMode.value;
                     break;
             }
-        }
-        const additive = element.attributes.getNamedItem('additive');
-        if (additive) {
-            this.additive = additive.value === 'sum';
-        }
-        const accumulate = element.attributes.getNamedItem('accumulate');
-        if (accumulate) {
-            this.accumulate = accumulate.value === 'sum';
-        }
-        const fill = element.attributes.getNamedItem('fill');
-        if (fill) {
-            this.freeze = fill.value === 'freeze';
         }
     }
 

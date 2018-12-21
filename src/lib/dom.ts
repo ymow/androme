@@ -213,7 +213,7 @@ export function cssFromParent(element: Element, attr: string) {
 }
 
 export function cssAttribute(element: Element, attr: string, computed = false): string {
-    let value = element.getAttribute(attr) || (element.parentElement instanceof SVGGElement ? element.parentElement.getAttribute(attr) : '');
+    let value = element.getAttribute(attr) || (!computed && element.parentElement instanceof SVGGElement ? element.parentElement.getAttribute(attr) : '');
     if (!value) {
         const node = getElementAsNode<T>(element);
         if (node) {

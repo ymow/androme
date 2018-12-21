@@ -1,5 +1,5 @@
 interface SvgDefs {
-    clipPath: Map<string, androme.lib.base.SvgPath[]>;
+    clipPath: Map<string, androme.lib.base.SvgGroup>;
     gradient: Map<string, Gradient>;
 }
 

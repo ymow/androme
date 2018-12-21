@@ -233,10 +233,10 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
         return result;
     }
 
-    public static fromCoordinateList(coordinates: number[]) {
+    public static fromCoordinateList(values: number[]) {
         const result: Point[] = [];
-        for (let i = 0; i < coordinates.length; i += 2) {
-            result.push({ x: coordinates[i], y: coordinates[i + 1] });
+        for (let i = 0; i < values.length; i += 2) {
+            result.push({ x: values[i], y: values[i + 1] });
         }
         return result.length % 2 === 0 ? result : [];
     }

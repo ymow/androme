@@ -1,7 +1,7 @@
 import { cssAttribute, getStyle } from './dom';
 import { convertInt, convertPX, isPercent, isUnit } from './util';
 
-export function getTransformData(element: SVGGraphicsElement) {
+export function createTransformData(element: SVGGraphicsElement) {
     const data: SvgTransformData = {
         operations: [],
         translateX: 0,

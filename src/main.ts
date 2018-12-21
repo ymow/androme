@@ -11,6 +11,7 @@ import NodeList from './base/nodelist';
 import Resource from './base/resource';
 import Svg from './base/svg';
 import SvgAnimate from './base/svganimate';
+import SvgAnimateMotion from './base/svganimatemotion';
 import SvgAnimateTransform from './base/svganimatetransform';
 import SvgBuild from './base/svgbuild';
 import SvgElement from './base/svgelement';
@@ -254,6 +255,7 @@ const lib = {
         Resource,
         Svg,
         SvgAnimate,
+        SvgAnimateMotion,
         SvgAnimateTransform,
         SvgBuild,
         SvgElement,

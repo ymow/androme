@@ -53,6 +53,13 @@
             <polygon points="100,100 150,25 150,75 200,0" stroke="green" fill="purple">
                 <animate attributeType="XML" attributeName="points" values="100,100 150,25 150,75 200,0; 50,50 75,12 75,37 100,0; 100,100 150,25 150,75 200,0" keyTimes="0; 0.5; 1" dur="15s" repeatCount="1" data-android-interpolator="ACCELERATE" />
             </polygon>
+            <g fill="grey">
+                <path d="M 50,30 A 20,20 0,0,1 90,30 A 20,20 0,0,1 130,30 Q 130,60 90,90 Q 50,60 50,30 z" />
+                <animateTransform attributeType="XML" attributeName="transform" type="translate" dur="10s" keyTimes="0;0.75;1" repeatCount="1" values="10 10;20;30 30" />
+                <animateTransform attributeType="XML" attributeName="transform" type="rotate" dur="10s" keyTimes="0;0.75;1" repeatCount="1" values="-10 50 100;-90 60 120;-180 70 140" />
+                <animateTransform attributeType="XML" attributeName="transform" type="scale" dur="5s" keyTimes="0;0.75;1" repeatCount="1" values="1;2 2.1;3" />
+                <animateTransform attributeType="XML" attributeName="transform" type="translate" dur="5s" to="10 10" repeatCount="1" />
+            </g>
         </svg>
         <br /><br />
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -83,7 +90,9 @@
         <br /><br />
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
             <clipPath id="myClip">
-                <circle cx="40" cy="35" r="35" />
+                <circle cx="40" cy="35" r="35">
+                    <animate attributeType="XML" attributeName="r" values="10; 75; 100" keyTimes="0; 0.5; 1" dur="10s" repeatCount="1" />
+                </circle>
             </clipPath>
             <path id="heart" d="M10,30 A20,20,0,0,1,50,30 A20,20,0,0,1,90,30 Q90,60,50,90 Q10,60,10,30 Z" />
             <use clip-path="url(#myClip)" href="#heart" fill="red" />

@@ -11,6 +11,7 @@ import { getXmlNs } from '../../lib/util';
 
 import $Svg = androme.lib.base.Svg;
 import $SvgAnimate = androme.lib.base.SvgAnimate;
+import $SvgAnimateTransform = androme.lib.base.SvgAnimateTransform;
 import $SvgBuild = androme.lib.base.SvgBuild;
 import $SvgElement = androme.lib.base.SvgElement;
 import $SvgGroup = androme.lib.base.SvgGroup;
@@ -63,7 +64,7 @@ function getSvgOffset(element: SVGGraphicsElement) {
     let x = 0;
     let y = 0;
     while (parent instanceof SVGSVGElement && parent.parentElement instanceof SVGSVGElement) {
-        const attributes = $svg.getTransformData(parent);
+        const attributes = $svg.createTransformData(parent);
         x += parent.x.baseVal.value + attributes.translateX;
         y += parent.y.baseVal.value + attributes.translateY;
         parent = parent.parentElement;
@@ -73,7 +74,6 @@ function getSvgOffset(element: SVGGraphicsElement) {
 
 export default class ResourceSvg<T extends View> extends androme.lib.base.Extension<T> {
     public readonly options = {
-        vectorColorResourceValue: true,
         vectorAnimateOrdering: 'together',
         vectorAnimateInterpolator: INTERPOLATOR_ANDROID.LINEAR,
         vectorAnimateAlwaysUseKeyframes: true
@@ -87,7 +87,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
 
     public afterResources() {
         for (const node of this.application.processing.cache) {
-            if (node.svgElement && node.element.children.length) {
+            if (node.svgElement) {
                 const svg = new $Svg(<SVGSVGElement> node.element);
                 const namespace = new Set<string>();
                 const animateGroup = new Map<string, AnimateGroup>();
@@ -95,7 +95,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                 const images: $SvgImage[] = [];
                 let drawable = '';
                 let vectorName = '';
-                function createGroup(group: $SvgGroup | $SvgElement) {
+                const createGroup = (group: $SvgGroup | $SvgElement) => {
                     const name = `group_${group.name}`;
                     const data: ExternalData = {
                         name,
@@ -104,7 +104,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     let x = group instanceof $SvgGroupViewBox ? group.x : 0;
                     let y = group instanceof $SvgGroupViewBox ? group.y : 0;
                     if (group.transformable) {
-                        const transform = $svg.getTransformData(group.element);
+                        const transform = $svg.createTransformData(group.element);
                         if (transform.operations.length) {
                             x += transform.translateX;
                             y += transform.translateY;
@@ -141,14 +141,25 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                         animateGroup.set(name, { element: group.element, animate: group.animate });
                     }
                     return data;
-                }
+                };
                 const createPath = (svgElement: $SvgElement, svgPath: $SvgPath) => {
                     const name = svgElement.name;
                     const clipPaths: ExternalData[] = [];
                     if (svgPath.clipPath !== '') {
                         const clipPath = svg.defs.clipPath.get(svgPath.clipPath);
                         if (clipPath) {
-                            clipPath.forEach(subitem => clipPaths.push({ name, d: subitem.d }));
+                            clipPath.each(child => {
+                                if (child.path) {
+                                    clipPaths.push({ name: child.name, d: child.path.d });
+                                    if (child.animate.length) {
+                                        animateGroup.set(child.name, {
+                                            element: child.element,
+                                            animate: child.animate,
+                                            pathData: child.path.d
+                                        });
+                                    }
+                                }
+                            });
                         }
                     }
                     const result = Object.assign({}, svgPath, { name, clipPaths });
@@ -164,9 +175,10 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                             }
                                         case 'rect':
                                         case 'polygon':
+                                        case 'polyline':
                                         case 'circle':
                                         case 'ellipse':
-                                            const gradients = Resource.createBackgroundGradient(node, [gradient], result, this.options.vectorColorResourceValue);
+                                            const gradients = Resource.createBackgroundGradient(node, [gradient], result);
                                             result[attr] = [{ gradients }];
                                             namespace.add('aapt');
                                             return;
@@ -176,11 +188,9 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                     result[attr] = result.color;
                                 }
                             }
-                            if (this.options.vectorColorResourceValue) {
-                                const colorName = Resource.addColor(result[attr]);
-                                if (colorName !== '') {
-                                    result[attr] = `@color/${colorName}`;
-                                }
+                            const colorName = Resource.addColor(result[attr]);
+                            if (colorName !== '') {
+                                result[attr] = `@color/${colorName}`;
                             }
                         }
                     });
@@ -204,11 +214,11 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                     return result;
                 };
                 if (svg.length) {
-                    let groups: StringMap[] = [];
                     const opacity = svg.animate.filter(item => item.attributeName === 'opacity');
                     if (opacity.length) {
                         animateGroup.set(svg.name, { element: svg.element, animate: opacity });
                     }
+                    let groups: StringMap[] = [];
                     let groupData: ExternalData | undefined;
                     for (let i = 0; i < svg.children.length; i++) {
                         const group = svg.children[i];
@@ -277,6 +287,8 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                 for (const item of group.animate) {
                                     const dataset = $dom.getDataSet(item.element, 'android');
                                     const startOffset = item.begin !== -1 ? item.begin : 0;
+                                    let propertyName: string[] | undefined;
+                                    let values: string[] | Null<number>[][] | undefined;
                                     let duration: number | undefined;
                                     let repeatCount = 0;
                                     if (item.duration !== -1) {
@@ -320,292 +332,344 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                         fillBefore: '',
                                         fillEnabled: ''
                                     };
-                                    switch (item.attributeName) {
-                                        case 'stroke':
-                                        case 'fill':
-                                            break;
-                                        case 'opacity':
-                                        case 'stroke-opacity':
-                                        case 'fill-opacity':
-                                            options.valueType = 'floatType';
-                                            break;
-                                        case 'stroke-width':
-                                            options.valueType = 'intType';
-                                            break;
-                                        case 'd':
-                                        case 'x':
-                                        case 'x1':
-                                        case 'x2':
-                                        case 'cx':
-                                        case 'y':
-                                        case 'y1':
-                                        case 'y2':
-                                        case 'cy':
-                                        case 'r':
-                                        case 'rx':
-                                        case 'ry':
-                                        case 'width':
-                                        case 'height':
-                                        case 'points':
-                                            options.valueType = 'pathType';
-                                            break;
-                                        default:
-                                            continue;
-                                    }
-                                    let propertyName: string | undefined;
-                                    let values: string[] | undefined;
-                                    switch (options.valueType) {
-                                        case 'intType': {
-                                            values = item.values.map(value => $util.convertInt(value).toString());
-                                            switch (item.attributeName) {
-                                                case 'stroke-width':
-                                                    propertyName = 'strokeWidth';
-                                                    break;
-                                            }
-                                            break;
-                                        }
-                                        case 'floatType': {
-                                            values = item.values.map(value => $util.convertFloat(value).toString());
-                                            switch (item.attributeName) {
-                                                case 'opacity':
-                                                    propertyName = 'alpha';
-                                                    break;
-                                                case 'stroke-opacity':
-                                                    propertyName = 'strokeAlpha';
-                                                    break;
-                                                case 'fill-opacity':
-                                                    propertyName = 'fillAlpha';
-                                                    break;
-                                            }
-                                            break;
-                                        }
-                                        case 'pathType': {
-                                            if (group.pathData) {
-                                                pathType: {
-                                                    values = item.values.slice();
-                                                    if (item.attributeName === 'points') {
-                                                        for (let i = 0; i < values.length; i++) {
-                                                            const value = values[i];
-                                                            if (value !== '') {
-                                                                const points = $SvgBuild.fromCoordinateList($SvgBuild.toCoordinateList(value));
-                                                                if (points.length) {
-                                                                    values[i] = item.parentElement.tagName === 'polygon' ? $SvgPath.getPolygon(points) : $SvgPath.getPolyline(points);
-                                                                }
-                                                                else {
-                                                                    break pathType;
-                                                                }
-                                                            }
-                                                        }
+                                    if (item instanceof $SvgAnimateTransform) {
+                                        switch (item.attributeName) {
+                                            case 'transform': {
+                                                switch (item.type) {
+                                                    case SVGTransform.SVG_TRANSFORM_ROTATE: {
+                                                        values = $SvgAnimateTransform.toRotateList(item.values);
+                                                        propertyName = ['rotation', 'pivotX', 'pivotY'];
+                                                        break;
                                                     }
-                                                    else if (item.attributeName !== 'd') {
-                                                        for (let i = 0; i < values.length; i++) {
-                                                            const value = values[i];
-                                                            if (value !== '') {
-                                                                const pathPoints = $SvgBuild.toPathCommandList(group.pathData);
-                                                                if (pathPoints.length <= 1) {
-                                                                    break pathType;
-                                                                }
-                                                                let x: number | undefined;
-                                                                let y: number | undefined;
-                                                                let rx: number | undefined;
-                                                                let ry: number | undefined;
-                                                                let width: number | undefined;
-                                                                let height: number | undefined;
-                                                                switch (item.attributeName) {
-                                                                    case 'x':
-                                                                    case 'x1':
-                                                                    case 'x2':
-                                                                    case 'cx':
-                                                                        x = parseFloat(value);
-                                                                        if (isNaN(x)) {
-                                                                            break pathType;
-                                                                        }
-                                                                        break;
-                                                                    case 'y':
-                                                                    case 'y1':
-                                                                    case 'y2':
-                                                                    case 'cy':
-                                                                        y = parseFloat(value);
-                                                                        if (isNaN(y)) {
-                                                                            break pathType;
-                                                                        }
-                                                                        break;
-                                                                    case 'r':
-                                                                        rx = parseFloat(value);
-                                                                        if (isNaN(rx)) {
-                                                                            break pathType;
-                                                                        }
-                                                                        ry = rx;
-                                                                        break;
-                                                                    case 'rx':
-                                                                        rx = parseFloat(value);
-                                                                        if (isNaN(rx)) {
-                                                                            break pathType;
-                                                                        }
-                                                                        break;
-                                                                    case 'ry':
-                                                                        ry = parseFloat(value);
-                                                                        if (isNaN(ry)) {
-                                                                            break pathType;
-                                                                        }
-                                                                    case 'width':
-                                                                        width = parseFloat(value);
-                                                                        if (isNaN(width) || width < 0) {
-                                                                            break pathType;
-                                                                        }
-                                                                        break;
-                                                                    case 'height':
-                                                                        height = parseFloat(value);
-                                                                        if (isNaN(height) || height < 0) {
-                                                                            break pathType;
-                                                                        }
-                                                                        break;
-                                                                }
-                                                                if (x !== undefined || y !== undefined) {
-                                                                    const commandStart = pathPoints[0];
-                                                                    const commandEnd = pathPoints[pathPoints.length - 1];
-                                                                    const [firstPoint, lastPoint] = [commandStart.points[0], commandEnd.points[commandEnd.points.length - 1]];
-                                                                    let recalibrate = false;
-                                                                    if (x !== undefined) {
-                                                                        switch (item.attributeName) {
-                                                                            case 'x':
-                                                                                x -= firstPoint.x;
-                                                                                recalibrate = true;
-                                                                                break;
-                                                                            case 'x1':
-                                                                            case 'cx':
-                                                                                firstPoint.x = x;
-                                                                                commandStart.coordinates[0] = x;
-                                                                                break;
-                                                                            case 'x2':
-                                                                                lastPoint.x = x;
-                                                                                commandEnd.coordinates[0] = x;
-                                                                                break;
-                                                                        }
-                                                                    }
-                                                                    if (y !== undefined) {
-                                                                        switch (item.attributeName) {
-                                                                            case 'y':
-                                                                                y -= firstPoint.y;
-                                                                                recalibrate = true;
-                                                                                break;
-                                                                            case 'y1':
-                                                                            case 'cy':
-                                                                                firstPoint.y = y;
-                                                                                commandStart.coordinates[1] = y;
-                                                                                break;
-                                                                            case 'y2':
-                                                                                lastPoint.y = y;
-                                                                                commandEnd.coordinates[1] = y;
-                                                                                break;
-                                                                        }
-                                                                    }
-                                                                    if (recalibrate) {
-                                                                        for (const path of pathPoints) {
-                                                                            if (!path.relative) {
-                                                                                for (let j = 0, k = 0; j < path.coordinates.length; j += 2, k++) {
-                                                                                    const pt = path.points[k];
-                                                                                    if (x !== undefined) {
-                                                                                        path.coordinates[j] += x;
-                                                                                        pt.x += x;
-                                                                                    }
-                                                                                    if (y !== undefined) {
-                                                                                        path.coordinates[j + 1] += y;
-                                                                                        pt.y += y;
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                                else if (rx !== undefined || ry !== undefined) {
-                                                                    for (const path of pathPoints) {
-                                                                        if (path.command.toUpperCase() === 'A') {
-                                                                            if (rx !== undefined) {
-                                                                                path.radiusX = rx;
-                                                                                path.coordinates[0] = rx * 2 * (path.coordinates[0] < 0 ? -1 : 1);
-                                                                            }
-                                                                            if (ry !== undefined) {
-                                                                                path.radiusY = ry;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                                else if (width !== undefined || height !== undefined) {
-                                                                    for (const path of pathPoints) {
-                                                                        switch (path.command) {
-                                                                            case 'h':
-                                                                                if (width !== undefined) {
-                                                                                    path.coordinates[0] = width * (path.coordinates[0] < 0 ? -1 : 1);
-                                                                                }
-                                                                                break;
-                                                                            case 'v':
-                                                                                if (height !== undefined) {
-                                                                                    path.coordinates[1] = height;
-                                                                                }
-                                                                                break;
-                                                                        }
-                                                                    }
-                                                                }
-                                                                else {
-                                                                    values[i] = values[i - 1] || group.pathData;
-                                                                    continue;
-                                                                }
-                                                                values[i] = $SvgBuild.fromPathCommandList(pathPoints);
-                                                            }
-                                                        }
+                                                    case SVGTransform.SVG_TRANSFORM_SCALE: {
+                                                        values = $SvgAnimateTransform.toScaleList(item.values);
+                                                        propertyName = ['scaleX', 'scaleY'];
+                                                        break;
                                                     }
-                                                    propertyName = 'pathData';
+                                                    case SVGTransform.SVG_TRANSFORM_TRANSLATE: {
+                                                        values = $SvgAnimateTransform.toTranslateList(item.values);
+                                                        propertyName = ['translateX', 'translateY'];
+                                                        break;
+                                                    }
                                                 }
+                                                options.valueType = 'floatType';
+                                                break;
                                             }
-                                            break;
                                         }
-                                        default: {
-                                            values = item.values.slice();
-                                            switch (item.attributeName) {
-                                                case 'fill':
-                                                    propertyName = 'fillColor';
-                                                case 'stroke':
-                                                    propertyName = 'strokeColor';
-                                                    break;
+                                    }
+                                    else {
+                                        switch (item.attributeName) {
+                                            case 'stroke':
+                                            case 'fill':
+                                                break;
+                                            case 'opacity':
+                                            case 'stroke-opacity':
+                                            case 'fill-opacity':
+                                                options.valueType = 'floatType';
+                                                break;
+                                            case 'stroke-width':
+                                                options.valueType = 'intType';
+                                                break;
+                                            case 'd':
+                                            case 'x':
+                                            case 'x1':
+                                            case 'x2':
+                                            case 'cx':
+                                            case 'y':
+                                            case 'y1':
+                                            case 'y2':
+                                            case 'cy':
+                                            case 'r':
+                                            case 'rx':
+                                            case 'ry':
+                                            case 'width':
+                                            case 'height':
+                                            case 'points':
+                                                options.valueType = 'pathType';
+                                                break;
+                                            default:
+                                                continue;
+                                        }
+                                        switch (options.valueType) {
+                                            case 'intType': {
+                                                values = item.values.map(value => $util.convertInt(value).toString());
+                                                switch (item.attributeName) {
+                                                    case 'stroke-width':
+                                                        propertyName = ['strokeWidth'];
+                                                        break;
+                                                }
+                                                break;
                                             }
-                                            if (propertyName !== '') {
-                                                for (let i = 0; i < values.length; i++) {
-                                                    const color = $color.parseRGBA(values[i]);
-                                                    if (color) {
-                                                        values[i] = `@color/${Resource.addColor(color)}`;
+                                            case 'floatType': {
+                                                values = item.values.map(value => $util.convertFloat(value).toString());
+                                                switch (item.attributeName) {
+                                                    case 'opacity':
+                                                        propertyName = ['alpha'];
+                                                        break;
+                                                    case 'stroke-opacity':
+                                                        propertyName = ['strokeAlpha'];
+                                                        break;
+                                                    case 'fill-opacity':
+                                                        propertyName = ['fillAlpha'];
+                                                        break;
+                                                }
+                                                break;
+                                            }
+                                            case 'pathType': {
+                                                if (group.pathData) {
+                                                    pathType: {
+                                                        values = item.values.slice();
+                                                        if (item.attributeName === 'points') {
+                                                            for (let i = 0; i < values.length; i++) {
+                                                                const value = values[i];
+                                                                if (value !== '') {
+                                                                    const points = $SvgBuild.fromCoordinateList($SvgBuild.toCoordinateList(value));
+                                                                    if (points.length) {
+                                                                        values[i] = item.parentElement.tagName === 'polygon' ? $SvgPath.getPolygon(points) : $SvgPath.getPolyline(points);
+                                                                    }
+                                                                    else {
+                                                                        break pathType;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        else if (item.attributeName !== 'd') {
+                                                            for (let i = 0; i < values.length; i++) {
+                                                                const value = values[i];
+                                                                if (value !== '') {
+                                                                    const pathPoints = $SvgBuild.toPathCommandList(group.pathData);
+                                                                    if (pathPoints.length <= 1) {
+                                                                        break pathType;
+                                                                    }
+                                                                    let x: number | undefined;
+                                                                    let y: number | undefined;
+                                                                    let rx: number | undefined;
+                                                                    let ry: number | undefined;
+                                                                    let width: number | undefined;
+                                                                    let height: number | undefined;
+                                                                    switch (item.attributeName) {
+                                                                        case 'x':
+                                                                        case 'x1':
+                                                                        case 'x2':
+                                                                        case 'cx':
+                                                                            x = parseFloat(value);
+                                                                            if (isNaN(x)) {
+                                                                                break pathType;
+                                                                            }
+                                                                            break;
+                                                                        case 'y':
+                                                                        case 'y1':
+                                                                        case 'y2':
+                                                                        case 'cy':
+                                                                            y = parseFloat(value);
+                                                                            if (isNaN(y)) {
+                                                                                break pathType;
+                                                                            }
+                                                                            break;
+                                                                        case 'r':
+                                                                            rx = parseFloat(value);
+                                                                            if (isNaN(rx)) {
+                                                                                break pathType;
+                                                                            }
+                                                                            ry = rx;
+                                                                            break;
+                                                                        case 'rx':
+                                                                            rx = parseFloat(value);
+                                                                            if (isNaN(rx)) {
+                                                                                break pathType;
+                                                                            }
+                                                                            break;
+                                                                        case 'ry':
+                                                                            ry = parseFloat(value);
+                                                                            if (isNaN(ry)) {
+                                                                                break pathType;
+                                                                            }
+                                                                        case 'width':
+                                                                            width = parseFloat(value);
+                                                                            if (isNaN(width) || width < 0) {
+                                                                                break pathType;
+                                                                            }
+                                                                            break;
+                                                                        case 'height':
+                                                                            height = parseFloat(value);
+                                                                            if (isNaN(height) || height < 0) {
+                                                                                break pathType;
+                                                                            }
+                                                                            break;
+                                                                    }
+                                                                    if (x !== undefined || y !== undefined) {
+                                                                        const commandStart = pathPoints[0];
+                                                                        const commandEnd = pathPoints[pathPoints.length - 1];
+                                                                        const [firstPoint, lastPoint] = [commandStart.points[0], commandEnd.points[commandEnd.points.length - 1]];
+                                                                        let recalibrate = false;
+                                                                        if (x !== undefined) {
+                                                                            switch (item.attributeName) {
+                                                                                case 'x':
+                                                                                    x -= firstPoint.x;
+                                                                                    recalibrate = true;
+                                                                                    break;
+                                                                                case 'x1':
+                                                                                case 'cx':
+                                                                                    firstPoint.x = x;
+                                                                                    commandStart.coordinates[0] = x;
+                                                                                    break;
+                                                                                case 'x2':
+                                                                                    lastPoint.x = x;
+                                                                                    commandEnd.coordinates[0] = x;
+                                                                                    break;
+                                                                            }
+                                                                        }
+                                                                        if (y !== undefined) {
+                                                                            switch (item.attributeName) {
+                                                                                case 'y':
+                                                                                    y -= firstPoint.y;
+                                                                                    recalibrate = true;
+                                                                                    break;
+                                                                                case 'y1':
+                                                                                case 'cy':
+                                                                                    firstPoint.y = y;
+                                                                                    commandStart.coordinates[1] = y;
+                                                                                    break;
+                                                                                case 'y2':
+                                                                                    lastPoint.y = y;
+                                                                                    commandEnd.coordinates[1] = y;
+                                                                                    break;
+                                                                            }
+                                                                        }
+                                                                        if (recalibrate) {
+                                                                            for (const path of pathPoints) {
+                                                                                if (!path.relative) {
+                                                                                    for (let j = 0, k = 0; j < path.coordinates.length; j += 2, k++) {
+                                                                                        const pt = path.points[k];
+                                                                                        if (x !== undefined) {
+                                                                                            path.coordinates[j] += x;
+                                                                                            pt.x += x;
+                                                                                        }
+                                                                                        if (y !== undefined) {
+                                                                                            path.coordinates[j + 1] += y;
+                                                                                            pt.y += y;
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    else if (rx !== undefined || ry !== undefined) {
+                                                                        for (const path of pathPoints) {
+                                                                            if (path.command.toUpperCase() === 'A') {
+                                                                                if (rx !== undefined) {
+                                                                                    path.radiusX = rx;
+                                                                                    path.coordinates[0] = rx * 2 * (path.coordinates[0] < 0 ? -1 : 1);
+                                                                                }
+                                                                                if (ry !== undefined) {
+                                                                                    path.radiusY = ry;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    else if (width !== undefined || height !== undefined) {
+                                                                        for (const path of pathPoints) {
+                                                                            switch (path.command) {
+                                                                                case 'h':
+                                                                                    if (width !== undefined) {
+                                                                                        path.coordinates[0] = width * (path.coordinates[0] < 0 ? -1 : 1);
+                                                                                    }
+                                                                                    break;
+                                                                                case 'v':
+                                                                                    if (height !== undefined) {
+                                                                                        path.coordinates[1] = height;
+                                                                                    }
+                                                                                    break;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    else {
+                                                                        values[i] = values[i - 1] || group.pathData;
+                                                                        continue;
+                                                                    }
+                                                                    values[i] = $SvgBuild.fromPathCommandList(pathPoints);
+                                                                }
+                                                            }
+                                                        }
+                                                        propertyName = ['pathData'];
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            default: {
+                                                values = item.values.slice();
+                                                switch (item.attributeName) {
+                                                    case 'fill':
+                                                        propertyName = ['fillColor'];
+                                                    case 'stroke':
+                                                        propertyName = ['strokeColor'];
+                                                        break;
+                                                }
+                                                if (propertyName) {
+                                                    for (let i = 0; i < values.length; i++) {
+                                                        const color = $color.parseRGBA(values[i]);
+                                                        if (color) {
+                                                            values[i] = `@color/${Resource.addColor(color)}`;
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                     if (propertyName && values) {
-                                        if (node.localSettings.targetAPI >= BUILD_ANDROID.MARSHMALLOW && item.keyTimes.length > 1 && (this.options.vectorAnimateAlwaysUseKeyframes || item.keyTimes.join('-') !== '0-1')) {
-                                            const keyName = JSON.stringify(options);
-                                            const propertyValues: PropertyValue[] = animatorMap.get(keyName) || [];
-                                            const keyframes: KeyFrame[] = [];
-                                            for (let i = 0; i < item.keyTimes.length; i++) {
-                                                const value = values[i];
-                                                keyframes.push({
-                                                    fraction: value !== '' ? item.keyTimes[i].toString() : '',
-                                                    value
-                                                });
+                                        const keyName = JSON.stringify(options);
+                                        for (let i = 0; i < propertyName.length; i++) {
+                                            if (node.localSettings.targetAPI >= BUILD_ANDROID.MARSHMALLOW && item.keyTimes.length > 1 && (this.options.vectorAnimateAlwaysUseKeyframes || item.keyTimes.join('-') !== '0-1')) {
+                                                const propertyValues: PropertyValue[] = animatorMap.get(keyName) || [];
+                                                const keyframes: KeyFrame[] = [];
+                                                for (let j = 0; j < item.keyTimes.length; j++) {
+                                                    let value: string | undefined;
+                                                    if (Array.isArray(values[j])) {
+                                                        const fromTo = values[j][i];
+                                                        if (fromTo !== undefined) {
+                                                            value = fromTo !== null ? fromTo.toString() : '';
+                                                        }
+                                                    }
+                                                    else {
+                                                        value = values[j].toString();
+                                                    }
+                                                    if (value !== undefined) {
+                                                        keyframes.push({
+                                                            fraction: value !== '' ? item.keyTimes[j].toString() : '',
+                                                            value
+                                                        });
+                                                    }
+                                                }
+                                                propertyValues.push({ propertyName: propertyName[i], keyframes });
+                                                if (!animatorMap.has(keyName)) {
+                                                    animatorMap.set(keyName, propertyValues);
+                                                    options.propertyValues = propertyValues;
+                                                    animate.objectAnimators.push(options);
+                                                }
                                             }
-                                            propertyValues.push({ propertyName, keyframes });
-                                            if (!animatorMap.has(keyName)) {
-                                                animatorMap.set(keyName, propertyValues);
-                                                options.propertyValues = propertyValues;
+                                            else {
+                                                options.propertyName = propertyName[i];
+                                                if (Array.isArray(values[0])) {
+                                                    if (values.length > 1) {
+                                                        const from = values[0][i];
+                                                        if (from !== null) {
+                                                            options.valueFrom = from.toString();
+                                                        }
+                                                    }
+                                                    const to = values[values.length - 1][i];
+                                                    if (to !== null) {
+                                                        options.valueTo = to.toString();
+                                                    }
+                                                }
+                                                else {
+                                                    if (values.length > 1) {
+                                                        options.valueFrom = values[0].toString();
+                                                    }
+                                                    options.valueTo = values[values.length - 1].toString();
+                                                }
+                                                options.propertyValues = false;
                                                 animate.objectAnimators.push(options);
                                             }
-                                        }
-                                        else {
-                                            options.propertyName = propertyName;
-                                            if (values.length > 1) {
-                                                options.valueFrom = values[0];
-                                            }
-                                            options.valueTo = values[values.length - 1];
-                                            options.propertyValues = false;
-                                            animate.objectAnimators.push(options);
                                         }
                                     }
                                 }
@@ -644,7 +708,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                             top: y !== 0 ? $util.formatPX(y) : '',
                             src: Resource.addImage({ mdpi: item.uri })
                         };
-                        const transform = $svg.getTransformData(item.element);
+                        const transform = $svg.createTransformData(item.element);
                         if (transform.rotateAngle !== 0) {
                             data.fromDegrees = transform.rotateAngle.toString();
                             data.visible = item.visible ? 'true' : 'false';

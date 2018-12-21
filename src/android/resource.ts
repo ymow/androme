@@ -31,7 +31,7 @@ function getRadiusPercent(value: string) {
 }
 
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
-    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: androme.lib.base.SvgPath, colorAlias = true) {
+    public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: androme.lib.base.SvgPath) {
         const result: BackgroundGradient[] = [];
         const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
         for (const item of gradients) {
@@ -154,7 +154,7 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
             if (hasStop) {
                 for (let i = 0; i < item.colorStop.length; i++) {
                     const stop = item.colorStop[i];
-                    const color = colorAlias ? `@color/${Resource.addColor(stop.color)}` : getHexARGB($color.parseRGBA(stop.color));
+                    const color = `@color/${Resource.addColor(stop.color)}`;
                     let offset = parseInt(stop.offset);
                     if (i === 0) {
                         if (!node.svgElement && offset !== 0) {

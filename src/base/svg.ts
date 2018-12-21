@@ -23,7 +23,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
     public readonly transformable = false;
 
     public readonly defs: SvgDefs = {
-        clipPath: new Map<string, SvgPath[]>(),
+        clipPath: new Map<string, SvgGroup>(),
         gradient: new Map<string, Gradient>()
     };
 
@@ -38,7 +38,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         this.name = SvgBuild.setName(element);
         this.animate = SvgElement.toAnimateList(element);
         this.visible = isVisible(element);
-        this.build();
+        this.init();
     }
 
     public setDimensions(width: number, height: number) {
@@ -56,7 +56,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         this._opacity = !isNaN(value) && value < 1 ? value : 1;
     }
 
-    private build() {
+    private init() {
         const element = this.element;
         const width = element.viewBox.baseVal.width;
         const height = element.viewBox.baseVal.height;
@@ -73,9 +73,26 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
             if (svg.id) {
                 switch (svg.tagName) {
                     case 'clipPath': {
-                        const clipPath = SvgPath.toClipPathList(<SVGClipPathElement> svg);
-                        if (clipPath.length) {
-                            this.defs.clipPath.set(`${svg.id}`, clipPath);
+                        const svgElement = <SVGClipPathElement> svg;
+                        const group = new SvgGroup(svgElement);
+                        for (const item of Array.from(svgElement.children)) {
+                            switch (item.tagName) {
+                                case 'path':
+                                case 'circle':
+                                case 'ellipse':
+                                case 'line':
+                                case 'rect':
+                                case 'polygon':
+                                case 'polyline':
+                                    const shape = new SvgElement(<SVGGraphicsElement> item);
+                                    if (shape.path) {
+                                        group.append(shape);
+                                    }
+                                    break;
+                            }
+                        }
+                        if (group.length) {
+                            this.defs.clipPath.set(`${svg.id}`, group);
                         }
                         break;
                     }
@@ -177,13 +194,13 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
         for (const svg of Array.from(element.children)) {
             const nested = new Set(Array.from(svg.querySelectorAll('*')));
             for (const group of this.children) {
-                if (group.element && (group.element === svg || nested.has(group.element))) {
+                if (group.element === svg || nested.has(group.element)) {
                     sorted.delete(group);
                     sorted.add(group);
                     break;
                 }
-                for (const path of group) {
-                    if (path.element && (path.element === svg || nested.has(path.element))) {
+                for (const shape of group.children) {
+                    if (shape.element === svg || nested.has(shape.element)) {
                         sorted.delete(group);
                         sorted.add(group);
                         break;
