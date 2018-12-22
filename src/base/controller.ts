@@ -4,6 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 
 import { repeat } from '../lib/util';
+import { replaceIndent } from '../lib/xml';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
     public abstract readonly localSettings: ControllerSettings;
@@ -97,7 +98,25 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         return value.replace(/{[<:@#>]\d+(\^\d+)?}/g, '').trim();
     }
 
-    get outputIndentPrefix() {
-        return /^({.*?})(\t*)(<.*)/;
+    public replaceIndent(value: string, depth: number, cache: T[]) {
+        value = replaceIndent(value, depth, /^({.*?})(\t*)(<.*)/);
+        if (cache) {
+            const pattern = /{@(\d+)}/g;
+            let match: RegExpExecArray | null;
+            let i = 0;
+            while ((match = pattern.exec(value)) !== null) {
+                const id = parseInt(match[1]);
+                const node = cache.find(item => item.id === id);
+                if (node) {
+                    if (i++ === 0) {
+                        node.renderDepth = depth;
+                    }
+                    else if (node.renderParent) {
+                        node.renderDepth = node.renderParent.renderDepth + 1;
+                    }
+                }
+            }
+        }
+        return value;
     }
 }

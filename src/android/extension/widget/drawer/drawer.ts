@@ -31,8 +31,8 @@ export default class Drawer<T extends $View> extends androme.lib.base.Extension<
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length) {
             Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !$util.includes(item.dataset.include, $const.EXT_NAME.EXTERNAL)) {
-                    item.dataset.include = ($util.hasValue(item.dataset.include) ? `${item.dataset.include}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                if (item.tagName === 'NAV' && !$util.includes(item.dataset.use, $const.EXT_NAME.EXTERNAL)) {
+                    item.dataset.use = ($util.hasValue(item.dataset.use) ? `${item.dataset.use}, ` : '') + $const.EXT_NAME.EXTERNAL;
                 }
             });
             this.application.parseElements.add(element);

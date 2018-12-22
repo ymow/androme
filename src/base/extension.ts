@@ -7,7 +7,7 @@ import { includes } from '../lib/util';
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public static findNestedByName(element: Element, name: string) {
         if (hasComputedStyle(element)) {
-            return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.include, name)) as HTMLElement || null;
+            return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.use, name)) as HTMLElement || null;
         }
         return null;
     }
@@ -50,7 +50,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public included(element: HTMLElement) {
-        return includes(element.dataset.include, this.name);
+        return includes(element.dataset.use, this.name);
     }
 
     public beforeInit(element: HTMLElement, recursive = false) {
@@ -83,7 +83,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public condition(node: T, parent?: T) {
         if (hasComputedStyle(node.element)) {
-            const ext = node.dataset.include;
+            const ext = node.dataset.use;
             if (!ext) {
                 return this.tagNames.length > 0;
             }

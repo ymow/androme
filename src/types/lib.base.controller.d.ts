@@ -8,7 +8,6 @@ declare global {
             readonly containerTypeHorizontal: LayoutType;
             readonly containerTypeVertical: LayoutType;
             readonly containerTypeVerticalMargin: LayoutType;
-            readonly outputIndentPrefix: RegExp;
             readonly afterInsertNode: SelfWrapped<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
@@ -28,6 +27,7 @@ declare global {
             hasAppendProcessing(id: number): boolean;
             getEnclosingTag(controlName: string, id: number, depth: number, xml?: string): string;
             removePlaceholders(value: string): string;
+            replaceIndent(value: string, depth: number, cache: T[]): string;
         }
 
         export class Controller<T extends Node> implements Controller<T> {

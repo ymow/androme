@@ -345,7 +345,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     this.userSettings.collapseUnattributedElements &&
                     node.positionStatic &&
                     node.baseElement && !$util.hasValue(node.baseElement.id) &&
-                    !$util.hasValue(node.dataset.include) &&
+                    !$util.hasValue(node.dataset.use) &&
                     !$util.hasValue(node.dataset.target) &&
                     !node.hasWidth &&
                     !node.hasHeight &&
@@ -438,7 +438,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                 node.bounds.height === 0 &&
                 !visible.background &&
                 !$util.hasValue(node.element.id) &&
-                !$util.hasValue(node.dataset.include))
+                !$util.hasValue(node.dataset.use))
             {
                 node.hide();
                 next = true;
@@ -723,7 +723,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             }
         }
         if (valid) {
-            const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
+            const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.use);
             const controlName = View.getControlName(containerType);
             node.alignmentType |= alignmentType;
             node.setControlType(controlName, containerType);
@@ -739,7 +739,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         node.alignmentType |= layout.alignmentType;
         const controlName = View.getControlName(layout.containerType);
         node.setControlType(controlName, layout.containerType);
-        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
+        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.use);
         switch (node.element.tagName) {
             case 'IMG': {
                 if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
@@ -1047,7 +1047,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 const horizontal = index === 0;
-                const dimension = node.positionStatic ? 'bounds' : 'linear';
                 let LT: string;
                 let RB: string;
                 let LTRB: string;
@@ -1064,6 +1063,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     LTRB = !opposite ? 'topBottom' : 'bottomTop';
                     RBLT = !opposite ? 'bottomTop' : 'topBottom';
                 }
+                if ($util.withinFraction(node.linear[LT], documentParent.box[LT])) {
+                    node.anchor(LT, 'parent', true);
+                    return;
+                }
+                const dimension = node.positionStatic ? 'bounds' : 'linear';
                 let beginPercent = 'layout_constraintGuide_';
                 let usePercent = false;
                 let location: number;
@@ -1090,7 +1094,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 }
                                 if (pageFlow || !node.pageFlow && !item.pageFlow) {
                                     if ($util.withinFraction(node.bounds[LT], item.bounds[LT])) {
-                                        node.anchor(!horizontal && node.textElement && item.textElement && item.baseline && node.baseline && node.bounds.height === item.bounds.height ? 'baseline' : LT, item.documentId, true);
+                                        node.anchor(!horizontal && node.textElement && node.baseline && item.textElement && item.baseline ? 'baseline' : LT, item.documentId, true);
                                         valid = true;
                                     }
                                     else if ($util.withinFraction(node.bounds[RB], item.bounds[RB])) {
@@ -1709,7 +1713,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
             if (boxParent.css('textAlign') === 'center') {
                 rowStart.app('layout_constraintHorizontal_chainStyle', 'spread');
             }
-            else {
+            else if (segment.length > 1) {
                 if (reverse) {
                     rowEnd.app('layout_constraintHorizontal_chainStyle', 'packed');
                     rowEnd.app('layout_constraintHorizontal_bias', '1');

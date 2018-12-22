@@ -35,15 +35,15 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
     public init(element: HTMLElement) {
         if (this.included(element)) {
             Array.from(element.children).some((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !$util.includes(item.dataset.include, $const.EXT_NAME.EXTERNAL)) {
-                    item.dataset.include = ($util.hasValue(item.dataset.include) ? `${item.dataset.include}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                if (item.tagName === 'NAV' && !$util.includes(item.dataset.use, $const.EXT_NAME.EXTERNAL)) {
+                    item.dataset.use = ($util.hasValue(item.dataset.use) ? `${item.dataset.use}, ` : '') + $const.EXT_NAME.EXTERNAL;
                     return true;
                 }
                 return false;
             });
             if (element.dataset.target) {
                 const target = document.getElementById(element.dataset.target);
-                if (target && element.parentElement !== target && !$util.includes(target.dataset.include, WIDGET_NAME.COORDINATOR)) {
+                if (target && element.parentElement !== target && !$util.includes(target.dataset.use, WIDGET_NAME.COORDINATOR)) {
                     this.application.parseElements.add(element);
                 }
             }

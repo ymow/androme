@@ -20,7 +20,7 @@ export default class ScrollBar<T extends View> extends androme.lib.base.Extensio
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
+        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.use);
         const overflow: string[] = [];
         if (node.overflowX && node.overflowY) {
             overflow.push(SCROLL_HORIZONTAL, SCROLL_VERTICAL);

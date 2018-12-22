@@ -83,7 +83,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     }
                 }
                 else if (svg instanceof SVGLinearGradientElement) {
-                    this.defs.gradient.set(`@${svg.id}`, <LinearGradient> {
+                    this.defs.gradient.set(`@${svg.id}`, <SvgLinearGradient> {
                         type: 'linear',
                         x1: svg.x1.baseVal.value,
                         x2: svg.x2.baseVal.value,
@@ -97,7 +97,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                     });
                 }
                 else if (svg instanceof SVGRadialGradientElement) {
-                    this.defs.gradient.set(`@${svg.id}`, <RadialGradient> {
+                    this.defs.gradient.set(`@${svg.id}`, <SvgRadialGradient> {
                         type: 'radial',
                         cx: svg.cx.baseVal.value,
                         cy: svg.cy.baseVal.value,

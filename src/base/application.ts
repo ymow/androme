@@ -10,14 +10,14 @@ import Resource from './resource';
 
 import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache, withinViewportOrigin } from '../lib/dom';
 import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
-import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
+import { formatPlaceholder, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
     const tagged: string[] = [];
     let current: HTMLElement | null = element;
     do {
-        if (current.dataset.include) {
-            tagged.push(...current.dataset.include.split(',').map(value => value.trim()));
+        if (current.dataset.use) {
+            tagged.push(...current.dataset.use.split(',').map(value => value.trim()));
         }
         current = current !== documentRoot ? current.parentElement : null;
     }
@@ -377,14 +377,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.renderChildren.some((item: T) => {
                     for (const templates of this.processing.depthMap.values()) {
                         const key = item.renderPositionId;
-                        let view = templates.get(key);
+                        const view = templates.get(key);
                         if (view) {
                             const indent = node.renderDepth + 1;
                             if (item.renderDepth !== indent) {
-                                view = replaceIndent(view, indent, this.controllerHandler.outputIndentPrefix);
-                                item.renderDepth = indent;
+                                templates.set(key, this.controllerHandler.replaceIndent(view, indent, this.processing.cache.children));
                             }
-                            templates.set(key, view);
                             return true;
                         }
                     }
@@ -1175,33 +1173,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (replaceId !== parentId) {
                 const target = this.session.cache.find('id', parseInt(replaceId));
                 if (target) {
-                    const depth = target.renderDepth + 1;
-                    output = replaceIndent(output, depth, this.controllerHandler.outputIndentPrefix);
-                    const pattern = /{@(\d+)}/g;
-                    let match: RegExpExecArray | null;
-                    let i = 0;
-                    while ((match = pattern.exec(output)) !== null) {
-                        const node = this.session.cache.find('id', parseInt(match[1]));
-                        if (node) {
-                            if (i++ === 0) {
-                                node.renderDepth = depth;
-                            }
-                            else {
-                                node.renderDepth = node.parent ? node.parent.renderDepth + 1 : depth;
-                            }
-                        }
-                    }
+                    output = this.controllerHandler.replaceIndent(output, target.renderDepth + 1, this.session.cache.children);
                 }
             }
             template[positionId || replaceId] = output;
-        }
-        for (const inner in template) {
-            for (const outer in template) {
-                if (inner !== outer) {
-                    template[inner] = template[inner].replace(formatPlaceholder(outer), template[outer]);
-                    template[outer] = template[outer].replace(formatPlaceholder(inner), template[inner]);
-                }
-            }
         }
         for (const view of this.viewData) {
             for (const id in template) {
@@ -1559,15 +1534,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         output = replacePlaceholder(output, basegroup.id, formatPlaceholder(target.renderPositionId));
                     }
                     if (!settings.floatOverlapDisabled && target && segment === inlineAbove && segment.some(subitem => subitem.blockStatic && !subitem.hasWidth)) {
+                        const vertical = this.controllerHandler.containerTypeVertical;
+                        const targeted = target.of(vertical.containerType, vertical.alignmentType) ? target.children : [target];
                         if (leftAbove.length) {
                             const marginRight = maxArray(leftAbove.map(subitem => subitem.linear.right));
                             const boundsLeft = minArray(segment.map(subitem => subitem.bounds.left));
-                            target.modifyBox(BOX_STANDARD.PADDING_LEFT, marginRight - boundsLeft);
+                            targeted.forEach(subitem => subitem.modifyBox(BOX_STANDARD.PADDING_LEFT, marginRight - boundsLeft));
                         }
                         if (rightAbove.length) {
                             const marginLeft = minArray(rightAbove.map(subitem => subitem.linear.left));
                             const boundsRight = maxArray(segment.map(subitem => subitem.bounds.right));
-                            target.modifyBox(BOX_STANDARD.PADDING_RIGHT, boundsRight - marginLeft);
+                            targeted.forEach(subitem => subitem.modifyBox(BOX_STANDARD.PADDING_RIGHT, boundsRight - marginLeft));
                         }
                     }
                 });
@@ -1579,23 +1556,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
     protected processFloatVertical(data: Layout<T>) {
         const controller = this.controllerHandler;
         const vertical = controller.containerTypeVertical;
-        let output = '';
-        let group: T;
-        if (data.parent.of(vertical.containerType, vertical.alignmentType)) {
-            group = data.parent;
-            output = formatPlaceholder(group.id);
-        }
-        else {
-            group = data.node;
-            const layout = new Layout(
-                data.parent,
-                data.node,
-                vertical.containerType,
-                vertical.alignmentType,
-                data.length
-            );
-            output = this.renderNode(layout);
-        }
+        const group = data.node;
+        const layoutGroup = new Layout(
+            data.parent,
+            group,
+            vertical.containerType,
+            vertical.alignmentType,
+            data.length
+        );
+        let output = this.renderNode(layoutGroup);
         const staticRows: T[][] = [];
         const floatedRows: Null<T[]>[] = [];
         const current: T[] = [];
@@ -1782,7 +1751,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             return false;
         }
         else if (hasComputedStyle(element)) {
-            if (hasValue(element.dataset.include)) {
+            if (hasValue(element.dataset.use)) {
                 return true;
             }
             else if (withinViewportOrigin(element)) {

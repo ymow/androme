@@ -94,11 +94,9 @@ export default class ResourceIncludes<T extends View> extends androme.lib.base.E
                                     for (const item of group) {
                                         if (item.renderDepth !== depth) {
                                             const key = item.renderPositionId;
-                                            let output = content.get(key);
+                                            const output = content.get(key);
                                             if (output) {
-                                                output = $xml.replaceIndent(output, depth, controller.outputIndentPrefix);
-                                                content.set(key, output);
-                                                item.renderDepth = depth;
+                                                content.set(key, controller.replaceIndent(output, depth, controller.cache.children));
                                             }
                                         }
                                     }

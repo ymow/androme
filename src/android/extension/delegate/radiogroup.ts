@@ -18,7 +18,7 @@ export default class ScrollView<T extends View> extends androme.lib.base.Extensi
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
+        const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.use);
         const element = <HTMLInputElement> node.element;
         const pending: T[] = [];
         let replaceWith: T | undefined;

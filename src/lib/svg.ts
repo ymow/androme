@@ -87,9 +87,9 @@ export function createTransformData(element: SVGGraphicsElement) {
 export function getTransformOrigin(element: SVGGraphicsElement, dpi = 0) {
     const value = cssAttribute(element, 'transform-origin');
     if (value !== '') {
+        const parent = element.parentElement;
         let width: number;
         let height: number;
-        const parent = element.parentElement;
         if (parent instanceof SVGSVGElement) {
             width = parent.viewBox.baseVal.width;
             height = parent.viewBox.baseVal.height;
@@ -141,7 +141,9 @@ export function getTransformOrigin(element: SVGGraphicsElement, dpi = 0) {
                 }
             }
         });
-        if (origin.x !== 0 || origin.y !== 0) {
+        if (origin.x || origin.y) {
+            origin.x = origin.x || 0;
+            origin.y = origin.y || 0;
             return origin;
         }
     }

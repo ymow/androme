@@ -27,7 +27,7 @@ export default class Substitute<T extends Node> extends Extension<T> {
         if (data.tagChild) {
             node.each(item => {
                 if (item.styleElement) {
-                    item.dataset.include = this.name;
+                    item.dataset.use = this.name;
                     item.dataset.andromeSubstituteTag = data.tagChild;
                 }
             });

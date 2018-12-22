@@ -171,10 +171,10 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" style="width: 200px;">
-        <div id="toolbar_demo" data-include="android.widget.toolbar" data-target="drawer_content">
+        <div id="toolbar_demo" data-use="android.widget.toolbar" data-target="drawer_content">
             <img src="images/icons8-menu-24.png" data-navigation-icon="true" onclick="toggleDrawer(this, true);" />
             <img src="images/icons8-left-24.png" data-collapse-icon="true" onclick="toggleDrawer(this, false);" style="display: none;" />
-            <nav id="toolbar_menu" data-include="android.widget.menu">
+            <nav id="toolbar_menu" data-use="android.widget.menu">
                 <div
                     data-show-as-action="always"
                     title="Web">
@@ -187,12 +187,12 @@
                 </div>
             </nav>
         </div>
-        <div id="drawer_demo" data-include="android.widget.drawer">
-            <div id="drawer_content" data-include="android.widget.coordinator" data-android-include="drawer_content" data-android-include-end="true"></div>
-            <div id="drawer_header" data-include="androme.external">
+        <div id="drawer_demo" data-use="android.widget.drawer">
+            <div id="drawer_content" data-use="android.widget.coordinator" data-android-include="drawer_content" data-android-include-end="true"></div>
+            <div id="drawer_header" data-use="androme.external">
                 <span style="margin-top: 100px; display: block;">android@user.com</span>
             </div>
-            <nav id="drawer_menu" data-include="android.widget.menu">
+            <nav id="drawer_menu" data-use="android.widget.menu">
                 <div>
                     <img src="images/icons8-chrome.png" />
                     <label>Chrome</label>

@@ -454,6 +454,9 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     public cssInitial(attr: string, modified = false, computed = false) {
+        if (this._initial.iteration === -1 && !modified) {
+            computed = true;
+        }
         let value = modified ? this._styleMap[attr] : this._initial.styleMap[attr];
         if (computed && !hasValue(value)) {
             value = this.style[attr];
@@ -1081,7 +1084,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     }
 
     get extensions() {
-        return this.dataset.include ? this.dataset.include.split(',').map(value => value.trim()).filter(value => value) : [];
+        return this.dataset.use ? this.dataset.use.split(',').map(value => value.trim()).filter(value => value) : [];
     }
 
     get flexbox() {
@@ -1215,7 +1218,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
 
     get positionAuto() {
         if (this._cached.positionAuto === undefined) {
-            const styleMap = this._initial.styleMap;
+            const styleMap = this._initial.iteration === -1 ? this._styleMap : this._initial.styleMap;
             this._cached.positionAuto = (
                 !this.pageFlow &&
                 (styleMap.top === 'auto' || !styleMap.top) &&
@@ -1365,7 +1368,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
                                 element.children.length === 0 ||
                                 Array.from(element.children).every(item => {
                                     const node = getElementAsNode<T>(item);
-                                    return !(node && !node.excluded || hasComputedStyle(item) && hasValue(item.dataset.include));
+                                    return !(node && !node.excluded || hasComputedStyle(item) && hasValue(item.dataset.use));
                                 })
                             )
                         );
@@ -1437,7 +1440,7 @@ export default abstract class Node extends Container<T> implements androme.lib.b
     get autoMargin() {
         if (this._cached.autoMargin === undefined) {
             if (!this.pageFlow || this.blockStatic || this.display === 'table') {
-                const styleMap = this._initial.styleMap;
+                const styleMap = this._initial.iteration === -1 ? this._styleMap : this._initial.styleMap;
                 const left = styleMap.marginLeft === 'auto' && (this.pageFlow ? true : this.has('right'));
                 const right = styleMap.marginRight === 'auto' && (this.pageFlow ? true : this.has('left'));
                 const top = styleMap.marginTop === 'auto' && (this.pageFlow ? true : this.has('bottom'));
