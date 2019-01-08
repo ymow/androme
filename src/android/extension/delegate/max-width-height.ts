@@ -8,7 +8,7 @@ import $enum = androme.lib.enumeration;
 
 export default class MaxWidthHeight<T extends View> extends androme.lib.base.Extension<T> {
     public condition(node: T) {
-        return !node.textElement && (node.has('maxWidth') || node.has('maxHeight'));
+        return !node.textElement && !node.imageElement && !node.svgElement && (node.has('maxWidth') || node.has('maxHeight'));
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {

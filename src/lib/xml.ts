@@ -151,7 +151,7 @@ export function createTemplate(value: StringMap, data: ExternalData, index?: str
     if (index === undefined) {
         output = output.replace(/\n{%\w+}\n/g, '\n');
     }
-    return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
+    return output.replace(/\s*([\w:]+="[^"]*)?{~\w+}"?/g, '');
 }
 
 export function getTemplateSection(data: ExternalData, ...levels: string[]) {

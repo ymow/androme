@@ -964,14 +964,6 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         return false;
                     });
                 }
-                if (node.has('maxWidth')) {
-                    const value = node.convertPX(node.css('maxWidth'));
-                    node.android('maxWidth', value);
-                }
-                if (node.has('maxHeight')) {
-                    const value = node.convertPX(node.css('maxHeight'), false);
-                    node.android('maxHeight', value);
-                }
                 break;
             case CONTAINER_ANDROID.BUTTON:
                 if (!node.cssInitial('verticalAlign')) {
@@ -983,6 +975,16 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     node.android('layout_height', $util.formatPX(node.contentBoxHeight || 1));
                 }
                 break;
+        }
+        if (node.textElement || node.imageElement || node.svgElement) {
+            if (node.has('maxWidth')) {
+                const value = node.convertPX(node.css('maxWidth'));
+                node.android('maxWidth', value);
+            }
+            if (node.has('maxHeight')) {
+                const value = node.convertPX(node.css('maxHeight'), false);
+                node.android('maxHeight', value);
+            }
         }
         node.render(target ? node : parent);
         return this.getEnclosingTag(controlName, node.id, target ? -1 : node.renderDepth);

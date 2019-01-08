@@ -1,6 +1,6 @@
 {
   "name": "android.widget",
-  "version": "2.3.1",
+  "version": "2.3.3",
   "description": "Extensions for the android framework using widgets from the Android Support library.",
   "repository": {
     "type": "git",

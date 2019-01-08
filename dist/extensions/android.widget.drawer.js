@@ -1,4 +1,4 @@
-/* android.widget 2.3.1
+/* android.widget 2.3.3
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -50,8 +50,8 @@ this.android.widget.drawer = (function () {
         init(element) {
             if (this.included(element) && element.children.length) {
                 Array.from(element.children).forEach((item) => {
-                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.include, $const.EXT_NAME.EXTERNAL)) {
-                        item.dataset.include = ($util.hasValue(item.dataset.include) ? `${item.dataset.include}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.use, $const.EXT_NAME.EXTERNAL)) {
+                        item.dataset.use = ($util.hasValue(item.dataset.use) ? `${item.dataset.use}, ` : '') + $const.EXT_NAME.EXTERNAL;
                     }
                 });
                 this.application.parseElements.add(element);

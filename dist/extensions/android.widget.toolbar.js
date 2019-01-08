@@ -1,4 +1,4 @@
-/* android.widget 2.3.1
+/* android.widget 2.3.3
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -54,15 +54,15 @@ this.android.widget.toolbar = (function () {
         init(element) {
             if (this.included(element)) {
                 Array.from(element.children).some((item) => {
-                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.include, $const.EXT_NAME.EXTERNAL)) {
-                        item.dataset.include = ($util.hasValue(item.dataset.include) ? `${item.dataset.include}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.use, $const.EXT_NAME.EXTERNAL)) {
+                        item.dataset.use = ($util.hasValue(item.dataset.use) ? `${item.dataset.use}, ` : '') + $const.EXT_NAME.EXTERNAL;
                         return true;
                     }
                     return false;
                 });
                 if (element.dataset.target) {
                     const target = document.getElementById(element.dataset.target);
-                    if (target && element.parentElement !== target && !$util.includes(target.dataset.include, "android.widget.coordinator" /* COORDINATOR */)) {
+                    if (target && element.parentElement !== target && !$util.includes(target.dataset.use, "android.widget.coordinator" /* COORDINATOR */)) {
                         this.application.parseElements.add(element);
                     }
                 }
@@ -310,7 +310,7 @@ this.android.widget.toolbar = (function () {
             }
         }
         createPlaceholder(nextId, node, children) {
-            const placeholder = new $View(nextId, $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block), this.application.controllerHandler.delegateNodeInit);
+            const placeholder = new $View(nextId, $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block), this.application.controllerHandler.afterInsertNode);
             placeholder.inherit(node, 'base');
             placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
             placeholder.positioned = true;
