@@ -1,5 +1,7 @@
 # androme
 
+Project renamed to squared: https://github.com/anpham6/squared
+
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML.
 
 Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.

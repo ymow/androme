@@ -1,4 +1,4 @@
-/* android.widget 2.3.3
+/* android.widget 2.4.0
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -37,7 +37,6 @@ this.android.widget.toolbar = (function () {
     var EXTENSION_TOOLBAR_TMPL = template.join('\n');
 
     var $Resource = android.lib.base.Resource;
-    var $View = android.lib.base.View;
     var $const = androme.lib.constant;
     var $dom = androme.lib.dom;
     var $enum = androme.lib.enumeration;
@@ -210,7 +209,7 @@ this.android.widget.toolbar = (function () {
                 else {
                     $util.defaultWhenNull(appBarOptions, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
-                appBarNode = this.createPlaceholder(application.nextId, node, appBarChildren);
+                appBarNode = this.createPlaceholder(node, appBarChildren);
                 appBarNode.parent = node.parent;
                 appBarNode.controlId = $android_util.stripId(appBarOptions.android.id);
                 appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $android_enum.CONTAINER_NODE.BLOCK);
@@ -225,7 +224,7 @@ this.android.widget.toolbar = (function () {
                     }
                     $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'toolbarId', node.documentId);
-                    collapsingToolbarNode = this.createPlaceholder(application.nextId, node, collapsingToolbarChildren);
+                    collapsingToolbarNode = this.createPlaceholder(node, collapsingToolbarChildren);
                     collapsingToolbarNode.parent = appBarNode;
                     if (collapsingToolbarNode) {
                         collapsingToolbarNode.each(item => item.dataset.target = collapsingToolbarNode.controlId);
@@ -309,8 +308,8 @@ this.android.widget.toolbar = (function () {
                 this.application.resourceHandler.addStyleTheme(EXTENSION_TOOLBAR_TMPL, data, options);
             }
         }
-        createPlaceholder(nextId, node, children) {
-            const placeholder = new $View(nextId, $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block), this.application.controllerHandler.afterInsertNode);
+        createPlaceholder(node, children) {
+            const placeholder = this.application.createNode($dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block));
             placeholder.inherit(node, 'base');
             placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
             placeholder.positioned = true;

@@ -1,7 +1,7 @@
 import { UserSettingsAndroid, ViewAttribute } from './types/module';
 
 import { AXIS_ANDROID, BOX_ANDROID, CONTAINER_ANDROID, XMLNS_ANDROID } from './lib/constant';
-import { BUILD_ANDROID, CONTAINER_NODE, DENSITY_ANDROID } from './lib/enumeration';
+import { BUILD_ANDROID, CONTAINER_NODE } from './lib/enumeration';
 
 import BASE_TMPL from './template/base';
 
@@ -799,11 +799,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     if (!node.pageFlow && node.left < 0 || node.top < 0) {
                         const absoluteParent = node.absoluteParent;
                         if (absoluteParent && absoluteParent.css('overflow') === 'hidden') {
-                            const container = new View(
-                                this.cache.nextId,
-                                $dom.createElement(node.actualParent ? node.actualParent.baseElement : null),
-                                this.afterInsertNode
-                            ) as T;
+                            const container = this.application.createNode($dom.createElement(node.actualParent ? node.actualParent.baseElement : null));
                             container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                             container.inherit(node, 'base');
                             container.exclude({
@@ -1223,11 +1219,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     }
 
     public createNodeWrapper(node: T, parent?: T, controlName?: string, containerType?: number) {
-        const container = new View(
-            this.application.nextId,
-            $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
-            this.application.controllerHandler.afterInsertNode
-        ) as T;
+        const container = this.application.createNode($dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block));
         if (node.documentRoot) {
             container.documentRoot = true;
             node.documentRoot = false;
@@ -1843,12 +1835,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
         };
     }
 
-    get afterInsertNode(): SelfWrapped<T, void> {
+    get afterInsertNode(): BindGeneric<T, void> {
         const settings = this.userSettings;
         return (self: T) => {
             self.localSettings = {
                 targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : BUILD_ANDROID.LATEST,
-                resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : DENSITY_ANDROID.MDPI,
                 supportRTL: settings.supportRTL !== undefined ? settings.supportRTL : true,
                 constraintPercentAccuracy: this.localSettings.constraint.percentAccuracy,
                 customizationsOverwritePrivilege: settings.customizationsOverwritePrivilege !== undefined ? settings.customizationsOverwritePrivilege : true

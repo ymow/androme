@@ -34,7 +34,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract get containerTypeHorizontal(): LayoutType;
     public abstract get containerTypeVertical(): LayoutType;
     public abstract get containerTypeVerticalMargin(): LayoutType;
-    public abstract get afterInsertNode(): SelfWrapped<T, void>;
+    public abstract get afterInsertNode(): BindGeneric<T, void>;
 
     public reset() {
         this._before = {};

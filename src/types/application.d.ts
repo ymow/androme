@@ -1,8 +1,4 @@
-interface EnvironmentSettings {
-    resolutionDPI: number;
-}
-
-interface UserSettings extends EnvironmentSettings {
+interface UserSettings {
     builtInExtensions: string[];
     preloadImages: boolean;
     supportNegativeLeftTop: boolean;
@@ -108,8 +104,8 @@ interface InitialData<T> {
     iteration: number;
     styleMap: StringMap;
     children: T[];
-    bounds?: RectDimensions;
-    linear?: RectDimensions;
-    box?: RectDimensions;
+    bounds?: RectDimension;
+    linear?: RectDimension;
+    box?: RectDimension;
     documentParent?: T;
 }

@@ -16,11 +16,7 @@ export default class <T extends View> extends androme.lib.extensions.Sprite<T> {
         let container: T | undefined;
         const mainData = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'mainData');
         if (mainData && mainData.uri && mainData.position && node.baseElement) {
-            container = new View(
-                this.application.nextId,
-                node.baseElement,
-                this.application.controllerHandler.afterInsertNode
-            ) as T;
+            container = this.application.createNode(node.baseElement);
             container.inherit(node, 'initial', 'base', 'styleMap');
             container.setControlType(CONTAINER_ANDROID.FRAME);
             container.exclude({

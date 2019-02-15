@@ -93,7 +93,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                         x2AsString: svg.x2.baseVal.valueAsString,
                         y1AsString: svg.y1.baseVal.valueAsString,
                         y2AsString: svg.y2.baseVal.valueAsString,
-                        colorStop: SvgBuild.createColorStops(svg)
+                        colorStops: SvgBuild.createColorStops(svg)
                     });
                 }
                 else if (svg instanceof SVGRadialGradientElement) {
@@ -109,7 +109,7 @@ export default class Svg extends Container<SvgGroup> implements androme.lib.base
                         fy: svg.fy.baseVal.value,
                         fxAsString: svg.fx.baseVal.valueAsString,
                         fyAsString: svg.fy.baseVal.valueAsString,
-                        colorStop: SvgBuild.createColorStops(svg)
+                        colorStops: SvgBuild.createColorStops(svg)
                     });
                 }
             }

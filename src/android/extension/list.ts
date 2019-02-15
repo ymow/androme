@@ -90,7 +90,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                 let [left, top] = [0, 0];
                 let image = '';
                 if (mainData.imageSrc !== '') {
-                    const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.dpi, node.fontSize);
+                    const boxPosition = $dom.getBackgroundPosition(mainData.imagePosition, node.bounds, node.fontSize);
                     left = boxPosition.left;
                     top = boxPosition.top;
                     image = Resource.addImageUrl(mainData.imageSrc);
@@ -167,11 +167,7 @@ export default class <T extends View> extends androme.lib.extensions.List<T> {
                     else {
                         options.android.text = mainData.ordinal;
                     }
-                    const companion = new View(
-                        this.application.nextId,
-                        $dom.createElement(node.actualParent ? node.actualParent.baseElement : null),
-                        this.application.controllerHandler.afterInsertNode
-                    ) as T;
+                    const companion = this.application.createNode($dom.createElement(node.actualParent ? node.actualParent.baseElement : null));
                     companion.tagName = `${node.tagName}_ORDINAL`;
                     companion.inherit(node, 'textStyle');
                     if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {

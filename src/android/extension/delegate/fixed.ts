@@ -56,11 +56,7 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
     }
 
     public processNode(node: T, parent: T): ExtensionResult<T> {
-        const container = new View(
-            this.application.nextId,
-            $dom.createElement(node.baseElement, node.block),
-            this.application.controllerHandler.afterInsertNode
-        ) as T;
+        const container = this.application.createNode($dom.createElement(node.baseElement, node.block));
         container.inherit(node, 'initial', 'base');
         container.exclude({
             procedure: $enum.NODE_PROCEDURE.NONPOSITIONAL,

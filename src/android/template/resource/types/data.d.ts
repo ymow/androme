@@ -14,10 +14,10 @@ export interface BackgroundImage {
 
 export interface BackgroundGradient {
     type: string;
-    startColor: string;
-    endColor: string;
-    centerColor: string;
-    colorStop: ColorStop[];
+    colorStops: ColorStop[];
+    startColor?: string;
+    endColor?: string;
+    centerColor?: string;
     angle?: string;
     startX?: string;
     startY?: string;

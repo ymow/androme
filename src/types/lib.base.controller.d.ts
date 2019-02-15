@@ -8,7 +8,7 @@ declare global {
             readonly containerTypeHorizontal: LayoutType;
             readonly containerTypeVertical: LayoutType;
             readonly containerTypeVerticalMargin: LayoutType;
-            readonly afterInsertNode: SelfWrapped<T, void>;
+            readonly afterInsertNode: BindGeneric<T, void>;
             finalize(data: SessionData<NodeList<T>>): void;
             reset(): void;
             processUnknownParent(layout: Layout<T>): LayoutResult<T>;

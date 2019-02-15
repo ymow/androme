@@ -1,5 +1,6 @@
 export interface UserSettingsAndroid extends UserSettings {
     targetAPI: number;
+    resolutionDPI: number;
     supportRTL: boolean;
     ellipsisOnTextOverflow: boolean;
     collapseUnattributedElements: boolean;
@@ -8,7 +9,7 @@ export interface UserSettingsAndroid extends UserSettings {
     showAttributes: boolean;
 }
 
-export interface LocalSettings extends EnvironmentSettings {
+export interface LocalSettings {
     targetAPI: number;
     supportRTL: boolean;
     constraintPercentAccuracy?: number;

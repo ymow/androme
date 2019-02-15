@@ -7,9 +7,96 @@ import Node from './node';
 import NodeList from './nodelist';
 
 import { parseRGBA } from '../lib/color';
-import { cssFromParent, cssInherit, hasLineBreak, isUserAgent, isLineBreak } from '../lib/dom';
-import { convertInt, hasValue, isNumber } from '../lib/util';
+import { cssFromParent, cssInherit, getElementAsNode, hasLineBreak, isLineBreak, isUserAgent } from '../lib/dom';
+import { convertAngle, convertInt, hasValue, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
+
+const REGEXP_DECIMAL = '(-?[\\d.]+)';
+const REGEXP_COLORSTOP = `(?:\\s*(rgba?\\(\\d+, \\d+, \\d+(?:, [\\d.]+)?\\)|#[a-zA-Z\\d]{3,}|[a-z]+)\\s*(\\d+%|${REGEXP_DECIMAL})?,?\\s*)`;
+const REGEXP_POSITION = /(.+?)?\s*at (.+?)$/;
+const REGEXP_DEGREE = REGEXP_DECIMAL + '(deg|rad|turn|grad)';
+
+function replaceExcluded<T extends Node>(element: HTMLElement, attr: string) {
+    let result = element[attr];
+    Array.from(element.children).forEach((item: Element) => {
+        const child = getElementAsNode<T>(item);
+        if (child && (child.excluded || hasValue(child.dataset.target)) && child[attr] && child[attr].trim() !== '') {
+            result = result.replace(child[attr], '');
+        }
+    });
+    return result;
+}
+
+function getColorStops(value: string, opacity: string, conic = false) {
+    const result: ColorStop[] = [];
+    const pattern = new RegExp(REGEXP_COLORSTOP, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(value)) !== null) {
+        const color = parseRGBA(match[1], opacity);
+        if (color && color.visible) {
+            const item: ColorStop = {
+                color: color.valueRGBA,
+                opacity: color.alpha,
+                offset: ''
+            };
+            if (conic) {
+                if (match[3] && match[4]) {
+                    item.offset = convertAngle(match[3], match[4]).toString();
+                }
+            }
+            else {
+                if (match[2]) {
+                    item.offset = match[2];
+                }
+            }
+            result.push(item);
+        }
+    }
+    const lastStop = result[result.length - 1];
+    if (lastStop.offset === '') {
+        lastStop.offset = conic ? '360' : '100%';
+    }
+    let previousIncrement = 0;
+    for (let i = 0; i < result.length; i++) {
+        const item = result[i];
+        if (item.offset === '') {
+            if (i === 0) {
+                item.offset = '0';
+            }
+            else {
+                for (let j = i + 1, k = 2; j < result.length - 1; j++, k++) {
+                    if (result[j].offset !== '') {
+                        item.offset = ((previousIncrement + parseInt(result[j].offset)) / k).toString();
+                        break;
+                    }
+                }
+                if (item.offset === '') {
+                    item.offset = (previousIncrement + parseInt(lastStop.offset) / (result.length - 1)).toString();
+                }
+            }
+            if (!conic) {
+                item.offset += '%';
+            }
+        }
+        previousIncrement = parseInt(item.offset);
+    }
+    if (conic && previousIncrement < 360 || !conic && previousIncrement < 100) {
+        const colorFill = Object.assign({}, result[result.length - 1]);
+        colorFill.offset = conic ? '360' : '100%';
+        result.push(colorFill);
+    }
+    return result;
+}
+
+function parseAngle(value: string | undefined) {
+    if (value) {
+        const match = new RegExp(REGEXP_DEGREE).exec(value.trim());
+        if (match) {
+            return convertAngle(match[1], match[2]);
+        }
+    }
+    return 0;
+}
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static KEY_NAME = 'androme.resource';
@@ -209,91 +296,95 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     case 'background':
                     case 'backgroundImage': {
                         if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
-                            function colorStop(parse: boolean) {
-                                return `${parse ? '' : '(?:'},?\\s*(${parse ? '' : '?:'}rgba?\\(\\d+, \\d+, \\d+(?:, [\\d.]+)?\\)|[a-z]+)\\s*(${parse ? '' : '?:'}\\d+%)?${parse ? '' : ')'}`;
-                            }
                             const gradients: Gradient[] = [];
-                            let pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?(${colorStop(false)}+)\\)`, 'g');
+                            const opacity = node.css('opacity');
+                            let pattern = new RegExp(`(linear|radial|conic)-gradient\\(((?:to [a-z ]+|(?:from )?-?[\\d.]+(?:deg|rad|turn|grad)|circle|ellipse|closest-side|closest-corner|farthest-side|farthest-corner)?(?:\\s*at [\\w %]+)?),?\\s*(${REGEXP_COLORSTOP}+)\\)`, 'g');
                             let match: RegExpExecArray | null;
                             while ((match = pattern.exec(value)) !== null) {
-                                let gradient: Gradient;
-                                if (match[1] === 'linear') {
-                                    if (!/^to/.test(match[2]) && !/deg$/.test(match[2])) {
-                                        match[3] = match[2] + match[3];
-                                        match[2] = '180deg';
-                                    }
-                                    gradient = <LinearGradient> {
-                                        type: 'linear',
-                                        angle: (() => {
-                                            switch (match[2]) {
-                                                case 'to top':
-                                                    return 0;
-                                                case 'to right top':
-                                                    return 45;
-                                                case 'to right':
-                                                    return 90;
-                                                case 'to right bottom':
-                                                    return 135;
-                                                case 'to bottom':
-                                                    return 180;
-                                                case 'to left bottom':
-                                                    return 225;
-                                                case 'to left':
-                                                    return 270;
-                                                case 'to left top':
-                                                    return 315;
-                                                default:
-                                                    return convertInt(match[2]);
-                                            }
-                                        })(),
-                                        colorStop: []
-                                    };
-                                }
-                                else {
-                                    gradient = <RadialGradient> {
-                                        type: 'radial',
-                                        shapePosition: (() => {
-                                            const result = ['ellipse', 'center'];
-                                            if (match[2]) {
-                                                const shape = match[2].split('at').map(item => item.trim());
-                                                switch (shape[0]) {
-                                                    case 'ellipse':
-                                                    case 'circle':
-                                                    case 'closest-side':
-                                                    case 'closest-corner':
-                                                    case 'farthest-side':
-                                                    case 'farthest-corner':
-                                                        result[0] = shape[0];
-                                                        break;
-                                                    default:
-                                                        result[1] = shape[0];
-                                                        break;
-                                                }
-                                                if (shape[1]) {
-                                                    result[1] = shape[1];
-                                                }
-                                            }
-                                            return result;
-                                        })(),
-                                        colorStop: []
-                                    };
-                                }
-                                const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
-                                const opacity = node.css('opacity');
-                                for (let i = 0; i < stopMatch.length; i += 3) {
-                                    const rgba = stopMatch[i + 1];
-                                    if (rgba) {
-                                        const color = parseRGBA(rgba, opacity);
-                                        if (color && color.visible) {
-                                            gradient.colorStop.push({
-                                                color: color.valueRGBA,
-                                                offset: stopMatch[i + 2] || '0%',
-                                                opacity: color.alpha
-                                            });
+                                let gradient!: Gradient;
+                                switch (match[1]) {
+                                    case 'linear': {
+                                        if (match[2] === undefined) {
+                                            match[2] = 'to bottom';
                                         }
+                                        gradient = <LinearGradient> {
+                                            type: 'linear',
+                                            angle: (() => {
+                                                switch (match[2]) {
+                                                    case 'to top':
+                                                        return 0;
+                                                    case 'to right top':
+                                                        return 45;
+                                                    case 'to right':
+                                                        return 90;
+                                                    case 'to right bottom':
+                                                        return 135;
+                                                    case 'to bottom':
+                                                        return 180;
+                                                    case 'to left bottom':
+                                                        return 225;
+                                                    case 'to left':
+                                                        return 270;
+                                                    case 'to left top':
+                                                        return 315;
+                                                    default:
+                                                        return parseAngle(match[2]);
+                                                }
+                                            })(),
+                                            colorStops: getColorStops(match[3], opacity)
+                                        };
+                                        break;
+                                    }
+                                    case 'radial': {
+                                        gradient = <RadialGradient> {
+                                            type: 'radial',
+                                            position: (() => {
+                                                const result = ['center', 'ellipse'];
+                                                if (match[2]) {
+                                                    const position = REGEXP_POSITION.exec(match[2]);
+                                                    if (position) {
+                                                        if (position[1]) {
+                                                            switch (position[1]) {
+                                                                case 'ellipse':
+                                                                case 'circle':
+                                                                case 'closest-side':
+                                                                case 'closest-corner':
+                                                                case 'farthest-side':
+                                                                case 'farthest-corner':
+                                                                    result[1] = position[1];
+                                                                    break;
+                                                            }
+                                                        }
+                                                        if (position[2]) {
+                                                            result[0] = position[2];
+                                                        }
+                                                    }
+                                                }
+                                                return result;
+                                            })(),
+                                            colorStops: getColorStops(match[3], opacity)
+                                        };
+                                        break;
+                                    }
+                                    case 'conic': {
+                                        gradient = <ConicGradient> {
+                                            type: 'conic',
+                                            angle: parseAngle(match[2]),
+                                            position: (() => {
+                                                if (match[2]) {
+                                                    const position = REGEXP_POSITION.exec(match[2]);
+                                                    if (position) {
+                                                        return [position[2]];
+                                                    }
+                                                }
+                                                return ['center'];
+                                            })(),
+                                            colorStops: getColorStops(match[3], opacity, true)
+                                        };
+                                        break;
                                     }
                                 }
-                                if (gradient.colorStop.length > 1) {
+                                if (gradient.colorStops.length > 1) {
                                     gradients.push(gradient);
                                 }
                             }
@@ -303,11 +394,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             else {
                                 const images: string[] = [];
                                 pattern = new RegExp(REGEX_PATTERN.CSS_URL, 'g');
-                                match = null;
                                 while ((match = pattern.exec(value)) !== null) {
-                                    if (match) {
-                                        images.push(match[0]);
-                                    }
+                                    images.push(match[0]);
                                 }
                                 if (images.length) {
                                     boxStyle.backgroundImage = images;
@@ -493,15 +581,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     else if (node.inlineText) {
                         name = node.textContent.trim();
                         if (element.tagName === 'CODE') {
-                            value = replaceEntity(element.innerHTML);
+                            value = replaceEntity(replaceExcluded(element, 'innerHTML'));
                         }
                         else if (hasLineBreak(element, true)) {
-                            value = replaceEntity(element.innerHTML);
+                            value = replaceEntity(replaceExcluded(element, 'innerHTML'));
                             value = value.replace(/\s*<br[^>]*>\s*/g, '\\n');
                             value = value.replace(/(<([^>]+)>)/ig, '');
                         }
                         else {
-                            value = replaceEntity(node.textContent);
+                            value = replaceEntity(replaceExcluded(element, 'textContent'));
                         }
                         [value, inlineTrim] = replaceWhiteSpace(node, value);
                     }

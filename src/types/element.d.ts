@@ -12,12 +12,12 @@ interface RectPosition extends BoxRect {
     originalY: string;
 }
 
-interface RectDimensions extends BoxRect {
+interface RectDimension extends BoxRect {
     width: number;
     height: number;
 }
 
-interface TextDimensions extends RectDimensions {
+interface TextDimension extends RectDimension {
     multiLine: number;
 }
 
@@ -118,15 +118,18 @@ interface ColorData {
 
 interface Gradient {
     type: string;
-    colorStop: ColorStop[];
+    colorStops: ColorStop[];
 }
 
 interface LinearGradient extends Gradient {
-    angle?: number;
+    angle: number;
 }
 
 interface RadialGradient extends Gradient {
-    shapePosition?: string[];
+    position: string[];
+}
+
+interface ConicGradient extends LinearGradient, RadialGradient {
 }
 
 interface ColorStop {

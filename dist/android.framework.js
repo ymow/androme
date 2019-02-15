@@ -1,4 +1,4 @@
-/* androme 2.3.3
+/* androme 2.4.0
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -819,15 +819,20 @@ var android = (function () {
     class Resource extends androme.lib.base.Resource {
         static createBackgroundGradient(node, gradients, svgPath) {
             const result = [];
-            const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
             for (const item of gradients) {
-                const gradient = {
-                    type: item.type,
-                    startColor: !hasStop ? Resource.addColor(item.colorStop[0].color) : '',
-                    centerColor: !hasStop && item.colorStop.length > 2 ? Resource.addColor(item.colorStop[1].color) : '',
-                    endColor: !hasStop ? Resource.addColor(item.colorStop[item.colorStop.length - 1].color) : '',
-                    colorStop: []
-                };
+                const gradient = { type: item.type, colorStops: [] };
+                let hasStop;
+                if (!node.svgElement && parseFloat(item.colorStops[0].offset) === 0 && ['100%', '360'].includes(item.colorStops[item.colorStops.length - 1].offset) && (item.colorStops.length === 2 || item.colorStops.length === 3 && ['50%', '180'].includes(item.colorStops[1].offset))) {
+                    gradient.startColor = Resource.addColor(item.colorStops[0].color);
+                    gradient.endColor = Resource.addColor(item.colorStops[item.colorStops.length - 1].color);
+                    if (item.colorStops.length === 3) {
+                        gradient.centerColor = Resource.addColor(item.colorStops[1].color);
+                    }
+                    hasStop = false;
+                }
+                else {
+                    hasStop = true;
+                }
                 switch (item.type) {
                     case 'radial':
                         if (node.svgElement) {
@@ -890,24 +895,16 @@ var android = (function () {
                             }
                         }
                         else {
-                            const radial = item;
-                            let boxPosition;
-                            if (radial.shapePosition && radial.shapePosition.length > 1) {
-                                boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.dpi, node.fontSize, true, !hasStop);
-                            }
+                            const position = $dom.getBackgroundPosition(item.position[0], node.bounds, node.fontSize, true, !hasStop);
                             if (hasStop) {
                                 gradient.gradientRadius = node.bounds.width.toString();
-                                if (boxPosition) {
-                                    gradient.centerX = boxPosition.left.toString();
-                                    gradient.centerY = boxPosition.top.toString();
-                                }
+                                gradient.centerX = position.left.toString();
+                                gradient.centerY = position.top.toString();
                             }
                             else {
                                 gradient.gradientRadius = $util.formatPX(node.bounds.width);
-                                if (boxPosition) {
-                                    gradient.centerX = $util.convertPercent(boxPosition.left);
-                                    gradient.centerY = $util.convertPercent(boxPosition.top);
-                                }
+                                gradient.centerX = $util.convertPercent(position.left);
+                                gradient.centerY = $util.convertPercent(position.top);
                             }
                         }
                         break;
@@ -936,15 +933,31 @@ var android = (function () {
                             }
                         }
                         break;
+                    case 'conic':
+                        if (!node.svgElement) {
+                            gradient.type = 'sweep';
+                            const position = $dom.getBackgroundPosition(item.position[0], node.bounds, node.fontSize, true, !hasStop);
+                            if (hasStop) {
+                                gradient.centerX = position.left.toString();
+                                gradient.centerY = position.top.toString();
+                            }
+                            else {
+                                gradient.centerX = $util.convertPercent(position.left);
+                                gradient.centerY = $util.convertPercent(position.top);
+                            }
+                            break;
+                        }
+                    default:
+                        return result;
                 }
                 if (hasStop) {
-                    for (let i = 0; i < item.colorStop.length; i++) {
-                        const stop = item.colorStop[i];
+                    for (let i = 0; i < item.colorStops.length; i++) {
+                        const stop = item.colorStops[i];
                         const color = `@color/${Resource.addColor(stop.color)}`;
                         let offset = parseInt(stop.offset);
                         if (i === 0) {
                             if (!node.svgElement && offset !== 0) {
-                                gradient.colorStop.push({
+                                gradient.colorStops.push({
                                     color,
                                     offset: '0',
                                     opacity: stop.opacity
@@ -952,14 +965,14 @@ var android = (function () {
                             }
                         }
                         else if (offset === 0) {
-                            if (i < item.colorStop.length - 1) {
-                                offset = Math.round((parseInt(item.colorStop[i - 1].offset) + parseInt(item.colorStop[i + 1].offset)) / 2);
+                            if (i < item.colorStops.length - 1) {
+                                offset = Math.round((parseInt(item.colorStops[i - 1].offset) + parseInt(item.colorStops[i + 1].offset)) / 2);
                             }
                             else {
                                 offset = 100;
                             }
                         }
-                        gradient.colorStop.push({
+                        gradient.colorStops.push({
                             color,
                             offset: (offset / 100).toFixed(2),
                             opacity: stop.opacity
@@ -1281,7 +1294,6 @@ var android = (function () {
                 this._containerType = 0;
                 this._localSettings = {
                     targetAPI: 28 /* LATEST */,
-                    resolutionDPI: 160 /* MDPI */,
                     supportRTL: false
                 };
                 this.__android = {};
@@ -1341,7 +1353,7 @@ var android = (function () {
                 return this.__app[attr] || '';
             }
             apply(options) {
-                if (typeof options === 'object') {
+                if (options && typeof options === 'object') {
                     const local = Object.assign({}, options);
                     super.apply(local);
                     for (const obj in local) {
@@ -1533,26 +1545,11 @@ var android = (function () {
                     const obj = this[`__${name}`];
                     if (objs.length === 0 || objs.includes(name)) {
                         for (const attr in obj) {
-                            if (name !== '_') {
-                                result.push(`${name}:${attr}="${obj[attr]}"`);
-                            }
-                            else {
-                                result.push(`${attr}="${obj[attr]}"`);
-                            }
+                            result.push(name !== '_' ? `${name}:${attr}="${obj[attr]}"` : `${attr}="${obj[attr]}"`);
                         }
                     }
                 }
-                return result.sort((a, b) => {
-                    if (a.startsWith('android:id=')) {
-                        return -1;
-                    }
-                    else if (b.startsWith('android:id=')) {
-                        return 1;
-                    }
-                    else {
-                        return a > b ? 1 : -1;
-                    }
-                });
+                return result.sort((a, b) => a > b || b.startsWith('android:id=') ? 1 : -1);
             }
             localizeString(value) {
                 if (!this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.LOCALIZATION)) {
@@ -1705,14 +1702,19 @@ var android = (function () {
                     hasWidth = true;
                 }
                 if (!hasWidth) {
+                    const blockStatic = this.blockStatic && !this.has('maxWidth') && (this.htmlElement || this.svgElement);
                     if (this.plainText) {
                         this.android('layout_width', renderParent && this.bounds.width > renderParent.box.width && this.multiLine && this.alignParent('left') ? 'match_parent' : 'wrap_content', false);
                     }
-                    else if (children.filter(node => (node.inlineStatic || $util$2.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal).some(node => Math.ceil(node.bounds.width) >= this.box.width)) {
+                    else if (children.some(node => (node.inlineStatic && !node.plainText || $util$2.isUnit(node.cssInitial('width'))) && !node.autoMargin.horizontal && Math.ceil(node.bounds.width) >= this.box.width)) {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else if (this.flexElement && renderParent && renderParent.hasWidth ||
-                        !this.documentRoot && children.some(node => node.layoutVertical && !node.hasWidth && !node.floating && !node.autoMargin.horizontal) ||
+                        this.groupParent && children.some(node => !(node.plainText && node.multiLine) && node.linear.width >= this.documentParent.box.width) ||
+                        blockStatic && (this.documentBody ||
+                            !!parent && (parent.documentBody ||
+                                parent.has('width', 32 /* PERCENT */) ||
+                                parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings())))) ||
                         this.layoutFrame && ($NodeList.floated(children).size === 2 ||
                             children.some(node => node.blockStatic && (node.autoMargin.leftRight || node.rightAligned)))) {
                         this.android('layout_width', 'match_parent', false);
@@ -1723,15 +1725,11 @@ var android = (function () {
                             this.inlineFlow ||
                             this.tableElement ||
                             this.flexElement ||
-                            !!parent && parent.flexElement ||
-                            !!parent && parent.gridElement ||
+                            !!parent && (parent.flexElement || parent.gridElement) ||
                             !!renderParent && renderParent.is(CONTAINER_NODE.GRID));
-                        if ((!wrap || this.blockStatic && !this.has('maxWidth')) && (!!parent && this.linear.width >= parent.box.width ||
+                        if ((!wrap || blockStatic) && (!!parent && this.linear.width >= parent.box.width ||
                             this.layoutVertical && !this.autoMargin.horizontal ||
-                            this.htmlElement && this.blockStatic && (this.documentBody ||
-                                !!parent && (parent.documentBody ||
-                                    parent.blockStatic && (this.singleChild || this.alignedVertically(this.previousSiblings())))) ||
-                            this.groupParent && children.some(item => !(item.plainText && item.multiLine) && item.linear.width >= this.documentParent.box.width))) {
+                            !this.documentRoot && children.some(node => node.layoutVertical && !node.autoMargin.horizontal && !node.hasWidth && !node.floating))) {
                             this.android('layout_width', 'match_parent', false);
                         }
                         else {
@@ -1751,11 +1749,12 @@ var android = (function () {
                         else if ($util$2.isPercent(height)) {
                             if (height === '100%') {
                                 this.android('layout_height', 'match_parent');
+                                hasHeight = true;
                             }
-                            else {
+                            else if (this.documentParent.has('height')) {
                                 this.android('layout_height', $util$2.formatPX(Math.ceil(this.bounds.height) - this.contentBoxHeight));
+                                hasHeight = true;
                             }
-                            hasHeight = true;
                         }
                     }
                 }
@@ -1777,11 +1776,22 @@ var android = (function () {
                     function setAutoMargin(node) {
                         if (!node.blockWidth) {
                             const alignment = [];
+                            const singleFrame = node.documentRoot && node.layoutFrame && node.length === 1 && node.has('maxWidth');
                             if (node.autoMargin.leftRight) {
-                                alignment.push('center_horizontal');
+                                if (singleFrame) {
+                                    node.renderChildren[0].mergeGravity('layout_gravity', 'center_horizontal');
+                                }
+                                else {
+                                    alignment.push('center_horizontal');
+                                }
                             }
                             else if (node.autoMargin.left) {
-                                alignment.push(right);
+                                if (singleFrame) {
+                                    node.renderChildren[0].mergeGravity('layout_gravity', right);
+                                }
+                                else {
+                                    alignment.push(right);
+                                }
                             }
                             else if (node.autoMargin.right) {
                                 alignment.push(left);
@@ -1920,7 +1930,7 @@ var android = (function () {
                                     break;
                             }
                         }
-                        const gravity = [x, y].filter(value => value).join('|');
+                        const gravity = x !== '' && y !== '' ? `${x}|${y}` : x || y;
                         result = gravity + (z !== '' ? (gravity !== '' ? '|' : '') + z : '');
                 }
                 if (result !== '') {
@@ -2225,12 +2235,9 @@ var android = (function () {
                 }
                 return false;
             }
-            get dpi() {
-                return this.localSettings.resolutionDPI;
-            }
             get fontSize() {
                 if (this._fontSize === 0) {
-                    this._fontSize = parseInt($util$2.convertPX(this.css('fontSize'), this.dpi, 0)) || 16;
+                    this._fontSize = parseInt($util$2.convertPX(this.css('fontSize'), 0)) || 16;
                 }
                 return this._fontSize;
             }
@@ -3008,7 +3015,7 @@ var android = (function () {
                         if (!node.pageFlow && node.left < 0 || node.top < 0) {
                             const absoluteParent = node.absoluteParent;
                             if (absoluteParent && absoluteParent.css('overflow') === 'hidden') {
-                                const container = new View(this.cache.nextId, $dom$2.createElement(node.actualParent ? node.actualParent.baseElement : null), this.afterInsertNode);
+                                const container = this.application.createNode($dom$2.createElement(node.actualParent ? node.actualParent.baseElement : null));
                                 container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                                 container.inherit(node, 'base');
                                 container.exclude({
@@ -3407,7 +3414,7 @@ var android = (function () {
             return group;
         }
         createNodeWrapper(node, parent, controlName, containerType) {
-            const container = new View(this.application.nextId, $dom$2.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block), this.application.controllerHandler.afterInsertNode);
+            const container = this.application.createNode($dom$2.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block));
             if (node.documentRoot) {
                 container.documentRoot = true;
                 node.documentRoot = false;
@@ -4008,7 +4015,6 @@ var android = (function () {
             return (self) => {
                 self.localSettings = {
                     targetAPI: settings.targetAPI !== undefined ? settings.targetAPI : 28 /* LATEST */,
-                    resolutionDPI: settings.resolutionDPI !== undefined ? settings.resolutionDPI : 160 /* MDPI */,
                     supportRTL: settings.supportRTL !== undefined ? settings.supportRTL : true,
                     constraintPercentAccuracy: this.localSettings.constraint.percentAccuracy,
                     customizationsOverwritePrivilege: settings.customizationsOverwritePrivilege !== undefined ? settings.customizationsOverwritePrivilege : true
@@ -4594,7 +4600,7 @@ var android = (function () {
                 const alignItems = node.has('alignSelf') ? node.css('alignSelf') : mainData.alignItems;
                 const justifyItems = node.has('justifySelf') ? node.css('justifySelf') : mainData.justifyItems;
                 if (/(start|end|center|baseline)/.test(alignItems) || /(start|end|center|baseline|left|right)/.test(justifyItems)) {
-                    container = new View(this.application.nextId, $dom$4.createElement(node.actualParent ? node.actualParent.baseElement : null), this.application.controllerHandler.afterInsertNode);
+                    container = this.application.createNode($dom$4.createElement(node.actualParent ? node.actualParent.baseElement : null));
                     container.tagName = node.tagName;
                     container.setControlType(CONTAINER_ANDROID.FRAME, CONTAINER_NODE.FRAME);
                     container.inherit(node, 'initial', 'base');
@@ -5254,7 +5260,7 @@ var android = (function () {
                     let [left, top] = [0, 0];
                     let image = '';
                     if (mainData.imageSrc !== '') {
-                        const boxPosition = $dom$5.getBackgroundPosition(mainData.imagePosition, node.bounds, node.dpi, node.fontSize);
+                        const boxPosition = $dom$5.getBackgroundPosition(mainData.imagePosition, node.bounds, node.fontSize);
                         left = boxPosition.left;
                         top = boxPosition.top;
                         image = Resource.addImageUrl(mainData.imageSrc);
@@ -5325,7 +5331,7 @@ var android = (function () {
                         else {
                             options.android.text = mainData.ordinal;
                         }
-                        const companion = new View(this.application.nextId, $dom$5.createElement(node.actualParent ? node.actualParent.baseElement : null), this.application.controllerHandler.afterInsertNode);
+                        const companion = this.application.createNode($dom$5.createElement(node.actualParent ? node.actualParent.baseElement : null));
                         companion.tagName = `${node.tagName}_ORDINAL`;
                         companion.inherit(node, 'textStyle');
                         if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
@@ -5400,7 +5406,7 @@ var android = (function () {
             let container;
             const mainData = node.data($const$5.EXT_NAME.SPRITE, 'mainData');
             if (mainData && mainData.uri && mainData.position && node.baseElement) {
-                container = new View(this.application.nextId, node.baseElement, this.application.controllerHandler.afterInsertNode);
+                container = this.application.createNode(node.baseElement);
                 container.inherit(node, 'initial', 'base', 'styleMap');
                 container.setControlType(CONTAINER_ANDROID.FRAME);
                 container.exclude({
@@ -5769,7 +5775,7 @@ var android = (function () {
             return false;
         }
         processNode(node, parent) {
-            const container = new View(this.application.nextId, $dom$6.createElement(node.baseElement, node.block), this.application.controllerHandler.afterInsertNode);
+            const container = this.application.createNode($dom$6.createElement(node.baseElement, node.block));
             container.inherit(node, 'initial', 'base');
             container.exclude({
                 procedure: $enum$b.NODE_PROCEDURE.NONPOSITIONAL,
@@ -5970,7 +5976,7 @@ var android = (function () {
                 node.overflow = overflowType;
             }
             const scrollView = overflow.map((value, index) => {
-                const container = new View(this.application.nextId, index === 0 ? node.baseElement : $dom$7.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block), this.application.controllerHandler.afterInsertNode);
+                const container = this.application.createNode(index === 0 ? node.baseElement : $dom$7.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block));
                 container.setControlType(value, CONTAINER_NODE.BLOCK);
                 if (index === 0) {
                     container.inherit(node, 'initial', 'base', 'styleMap');
@@ -6134,9 +6140,9 @@ var android = (function () {
         '			<aapt:attr name="android:fillColor">',
         '!gradients',
         '				<gradient android:type="{&type}" android:startColor="@color/{~startColor}" android:endColor="@color/{~endColor}" android:centerColor="@color/{~centerColor}" android:startX="{~startX}" android:startY="{~startY}" android:endX="{~endX}" android:endY="{~endY}" android:centerX="{~centerX}" android:centerY="{~centerY}" android:gradientRadius="{~gradientRadius}">',
-        '!colorStop',
+        '!colorStops',
         '					<item android:offset="{&offset}" android:color="{&color}" />',
-        '!colorStop',
+        '!colorStops',
         '				</gradient>',
         '!gradients',
         '			</aapt:attr>',
@@ -6183,8 +6189,7 @@ var android = (function () {
                         if (direction === 0 || direction === 2) {
                             halfSize = !halfSize;
                         }
-                        if (color.valueRGB === '#000000' && (groove && (direction === 1 || direction === 3) ||
-                            !groove && (direction === 0 || direction === 2))) {
+                        if (color.valueRGB === '#000000' && (groove && (direction === 1 || direction === 3) || !groove && (direction === 0 || direction === 2))) {
                             halfSize = !halfSize;
                         }
                         if (halfSize) {
@@ -6386,7 +6391,7 @@ var android = (function () {
                         let resourceName = '';
                         for (let i = 0; i < backgroundImage.length; i++) {
                             if (backgroundImage[i] !== '') {
-                                const boxPosition = $dom$8.getBackgroundPosition(backgroundPosition[i], node.bounds, node.dpi, node.fontSize);
+                                const boxPosition = $dom$8.getBackgroundPosition(backgroundPosition[i], node.bounds, node.fontSize);
                                 const image = backgroundDimensions[i];
                                 let gravity = (() => {
                                     if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
@@ -6590,7 +6595,7 @@ var android = (function () {
                         });
                         const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                         const borderRadius = getShapeAttribute(stored, 'radius');
-                        const vectorGradient = backgroundGradient.length && backgroundGradient.some(gradient => gradient.colorStop.length > 0);
+                        const vectorGradient = backgroundGradient.some(gradient => gradient.colorStops.length > 0);
                         if (vectorGradient) {
                             const width = node.bounds.width;
                             const height = node.bounds.height;

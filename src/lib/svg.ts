@@ -84,7 +84,7 @@ export function createTransformData(element: SVGGraphicsElement) {
     return data;
 }
 
-export function getTransformOrigin(element: SVGGraphicsElement, dpi = 0) {
+export function getTransformOrigin(element: SVGGraphicsElement) {
     const value = cssAttribute(element, 'transform-origin');
     if (value !== '') {
         const parent = element.parentElement;
@@ -128,7 +128,7 @@ export function getTransformOrigin(element: SVGGraphicsElement, dpi = 0) {
                             position = '50%';
                         }
                         if (isUnit(position)) {
-                            origin[attr] = parseInt(position.endsWith('px') ? position : convertPX(position, dpi, convertInt(getStyle(element).fontSize as string)));
+                            origin[attr] = parseInt(position.endsWith('px') ? position : convertPX(position, convertInt(getStyle(element).fontSize || '16')));
                         }
                         else if (isPercent(position)) {
                             origin[attr] = (attr === 'x' ? width : height) * (parseInt(position) / 100);

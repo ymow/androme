@@ -207,7 +207,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
             else {
                 $util.defaultWhenNull(appBarOptions, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = this.createPlaceholder(application.nextId, node, appBarChildren) as T;
+            appBarNode = this.createPlaceholder(node, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.controlId = $android_util.stripId(appBarOptions.android.id);
             appBarNode.setControlType($android_const.SUPPORT_ANDROID.APPBAR, $android_enum.CONTAINER_NODE.BLOCK);
@@ -230,7 +230,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 }
                 $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 $util.defaultWhenNull(collapsingToolbarOptions, 'app', 'toolbarId', node.documentId);
-                collapsingToolbarNode = this.createPlaceholder(application.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode = this.createPlaceholder(node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).controlId);
@@ -326,12 +326,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
         }
     }
 
-    private createPlaceholder(nextId: number, node: T, children: T[]) {
-        const placeholder = new $View(
-            nextId,
-            $dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block),
-            this.application.controllerHandler.afterInsertNode
-        );
+    private createPlaceholder(node: T, children: T[]) {
+        const placeholder = this.application.createNode($dom.createElement(node.actualParent ? node.actualParent.baseElement : null, node.block));
         placeholder.inherit(node, 'base');
         placeholder.exclude({ resource: $enum.NODE_RESOURCE.ALL });
         placeholder.positioned = true;

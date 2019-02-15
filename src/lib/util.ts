@@ -67,29 +67,51 @@ export function formatString(value: string, ...params: string[]) {
 }
 
 export function capitalize(value: string, upper = true) {
-    return value ? value.charAt(0)[upper ? 'toUpperCase' : 'toLowerCase']() + value.substring(1)[upper ? 'toLowerCase' : 'toString']() : '';
+    if (value !== '') {
+        if (upper) {
+            return value.charAt(0).toUpperCase() + value.substring(1).toLowerCase();
+        }
+        else {
+            return value.charAt(0).toLowerCase() + value.substring(1);
+        }
+    }
+    return value;
 }
 
 export function convertUnderscore(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
-    const result = value.match(/([a-z][A-Z])/g);
-    if (result) {
-        result.forEach(match => value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`));
+    const matchArray = value.match(/([a-z][A-Z])/g);
+    if (matchArray) {
+        matchArray.forEach(match => value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`));
     }
     return value;
 }
 
 export function convertCamelCase(value: string, char = '-') {
-    value = value.replace(new RegExp(`^${char}+`), '');
-    const result = value.match(new RegExp(`(${char}[a-z])`, 'g'));
-    if (result) {
-        result.forEach(match => value = value.replace(match, match[1].toUpperCase()));
+    const matchArray = value.replace(new RegExp(`^${char}+`), '').match(new RegExp(`(${char}[a-z])`, 'g'));
+    if (matchArray) {
+        matchArray.forEach(match => value = value.replace(match, match[1].toUpperCase()));
     }
     return value;
 }
 
 export function convertWord(value: string) {
     return value ? value.replace(/[^\w]/g, '_').trim() : '';
+}
+
+export function convertAngle(value: string, unit = 'deg') {
+    let angle = parseFloat(value);
+    switch (unit) {
+        case 'rad':
+            angle *= 180 / Math.PI;
+            break;
+        case 'grad':
+            angle /= 400;
+        case 'turn':
+            angle *= 360;
+            break;
+    }
+    return angle;
 }
 
 export function convertInt(value: string) {
@@ -100,7 +122,7 @@ export function convertFloat(value: string) {
     return (value && parseFloat(value)) || 0;
 }
 
-export function convertPX(value: string, dpi: number, fontSize: number): string {
+export function convertPX(value: string, fontSize?: number): string {
     if (value) {
         if (isNumber(value)) {
             return `${Math.round(value)}px`;
@@ -141,7 +163,7 @@ export function convertPX(value: string, dpi: number, fontSize: number): string 
                 case 'cm':
                     result /= 2.54;
                 case 'in':
-                    result *= dpi || 96;
+                    result *= window.devicePixelRatio * 96;
                     break;
             }
             return `${result}px`;

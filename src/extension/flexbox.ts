@@ -5,18 +5,19 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
-import { sortAsc, sortDesc } from '../lib/util';
+import { withinFraction } from '../lib/util';
 
 export default abstract class Flexbox<T extends Node> extends Extension<T> {
-    public static createDataAttribute<T extends Node>(children: T[]): FlexboxData<T> {
+    public static createDataAttribute<T extends Node>(node: T, children: T[]): FlexboxData<T> {
+        const flex = node.flexbox;
         return {
-            wrap: false,
-            wrapReverse: false,
-            directionReverse: false,
-            justifyContent: '',
-            rowDirection: false,
+            wrap: flex.wrap.startsWith('wrap'),
+            wrapReverse: flex.wrap === 'wrap-reverse',
+            directionReverse: flex.direction.endsWith('reverse'),
+            justifyContent: flex.justifyContent,
+            rowDirection: flex.direction.startsWith('row'),
             rowCount: 0,
-            columnDirection: false,
+            columnDirection: flex.direction.startsWith('column'),
             columnCount: 0,
             children
         };
@@ -29,77 +30,68 @@ export default abstract class Flexbox<T extends Node> extends Extension<T> {
     public processNode(node: T): ExtensionResult<T> {
         const controller = this.application.controllerHandler;
         const pageFlow = node.children.filter(item => item.pageFlow) as T[];
-        const flex = node.flexbox;
-        const mainData = Object.assign(Flexbox.createDataAttribute(pageFlow), {
-            wrap: flex.wrap.startsWith('wrap'),
-            wrapReverse: flex.wrap === 'wrap-reverse',
-            directionReverse: flex.direction.endsWith('reverse'),
-            justifyContent: flex.justifyContent,
-            rowDirection: flex.direction.startsWith('row'),
-            columnDirection: flex.direction.startsWith('column')
-        });
+        const mainData = Flexbox.createDataAttribute(node, pageFlow);
         if (node.cssTry('display', 'block')) {
             for (const item of pageFlow) {
-                const bounds = item.element.getBoundingClientRect();
-                const initial: InitialData<T> = item.unsafe('initial');
-                Object.assign(initial.bounds, { width: bounds.width, height: bounds.height });
+                if (item.element) {
+                    const bounds = item.element.getBoundingClientRect();
+                    const initial: InitialData<T> = item.unsafe('initial');
+                    Object.assign(initial.bounds, { width: bounds.width, height: bounds.height });
+                }
             }
             node.cssFinally('display');
         }
         if (mainData.wrap) {
-            function setFlexDirection(align: string, sort: string, size: string) {
+            function setDirection(align: string, sort: string, size: string) {
                 const map = new Map<number, T[]>();
                 pageFlow.sort((a, b) => {
-                    if (a.linear[align] < b.linear[align]) {
+                    if (!withinFraction(a.linear[align], b.linear[align])) {
                         return a.linear[align] < b.linear[align] ? -1 : 1;
                     }
-                    else {
-                        return a.linear[sort] < b.linear[sort] ? -1 : 1;
-                    }
+                    return a.linear[sort] >= b.linear[sort] ? 1 : -1;
                 });
                 for (const item of pageFlow) {
-                    const xy = Math.round(item.linear[align]);
-                    const items: T[] = map.get(xy) || [];
+                    const point = Math.round(item.linear[align]);
+                    const items: T[] = map.get(point) || [];
                     items.push(item);
-                    map.set(xy, items);
+                    map.set(point, items);
                 }
-                if (map.size) {
-                    let maxCount = 0;
-                    Array.from(map.values()).forEach((segment, index) => {
-                        const group = controller.createNodeGroup(segment[0], segment, node);
-                        group.siblingIndex = index;
-                        const box = group.unsafe('box');
-                        if (box) {
-                            box[size] = node.box[size];
-                        }
-                        group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
-                        maxCount = Math.max(segment.length, maxCount);
-                    });
-                    node.sort(NodeList.siblingIndex);
-                    if (mainData.rowDirection) {
-                        mainData.rowCount = map.size;
-                        mainData.columnCount = maxCount;
+                let maxCount = 0;
+                let i = 0;
+                for (const segment of map.values()) {
+                    const group = controller.createNodeGroup(segment[0], segment, node);
+                    group.siblingIndex = i++;
+                    const box = group.unsafe('box');
+                    if (box) {
+                        box[size] = node.box[size];
                     }
-                    else {
-                        mainData.rowCount = maxCount;
-                        mainData.columnCount = map.size;
-                    }
+                    group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                    maxCount = Math.max(segment.length, maxCount);
+                }
+                node.sort(NodeList.siblingIndex);
+                if (mainData.rowDirection) {
+                    mainData.rowCount = map.size;
+                    mainData.columnCount = maxCount;
+                }
+                else {
+                    mainData.rowCount = maxCount;
+                    mainData.columnCount = map.size;
                 }
             }
             if (mainData.rowDirection) {
-                setFlexDirection(mainData.wrapReverse ? 'bottom' : 'top', 'left', 'right');
+                setDirection(mainData.wrapReverse ? 'bottom' : 'top', 'left', 'right');
             }
             else {
-                setFlexDirection('left', 'top', 'bottom');
+                setDirection('left', 'top', 'bottom');
             }
         }
         else {
             if (pageFlow.some(item => item.flexbox.order !== 0)) {
                 if (mainData.directionReverse) {
-                    sortDesc(node.children, 'flexbox.order');
+                    node.sort((a, b) => a.flexbox.order <= b.flexbox.order ? 1 : -1);
                 }
                 else {
-                    sortAsc(node.children, 'flexbox.order');
+                    node.sort((a, b) => a.flexbox.order >= b.flexbox.order ? 1 : -1);
                 }
             }
             if (mainData.rowDirection) {

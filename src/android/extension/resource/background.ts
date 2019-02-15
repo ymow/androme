@@ -47,11 +47,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
                     if (direction === 0 || direction === 2) {
                         halfSize = !halfSize;
                     }
-                    if (color.valueRGB === '#000000' && (
-                            groove && (direction === 1 || direction === 3) ||
-                            !groove && (direction === 0 || direction === 2)
-                       ))
-                    {
+                    if (color.valueRGB === '#000000' && (groove && (direction === 1 || direction === 3) || !groove && (direction === 0 || direction === 2))) {
                         halfSize = !halfSize;
                     }
                     if (halfSize) {
@@ -258,7 +254,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '') {
-                            const boxPosition = $dom.getBackgroundPosition(backgroundPosition[i], node.bounds, node.dpi, node.fontSize);
+                            const boxPosition = $dom.getBackgroundPosition(backgroundPosition[i], node.bounds, node.fontSize);
                             const image = backgroundDimensions[i];
                             let gravity = (() => {
                                 if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
@@ -462,7 +458,7 @@ export default class ResourceBackground<T extends View> extends androme.lib.base
                     });
                     const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                     const borderRadius = getShapeAttribute(stored, 'radius');
-                    const vectorGradient = backgroundGradient.length && backgroundGradient.some(gradient => gradient.colorStop.length > 0);
+                    const vectorGradient = backgroundGradient.some(gradient => gradient.colorStops.length > 0);
                     if (vectorGradient) {
                         const width = node.bounds.width;
                         const height = node.bounds.height;

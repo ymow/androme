@@ -6,7 +6,7 @@ export default class ViewGroup<T extends View> extends View$Base(androme.lib.bas
         id: number,
         node: T,
         children: T[],
-        afterInit?: SelfWrapped<T, void>)
+        afterInit?: BindGeneric<T, void>)
     {
         super(id, undefined, afterInit);
         this.tagName = `${node.tagName}_GROUP`;

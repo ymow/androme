@@ -6,7 +6,7 @@ type Constructor<T> = new(...args: any[]) => T;
 
 type IteratorPredicate<T, U> = (value: T, index: number) => U;
 
-type SelfWrapped<T, U> = (self: T, ...args: any[]) => U;
+type BindGeneric<T, U> = (item: T, ...args: any[]) => U;
 
 type FunctionType<T> = (...args: any[]) => T;
 type FunctionVoid = FunctionType<void>;

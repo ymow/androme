@@ -41,7 +41,7 @@ export function newBoxRect(): BoxRect {
     };
 }
 
-export function newRectDimensions(): RectDimensions {
+export function newRectDimension(): RectDimension {
     return Object.assign({ width: 0, height: 0 }, newBoxRect());
 }
 
@@ -79,20 +79,20 @@ export function removeElementsByClassName(className: string) {
     Array.from(document.getElementsByClassName(className)).forEach(element => element.parentElement && element.parentElement.removeChild(element));
 }
 
-export function convertClientUnit(value: string, dimension: number, dpi: number, fontSize: number, percent = false) {
+export function convertClientUnit(value: string, dimension: number, fontSize?: number, percent = false) {
     if (percent) {
-        return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, dpi, fontSize)) / dimension);
+        return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
     }
     else {
-        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, dpi, fontSize));
+        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : parseInt(convertPX(value, fontSize));
     }
 }
 
-export function getRangeClientRect(element: Element): TextDimensions {
+export function getRangeClientRect(element: Element): TextDimension {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
-    let bounds: RectDimensions = newRectDimensions();
+    let bounds: RectDimension = newRectDimension();
     let multiLine = 0;
     if (domRect.length) {
         bounds = assignBounds(domRect[0]);
@@ -117,7 +117,7 @@ export function getRangeClientRect(element: Element): TextDimensions {
     return Object.assign(bounds, { multiLine });
 }
 
-export function assignBounds(bounds: RectDimensions | DOMRect): RectDimensions {
+export function assignBounds(bounds: RectDimension | DOMRect): RectDimension {
     return {
         top: bounds.top,
         right: bounds.right,
@@ -223,7 +223,20 @@ export function cssAttribute(element: Element, attr: string, computed = false): 
     return !value && computed ? getStyle(element)[convertCamelCase(attr)] : value || '';
 }
 
-export function getBackgroundPosition(value: string, dimension: RectDimensions, dpi: number, fontSize: number, leftPerspective = false, percent = false) {
+export function cssInheritAttribute(element: Element | null, attr: string) {
+    let current: HTMLElement | Element | null = element;
+    let value = '';
+    while (current) {
+        value = cssAttribute(current, attr);
+        if (value !== '' && value !== 'inherit') {
+            break;
+        }
+        current = current.parentElement;
+    }
+    return value;
+}
+
+export function getBackgroundPosition(value: string, dimension: RectDimension, fontSize?: number, leftPerspective = false, percent = false) {
     const result: RectPosition = {
         top: 0,
         left: 0,
@@ -246,7 +259,7 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
                     break;
                 case 1:
                 case 3:
-                    const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, dpi, fontSize, percent);
+                    const clientXY = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
                     if (index === 1) {
                         if (leftPerspective) {
                             if (result.horizontal === 'right') {
@@ -254,7 +267,7 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
                                     result.originalX = formatPercent(100 - parseInt(position));
                                 }
                                 else {
-                                    result.originalX = formatPX(dimension.width - parseInt(convertPX(position, dpi, fontSize)));
+                                    result.originalX = formatPX(dimension.width - parseInt(convertPX(position, fontSize)));
                                 }
                                 result.right = clientXY;
                                 result.left = percent ? 1 - clientXY : dimension.width - clientXY;
@@ -277,7 +290,7 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
                                     result.originalY = formatPercent(100 - parseInt(position));
                                 }
                                 else {
-                                    result.originalY = formatPX(dimension.height - parseInt(convertPX(position, dpi, fontSize)));
+                                    result.originalY = formatPX(dimension.height - parseInt(convertPX(position, fontSize)));
                                 }
                                 result.bottom = clientXY;
                                 result.top = percent ? 1 - clientXY : dimension.height - clientXY;
@@ -302,7 +315,7 @@ export function getBackgroundPosition(value: string, dimension: RectDimensions, 
             const offsetParent = index === 0 ? dimension.width : dimension.height;
             const direction = index === 0 ? 'left' : 'top';
             const original = index === 0 ? 'originalX' : 'originalY';
-            const clientXY = convertClientUnit(position, offsetParent, dpi, fontSize, percent);
+            const clientXY = convertClientUnit(position, offsetParent, fontSize, percent);
             if (isPercent(position)) {
                 result[direction] = clientXY;
                 result[original] = position;

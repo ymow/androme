@@ -33,15 +33,20 @@ function getRadiusPercent(value: string) {
 export default class Resource<T extends View> extends androme.lib.base.Resource<T> implements android.lib.base.Resource<T> {
     public static createBackgroundGradient<T extends View>(node: T, gradients: Gradient[], svgPath?: androme.lib.base.SvgPath) {
         const result: BackgroundGradient[] = [];
-        const hasStop = node.svgElement || gradients.some(item => item.colorStop.filter(stop => parseInt(stop.offset) > 0).length > 0);
         for (const item of gradients) {
-            const gradient: BackgroundGradient = {
-                type: item.type,
-                startColor: !hasStop ? Resource.addColor(item.colorStop[0].color) : '',
-                centerColor: !hasStop && item.colorStop.length > 2 ? Resource.addColor(item.colorStop[1].color) : '',
-                endColor: !hasStop ? Resource.addColor(item.colorStop[item.colorStop.length - 1].color) : '',
-                colorStop: []
-            };
+            const gradient: BackgroundGradient = { type: item.type, colorStops: [] };
+            let hasStop: boolean;
+            if (!node.svgElement && parseFloat(item.colorStops[0].offset) === 0 && ['100%', '360'].includes(item.colorStops[item.colorStops.length - 1].offset) && (item.colorStops.length === 2 || item.colorStops.length === 3 && ['50%', '180'].includes(item.colorStops[1].offset))) {
+                gradient.startColor = Resource.addColor(item.colorStops[0].color);
+                gradient.endColor = Resource.addColor(item.colorStops[item.colorStops.length - 1].color) ;
+                if (item.colorStops.length === 3) {
+                    gradient.centerColor = Resource.addColor(item.colorStops[1].color);
+                }
+                hasStop = false;
+            }
+            else {
+                hasStop = true;
+            }
             switch (item.type) {
                 case 'radial':
                     if (node.svgElement) {
@@ -104,24 +109,16 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                         }
                     }
                     else {
-                        const radial = <RadialGradient> item;
-                        let boxPosition: RectPosition | undefined;
-                        if (radial.shapePosition && radial.shapePosition.length > 1) {
-                            boxPosition = $dom.getBackgroundPosition(radial.shapePosition[1], node.bounds, node.dpi, node.fontSize, true, !hasStop);
-                        }
+                        const position = $dom.getBackgroundPosition((<RadialGradient> item).position[0], node.bounds, node.fontSize, true, !hasStop);
                         if (hasStop) {
                             gradient.gradientRadius = node.bounds.width.toString();
-                            if (boxPosition) {
-                                gradient.centerX = boxPosition.left.toString();
-                                gradient.centerY = boxPosition.top.toString();
-                            }
+                            gradient.centerX = position.left.toString();
+                            gradient.centerY = position.top.toString();
                         }
                         else {
                             gradient.gradientRadius = $util.formatPX(node.bounds.width);
-                            if (boxPosition) {
-                                gradient.centerX = $util.convertPercent(boxPosition.left);
-                                gradient.centerY = $util.convertPercent(boxPosition.top);
-                            }
+                            gradient.centerX = $util.convertPercent(position.left);
+                            gradient.centerY = $util.convertPercent(position.top);
                         }
                     }
                     break;
@@ -150,15 +147,31 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                         }
                     }
                     break;
+                case 'conic':
+                    if (!node.svgElement) {
+                        gradient.type = 'sweep';
+                        const position = $dom.getBackgroundPosition((<ConicGradient> item).position[0], node.bounds, node.fontSize, true, !hasStop);
+                        if (hasStop) {
+                            gradient.centerX = position.left.toString();
+                            gradient.centerY = position.top.toString();
+                        }
+                        else {
+                            gradient.centerX = $util.convertPercent(position.left);
+                            gradient.centerY = $util.convertPercent(position.top);
+                        }
+                        break;
+                    }
+                default:
+                    return result;
             }
             if (hasStop) {
-                for (let i = 0; i < item.colorStop.length; i++) {
-                    const stop = item.colorStop[i];
+                for (let i = 0; i < item.colorStops.length; i++) {
+                    const stop = item.colorStops[i];
                     const color = `@color/${Resource.addColor(stop.color)}`;
                     let offset = parseInt(stop.offset);
                     if (i === 0) {
                         if (!node.svgElement && offset !== 0) {
-                            gradient.colorStop.push({
+                            gradient.colorStops.push({
                                 color,
                                 offset: '0',
                                 opacity: stop.opacity
@@ -166,14 +179,14 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                         }
                     }
                     else if (offset === 0) {
-                        if (i < item.colorStop.length - 1) {
-                            offset = Math.round((parseInt(item.colorStop[i - 1].offset) + parseInt(item.colorStop[i + 1].offset)) / 2);
+                        if (i < item.colorStops.length - 1) {
+                            offset = Math.round((parseInt(item.colorStops[i - 1].offset) + parseInt(item.colorStops[i + 1].offset)) / 2);
                         }
                         else {
                             offset = 100;
                         }
                     }
-                    gradient.colorStop.push({
+                    gradient.colorStops.push({
                         color,
                         offset: (offset / 100).toFixed(2),
                         opacity: stop.opacity

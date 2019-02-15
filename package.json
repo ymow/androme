@@ -1,6 +1,6 @@
 {
   "name": "androme",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS could possibly be supported with Swift. Compatible with Chrome and Safari.",
   "main": "dist/androme.min.js",
   "scripts": {
@@ -17,19 +17,21 @@
     "Android",
     "Chrome",
     "HTML",
-    "XML",
+    "SVG",
     "CSS",
-    "Javascript",
     "CSS Grid",
     "Flexbox",
-    "SVG",
+    "SMIL",
     "iOS",
     "iPhone",
     "Safari",
+    "XML",
+    "Animations",
     "Flutter",
     "Xamarin",
     "Xamarin Forms",
     "TypeScript",
+    "JavaScript",
     "Firefox",
     "Edge"
   ],
@@ -53,15 +55,15 @@
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/plugin-transform-for-of": "^7.2.0",
-    "@babel/preset-env": "^7.2.3",
+    "@babel/preset-env": "^7.3.1",
     "rimraf": "^2.6.3",
-    "rollup": "^1.0.2",
-    "rollup-plugin-babel": "^4.2.0",
-    "rollup-plugin-terser": "^4.0.1",
+    "rollup": "^1.1.2",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-terser": "^4.0.4",
     "systemjs": "^0.21.5",
     "systemjs-plugin-babel": "0.0.25",
-    "terser": "^3.14.1",
-    "tslint": "^5.12.0",
-    "typescript": "^3.2.2"
+    "terser": "^3.16.1",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.3"
   }
 }

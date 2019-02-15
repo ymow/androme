@@ -9,7 +9,7 @@ import NodeList from './nodelist';
 import Resource from './resource';
 
 import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache, withinViewportOrigin } from '../lib/dom';
-import { convertCamelCase, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
@@ -25,13 +25,13 @@ function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element
     if (tagged.length) {
         const result: Extension<T>[] = [];
         const untagged: Extension<T>[] = [];
-        for (const item of extensions) {
-            const index = tagged.indexOf(item.name);
+        for (const ext of extensions) {
+            const index = tagged.indexOf(ext.name);
             if (index !== -1) {
-                result[index] = item;
+                result[index] = ext;
             }
             else {
-                untagged.push(item);
+                untagged.push(ext);
             }
         }
         return [...result.filter(item => item), ...untagged];
@@ -56,6 +56,21 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
         return true;
     }
     return false;
+}
+
+function compareRange(operation: string, value: number, range: number) {
+    switch (operation) {
+        case '<=':
+            return value <= range;
+        case '<':
+            return value < range;
+        case '>=':
+            return value >= range;
+        case '>':
+            return value > range;
+        default:
+            return value === range;
+    }
 }
 
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
@@ -334,11 +349,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public renderLayout(layout: Layout<T>) {
         let output = '';
-        const renderFloat = hasBit(layout.renderType, NODE_ALIGNMENT.FLOAT);
-        if (renderFloat && hasBit(layout.renderType, NODE_ALIGNMENT.HORIZONTAL)) {
+        const floating = hasBit(layout.renderType, NODE_ALIGNMENT.FLOAT);
+        if (floating && hasBit(layout.renderType, NODE_ALIGNMENT.HORIZONTAL)) {
             output = this.processFloatHorizontal(layout);
         }
-        else if (renderFloat && hasBit(layout.renderType, NODE_ALIGNMENT.VERTICAL)) {
+        else if (floating && hasBit(layout.renderType, NODE_ALIGNMENT.VERTICAL)) {
             output = this.processFloatVertical(layout);
         }
         else if (layout.containerType !== 0) {
@@ -479,6 +494,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             this._renderPosition.set(parent.id, { parent, children });
         }
+    }
+
+    public createNode(element: Element) {
+        return new this.nodeConstructor(this.nextId, element, this.controllerHandler.afterInsertNode);
     }
 
     public toString() {
@@ -638,10 +657,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 break;
                                             }
                                             else {
-                                                if (node.left < 0 && node.outsideX(parent.box) ||
-                                                    !node.has('left') && node.right < 0 && node.outsideX(parent.box) ||
-                                                    node.top < 0 && node.outsideY(parent.box) ||
-                                                    !node.has('top') && node.bottom < 0 && node.outsideX(parent.box))
+                                                if ((!node.has('right') || node.right < 0) && (!node.has('bottom') || node.bottom < 0) && (
+                                                        node.left < 0 && node.outsideX(parent.box) ||
+                                                        !node.has('left') && node.right < 0 && node.outsideX(parent.box) ||
+                                                        node.top < 0 && node.outsideY(parent.box) ||
+                                                        !node.has('top') && node.bottom < 0 && node.outsideX(parent.box)
+                                                   ))
                                                 {
                                                     outside = true;
                                                 }
@@ -796,8 +817,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
-                    if (nodeY.rendered || !nodeY.visible || this.parseElements.has(<HTMLElement> nodeY.baseElement) && !nodeY.documentRoot && !nodeY.documentBody) {
+                    if (nodeY.rendered || !nodeY.visible) {
                         continue;
+                    }
+                    else if (nodeY.htmlElement) {
+                        const element = <HTMLElement> nodeY.element;
+                        if (this.parseElements.has(element) && !nodeY.documentRoot && !nodeY.documentBody) {
+                            continue;
+                        }
+                        else if (nodeY.length === 0 && element.children.length && Array.from(element.children).every(item => this.parseElements.has(<HTMLElement> item))) {
+                            nodeY.inlineText = false;
+                        }
                     }
                     let parentY = nodeY.parent as T;
                     let unknownParent = parentY.hasAlign(NODE_ALIGNMENT.UNKNOWN);
@@ -1454,20 +1484,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 layerIndex = layerIndex.filter(item => item.length > 0);
                 layout.itemCount = layerIndex.length;
-                let vertical: LayoutType;
-                if (inlineAbove.length === 0 && (leftSub.length === 0 || rightSub.length === 0)) {
-                    vertical = this.controllerHandler.containerTypeVertical;
-                }
-                else {
-                    vertical = this.controllerHandler.containerTypeVerticalMargin;
-                }
+                const vertical = inlineAbove.length === 0 && (leftSub.length === 0 || rightSub.length === 0) ? this.controllerHandler.containerTypeVertical : this.controllerHandler.containerTypeVerticalMargin;
                 layout.setType(vertical.containerType, vertical.alignmentType);
                 output = this.renderNode(layout);
             }
         }
         if (layerIndex.length) {
             const floating = [inlineAbove, leftAbove, leftBelow, rightAbove, rightBelow];
-            let floatgroup: T | null;
+            let floatgroup: T | undefined;
             layerIndex.forEach((item, index) => {
                 if (Array.isArray(item[0])) {
                     const grouping: T[] = [];
@@ -1499,7 +1523,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
                 else {
-                    floatgroup = null;
+                    floatgroup = undefined;
                 }
                 ((Array.isArray(item[0]) ? item : [item]) as T[][]).forEach(segment => {
                     let basegroup = data.node;
@@ -1711,7 +1735,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     protected insertNode(element: Element, parent?: T) {
         let node: T | null = null;
         if (hasComputedStyle(element)) {
-            const nodeConstructor = new this.nodeConstructor(this.nextId, element, this.controllerHandler.afterInsertNode);
+            const nodeConstructor = this.createNode(element);
             if (!this.controllerHandler.localSettings.unsupported.excluded.has(element.tagName) && this.conditionElement(element)) {
                 node = nodeConstructor;
                 node.setExclusions();
@@ -1724,7 +1748,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         else if (element.nodeName.charAt(0) === '#' && element.nodeName === '#text') {
             if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                node = new this.nodeConstructor(this.nextId, element, this.controllerHandler.afterInsertNode);
+                node = this.createNode(element);
                 if (parent) {
                     node.inherit(parent, 'textStyle');
                 }
@@ -1784,120 +1808,221 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     private setStyleMap() {
-        const dpi = this.userSettings.resolutionDPI;
-        const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
-        let warning = false;
-        for (let i = 0; i < document.styleSheets.length; i++) {
-            const styleSheet = <CSSStyleSheet> document.styleSheets[i];
-            if (styleSheet.cssRules) {
-                for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                    try {
-                        if (styleSheet.cssRules[j] instanceof CSSStyleRule) {
-                            const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
-                            const attrRule = new Set<string>();
-                            Array.from(cssRule.style).forEach(value => attrRule.add(convertCamelCase(value)));
-                            Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
-                                const attrs = new Set(attrRule);
-                                Array.from(element.style).forEach(value => attrs.add(convertCamelCase(value)));
-                                const style = getStyle(element);
-                                const fontSize = parseInt(convertPX(style.fontSize || '16px', dpi, 0));
-                                const styleMap: StringMap = {};
-                                for (const attr of attrs) {
-                                    if (element.style[attr]) {
-                                        styleMap[attr] = element.style[attr];
-                                    }
-                                    else {
-                                        const value: string = cssRule.style[attr];
-                                        if (value !== 'initial') {
-                                            const computedValue = style[attr] || '';
-                                            if (value === computedValue) {
-                                                styleMap[attr] = value;
+        violation: {
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                const item = <CSSStyleSheet> document.styleSheets[i];
+                if (item.cssRules) {
+                    for (let j = 0; j < item.cssRules.length; j++) {
+                        const rule = item.cssRules[j];
+                        try {
+                            switch (rule.type) {
+                                case CSSRule.STYLE_RULE:
+                                    this.applyStyleRule(<CSSStyleRule> rule);
+                                    break;
+                                case CSSRule.MEDIA_RULE:
+                                    const patternA = /(?:(not|only)?\s*(?:all|screen) and )?((?:\([^)]+\)(?: and )?)+),?\s*/g;
+                                    let matchA: RegExpExecArray | null;
+                                    let statement = false;
+                                    while (!statement && ((matchA = patternA.exec((<CSSConditionRule> rule).conditionText)) !== null)) {
+                                        const negate = matchA[1] === 'not';
+                                        const patternB = /\(([a-z\-]+)\s*(:|<?=?|=?>?)?\s*([\w.%]+)?\)(?: and )?/g;
+                                        let matchB: RegExpExecArray | null;
+                                        let valid = false;
+                                        while (!statement && (matchB = patternB.exec(matchA[2])) !== null) {
+                                            const attr = matchB[1];
+                                            let operation: string;
+                                            if (matchB[1].startsWith('min')) {
+                                                operation = '>=';
+                                            }
+                                            else if (matchB[1].startsWith('max')) {
+                                                operation = '<=';
                                             }
                                             else {
-                                                switch (attr) {
-                                                    case 'backgroundColor':
-                                                    case 'borderTopColor':
-                                                    case 'borderRightColor':
-                                                    case 'borderBottomColor':
-                                                    case 'borderLeftColor':
-                                                    case 'color':
-                                                    case 'fontSize':
-                                                    case 'fontWeight':
-                                                        styleMap[attr] = computedValue || value;
-                                                        break;
-                                                    case 'width':
-                                                    case 'height':
-                                                    case 'minWidth':
-                                                    case 'maxWidth':
-                                                    case 'minHeight':
-                                                    case 'maxHeight':
-                                                    case 'lineHeight':
-                                                    case 'verticalAlign':
-                                                    case 'textIndent':
-                                                    case 'columnGap':
-                                                    case 'top':
-                                                    case 'right':
-                                                    case 'bottom':
-                                                    case 'left':
-                                                    case 'marginTop':
-                                                    case 'marginRight':
-                                                    case 'marginBottom':
-                                                    case 'marginLeft':
-                                                    case 'paddingTop':
-                                                    case 'paddingRight':
-                                                    case 'paddingBottom':
-                                                    case 'paddingLeft':
-                                                        styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, dpi, fontSize);
-                                                        break;
-                                                    default:
-                                                        if (styleMap[attr] === undefined) {
-                                                            styleMap[attr] = value;
-                                                        }
-                                                        break;
-                                                }
+                                                operation = matchA[2];
+                                            }
+                                            const value = matchB[3];
+                                            switch (attr) {
+                                                case 'aspect-ratio':
+                                                case 'min-aspect-ratio':
+                                                case 'max-aspect-ratio':
+                                                    const [width, height] = value.split('/').map(ratio => parseInt(ratio));
+                                                    valid = compareRange(operation, window.innerWidth / window.innerHeight, width / height);
+                                                    break;
+                                                case 'width':
+                                                case 'min-width':
+                                                case 'max-width':
+                                                case 'height':
+                                                case 'min-height':
+                                                case 'max-height':
+                                                    valid = compareRange(operation, attr.indexOf('width') !== -1 ? window.innerWidth : window.innerHeight, parseFloat(convertPX(value, convertInt(getStyle(document.body).fontSize || '16'))));
+                                                    break;
+                                                case 'orientation':
+                                                    valid = value === 'portrait' && window.innerWidth <= window.innerHeight || value === 'landscape' && window.innerWidth > window.innerHeight;
+                                                    break;
+                                                case 'resolution':
+                                                case 'min-resolution':
+                                                case 'max-resolution':
+                                                    let resolution = parseFloat(value);
+                                                    if (value.endsWith('dpcm')) {
+                                                        resolution *= 2.54;
+                                                    }
+                                                    else if (value.endsWith('dppx') || value.endsWith('x')) {
+                                                        resolution *= 96;
+                                                    }
+                                                    valid = compareRange(operation, window.devicePixelRatio * 96, resolution);
+                                                    break;
+                                                case 'grid':
+                                                    valid = value === '0';
+                                                    break;
+                                                case 'color':
+                                                    valid = value === undefined || convertInt(value) > 0;
+                                                    break;
+                                                case 'min-color':
+                                                    valid = convertInt(value) <= screen.colorDepth / 3;
+                                                    break;
+                                                case 'max-color':
+                                                    valid = convertInt(value) >= screen.colorDepth / 3;
+                                                    break;
+                                                case 'color-index':
+                                                case 'min-color-index':
+                                                case 'monochrome':
+                                                case 'min-monochrome':
+                                                    valid = value === '0';
+                                                    break;
+                                                case 'max-color-index':
+                                                case 'max-monochrome':
+                                                    valid = convertInt(value) >= 0;
+                                                    break;
+                                                default:
+                                                    valid = false;
+                                                    break;
+                                            }
+                                            if (!valid) {
+                                                break;
                                             }
                                         }
-                                    }
-                                }
-                                if (this.userSettings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
-                                    styleMap.backgroundImage.split(',').map(value => value.trim()).forEach(value => {
-                                        const uri = cssResolveUrl(value);
-                                        if (uri !== '' && !this.session.image.has(uri)) {
-                                            this.session.image.set(uri, { width: 0, height: 0, uri });
+                                        if (!negate && valid || negate && !valid) {
+                                            statement = true;
                                         }
-                                    });
-                                }
-                                if (clientFirefox && styleMap.display === undefined) {
-                                    switch (element.tagName) {
-                                        case 'INPUT':
-                                        case 'TEXTAREA':
-                                        case 'SELECT':
-                                        case 'BUTTON':
-                                            styleMap.display = 'inline-block';
-                                            break;
                                     }
-                                }
-                                const data = getElementCache(element, 'styleMap');
-                                if (data) {
-                                    Object.assign(data, styleMap);
-                                }
-                                else {
-                                    setElementCache(element, 'style', style);
-                                    setElementCache(element, 'styleMap', styleMap);
-                                }
-                            });
+                                    if (statement) {
+                                        const items = (<CSSMediaRule> rule).cssRules;
+                                        for (let k = 0; k < items.length; k++) {
+                                            this.applyStyleRule(<CSSStyleRule> items[k]);
+                                        }
+                                    }
+                                    break;
+                            }
                         }
-                    }
-                    catch (error) {
-                        if (!warning) {
-                            alert('External CSS files cannot be parsed with Chrome 64+ when loading HTML pages directly from your hard drive [file://]. ' +
-                                  'Either use a local web server [http://], embed your CSS into a &lt;style&gt; element, or use a different browser. ' +
+                        catch (error) {
+                            alert('External CSS files cannot be parsed with some browsers when loading HTML pages directly from your hard drive. ' +
+                                  'Either use a local web server, embed your CSS into a <style> element, or you can also try a different browser. ' +
                                   'See the README for more detailed instructions.\n\n' +
-                                  `${styleSheet.href}\n\n${error}`);
-                            warning = true;
+                                  `${item.href}\n\n${error}`);
+                            break violation;
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private applyStyleRule(item: CSSStyleRule) {
+        const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
+        const common = new Set<string>();
+        for (const attr of Array.from(item.style)) {
+            common.add(convertCamelCase(attr));
+        }
+        for (const element of Array.from(document.querySelectorAll(item.selectorText)) as HTMLElement[]) {
+            const applied = new Set(common);
+            for (const attr of Array.from(element.style)) {
+                applied.add(convertCamelCase(attr));
+            }
+            const style = getStyle(element);
+            const fontSize = parseInt(convertPX(style.fontSize || '16px', 0));
+            const styleMap: StringMap = {};
+            for (const attr of applied) {
+                if (element.style[attr]) {
+                    styleMap[attr] = element.style[attr];
+                }
+                else {
+                    const value: string = item.style[attr];
+                    if (value !== 'initial') {
+                        const computedValue = style[attr] || '';
+                        if (value === computedValue) {
+                            styleMap[attr] = value;
+                        }
+                        else {
+                            switch (attr) {
+                                case 'backgroundColor':
+                                case 'borderTopColor':
+                                case 'borderRightColor':
+                                case 'borderBottomColor':
+                                case 'borderLeftColor':
+                                case 'color':
+                                case 'fontSize':
+                                case 'fontWeight':
+                                    styleMap[attr] = computedValue || value;
+                                    break;
+                                case 'width':
+                                case 'height':
+                                case 'minWidth':
+                                case 'maxWidth':
+                                case 'minHeight':
+                                case 'maxHeight':
+                                case 'lineHeight':
+                                case 'verticalAlign':
+                                case 'textIndent':
+                                case 'columnGap':
+                                case 'top':
+                                case 'right':
+                                case 'bottom':
+                                case 'left':
+                                case 'marginTop':
+                                case 'marginRight':
+                                case 'marginBottom':
+                                case 'marginLeft':
+                                case 'paddingTop':
+                                case 'paddingRight':
+                                case 'paddingBottom':
+                                case 'paddingLeft':
+                                    styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, fontSize);
+                                    break;
+                                default:
+                                    if (styleMap[attr] === undefined) {
+                                        styleMap[attr] = value;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (this.userSettings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
+                styleMap.backgroundImage.split(',').map(value => value.trim()).forEach(value => {
+                    const uri = cssResolveUrl(value);
+                    if (uri !== '' && !this.session.image.has(uri)) {
+                        this.session.image.set(uri, { width: 0, height: 0, uri });
+                    }
+                });
+            }
+            if (clientFirefox && styleMap.display === undefined) {
+                switch (element.tagName) {
+                    case 'INPUT':
+                    case 'TEXTAREA':
+                    case 'SELECT':
+                    case 'BUTTON':
+                        styleMap.display = 'inline-block';
+                        break;
+                }
+            }
+            const data = getElementCache(element, 'styleMap');
+            if (data) {
+                Object.assign(data, styleMap);
+            }
+            else {
+                setElementCache(element, 'style', style);
+                setElementCache(element, 'styleMap', styleMap);
             }
         }
     }
