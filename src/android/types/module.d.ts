@@ -31,3 +31,5 @@ export interface ViewAttribute {
     android: StringMap;
     app: StringMap;
 }
+
+export type CustomizationResult = (result: {}, api?: number, node?: android.lib.base.View) => boolean;

@@ -444,7 +444,7 @@ export function withinFraction(lower: number, upper: number) {
 
 export function assignWhenNull(destination: {}, source: {}) {
     for (const attr in source) {
-        if (!destination.hasOwnProperty(attr)) {
+        if (!hasValue(destination[attr])) {
             destination[attr] = source[attr];
         }
     }
@@ -477,12 +477,22 @@ export function defaultWhenNull(options: {}, ...attrs: string[]) {
     }
 }
 
+export function filterArray<T>(list: T[], predicate: IteratorPredicate<T, boolean>) {
+    const result: T[] = [];
+    for (let i = 0; i < list.length; i++) {
+        if (predicate(list[i], i, list)) {
+            result.push(list[i]);
+        }
+    }
+    return result;
+}
+
 export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>): [T[], T[]] {
     const valid: T[] = [];
     const invalid: T[] = [];
     for (let i = 0; i < list.length; i++) {
         const item = list[i];
-        if (predicate(item, i)) {
+        if (predicate(item, i, list)) {
             valid.push(item);
         }
         else {
@@ -501,7 +511,7 @@ export function flatArray<T>(list: any[]): T[] {
 }
 
 export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[] {
-    return list.map((item: T, index) => predicate(item, index)).filter((item: U) => hasValue(item));
+    return list.map((item: T, index) => predicate(item, index, list)).filter((item: U) => hasValue(item));
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {

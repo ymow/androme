@@ -31,7 +31,7 @@ export default abstract class ExtensionManager<T extends Node> implements androm
         return this.application.extensions.delete(ext);
     }
 
-    public retrieve(name: string) {
+    public retrieve(name: string): Extension<T> | null {
         return Array.from(this.application.extensions).find(item => item.name === name) || null;
     }
 

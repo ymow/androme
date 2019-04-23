@@ -95,21 +95,21 @@ interface RGBA {
     a: number;
 }
 
-interface Color {
-    name: string;
-    hex: string;
+interface HSL {
+    h: number;
+    s: number;
+    l: number;
+}
+
+interface ColorResult extends NameValue {
     rgba?: RGBA;
-    hsl?: {
-        h: number;
-        s: number;
-        l: number;
-    };
+    hsl?: HSL;
 }
 
 interface ColorData {
-    valueRGB: string;
-    valueRGBA: string;
-    valueARGB: string;
+    valueAsRGB: string;
+    valueAsRGBA: string;
+    valueAsARGB: string;
     rgba: RGBA;
     alpha: number;
     opaque: boolean;

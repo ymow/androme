@@ -71,7 +71,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
             if (node.display === 'table-cell') {
                 node.mergeGravity('layout_gravity', 'fill');
             }
-            const siblings = cellData.siblings ? cellData.siblings.slice() : [];
+            const siblings = cellData.siblings ? cellData.siblings.slice(0) : [];
             if (siblings.length) {
                 const controller = <android.lib.base.Controller<T>> this.application.controllerHandler;
                 siblings.unshift(node);
@@ -106,7 +106,7 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
         if (!(node.tableElement && node.css('borderCollapse') === 'collapse')) {
             const mainData: GridData = node.data($const.EXT_NAME.GRID, 'mainData');
             if (mainData) {
-                node.each(item => {
+                node.renderEach(item => {
                     const cellData: GridCellData<T> = item.data($const.EXT_NAME.GRID, 'cellData');
                     if (cellData) {
                         const actualParent = item.actualParent;
@@ -134,14 +134,14 @@ export default class <T extends View> extends androme.lib.extensions.Grid<T> {
                             }
                         }
                     }
-                }, true);
+                });
             }
             node.modifyBox($enum.BOX_STANDARD.PADDING_TOP, mainData.paddingTop);
             node.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, mainData.paddingRight);
             node.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, mainData.paddingBottom);
             node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, mainData.paddingLeft);
         }
-        if (!node.hasWidth && $util.withinFraction(node.box.right, $util.maxArray(node.renderChildren.filter(item => item.inlineFlow || !item.blockStatic).map(item => item.linear.right)))) {
+        if (!node.hasWidth && $util.withinFraction(node.box.right, $util.maxArray(node.renderFilter(item => item.inlineFlow || !item.blockStatic).map(item => item.linear.right)))) {
             node.android('layout_width', 'wrap_content');
         }
     }

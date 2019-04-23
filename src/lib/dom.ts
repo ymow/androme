@@ -19,6 +19,55 @@ export function isUserAgent(value: number) {
     return hasBit(value, client);
 }
 
+export function checkStyleAttribute(element: Element, attr: string, value: string, style?: CSSStyleDeclaration, fontSize?: number) {
+    if (style === undefined) {
+        style = getStyle(element);
+    }
+    if (value === 'inherit') {
+        value = cssInheritStyle(element.parentElement, attr);
+    }
+    if (value !== 'initial') {
+        if (value !== style[attr]) {
+            switch (attr) {
+                case 'backgroundColor':
+                case 'borderTopColor':
+                case 'borderRightColor':
+                case 'borderBottomColor':
+                case 'borderLeftColor':
+                case 'color':
+                case 'fontSize':
+                case 'fontWeight':
+                    return style[attr] || value;
+                case 'width':
+                case 'height':
+                case 'minWidth':
+                case 'maxWidth':
+                case 'minHeight':
+                case 'maxHeight':
+                case 'lineHeight':
+                case 'verticalAlign':
+                case 'textIndent':
+                case 'columnGap':
+                case 'top':
+                case 'right':
+                case 'bottom':
+                case 'left':
+                case 'marginTop':
+                case 'marginRight':
+                case 'marginBottom':
+                case 'marginLeft':
+                case 'paddingTop':
+                case 'paddingRight':
+                case 'paddingBottom':
+                case 'paddingLeft':
+                    return /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, fontSize);
+            }
+        }
+        return value;
+    }
+    return '';
+}
+
 export function getDataSet(element: Element, prefix: string) {
     const result: StringMap = {};
     if (hasComputedStyle(element) || element instanceof SVGElement) {
@@ -152,6 +201,7 @@ export function getStyle(element: Element | null, cache = true): CSSStyleDeclara
             setElementCache(element, 'style', style);
             return style;
         }
+        return <CSSStyleDeclaration> {};
     }
     return <CSSStyleDeclaration> { display: 'none' };
 }
@@ -171,22 +221,6 @@ export function cssResolveUrl(value: string) {
         return resolvePath(match[1]);
     }
     return '';
-}
-
-export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]) {
-    let result = '';
-    let current = element.parentElement;
-    while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
-        result = getStyle(current)[attr];
-        if (result === 'inherit' || exclude && exclude.some(value => result.indexOf(value) !== -1)) {
-            result = '';
-        }
-        if (current === document.body || result) {
-            break;
-        }
-        current = current.parentElement;
-    }
-    return result || '';
 }
 
 export function cssParent(element: Element, attr: string, ...styles: string[]) {
@@ -212,15 +246,24 @@ export function cssFromParent(element: Element, attr: string) {
     return false;
 }
 
-export function cssAttribute(element: Element, attr: string, computed = false): string {
-    let value = element.getAttribute(attr) || (!computed && element.parentElement instanceof SVGGElement ? element.parentElement.getAttribute(attr) : '');
+export function cssInline(element: Element, attr: string) {
+    let value = '';
+    if (typeof element['style'] === 'object') {
+        value = element['style'][attr];
+    }
     if (!value) {
-        const node = getElementAsNode<T>(element);
-        if (node) {
-           value = node.cssInitial(attr);
+        const styleMap = getElementCache(element, 'styleMap');
+        if (styleMap) {
+            value = styleMap[attr];
         }
     }
-    return !value && computed ? getStyle(element)[convertCamelCase(attr)] : value || '';
+    return value || '';
+}
+
+export function cssAttribute(element: Element, attr: string, computed = false) {
+    const node = getElementAsNode<T>(element);
+    const name = convertCamelCase(attr);
+    return node && node.cssInitial(name) || cssInline(element, name) || getNamedItem(element, attr) || computed && getStyle(element)[name] as string || '';
 }
 
 export function cssInheritAttribute(element: Element | null, attr: string) {
@@ -234,6 +277,34 @@ export function cssInheritAttribute(element: Element | null, attr: string) {
         current = current.parentElement;
     }
     return value;
+}
+
+export function cssInheritStyle(element: Element | null, attr: string, exclude?: string[], tagNames?: string[]) {
+    let result = '';
+    if (element) {
+        let current = element.parentElement;
+        while (current && (tagNames === undefined || !tagNames.includes(current.tagName))) {
+            result = getStyle(current)[attr];
+            if (result === 'inherit' || exclude && exclude.some(value => result.indexOf(value) !== -1)) {
+                result = '';
+            }
+            if (current === document.body || result) {
+                break;
+            }
+            current = current.parentElement;
+        }
+    }
+    return result || '';
+}
+
+export function getNamedItem(element: Element | null, attr: string) {
+    if (element) {
+        const item = element.attributes.getNamedItem(attr);
+        if (item) {
+            return item.value.trim();
+        }
+    }
+    return '';
 }
 
 export function getBackgroundPosition(value: string, dimension: RectDimension, fontSize?: number, leftPerspective = false, percent = false) {

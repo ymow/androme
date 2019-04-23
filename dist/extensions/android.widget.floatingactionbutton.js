@@ -1,4 +1,4 @@
-/* android.widget 2.4.0
+/* android.widget 2.4.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -24,7 +24,7 @@ this.android.widget.floatingactionbutton = (function () {
             const target = $util.hasValue(node.dataset.target);
             const element = node.element;
             const options = $android_util.createAttribute(this.options[element.id]);
-            const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+            const backgroundColor = $color.parseColor(node.css('backgroundColor'), node.css('opacity'));
             let colorValue = '';
             if (backgroundColor) {
                 colorValue = $Resource.addColor(backgroundColor);

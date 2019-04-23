@@ -1,4 +1,4 @@
-/* android.widget 2.4.0
+/* android.widget 2.4.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -27,7 +27,7 @@ this.android.widget.coordinator = (function () {
                     const ext = this.application.extensionManager.retrieve("android.widget.toolbar" /* TOOLBAR */);
                     if (ext) {
                         const toolbarOptions = $android_util.createAttribute(ext.options[toolbar.element.id]);
-                        if (toolbarOptions.hasOwnProperty('collapsingToolbar')) {
+                        if ('collapsingToolbar' in toolbarOptions) {
                             node.android('fitsSystemWindows', 'true');
                         }
                     }

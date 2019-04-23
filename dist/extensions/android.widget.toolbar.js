@@ -1,4 +1,4 @@
-/* android.widget 2.4.0
+/* android.widget 2.4.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -87,7 +87,7 @@ this.android.widget.toolbar = (function () {
                     if ($util.hasValue(element.dataset.navigationIcon)) {
                         const result = $Resource.addImageSrcSet(element, $android_const.PREFIX_ANDROID.MENU);
                         if (result !== '') {
-                            $util.defaultWhenNull(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                            $util.defaultWhenNull(toolbarOptions, 'app', 'navigationIcon', `@drawable/${result}`);
                             if ($dom.getStyle(element).display !== 'none') {
                                 children--;
                             }
@@ -96,7 +96,7 @@ this.android.widget.toolbar = (function () {
                     if ($util.hasValue(element.dataset.collapseIcon)) {
                         const result = $Resource.addImageSrcSet(element, $android_const.PREFIX_ANDROID.MENU);
                         if (result !== '') {
-                            $util.defaultWhenNull(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                            $util.defaultWhenNull(toolbarOptions, 'app', 'collapseIcon', `@drawable/${result}`);
                             if ($dom.getStyle(element).display !== 'none') {
                                 children--;
                             }
@@ -122,8 +122,8 @@ this.android.widget.toolbar = (function () {
                     }
                 }
             });
-            const hasCollapsingToolbar = options.hasOwnProperty('collapsingToolbar') || collapsingToolbarChildren.length;
-            const hasAppBar = options.hasOwnProperty('appBar') || appBarChildren.length || hasCollapsingToolbar;
+            const hasCollapsingToolbar = 'collapsingToolbar' in options || collapsingToolbarChildren.length;
+            const hasAppBar = 'appBar' in options || appBarChildren.length || hasCollapsingToolbar;
             let appBarOverlay = '';
             let popupOverlay = '';
             if (hasCollapsingToolbar) {
@@ -323,11 +323,11 @@ this.android.widget.toolbar = (function () {
         }
     }
 
-    const toolbar$1 = new Toolbar("android.widget.toolbar" /* TOOLBAR */, 2 /* ANDROID */);
+    const toolbar = new Toolbar("android.widget.toolbar" /* TOOLBAR */, 2 /* ANDROID */);
     if (androme) {
-        androme.includeAsync(toolbar$1);
+        androme.includeAsync(toolbar);
     }
 
-    return toolbar$1;
+    return toolbar;
 
 }());

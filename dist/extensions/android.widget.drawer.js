@@ -1,4 +1,4 @@
-/* android.widget 2.4.0
+/* android.widget 2.4.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -81,7 +81,7 @@ this.android.widget.drawer = (function () {
         }
         postParseDocument(node) {
             const application = this.application;
-            const options = $android_util.createAttribute(this.options.navigation);
+            const options = $android_util.createAttribute(this.options.navigationView);
             const menu = $util.optionalAsString(Drawer.findNestedByName(node.element, "android.widget.menu" /* MENU */), 'dataset.layoutName');
             const headerLayout = $util.optionalAsString(Drawer.findNestedByName(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
             if (menu !== '') {

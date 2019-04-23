@@ -6,7 +6,6 @@ demos-dev/
 node_modules/
 src/
 temp/
-.babelrc
 *.code-workspace
 package-lock.json
 rollup.config.js

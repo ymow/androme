@@ -70,7 +70,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 if ($util.hasValue(element.dataset.navigationIcon)) {
                     const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.PREFIX_ANDROID.MENU);
                     if (result !== '') {
-                        $util.defaultWhenNull(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                        $util.defaultWhenNull(toolbarOptions, 'app', 'navigationIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
                             children--;
                         }
@@ -79,7 +79,7 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 if ($util.hasValue(element.dataset.collapseIcon)) {
                     const result = $Resource.addImageSrcSet(<HTMLImageElement> element, $android_const.PREFIX_ANDROID.MENU);
                     if (result !== '') {
-                        $util.defaultWhenNull(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                        $util.defaultWhenNull(toolbarOptions, 'app', 'collapseIcon', `@drawable/${result}`);
                         if ($dom.getStyle(element).display !== 'none') {
                             children--;
                         }
@@ -105,8 +105,8 @@ export default class Toolbar<T extends $View> extends androme.lib.base.Extension
                 }
             }
         });
-        const hasCollapsingToolbar = options.hasOwnProperty('collapsingToolbar') || collapsingToolbarChildren.length;
-        const hasAppBar = options.hasOwnProperty('appBar') || appBarChildren.length || hasCollapsingToolbar;
+        const hasCollapsingToolbar = 'collapsingToolbar' in options || collapsingToolbarChildren.length;
+        const hasAppBar = 'appBar' in options || appBarChildren.length || hasCollapsingToolbar;
         let appBarOverlay = '';
         let popupOverlay = '';
         if (hasCollapsingToolbar) {

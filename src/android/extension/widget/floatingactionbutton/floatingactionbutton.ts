@@ -24,7 +24,7 @@ export default class FloatingActionButton<T extends $View> extends androme.lib.b
         const target = $util.hasValue(node.dataset.target);
         const element = node.element;
         const options = $android_util.createAttribute(this.options[element.id]);
-        const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+        const backgroundColor = $color.parseColor(node.css('backgroundColor'), node.css('opacity'));
         let colorValue = '';
         if (backgroundColor) {
             colorValue = $Resource.addColor(backgroundColor);

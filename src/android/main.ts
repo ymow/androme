@@ -1,7 +1,6 @@
 import { UserSettingsAndroid } from './types/module';
 
 import { EXT_ANDROID, XMLNS_ANDROID } from './lib/constant';
-import { API_ANDROID } from './customizations';
 import SETTINGS from './settings';
 
 import Controller from './controller';
@@ -40,6 +39,7 @@ import ResourceStyles from './extension/resource/styles';
 import ResourceSvg from './extension/resource/svg';
 
 import * as constant from './lib/constant';
+import * as customization from './lib/customization';
 import * as enumeration from './lib/enumeration';
 import * as util from './lib/util';
 
@@ -106,6 +106,7 @@ const lib = {
         }
     },
     constant,
+    customization,
     enumeration,
     util
 };
@@ -114,12 +115,12 @@ const appBase: AppFramework<T> = {
     lib,
     system: {
         customize(build: number, widget: string, options: {}) {
-            if (API_ANDROID[build]) {
-                const customizations = API_ANDROID[build].customizations;
-                if (customizations[widget] === undefined) {
-                    customizations[widget] = {};
+            if (customization.API_ANDROID[build]) {
+                const assign = customization.API_ANDROID[build].assign;
+                if (assign[widget] === undefined) {
+                    assign[widget] = {};
                 }
-                Object.assign(customizations[widget], options);
+                Object.assign(assign[widget], options);
             }
         },
         addXmlNs(name: string, uri: string) {

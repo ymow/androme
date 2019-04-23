@@ -1,4 +1,4 @@
-/* android.widget 2.4.0
+/* android.widget 2.4.1
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};

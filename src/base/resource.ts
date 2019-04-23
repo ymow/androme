@@ -6,8 +6,8 @@ import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { parseRGBA } from '../lib/color';
-import { cssFromParent, cssInherit, getElementAsNode, hasLineBreak, isLineBreak, isUserAgent } from '../lib/dom';
+import { parseColor } from '../lib/color';
+import { cssFromParent, cssInheritStyle, getElementAsNode, hasLineBreak, isLineBreak, isUserAgent } from '../lib/dom';
 import { convertAngle, convertInt, hasValue, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 
@@ -32,10 +32,10 @@ function getColorStops(value: string, opacity: string, conic = false) {
     const pattern = new RegExp(REGEXP_COLORSTOP, 'g');
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(value)) !== null) {
-        const color = parseRGBA(match[1], opacity);
+        const color = parseColor(match[1], opacity);
         if (color && color.visible) {
             const item: ColorStop = {
-                color: color.valueRGBA,
+                color: color.valueAsRGBA,
                 opacity: color.alpha,
                 offset: ''
             };
@@ -96,6 +96,42 @@ function parseAngle(value: string | undefined) {
         }
     }
     return 0;
+}
+
+function replaceWhiteSpace<T extends Node>(node: T, value: string): [string, boolean] {
+    const renderParent = node.renderParent;
+    if (node.multiLine && renderParent && !renderParent.layoutVertical) {
+        value = value.replace(/^\s*\n/, '');
+    }
+    switch (node.css('whiteSpace')) {
+        case 'nowrap':
+            value = value.replace(/\n/g, ' ');
+            break;
+        case 'pre':
+        case 'pre-wrap':
+            if (renderParent && !renderParent.layoutVertical) {
+                value = value.replace(/^\n/, '');
+            }
+            value = value.replace(/\n/g, '\\n');
+            value = value.replace(/\s/g, '&#160;');
+            break;
+        case 'pre-line':
+            value = value.replace(/\n/g, '\\n');
+            value = value.replace(/\s+/g, ' ');
+            break;
+        default:
+            const element = node.baseElement;
+            if (element) {
+                if (element.previousSibling && isLineBreak(<Element> element.previousSibling)) {
+                    value = value.replace(/^\s+/, '');
+                }
+                if (element.nextSibling && isLineBreak(<Element> element.nextSibling)) {
+                    value = value.replace(/\s+$/, '');
+                }
+            }
+            return [value, false];
+    }
+    return [value, true];
 }
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -252,7 +288,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 break;
                             case 'inherit':
                             case 'currentcolor':
-                                cssColor = cssInherit(node.element, `${attr}Color`);
+                                cssColor = cssInheritStyle(node.element, `${attr}Color`);
                                 break;
                         }
                         let width = node.css(`${attr}Width`) || '1px';
@@ -260,11 +296,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         if (style === 'inset' && width === '0px') {
                             width = '1px';
                         }
-                        const color = parseRGBA(cssColor, node.css('opacity'));
+                        const color = parseColor(cssColor, node.css('opacity'));
                         boxStyle[attr] = <BorderAttribute> {
                             width,
                             style,
-                            color: style !== 'none' && color ? color.valueRGBA : ''
+                            color: style !== 'none' && color ? color.valueAsRGBA : ''
                         };
                         break;
                     }
@@ -284,12 +320,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         break;
                     }
                     case 'backgroundColor': {
-                        if (!node.has('backgroundColor') && (value === node.cssParent('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
+                        if (!node.has('backgroundColor') && (value === node.cssAscend('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
                             boxStyle.backgroundColor = '';
                         }
                         else {
-                            const color = parseRGBA(value, node.css('opacity'));
-                            boxStyle.backgroundColor = color ? color.valueRGBA : '';
+                            const color = parseColor(value, node.css('opacity'));
+                            boxStyle.backgroundColor = color ? color.valueAsRGBA : '';
                         }
                         break;
                     }
@@ -432,16 +468,16 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))
             {
                 const opacity = node.css('opacity');
-                const color = parseRGBA(node.css('color'), opacity);
-                let backgroundColor: ColorData | null;
+                const color = parseColor(node.css('color'), opacity);
+                let backgroundColor: ColorData | undefined;
                 if (backgroundImage ||
-                    node.cssParent('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.cssInitial('backgroundColor')) ||
+                    node.cssAscend('backgroundColor', false, true) === node.css('backgroundColor') && (node.plainText || node.style.backgroundColor !== node.cssInitial('backgroundColor')) ||
                     !node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
                 {
-                    backgroundColor = null;
+                    backgroundColor = undefined;
                 }
                 else {
-                    backgroundColor = parseRGBA(node.css('backgroundColor'), opacity);
+                    backgroundColor = parseColor(node.css('backgroundColor'), opacity);
                 }
                 let fontFamily = node.css('fontFamily');
                 let fontSize = node.css('fontSize');
@@ -502,8 +538,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     fontStyle: node.css('fontStyle'),
                     fontSize,
                     fontWeight,
-                    color: color ? color.valueRGBA : '',
-                    backgroundColor: backgroundColor ? backgroundColor.valueRGBA : ''
+                    color: color ? color.valueAsRGBA : '',
+                    backgroundColor: backgroundColor ? backgroundColor.valueAsRGBA : ''
                 };
                 node.data(Resource.KEY_NAME, 'fontStyle', result);
             }
@@ -511,41 +547,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setValueString() {
-        function replaceWhiteSpace(node: T, value: string): [string, boolean] {
-            const renderParent = node.renderParent;
-            if (node.multiLine && renderParent && !renderParent.layoutVertical) {
-                value = value.replace(/^\s*\n/, '');
-            }
-            switch (node.css('whiteSpace')) {
-                case 'nowrap':
-                    value = value.replace(/\n/g, ' ');
-                    break;
-                case 'pre':
-                case 'pre-wrap':
-                    if (renderParent && !renderParent.layoutVertical) {
-                        value = value.replace(/^\n/, '');
-                    }
-                    value = value.replace(/\n/g, '\\n');
-                    value = value.replace(/\s/g, '&#160;');
-                    break;
-                case 'pre-line':
-                    value = value.replace(/\n/g, '\\n');
-                    value = value.replace(/\s+/g, ' ');
-                    break;
-                default:
-                    const element = node.baseElement;
-                    if (element) {
-                        if (element.previousSibling && isLineBreak(<Element> element.previousSibling)) {
-                            value = value.replace(/^\s+/, '');
-                        }
-                        if (element.nextSibling && isLineBreak(<Element> element.nextSibling)) {
-                            value = value.replace(/\s+$/, '');
-                        }
-                    }
-                    return [value, false];
-            }
-            return [value, true];
-        }
         for (const node of this.cache.visible) {
             const element = node.baseElement;
             if (element) {

@@ -22,7 +22,7 @@ import $xml = androme.lib.xml;
 
 function sortFloatHorizontal<T extends View>(list: T[]) {
     if (list.some(node => node.floating)) {
-        const result = list.slice().sort((a, b) => {
+        const result = list.slice(0).sort((a, b) => {
             if (a.floating && !b.floating) {
                 return a.float === 'left' ? -1 : 1;
             }
@@ -73,7 +73,7 @@ function getTextBottom<T extends View>(nodes: T[]) {
 }
 
 function checkSingleLine<T extends View>(node: T, nowrap = false) {
-    if (node.textElement && node.cssParent('textAlign', true) !== 'center' && !node.hasWidth && !node.multiLine && (nowrap || node.textContent.trim().split(String.fromCharCode(32)).length > 0)) {
+    if (node.textElement && node.cssAscend('textAlign', true) !== 'center' && !node.hasWidth && !node.multiLine && (nowrap || node.textContent.trim().split(String.fromCharCode(32)).length > 0)) {
         node.android('singleLine', 'true');
     }
 }
@@ -578,11 +578,11 @@ export default class Controller<T extends View> extends androme.lib.base.Control
     public setConstraints() {
         for (const node of this.cache.visible) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.CONSTRAINT)) {
-                const children = node.renderChildren.filter(item => !item.positioned) as T[];
+                const children = node.renderFilter(item => !item.positioned) as T[];
                 if (children.length) {
                     if (node.layoutConstraint) {
                         const [pageFlow, absolute] = $util.partition(children, item => item.pageFlow);
-                        const bottomParent = Math.max(absolute.length ? $util.maxArray(node.renderChildren.map(item => item.linear.bottom)) : 0, node.box.bottom);
+                        const bottomParent = absolute.length ? $util.maxArray(node.renderChildren.map(item => item.linear.bottom)) : node.box.bottom;
                         for (const item of absolute) {
                             if (!item.positionAuto && (item.documentParent === item.absoluteParent || item.position === 'fixed')) {
                                 if (item.hasWidth && item.autoMargin.horizontal) {
@@ -651,7 +651,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                         }
                         else {
                             for (const item of pageFlow) {
-                                if (item.autoMargin.leftRight || (item.inlineStatic && item.cssParent('textAlign', true) === 'center')) {
+                                if (item.autoMargin.leftRight || (item.inlineStatic && item.cssAscend('textAlign', true) === 'center')) {
                                     item.anchorParent(AXIS_ANDROID.HORIZONTAL);
                                 }
                                 else if (item.rightAligned) {
@@ -806,9 +806,9 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                                 procedure: $enum.NODE_PROCEDURE.ALL,
                                 resource: $enum.NODE_RESOURCE.ALL
                             });
-                            container.css({
+                            container.cssApply({
                                 'position': node.position,
-                                'zIndex': node.zIndex
+                                'zIndex': node.zIndex.toString()
                             });
                             parent.appendTry(node, container);
                             this.cache.append(container);
@@ -945,7 +945,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                     [/^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/, /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/].some((value, index) => {
                         const match = textShadow.match(value);
                         if (match) {
-                            const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
+                            const color = $color.parseColor(match[index === 0 ? 1 : 4]);
                             if (color) {
                                 const colorValue = Resource.addColor(color);
                                 if (colorValue !== '') {
@@ -1336,7 +1336,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             if (checkLineWrap && !connected && (
                                     checkWidthWrap() ||
                                     item.multiLine && $dom.hasLineBreak(item.element) ||
-                                    item.preserveWhiteSpace && /^\n+/.test(item.textContent)
+                                    item.preserveWhiteSpace && /^\s*\n+/.test(item.textContent)
                                ))
                             {
                                 return true;
@@ -1355,7 +1355,7 @@ export default class Controller<T extends View> extends androme.lib.base.Control
                             ) ||
                             !item.floating && (
                                 previous.blockStatic ||
-                                previousSiblings.length && previousSiblings.some(sibling => sibling.lineBreak || sibling.excluded && sibling.blockStatic) ||
+                                previousSiblings.some(sibling => sibling.lineBreak || sibling.excluded && sibling.blockStatic) ||
                                 siblings.some(element => $dom.isLineBreak(element))
                             ) ||
                             cleared.has(item)

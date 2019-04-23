@@ -72,7 +72,7 @@ export default class <T extends View> extends androme.lib.extensions.Flexbox<T> 
             if (mainData.wrap) {
                 let previous: T[] | undefined;
                 node.filter(item => item.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED)).forEach((segment: T) => {
-                    const pageFlow = segment.renderChildren.filter(item => item.pageFlow) as T[];
+                    const pageFlow = segment.renderFilter(item => item.pageFlow) as T[];
                     if (mainData.rowDirection) {
                         segment.android('layout_width', 'match_parent');
                         if (node.hasHeight) {

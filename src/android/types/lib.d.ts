@@ -1,6 +1,7 @@
 import { ViewAttribute } from './module';
 
 import * as $const from '../lib/constant';
+import * as $custom from '../lib/customization';
 import * as $enum from '../lib/enumeration';
 
 declare global {
@@ -23,6 +24,12 @@ declare global {
                 export import XMLNS_ANDROID = $const.XMLNS_ANDROID;
                 export import RESERVED_JAVA = $const.RESERVED_JAVA;
                 export import PREFIX_ANDROID = $const.PREFIX_ANDROID;
+            }
+
+            namespace customizations {
+                export import API_ANDROID = $custom.API_ANDROID;
+                export import DEPRECATED_ANDROID = $custom.DEPRECATED_ANDROID;
+                export function getValue(api: number, tagName: string, obj: string, attr: string): string;
             }
 
             namespace util {

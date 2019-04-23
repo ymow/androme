@@ -463,7 +463,7 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                 case 'pathType': {
                                                     if (group.pathData) {
                                                         pathType: {
-                                                            values = item.values.slice();
+                                                            values = item.values.slice(0);
                                                             if (item.attributeName === 'points') {
                                                                 for (let i = 0; i < values.length; i++) {
                                                                     const value = values[i];
@@ -642,13 +642,13 @@ export default class ResourceSvg<T extends View> extends androme.lib.base.Extens
                                                     break;
                                                 }
                                                 default: {
-                                                    values = item.values.slice();
+                                                    values = item.values.slice(0);
                                                     if (attribute) {
                                                         propertyName = [attribute];
                                                     }
                                                     if (propertyName) {
                                                         for (let i = 0; i < values.length; i++) {
-                                                            const color = $color.parseRGBA(values[i]);
+                                                            const color = $color.parseColor(values[i]);
                                                             if (color) {
                                                                 values[i] = `@color/${Resource.addColor(color)}`;
                                                             }

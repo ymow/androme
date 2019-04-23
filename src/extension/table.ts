@@ -4,7 +4,7 @@ import { BOX_STANDARD, CSS_STANDARD, USER_AGENT } from '../lib/enumeration';
 import Extension from '../base/extension';
 import Node from '../base/node';
 
-import { cssInherit, getStyle, isUserAgent } from '../lib/dom';
+import { cssInheritStyle, getStyle, isUserAgent } from '../lib/dom';
 import { convertFloat, convertInt, formatPercent, formatPX, isPercent, isUnit, maxArray } from '../lib/util';
 
 const enum LAYOUT_TABLE {
@@ -105,12 +105,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        let value = cssInherit(element, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
+                        let value = cssInheritStyle(element, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                         if (value !== '') {
                             element.style.background = value;
                         }
                         else {
-                            value = cssInherit(element, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
+                            value = cssInheritStyle(element, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                             if (value !== '') {
                                 element.style.backgroundColor = value;
                             }
@@ -166,12 +166,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 if (td.length || td.inlineText) {
                     rowWidth[i] += td.bounds.width + horizontal;
                 }
-                td.css({
+                td.cssApply({
                     marginTop: i === 0 ? '0px' : spacingHeight,
                     marginRight: j < tr.length - 1 ? spacingWidth : '0px',
                     marginBottom: i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight,
                     marginLeft: columnIndex[i] === 0 ? '0px' : spacingWidth
-                }, '', true);
+                }, true);
                 columnIndex[i] += element.colSpan;
             }
         }
@@ -375,7 +375,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     if (td && td.css('visibility') === 'visible') {
                         if (i === 0) {
                             if (td.borderTopWidth < parseInt(borderTopWidth)) {
-                                td.css({
+                                td.cssApply({
                                     borderTopColor,
                                     borderTopStyle,
                                     borderTopWidth
@@ -395,7 +395,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                         if (i === rowCount - 1) {
                             if (td.borderBottomWidth < parseInt(borderBottomWidth)) {
-                                td.css({
+                                td.cssApply({
                                     borderBottomColor,
                                     borderBottomStyle,
                                     borderBottomWidth
@@ -404,7 +404,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                         if (j === 0) {
                             if (td.borderLeftWidth < parseInt(borderLeftWidth)) {
-                                td.css({
+                                td.cssApply({
                                     borderLeftColor,
                                     borderLeftStyle,
                                     borderLeftWidth
@@ -424,7 +424,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                         if (j === columnCount - 1) {
                             if (td.borderRightWidth < parseInt(borderRightWidth)) {
-                                td.css({
+                                td.cssApply({
                                     borderRightColor,
                                     borderRightStyle,
                                     borderRightWidth
@@ -434,7 +434,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                     }
                 }
             }
-            node.css({
+            node.cssApply({
                 borderTopWidth: '0px',
                 borderRightWidth: '0px',
                 borderBottomWidth: '0px',

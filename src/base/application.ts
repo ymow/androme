@@ -8,8 +8,8 @@ import Node from './node';
 import NodeList from './nodelist';
 import Resource from './resource';
 
-import { cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache, withinViewportOrigin } from '../lib/dom';
-import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
+import { checkStyleAttribute, cssParent, cssResolveUrl, deleteElementCache, getElementAsNode, getElementCache, getLastChildElement, getStyle, isPlainText, hasComputedStyle, isUserAgent, removeElementsByClassName, setElementCache, withinViewportOrigin } from '../lib/dom';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, maxArray, minArray, resolvePath, sortAsc, trimNull, trimString } from '../lib/util';
 import { formatPlaceholder, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element: HTMLElement, extensions: Extension<T>[]) {
@@ -17,7 +17,9 @@ function prioritizeExtensions<T extends Node>(documentRoot: HTMLElement, element
     let current: HTMLElement | null = element;
     do {
         if (current.dataset.use) {
-            tagged.push(...current.dataset.use.split(',').map(value => value.trim()));
+            for (const value of current.dataset.use.split(',')) {
+                tagged.push(value.trim());
+            }
         }
         current = current !== documentRoot ? current.parentElement : null;
     }
@@ -48,11 +50,11 @@ function checkPositionStatic<T extends Node>(node: T, parent: T) {
         (previousSiblings.length === 0 || !previousSiblings.some(item => item.multiLine > 0 || item.excluded && !item.blockStatic)) &&
         (nextSiblings.length === 0 || nextSiblings.every(item => item.blockStatic || item.lineBreak || item.excluded) || node.element === getLastChildElement(parent.element)))
     {
-        node.css({
+        node.cssApply({
             'position': 'static',
             'display': 'inline-block',
             'verticalAlign': 'top'
-        }, '', true);
+        }, true);
         return true;
     }
     return false;
@@ -813,6 +815,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 const axisY = parent.duplicate() as T[];
                 const hasFloat = axisY.some(node => node.floating);
                 const cleared = hasFloat ? NodeList.clearedAll(parent) : new Map<T, string>();
+                const extensionsParent = parent.renderExtension.size ? Array.from(parent.renderExtension) : [];
                 const extensionsChild = extensions.filter(item => item.subscribersChild.size);
                 let k = -1;
                 while (++k < axisY.length) {
@@ -1003,8 +1006,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (!nodeY.rendered && !nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION)) {
                         let next = false;
-                        if (parentY.renderExtension.size || extensionsChild.length) {
-                            for (const ext of [...parentY.renderExtension, ...extensionsChild.filter(item => item.subscribersChild.has(nodeY))]) {
+                        if (extensionsParent.length || extensionsChild.length) {
+                            const combined = extensionsParent.slice(0);
+                            if (extensionsChild.length) {
+                                combined.push(...extensionsChild.filter(item => item.subscribersChild.has(nodeY)));
+                            }
+                            for (const ext of combined) {
                                 const result = ext.processChild(nodeY, parentY);
                                 if (result.output) {
                                     this.addRenderTemplate(parentY, nodeY, result.output);
@@ -1605,9 +1612,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 if (data.cleared.has(node)) {
                     if (!node.floating) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-                        staticRows.push(current.slice());
+                        staticRows.push(current.slice(0));
                         current.length = 0;
-                        floatedRows.push(floated.slice());
+                        floatedRows.push(floated.slice(0));
                         floated.length = 0;
                     }
                     else {
@@ -1616,7 +1623,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
                 if (node.floating) {
                     if (blockArea) {
-                        staticRows.push(current.slice());
+                        staticRows.push(current.slice(0));
                         floatedRows.push(null);
                         current.length = 0;
                         floated.length = 0;
@@ -1755,7 +1762,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 else {
                     node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
                 }
-                node.css({
+                node.cssApply({
                     position: 'static',
                     display: 'inline',
                     verticalAlign: 'baseline',
@@ -1929,82 +1936,34 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     private applyStyleRule(item: CSSStyleRule) {
         const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
-        const common = new Set<string>();
+        const fromRule: string[] = [];
         for (const attr of Array.from(item.style)) {
-            common.add(convertCamelCase(attr));
+            fromRule.push(convertCamelCase(attr));
         }
-        for (const element of Array.from(document.querySelectorAll(item.selectorText)) as HTMLElement[]) {
-            const applied = new Set(common);
-            for (const attr of Array.from(element.style)) {
-                applied.add(convertCamelCase(attr));
-            }
+        document.querySelectorAll(item.selectorText).forEach((element: HTMLElement) => {
             const style = getStyle(element);
             const fontSize = parseInt(convertPX(style.fontSize || '16px', 0));
             const styleMap: StringMap = {};
-            for (const attr of applied) {
-                if (element.style[attr]) {
-                    styleMap[attr] = element.style[attr];
+            for (const attr of fromRule) {
+                const value = checkStyleAttribute(element, attr, item.style[attr], style, fontSize);
+                if (value !== '') {
+                    styleMap[attr] = value;
                 }
-                else {
-                    const value: string = item.style[attr];
-                    if (value !== 'initial') {
-                        const computedValue = style[attr] || '';
-                        if (value === computedValue) {
-                            styleMap[attr] = value;
-                        }
-                        else {
-                            switch (attr) {
-                                case 'backgroundColor':
-                                case 'borderTopColor':
-                                case 'borderRightColor':
-                                case 'borderBottomColor':
-                                case 'borderLeftColor':
-                                case 'color':
-                                case 'fontSize':
-                                case 'fontWeight':
-                                    styleMap[attr] = computedValue || value;
-                                    break;
-                                case 'width':
-                                case 'height':
-                                case 'minWidth':
-                                case 'maxWidth':
-                                case 'minHeight':
-                                case 'maxHeight':
-                                case 'lineHeight':
-                                case 'verticalAlign':
-                                case 'textIndent':
-                                case 'columnGap':
-                                case 'top':
-                                case 'right':
-                                case 'bottom':
-                                case 'left':
-                                case 'marginTop':
-                                case 'marginRight':
-                                case 'marginBottom':
-                                case 'marginLeft':
-                                case 'paddingTop':
-                                case 'paddingRight':
-                                case 'paddingBottom':
-                                case 'paddingLeft':
-                                    styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value : convertPX(value, fontSize);
-                                    break;
-                                default:
-                                    if (styleMap[attr] === undefined) {
-                                        styleMap[attr] = value;
-                                    }
-                                    break;
-                            }
-                        }
-                    }
+            }
+            for (let attr of Array.from(element.style)) {
+                attr = convertCamelCase(attr);
+                const value = checkStyleAttribute(element, attr, element.style[attr], style, fontSize);
+                if (value !== '') {
+                    styleMap[attr] = value;
                 }
             }
             if (this.userSettings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
-                styleMap.backgroundImage.split(',').map(value => value.trim()).forEach(value => {
-                    const uri = cssResolveUrl(value);
+                for (const value of styleMap.backgroundImage.split(',')) {
+                    const uri = cssResolveUrl(value.trim());
                     if (uri !== '' && !this.session.image.has(uri)) {
                         this.session.image.set(uri, { width: 0, height: 0, uri });
                     }
-                });
+                }
             }
             if (clientFirefox && styleMap.display === undefined) {
                 switch (element.tagName) {
@@ -2024,7 +1983,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 setElementCache(element, 'style', style);
                 setElementCache(element, 'styleMap', styleMap);
             }
-        }
+        });
     }
 
     set appName(value) {

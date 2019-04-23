@@ -4,7 +4,7 @@ type UndefNull<T> = Undefined<T> | Null<T>;
 
 type Constructor<T> = new(...args: any[]) => T;
 
-type IteratorPredicate<T, U> = (value: T, index: number) => U;
+type IteratorPredicate<T, U> = (item: T, index: number, array: T[]) => U;
 
 type BindGeneric<T, U> = (item: T, ...args: any[]) => U;
 

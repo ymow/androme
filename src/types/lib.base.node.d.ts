@@ -25,6 +25,7 @@ declare global {
             multiLine: number;
             inlineText: boolean;
             overflow: number;
+            dir: string;
             documentParent: Node;
             parent: Node | undefined;
             renderParent: Node | undefined;
@@ -116,7 +117,6 @@ declare global {
             readonly firstChild: Node | undefined;
             readonly lastChild: Node | undefined;
             readonly documentId: string;
-            readonly dir: string;
             readonly nodes: Node[];
             readonly center: Point;
             setControlType(controlName: string, containerType?: number): void;
@@ -127,7 +127,7 @@ declare global {
             modifyBox(region: number, offset: number | null, negative?: boolean): void;
             valueBox(region: number): [number, number];
             alignParent(position: string): boolean;
-            alignSibling(position: string): boolean;
+            alignSibling(position: string, documentId?: string): string;
             localizeString(value: string): string;
             clone(id?: number, attributes?: boolean, position?: boolean): Node;
             init(): void;
@@ -139,7 +139,8 @@ declare global {
             namespace(obj: string): StringMap;
             delete(obj: string, ...attrs: string[]): void;
             apply(options: {}): void;
-            each(predicate: IteratorPredicate<Node, void>, rendered?: boolean): this;
+            renderEach(predicate: IteratorPredicate<Node, void>): this;
+            renderFilter(predicate: IteratorPredicate<Node, boolean>): Node[];
             render(parent: Node): void;
             hide(invisible?: boolean): void;
             data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
@@ -154,9 +155,10 @@ declare global {
             withinY(rect: RectDimension, dimension?: string): boolean;
             outsideX(rect: RectDimension, dimension?: string): boolean;
             outsideY(rect: RectDimension, dimension?: string): boolean;
-            css(attr: object | string, value?: string, cache?: boolean): string;
+            css(attr: string, value?: string, cache?: boolean): string;
+            cssApply(values: StringMap, cache?: boolean): this;
             cssInitial(attr: string, modified?: boolean, computed?: boolean): string;
-            cssParent(attr: string, childStart?: boolean, visible?: boolean): string;
+            cssAscend(attr: string, startChild?: boolean, visible?: boolean): string;
             cssSort(attr: string, duplicate?: boolean): Node[];
             cssPX(attr: string, value: number, negative?: boolean, cache?: boolean): string;
             cssTry(attr: string, value: string): boolean;

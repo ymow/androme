@@ -2,7 +2,7 @@ import Container from './container';
 import Node from './node';
 
 import { getElementAsNode } from '../lib/dom';
-import { isUnit, maxArray, minArray, withinFraction } from '../lib/util';
+import { isUnit, maxArray, withinFraction } from '../lib/util';
 
 export default class NodeList<T extends Node> extends Container<T> implements androme.lib.base.NodeList<T> {
     public static actualParent<T extends Node>(list: T[]) {
@@ -92,7 +92,7 @@ export default class NodeList<T extends Node> extends Container<T> implements an
 
     public static cleared<T extends Node>(list: T[], parent = true) {
         if (parent && list.length > 1) {
-            list.slice().sort(this.siblingIndex);
+            list.slice(0).sort(this.siblingIndex);
             const actualParent = this.actualParent(list);
             if (actualParent) {
                 const nodes: T[] = [];
@@ -181,10 +181,22 @@ export default class NodeList<T extends Node> extends Container<T> implements an
                             return false;
                         }
                     }
-                    const boxLeft = minArray(nodes.map(node => node.linear.left));
-                    const boxRight = maxArray(nodes.map(node => node.linear.right));
-                    const floatLeft =  maxArray(nodes.filter(node => node.float === 'left').map(node => node.linear.right));
-                    const floatRight =  minArray(nodes.filter(node => node.float === 'right').map(node => node.linear.left));
+                    let boxLeft = Number.MAX_VALUE;
+                    let boxRight = -Number.MAX_VALUE;
+                    let floatLeft = -Number.MAX_VALUE;
+                    let floatRight = Number.MAX_VALUE;
+                    for (const node of nodes) {
+                        boxLeft = Math.min(boxLeft, node.linear.left);
+                        boxRight = Math.max(boxRight, node.linear.right);
+                        if (node.floating) {
+                            if (node.float === 'left') {
+                                floatLeft = Math.max(floatLeft, node.linear.right);
+                            }
+                            else {
+                                floatRight = Math.min(floatRight, node.linear.left);
+                            }
+                        }
+                    }
                     for (let i = 0, j = 0, k = 0, l = 0, m = 0; i < nodes.length; i++) {
                         const item = nodes[i];
                         if (Math.floor(item.linear.left) <= boxLeft) {

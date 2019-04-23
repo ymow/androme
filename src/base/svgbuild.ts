@@ -1,4 +1,4 @@
-import { parseRGBA } from '../lib/color';
+import { parseColor } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
 import { applyMatrixX, applyMatrixY, getRadiusY } from '../lib/svg';
 
@@ -221,10 +221,10 @@ export default class SvgBuild implements androme.lib.base.SvgBuild {
     public static createColorStops(element: SVGGradientElement) {
         const result: ColorStop[] = [];
         for (const stop of Array.from(element.getElementsByTagName('stop'))) {
-            const color = parseRGBA(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
+            const color = parseColor(cssAttribute(stop, 'stop-color'), cssAttribute(stop, 'stop-opacity'));
             if (color && color.visible) {
                 result.push({
-                    color: color.valueRGBA,
+                    color: color.valueAsRGBA,
                     offset: cssAttribute(stop, 'offset'),
                     opacity: color.alpha
                 });

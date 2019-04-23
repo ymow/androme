@@ -23,7 +23,7 @@ type ThemeTemplate = {
 };
 
 function getHexARGB(value: ColorData | null) {
-    return value ? (value.opaque ? value.valueARGB : value.valueRGB) : '';
+    return value ? (value.opaque ? value.valueAsARGB : value.valueAsRGB) : '';
 }
 
 function getRadiusPercent(value: string) {
@@ -204,35 +204,33 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
                 const obj: ExternalData = options[namespace];
                 if (typeof obj === 'object') {
                     for (const attr in obj) {
-                        if (obj.hasOwnProperty(attr)) {
-                            let value = obj[attr].toString();
-                            switch (attr) {
-                                case 'text':
-                                    if (!value.startsWith('@string/')) {
-                                        value = this.addString(value, '', numberAlias);
-                                        if (value !== '') {
-                                            obj[attr] = `@string/${value}`;
-                                            continue;
-                                        }
+                        let value = obj[attr].toString();
+                        switch (attr) {
+                            case 'text':
+                                if (!value.startsWith('@string/')) {
+                                    value = this.addString(value, '', numberAlias);
+                                    if (value !== '') {
+                                        obj[attr] = `@string/${value}`;
+                                        continue;
                                     }
-                                    break;
-                                case 'src':
-                                case 'srcCompat':
-                                    if ($const.REGEX_PATTERN.URI.test(value)) {
-                                        value = this.addImage({ mdpi: value });
-                                        if (value !== '') {
-                                            obj[attr] = `@drawable/${value}`;
-                                            continue;
-                                        }
-                                    }
-                                    break;
-                            }
-                            const color = $color.parseRGBA(value);
-                            if (color) {
-                                const colorValue = this.addColor(color);
-                                if (colorValue !== '') {
-                                    obj[attr] = `@color/${colorValue}`;
                                 }
+                                break;
+                            case 'src':
+                            case 'srcCompat':
+                                if ($const.REGEX_PATTERN.URI.test(value)) {
+                                    value = this.addImage({ mdpi: value });
+                                    if (value !== '') {
+                                        obj[attr] = `@drawable/${value}`;
+                                        continue;
+                                    }
+                                }
+                                break;
+                        }
+                        const color = $color.parseColor(value);
+                        if (color) {
+                            const colorValue = this.addColor(color);
+                            if (colorValue !== '') {
+                                obj[attr] = `@color/${colorValue}`;
                             }
                         }
                     }
@@ -375,18 +373,18 @@ export default class Resource<T extends View> extends androme.lib.base.Resource<
         return '';
     }
 
-    public static addColor(value: ColorData | string | null) {
+    public static addColor(value: ColorData | string | undefined) {
         if (typeof value === 'string') {
-            value = $color.parseRGBA(value);
+            value = $color.parseColor(value);
         }
-        if (value && value.valueRGBA !== '#00000000') {
+        if (value && value.valueAsRGBA !== '#00000000') {
             const valueARGB = getHexARGB(value);
             let name = Resource.STORED.colors.get(valueARGB) || '';
             if (name === '') {
-                const shade = $color.getColorByShade(value.valueRGB);
+                const shade = $color.findColorShade(value.valueAsRGB);
                 if (shade) {
                     shade.name = $util.convertUnderscore(shade.name);
-                    if (!value.opaque && shade.hex === value.valueRGB) {
+                    if (!value.opaque && shade.value === value.valueAsRGB) {
                         name = shade.name;
                     }
                     else {

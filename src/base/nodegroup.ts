@@ -22,7 +22,7 @@ export default abstract class NodeGroup extends Node {
             this.setBounds();
             const actualParent = this.actualParent;
             if (actualParent) {
-                this.css('direction', actualParent.dir);
+                this.dir = actualParent.dir;
             }
             this.saveAsInitial();
         }
@@ -154,7 +154,7 @@ export default abstract class NodeGroup extends Node {
     }
 
     private get outerRegion(): BoxRect {
-        const nodes = this.children.slice();
+        const nodes = this.children.slice(0);
         let top = nodes[0];
         let right = top;
         let bottom = top;

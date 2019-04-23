@@ -22,16 +22,18 @@ declare global {
         }
 
         namespace color {
-            export function convertHex(value: string, opacity?: number): string;
-            export function getColorByName(value: string): Color | null;
-            export function getColorByShade(value: string): Color | null;
-            export function convertRGBA(value: string): RGBA | null;
-            export function parseRGBA(value: string, opacity?: string): ColorData | null;
-            export function reduceRGBA(value: string, percent: number): ColorData | null;
+            export function findColorName(value: string): ColorResult | undefined;
+            export function findColorShade(value: string): ColorResult | undefined;
+            export function parseColor(value: string, opacity?: string, transparency?: boolean): ColorData | undefined;
+            export function reduceColor(value: string, percent: number): ColorData | undefined;
+            export function convertHex(...values: string[] | number[]): string;
+            export function convertRGBA(value: string): RGBA | undefined;
+            export function formatRGBA(rgba: RGBA): string;
         }
 
         namespace dom {
             export function isUserAgent(value: number): boolean;
+            export function checkStyleAttribute(element: Element, attr: string, value: string, style?: CSSStyleDeclaration, fontSize?: number): string;
             export function getDataSet(element: Element, prefix: string): StringMap;
             export function newBoxRect(): BoxRect;
             export function newRectDimension(): RectDimension;
@@ -45,11 +47,13 @@ declare global {
             export function getBoxSpacing(element: Element): BoxModel;
             export function convertAngle(value: string, unit?: string): number;
             export function cssResolveUrl(value: string): string;
-            export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
+            export function cssInline(element: Element, attr: string): string;
             export function cssAttribute(element: Element, attr: string, computed?: boolean): string;
             export function cssInheritAttribute(element: Element | null, attr: string): string;
+            export function cssInheritStyle(element: Element | null, attr: string, exclude?: string[], tagNames?: string[]): string;
+            export function getNamedItem(element: Element | null, attr: string): string;
             export function getBackgroundPosition(value: string, dimension: RectDimension, fontSize?: number, leftPerspective?: boolean, percent?: boolean): RectPosition;
             export function getFirstChildElement(elements: Element[]): Element | null;
             export function getLastChildElement(elements: Element[]): Element | null;
@@ -126,6 +130,7 @@ declare global {
             export function defaultWhenNull(options: {}, ...attrs: string[]): void;
             export function partition<T>(list: T[], predicate: IteratorPredicate<T, boolean>): [T[], T[]];
             export function flatArray<T>(list: any[]): T[];
+            export function filterArray<T>(list: T[], predicate: IteratorPredicate<T, boolean>): T[];
             export function flatMap<T, U>(list: T[], predicate: IteratorPredicate<T, U>): U[];
             export function sortAsc<T>(list: T[], ...attrs: string[]): T[];
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];

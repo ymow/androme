@@ -256,12 +256,12 @@ export default class ResourceFonts<T extends View> extends androme.lib.base.Exte
                                 continue;
                             }
                             else if (ids.length === count) {
-                                styleKey[attr1] = ids.slice();
+                                styleKey[attr1] = ids.slice(0);
                                 sorted[i] = {};
                                 revalidate = true;
                             }
                             else if (ids.length === 1) {
-                                layoutKey[attr1] = ids.slice();
+                                layoutKey[attr1] = ids.slice(0);
                                 sorted[i][attr1] = [];
                                 revalidate = true;
                             }

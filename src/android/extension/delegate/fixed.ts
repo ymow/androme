@@ -96,22 +96,22 @@ export default class Fixed<T extends View> extends androme.lib.base.Extension<T>
             const width = node.cssInitial('width', true);
             const minWidth = node.cssInitial('minWidth', true);
             if (node.documentBody && node.some(item => item.has('right'))) {
-                node.css({
+                node.cssApply({
                     'width': 'auto',
                     'minWidth': 'auto'
-                }, '', true);
-                node.companion.css({
+                }, true);
+                node.companion.cssApply({
                     'width': width,
                     'minWidth': minWidth
-                }, '', true);
+                }, true);
                 node.android('layout_width', 'match_parent');
             }
             else {
                 const offset = node.paddingLeft + node.paddingRight + (node.documentBody ? node.marginLeft + node.marginRight : 0);
-                node.companion.css({
+                node.companion.cssApply({
                     'width': reduceContainerWidth(node, width, offset),
                     'minWidth': reduceContainerWidth(node, minWidth, offset)
-                }, '', true);
+                }, true);
             }
         }
     }

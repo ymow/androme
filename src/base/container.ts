@@ -64,7 +64,7 @@ export default class Container<T> implements androme.lib.base.Container<T>, Iter
     }
 
     public duplicate() {
-        return this._children.slice();
+        return this._children.slice(0);
     }
 
     public clear() {

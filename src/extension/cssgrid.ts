@@ -457,7 +457,7 @@ export default class CssGrid<T extends Node> extends Extension<T> {
             const rowB = horizontal ? 2 : 3;
             const colB = horizontal ? 3 : 2;
             while (!placement[0] || !placement[1]) {
-                const PLACEMENT = placement.slice();
+                const PLACEMENT = placement.slice(0);
                 if (!PLACEMENT[rowA]) {
                     let l = rowData.length;
                     for (let i = 0, j = 0, k = -1; i < l; i++) {

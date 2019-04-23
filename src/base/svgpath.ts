@@ -2,7 +2,7 @@ import { REGEX_PATTERN } from '../lib/constant';
 
 import SvgBuild from './svgbuild';
 
-import { parseRGBA } from '../lib/color';
+import { parseColor } from '../lib/color';
 import { cssAttribute } from '../lib/dom';
 import { getTransformOrigin } from '../lib/svg';
 
@@ -69,14 +69,14 @@ export default class SvgPath implements androme.lib.base.SvgPath {
                     value = '';
                     break;
                 case 'currentcolor': {
-                    const color = parseRGBA(cssAttribute(this.element, 'color', true));
-                    value = color ? color.valueRGB : '#000000';
+                    const color = parseColor(cssAttribute(this.element, 'color', true));
+                    value = color ? color.valueAsRGB : '#000000';
                     break;
                 }
                 default: {
-                    const color = parseRGBA(value);
+                    const color = parseColor(value);
                     if (color) {
-                        value = color.valueRGB;
+                        value = color.valueAsRGB;
                     }
                     break;
                 }
